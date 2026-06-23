@@ -17,6 +17,10 @@ import {
   History,
   Trash2,
   ChevronRight,
+  Download,
+  FileDown,
+  Square,
+  CheckSquare,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -64,6 +68,84 @@ function savePreviewItem(item: SavedItem) {
 function deletePreviewItem(id: string) {
   const items = loadPreviewSaved().filter((i) => i.id !== id);
   localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(items));
+}
+
+// ─── CSV Export ───────────────────────────────────────────────────────────────
+
+function csvCell(value: string): string {
+  return `"${value.replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+}
+
+function downloadCSV(content: string, filename: string) {
+  const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportShopifyCSV(items: SavedItem[]) {
+  const headers = [
+    'Handle', 'Title', 'Body (HTML)', 'Vendor', 'Type', 'Tags',
+    'Published', 'Option1 Name', 'Option1 Value',
+    'Variant Price', 'Variant Requires Shipping', 'Variant Taxable',
+    'Variant Inventory Tracker', 'Variant Inventory Qty',
+    'Variant Inventory Policy', 'Variant Fulfillment Service',
+  ];
+  const rows = items.map((item) => {
+    const handle = item.product.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const bodyHtml = `<p>${item.description.replace(/\n/g, '</p><p>')}</p>`;
+    const tags = item.tags.join(', ');
+    return [
+      csvCell(handle),
+      csvCell(item.title),
+      csvCell(bodyHtml),
+      csvCell(''),
+      csvCell(''),
+      csvCell(tags),
+      csvCell('TRUE'),
+      csvCell('Title'),
+      csvCell('Default Title'),
+      csvCell('0.00'),
+      csvCell('TRUE'),
+      csvCell('TRUE'),
+      csvCell(''),
+      csvCell('0'),
+      csvCell('deny'),
+      csvCell('manual'),
+    ].join(',');
+  });
+  downloadCSV([headers.join(','), ...rows].join('\n'), 'shopify-products.csv');
+}
+
+function exportEtsyCSV(items: SavedItem[]) {
+  const headers = [
+    'TITLE', 'DESCRIPTION', 'TAGS', 'MATERIALS', 'SHOP_SECTION_ID',
+    'PRICE', 'QUANTITY', 'SKU', 'TYPE', 'WHO_MADE', 'IS_SUPPLY', 'WHEN_MADE',
+    'RECIPIENT', 'OCCASION',
+  ];
+  const rows = items.map((item) => {
+    const tags = item.tags.slice(0, 13).map((t) => t.slice(0, 20)).join(',');
+    return [
+      csvCell(item.title.slice(0, 140)),
+      csvCell(item.description.slice(0, 65535)),
+      csvCell(tags),
+      csvCell(''),
+      csvCell(''),
+      csvCell('0.00'),
+      csvCell('1'),
+      csvCell(''),
+      csvCell('physical'),
+      csvCell('i_did'),
+      csvCell('FALSE'),
+      csvCell('made_to_order'),
+      csvCell(''),
+      csvCell(''),
+    ].join(',');
+  });
+  downloadCSV([headers.join(','), ...rows].join('\n'), 'etsy-listings.csv');
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -239,12 +321,17 @@ function SubscriptionGate({ onSubscribe, isLoading }: { onSubscribe: () => void;
 
 // ─── Saved Texts ─────────────────────────────────────────────────────────────
 
+type ExportFormat = 'shopify' | 'etsy';
+
 function SavedTexts({ previewMode }: { previewMode: boolean }) {
   const { session } = useAuth();
   const [items, setItems] = useState<SavedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('shopify');
+  const [exportOpen, setExportOpen] = useState(false);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -255,7 +342,7 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
     }
     if (!session) { setLoading(false); return; }
     const { data, error } = await supabase
-      .from('saved_seo_results')
+      .from('saved_seo')
       .select('id, product, city, platform, title, description, tags, created_at')
       .order('created_at', { ascending: false });
     if (!error && data) setItems(data as SavedItem[]);
@@ -268,12 +355,32 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
     setDeletingId(id);
     if (previewMode) {
       deletePreviewItem(id);
-      setItems((prev) => prev.filter((i) => i.id !== id));
     } else {
-      await supabase.from('saved_seo_results').delete().eq('id', id);
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      await supabase.from('saved_seo').delete().eq('id', id);
     }
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    setSelected((prev) => { const s = new Set(prev); s.delete(id); return s; });
     setDeletingId(null);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  };
+
+  const toggleAll = () => {
+    setSelected(selected.size === items.length ? new Set() : new Set(items.map((i) => i.id)));
+  };
+
+  const handleExport = () => {
+    const toExport = items.filter((i) => selected.has(i.id));
+    if (toExport.length === 0) return;
+    if (exportFormat === 'shopify') exportShopifyCSV(toExport);
+    else exportEtsyCSV(toExport);
+    setExportOpen(false);
   };
 
   const formatDate = (iso: string) => {
@@ -281,15 +388,19 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
     return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
+  const allSelected = items.length > 0 && selected.size === items.length;
+  const someSelected = selected.size > 0;
+
   return (
     <div>
+      {/* Header */}
       <div className="border-b border-slate-800/50 mb-8 pb-6 flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
             Mis Textos <span className="text-emerald-400">Guardados</span>
           </h1>
           <p className="text-slate-400 text-sm">
-            Historial de contenido SEO que has guardado para usar más tarde.
+            Historial de contenido SEO vinculado a tu cuenta. Selecciona textos para exportar.
           </p>
         </div>
         {items.length > 0 && (
@@ -317,85 +428,167 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-2xl bg-slate-900/70 border border-slate-800/60 overflow-hidden transition-all duration-200 hover:border-slate-700/80"
+        <>
+          {/* Toolbar */}
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <button
+              onClick={toggleAll}
+              className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
             >
-              {/* Header row */}
-              <div className="flex items-center gap-3 px-5 py-4">
-                <button
-                  onClick={() => setExpanded(expanded === item.id ? null : item.id)}
-                  className="flex-1 flex items-center gap-3 text-left min-w-0"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                    <BookmarkCheck size={14} className="text-emerald-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-slate-100 font-semibold text-sm truncate">{item.product}</p>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      {item.city && (
-                        <span className="text-xs text-slate-500 flex items-center gap-1">
-                          <MapPin size={10} /> {item.city}
-                        </span>
-                      )}
-                      {item.platform && (
-                        <span className="text-xs text-slate-500 flex items-center gap-1">
-                          {PLATFORM_ICONS[item.platform] ?? null} {item.platform}
-                        </span>
-                      )}
-                      <span className="text-xs text-slate-600">{formatDate(item.created_at)}</span>
-                    </div>
-                  </div>
-                  <ChevronRight
-                    size={14}
-                    className={`text-slate-600 shrink-0 transition-transform duration-200 ${expanded === item.id ? 'rotate-90' : ''}`}
-                  />
-                </button>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  disabled={deletingId === item.id}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-red-400
-                    hover:bg-red-400/10 transition-colors shrink-0 disabled:opacity-40"
-                >
-                  {deletingId === item.id
-                    ? <Loader2 size={13} className="animate-spin" />
-                    : <Trash2 size={13} />}
-                </button>
-              </div>
+              {allSelected
+                ? <CheckSquare size={14} className="text-emerald-400" />
+                : <Square size={14} />}
+              {allSelected ? 'Deseleccionar todo' : 'Seleccionar todo'}
+            </button>
 
-              {/* Expanded content */}
-              {expanded === item.id && (
-                <div className="border-t border-slate-800/60 px-5 py-5 space-y-4">
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Titulo</p>
-                    <p className="text-slate-100 text-sm font-medium leading-relaxed">{item.title}</p>
+            {someSelected && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">
+                  {selected.size} {selected.size === 1 ? 'seleccionado' : 'seleccionados'}
+                </span>
+
+                {/* Export dropdown */}
+                <div className="relative">
+                  <div className="flex items-center rounded-xl overflow-hidden border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
+                    {/* Format selector */}
+                    <div className="relative">
+                      <select
+                        value={exportFormat}
+                        onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
+                        className="appearance-none bg-slate-800 text-slate-300 text-xs font-semibold pl-3 pr-7 py-2.5
+                          border-r border-emerald-500/20 outline-none cursor-pointer hover:bg-slate-700 transition-colors"
+                      >
+                        <option value="shopify">Shopify CSV</option>
+                        <option value="etsy">Etsy CSV</option>
+                      </select>
+                      <ChevronRight size={11} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none rotate-90" />
+                    </div>
+                    {/* Export button */}
+                    <button
+                      onClick={handleExport}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400
+                        text-slate-950 text-xs font-bold transition-colors"
+                    >
+                      <FileDown size={13} />
+                      Exportar Seleccion a CSV
+                    </button>
                   </div>
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripcion</p>
-                    <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{item.description}</p>
-                  </div>
-                  {item.tags.length > 0 && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tags</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {item.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs bg-slate-700/60 border border-slate-600/50 text-slate-300 rounded-lg px-2.5 py-1"
-                          >
-                            <span className="text-emerald-500/60">#</span>{tag}
-                          </span>
-                        ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* List */}
+          <div className="space-y-3">
+            {items.map((item) => {
+              const isSelected = selected.has(item.id);
+              return (
+                <div
+                  key={item.id}
+                  className={`rounded-2xl border overflow-hidden transition-all duration-200
+                    ${isSelected
+                      ? 'bg-slate-900 border-emerald-500/30 shadow-md shadow-emerald-500/5'
+                      : 'bg-slate-900/70 border-slate-800/60 hover:border-slate-700/80'}`}
+                >
+                  {/* Header row */}
+                  <div className="flex items-center gap-3 px-4 py-4">
+                    {/* Checkbox */}
+                    <button
+                      onClick={() => toggleSelect(item.id)}
+                      className="shrink-0 text-slate-600 hover:text-emerald-400 transition-colors"
+                    >
+                      {isSelected
+                        ? <CheckSquare size={16} className="text-emerald-400" />
+                        : <Square size={16} />}
+                    </button>
+
+                    {/* Expand toggle */}
+                    <button
+                      onClick={() => setExpanded(expanded === item.id ? null : item.id)}
+                      className="flex-1 flex items-center gap-3 text-left min-w-0"
+                    >
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors
+                        ${isSelected
+                          ? 'bg-emerald-500/15 border border-emerald-500/30'
+                          : 'bg-emerald-500/10 border border-emerald-500/20'}`}>
+                        <BookmarkCheck size={14} className="text-emerald-400" />
                       </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-slate-100 font-semibold text-sm truncate">{item.product}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {item.city && (
+                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                              <MapPin size={10} /> {item.city}
+                            </span>
+                          )}
+                          {item.platform && (
+                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                              {PLATFORM_ICONS[item.platform] ?? null} {item.platform}
+                            </span>
+                          )}
+                          <span className="text-xs text-slate-600">{formatDate(item.created_at)}</span>
+                        </div>
+                      </div>
+                      <ChevronRight
+                        size={14}
+                        className={`text-slate-600 shrink-0 transition-transform duration-200 ${expanded === item.id ? 'rotate-90' : ''}`}
+                      />
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      disabled={deletingId === item.id}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-red-400
+                        hover:bg-red-400/10 transition-colors shrink-0 disabled:opacity-40"
+                    >
+                      {deletingId === item.id
+                        ? <Loader2 size={13} className="animate-spin" />
+                        : <Trash2 size={13} />}
+                    </button>
+                  </div>
+
+                  {/* Expanded content */}
+                  {expanded === item.id && (
+                    <div className="border-t border-slate-800/60 px-5 py-5 space-y-4">
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Titulo</p>
+                        <p className="text-slate-100 text-sm font-medium leading-relaxed">{item.title}</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripcion</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{item.description}</p>
+                      </div>
+                      {item.tags.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tags</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {item.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-xs bg-slate-700/60 border border-slate-600/50 text-slate-300 rounded-lg px-2.5 py-1"
+                              >
+                                <span className="text-emerald-500/60">#</span>{tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+
+          {/* Bottom export hint */}
+          {!someSelected && (
+            <p className="text-xs text-slate-600 text-center mt-6 flex items-center justify-center gap-1.5">
+              <Download size={11} />
+              Marca textos para habilitar la exportacion a CSV compatible con Shopify y Etsy
+            </p>
+          )}
+        </>
       )}
     </div>
   );
@@ -492,7 +685,7 @@ function Dashboard({
         setSavedId(newId);
       } else {
         const { data, error } = await supabase
-          .from('saved_seo_results')
+          .from('saved_seo')
           .insert({ product, city, platform, title: result.title, description: result.description, tags: result.tags })
           .select('id')
           .single();
