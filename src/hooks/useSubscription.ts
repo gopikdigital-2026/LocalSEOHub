@@ -12,12 +12,27 @@ export function useSubscription(user: User | null) {
       setLoadingSubscription(false);
       return;
     }
-    const { data } = await supabase
-      .from('subscriptions')
-      .select('status')
+
+    const { data: customer } = await supabase
+      .from('stripe_customers')
+      .select('customer_id')
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .maybeSingle();
-    setIsActive(data?.status === 'active');
+
+    if (!customer?.customer_id) {
+      setIsActive(false);
+      setLoadingSubscription(false);
+      return;
+    }
+
+    const { data: sub } = await supabase
+      .from('stripe_subscriptions')
+      .select('status')
+      .eq('customer_id', customer.customer_id)
+      .maybeSingle();
+
+    setIsActive(sub?.status === 'active' || sub?.status === 'trialing');
     setLoadingSubscription(false);
   }, [user]);
 

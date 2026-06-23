@@ -71,7 +71,12 @@ async function createCheckoutSession(accessToken: string): Promise<string | null
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ origin: window.location.origin }),
+    body: JSON.stringify({
+      price_id: import.meta.env.VITE_STRIPE_PRICE_ID,
+      success_url: `${window.location.origin}/?payment=success`,
+      cancel_url: `${window.location.origin}/?payment=canceled`,
+      mode: 'subscription',
+    }),
   });
   const data = await res.json();
   return data?.url ?? null;

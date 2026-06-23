@@ -45,18 +45,33 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Verify active subscription
+    // Verify active subscription via stripe_customers -> stripe_subscriptions
     const serviceSupabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: sub } = await serviceSupabase
-      .from("subscriptions")
-      .select("status")
+
+    const { data: customer } = await serviceSupabase
+      .from("stripe_customers")
+      .select("customer_id")
       .eq("user_id", user.id)
+      .is("deleted_at", null)
       .maybeSingle();
 
-    if (sub?.status !== "active") {
+    if (!customer?.customer_id) {
+      return new Response(
+        JSON.stringify({ error: "Se requiere una suscripción activa para generar contenido" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: sub } = await serviceSupabase
+      .from("stripe_subscriptions")
+      .select("status")
+      .eq("customer_id", customer.customer_id)
+      .maybeSingle();
+
+    if (sub?.status !== "active" && sub?.status !== "trialing") {
       return new Response(
         JSON.stringify({ error: "Se requiere una suscripción activa para generar contenido" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
