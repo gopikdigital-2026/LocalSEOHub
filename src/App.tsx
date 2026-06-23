@@ -12,6 +12,11 @@ import {
   AlertCircle,
   Lock,
   Loader2,
+  Bookmark,
+  BookmarkCheck,
+  History,
+  Trash2,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -28,6 +33,37 @@ interface SEOResult {
   title: string;
   description: string;
   tags: string[];
+}
+
+interface SavedItem {
+  id: string;
+  product: string;
+  city: string;
+  platform: string;
+  title: string;
+  description: string;
+  tags: string[];
+  created_at: string;
+}
+
+const PREVIEW_STORAGE_KEY = 'localseo_saved_preview';
+
+function loadPreviewSaved(): SavedItem[] {
+  try {
+    return JSON.parse(localStorage.getItem(PREVIEW_STORAGE_KEY) ?? '[]');
+  } catch {
+    return [];
+  }
+}
+
+function savePreviewItem(item: SavedItem) {
+  const items = loadPreviewSaved();
+  localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify([item, ...items]));
+}
+
+function deletePreviewItem(id: string) {
+  const items = loadPreviewSaved().filter((i) => i.id !== id);
+  localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(items));
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -201,6 +237,170 @@ function SubscriptionGate({ onSubscribe, isLoading }: { onSubscribe: () => void;
   );
 }
 
+// ─── Saved Texts ─────────────────────────────────────────────────────────────
+
+function SavedTexts({ previewMode }: { previewMode: boolean }) {
+  const { session } = useAuth();
+  const [items, setItems] = useState<SavedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const fetchItems = useCallback(async () => {
+    setLoading(true);
+    if (previewMode) {
+      setItems(loadPreviewSaved());
+      setLoading(false);
+      return;
+    }
+    if (!session) { setLoading(false); return; }
+    const { data, error } = await supabase
+      .from('saved_seo_results')
+      .select('id, product, city, platform, title, description, tags, created_at')
+      .order('created_at', { ascending: false });
+    if (!error && data) setItems(data as SavedItem[]);
+    setLoading(false);
+  }, [previewMode, session]);
+
+  useEffect(() => { fetchItems(); }, [fetchItems]);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    if (previewMode) {
+      deletePreviewItem(id);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    } else {
+      await supabase.from('saved_seo_results').delete().eq('id', id);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    }
+    setDeletingId(null);
+  };
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  return (
+    <div>
+      <div className="border-b border-slate-800/50 mb-8 pb-6 flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+            Mis Textos <span className="text-emerald-400">Guardados</span>
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Historial de contenido SEO que has guardado para usar más tarde.
+          </p>
+        </div>
+        {items.length > 0 && (
+          <span className="text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-400 rounded-full px-3 py-1 self-center">
+            {items.length} {items.length === 1 ? 'texto' : 'textos'}
+          </span>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-24">
+          <svg className="animate-spin w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="rounded-2xl bg-slate-900/40 border border-slate-800/40 border-dashed p-16 flex flex-col items-center justify-center text-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center">
+            <Bookmark size={24} className="text-slate-600" />
+          </div>
+          <div>
+            <p className="text-slate-400 font-medium text-sm">Aun no has guardado ningun texto</p>
+            <p className="text-slate-600 text-xs mt-1">Genera contenido SEO y pulsa "Guardar en el Historial".</p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-2xl bg-slate-900/70 border border-slate-800/60 overflow-hidden transition-all duration-200 hover:border-slate-700/80"
+            >
+              {/* Header row */}
+              <div className="flex items-center gap-3 px-5 py-4">
+                <button
+                  onClick={() => setExpanded(expanded === item.id ? null : item.id)}
+                  className="flex-1 flex items-center gap-3 text-left min-w-0"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                    <BookmarkCheck size={14} className="text-emerald-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-slate-100 font-semibold text-sm truncate">{item.product}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      {item.city && (
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <MapPin size={10} /> {item.city}
+                        </span>
+                      )}
+                      {item.platform && (
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          {PLATFORM_ICONS[item.platform] ?? null} {item.platform}
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-600">{formatDate(item.created_at)}</span>
+                    </div>
+                  </div>
+                  <ChevronRight
+                    size={14}
+                    className={`text-slate-600 shrink-0 transition-transform duration-200 ${expanded === item.id ? 'rotate-90' : ''}`}
+                  />
+                </button>
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  disabled={deletingId === item.id}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-red-400
+                    hover:bg-red-400/10 transition-colors shrink-0 disabled:opacity-40"
+                >
+                  {deletingId === item.id
+                    ? <Loader2 size={13} className="animate-spin" />
+                    : <Trash2 size={13} />}
+                </button>
+              </div>
+
+              {/* Expanded content */}
+              {expanded === item.id && (
+                <div className="border-t border-slate-800/60 px-5 py-5 space-y-4">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Titulo</p>
+                    <p className="text-slate-100 text-sm font-medium leading-relaxed">{item.title}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripcion</p>
+                    <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{item.description}</p>
+                  </div>
+                  {item.tags.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tags</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-xs bg-slate-700/60 border border-slate-600/50 text-slate-300 rounded-lg px-2.5 py-1"
+                          >
+                            <span className="text-emerald-500/60">#</span>{tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 function Dashboard({
@@ -215,6 +415,7 @@ function Dashboard({
   previewMode?: boolean;
 }) {
   const { session } = useAuth();
+  const [tab, setTab] = useState<'generator' | 'saved'>('generator');
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
@@ -223,6 +424,8 @@ function Dashboard({
   const [result, setResult] = useState<SEOResult | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
 
   const handleGenerate = async () => {
     if (!product.trim()) return;
@@ -235,6 +438,7 @@ function Dashboard({
     setHasGenerated(true);
     setResult(null);
     setApiError('');
+    setSavedId(null);
     try {
       let data: SEOResult;
       if (previewMode) {
@@ -268,10 +472,73 @@ function Dashboard({
     }
   };
 
+  const handleSave = async () => {
+    if (!result || isSaving) return;
+    setIsSaving(true);
+    const newId = crypto.randomUUID();
+    const item: SavedItem = {
+      id: newId,
+      product,
+      city,
+      platform,
+      title: result.title,
+      description: result.description,
+      tags: result.tags,
+      created_at: new Date().toISOString(),
+    };
+    try {
+      if (previewMode) {
+        savePreviewItem(item);
+        setSavedId(newId);
+      } else {
+        const { data, error } = await supabase
+          .from('saved_seo_results')
+          .insert({ product, city, platform, title: result.title, description: result.description, tags: result.tags })
+          .select('id')
+          .single();
+        if (!error && data) setSavedId(data.id);
+      }
+    } catch {
+      // silent — the icon simply won't change
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const canGenerate = product.trim().length > 0;
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      {/* Tabs */}
+      <div className="flex gap-1 mb-8 bg-slate-900/60 border border-slate-800/60 rounded-2xl p-1 w-fit">
+        <button
+          onClick={() => setTab('generator')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+            ${tab === 'generator'
+              ? 'bg-slate-800 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <Sparkles size={14} />
+          Generador
+        </button>
+        <button
+          onClick={() => setTab('saved')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+            ${tab === 'saved'
+              ? 'bg-slate-800 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <History size={14} />
+          Mis Textos Guardados
+        </button>
+      </div>
+
+      {tab === 'saved' ? (
+        <div>
+          <SavedTexts previewMode={previewMode} />
+        </div>
+      ) : (
+      <>
       {/* Page header */}
       <div className="border-b border-slate-800/50 mb-8 pb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
@@ -515,14 +782,35 @@ function Dashboard({
               </ResultSection>
 
               {result && (
-                <p className="text-xs text-slate-600 text-center px-4">
-                  Contenido generado por IA. Revisa y personaliza antes de publicar.
-                </p>
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <p className="text-xs text-slate-600 px-1">
+                    Contenido generado por IA. Revisa y personaliza antes de publicar.
+                  </p>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving || !!savedId}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold shrink-0
+                      transition-all duration-200 border
+                      ${savedId
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 cursor-default'
+                        : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300 hover:bg-slate-800'
+                      } disabled:opacity-60`}
+                  >
+                    {isSaving
+                      ? <Loader2 size={13} className="animate-spin" />
+                      : savedId
+                        ? <BookmarkCheck size={13} />
+                        : <Bookmark size={13} />}
+                    {savedId ? 'Guardado' : 'Guardar en el Historial'}
+                  </button>
+                </div>
               )}
             </>
           )}
         </div>
       </div>
+      </>
+      )}
     </main>
   );
 }
