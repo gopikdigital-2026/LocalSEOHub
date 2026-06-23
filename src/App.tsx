@@ -207,10 +207,12 @@ function Dashboard({
   isActive,
   onSubscribe,
   checkoutLoading,
+  previewMode = false,
 }: {
   isActive: boolean;
   onSubscribe: () => void;
   checkoutLoading: boolean;
+  previewMode?: boolean;
 }) {
   const { session } = useAuth();
   const [product, setProduct] = useState('');
@@ -223,17 +225,41 @@ function Dashboard({
   const [apiError, setApiError] = useState('');
 
   const handleGenerate = async () => {
-    if (!product.trim() || !session?.access_token) return;
+    if (!product.trim()) return;
     if (!isActive) {
       onSubscribe();
       return;
     }
+    if (!previewMode && !session?.access_token) return;
     setIsLoading(true);
     setHasGenerated(true);
     setResult(null);
     setApiError('');
     try {
-      const data = await callGenerateSEO(product, city, platform, keywords, session.access_token);
+      let data: SEOResult;
+      if (previewMode) {
+        await new Promise((r) => setTimeout(r, 1200));
+        const plat = platform || 'Etsy';
+        const loc = city || 'tu ciudad';
+        data = {
+          title: `${product} artesanal en ${loc} — ${plat} | Envío rápido`,
+          description: `¿Buscas ${product.toLowerCase()} en ${loc}? Encuentra en nuestra tienda de ${plat} los mejores ${product.toLowerCase()} elaborados con materiales de calidad superior.\n\nEnvío en 24-48h a toda España. Fabricación local en ${loc}. Ideal como regalo o uso personal. ¡Pide el tuyo hoy y recíbelo esta semana!\n\nVisítanos en ${plat} y descubre nuestra colección completa.`,
+          tags: [
+            `${product} ${loc}`,
+            `${product} artesanal`,
+            `${product} ${plat.toLowerCase()}`,
+            `comprar ${product}`,
+            `${product} local`,
+            `tienda ${loc}`,
+            `${product} calidad`,
+            `regalo ${product}`,
+            `envío rápido`,
+            `hecho a mano`,
+          ],
+        };
+      } else {
+        data = await callGenerateSEO(product, city, platform, keywords, session!.access_token);
+      }
       setResult(data);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Error al generar el contenido');
@@ -693,7 +719,7 @@ export default function App() {
         </div>
       )}
 
-      <Dashboard isActive={DEV_PREVIEW || isActive} onSubscribe={startCheckout} checkoutLoading={checkoutLoading} />
+      <Dashboard isActive={DEV_PREVIEW || isActive} onSubscribe={startCheckout} checkoutLoading={checkoutLoading} previewMode={DEV_PREVIEW} />
 
       <footer className="border-t border-slate-800/50 mt-16 py-6">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between flex-wrap gap-3">
