@@ -46,21 +46,34 @@ async function callGenerateSEO(
   keywords: string,
   accessToken: string
 ): Promise<SEOResult> {
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-seo`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ product, city, platform, keywords }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data?.error ?? 'Error desconocido del servidor');
+  try {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-seo`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ product, city, platform, keywords }),
+      signal: controller.signal,
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data?.error ?? 'Error desconocido del servidor');
+    }
+    return data as SEOResult;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('La solicitud tardó demasiado. Por favor, inténtalo de nuevo.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-  return data as SEOResult;
 }
 
 async function createCheckoutSession(accessToken: string): Promise<string | null> {
@@ -85,12 +98,17 @@ async function createCheckoutSession(accessToken: string): Promise<string | null
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<'idle' | 'copied' | 'error'>('idle');
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setState('copied');
+      setTimeout(() => setState('idle'), 2000);
+    } catch {
+      setState('error');
+      setTimeout(() => setState('idle'), 2000);
+    }
   };
 
   return (
@@ -99,10 +117,15 @@ function CopyButton({ text }: { text: string }) {
       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
         bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500"
     >
-      {copied ? (
+      {state === 'copied' ? (
         <>
           <Check size={12} className="text-emerald-400" />
-          <span className="text-emerald-400">Copiado</span>
+          <span className="text-emerald-400">¡Copiado!</span>
+        </>
+      ) : state === 'error' ? (
+        <>
+          <AlertCircle size={12} className="text-red-400" />
+          <span className="text-red-400">Error al copiar</span>
         </>
       ) : (
         <>
