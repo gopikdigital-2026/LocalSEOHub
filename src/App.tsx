@@ -571,6 +571,9 @@ function SuccessBanner({ onDismiss }: { onDismiss: () => void }) {
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
+// Set to true while building to skip auth and preview the dashboard directly
+const DEV_PREVIEW = true;
+
 export default function App() {
   const { user, session, loading, signOut } = useAuth();
   const { isActive, loadingSubscription, refresh } = useSubscription(user);
@@ -615,7 +618,7 @@ export default function App() {
 
   const handlePricingClick = () => setShowPricing(true);
 
-  if (loading || (user && loadingSubscription)) {
+  if (!DEV_PREVIEW && (loading || (user && loadingSubscription))) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <svg className="animate-spin w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24">
@@ -626,7 +629,7 @@ export default function App() {
     );
   }
 
-  if (!user) {
+  if (!DEV_PREVIEW && !user) {
     return (
       <div className="min-h-screen bg-slate-950">
         <Navbar
@@ -690,7 +693,7 @@ export default function App() {
         </div>
       )}
 
-      <Dashboard isActive={isActive} onSubscribe={startCheckout} checkoutLoading={checkoutLoading} />
+      <Dashboard isActive={DEV_PREVIEW || isActive} onSubscribe={startCheckout} checkoutLoading={checkoutLoading} />
 
       <footer className="border-t border-slate-800/50 mt-16 py-6">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between flex-wrap gap-3">
