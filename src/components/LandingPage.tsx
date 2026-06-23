@@ -1,7 +1,8 @@
-import { MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 
 interface LandingPageProps {
   onLoginClick: () => void;
+  onSubscribeClick: () => void;
   scrollToPricing?: boolean;
 }
 
@@ -52,19 +53,17 @@ const TESTIMONIALS = [
   },
 ];
 
-export default function LandingPage({ onLoginClick }: LandingPageProps) {
+export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Hero */}
       <section className="relative overflow-hidden">
-        {/* Background glow */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl" />
           <div className="absolute top-20 left-1/4 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-5xl mx-auto px-6 pt-20 pb-24 text-center relative">
-          {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-medium text-emerald-400 mb-8">
             <Sparkles size={12} />
             Potenciado por Inteligencia Artificial
@@ -92,10 +91,9 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
               Empieza gratis ahora
               <ArrowRight size={18} />
             </button>
-            <p className="text-xs text-slate-600">Sin tarjeta de crédito · Cancela cuando quieras</p>
+            <p className="text-xs text-slate-600">Cancela cuando quieras</p>
           </div>
 
-          {/* Social proof strip */}
           <div className="flex items-center justify-center gap-6 mt-12 flex-wrap">
             <div className="flex items-center gap-1.5">
               {[...Array(5)].map((_, i) => (
@@ -170,7 +168,6 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
 
         <div className="flex justify-center">
           <div className="relative w-full max-w-sm">
-            {/* Popular badge */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
               <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold px-4 py-1 rounded-full shadow-lg shadow-emerald-500/30">
                 MAS POPULAR
@@ -206,17 +203,10 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
                 ))}
               </ul>
 
-              <button
-                onClick={onLoginClick}
-                className="w-full py-4 rounded-xl font-bold text-sm transition-all duration-300
-                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                  text-slate-950 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
-              >
-                Empezar con Plan Pro
-              </button>
+              <LandingPricingButton onSubscribeClick={onSubscribeClick} />
 
               <p className="text-center text-xs text-slate-600 mt-3">
-                14 días de prueba gratuita incluidos
+                Pago seguro con Stripe · Cancela cuando quieras
               </p>
             </div>
           </div>
@@ -257,5 +247,19 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         </div>
       </footer>
     </div>
+  );
+}
+
+function LandingPricingButton({ onSubscribeClick }: { onSubscribeClick: () => void }) {
+  return (
+    <button
+      onClick={onSubscribeClick}
+      className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-sm transition-all duration-300
+        bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+        text-slate-950 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
+    >
+      <Sparkles size={15} />
+      Empezar con Plan Pro
+    </button>
   );
 }

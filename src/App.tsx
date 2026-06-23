@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   MapPin,
@@ -10,8 +10,11 @@ import {
   TrendingUp,
   Globe,
   AlertCircle,
+  Lock,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
+import { useSubscription } from './hooks/useSubscription';
 import { supabase } from './lib/supabase';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
@@ -58,6 +61,20 @@ async function callGenerateSEO(
     throw new Error(data?.error ?? 'Error desconocido del servidor');
   }
   return data as SEOResult;
+}
+
+async function createCheckoutSession(accessToken: string): Promise<string | null> {
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ origin: window.location.origin }),
+  });
+  const data = await res.json();
+  return data?.url ?? null;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -128,9 +145,45 @@ function ResultSection({
   );
 }
 
+// ─── Subscription gate banner ─────────────────────────────────────────────────
+
+function SubscriptionGate({ onSubscribe, isLoading }: { onSubscribe: () => void; isLoading: boolean }) {
+  return (
+    <div className="rounded-2xl bg-slate-900/70 border border-emerald-500/20 p-8 flex flex-col items-center text-center gap-5 min-h-[400px] justify-center">
+      <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+        <Lock size={22} className="text-emerald-400" />
+      </div>
+      <div>
+        <p className="text-white font-semibold text-base mb-1">Activa tu suscripción para generar</p>
+        <p className="text-slate-400 text-sm max-w-xs mx-auto">
+          Accede a generaciones ilimitadas de contenido SEO local por solo 9.99€/mes.
+        </p>
+      </div>
+      <button
+        onClick={onSubscribe}
+        disabled={isLoading}
+        className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300
+          bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+          text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
+      >
+        {isLoading ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+        {isLoading ? 'Redirigiendo a pago...' : 'Suscribirse al Plan Pro — 9.99€/mes'}
+      </button>
+    </div>
+  );
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
-function Dashboard() {
+function Dashboard({
+  isActive,
+  onSubscribe,
+  checkoutLoading,
+}: {
+  isActive: boolean;
+  onSubscribe: () => void;
+  checkoutLoading: boolean;
+}) {
   const { session } = useAuth();
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
@@ -143,6 +196,10 @@ function Dashboard() {
 
   const handleGenerate = async () => {
     if (!product.trim() || !session?.access_token) return;
+    if (!isActive) {
+      onSubscribe();
+      return;
+    }
     setIsLoading(true);
     setHasGenerated(true);
     setResult(null);
@@ -170,6 +227,12 @@ function Dashboard() {
         <p className="text-slate-400 text-sm sm:text-base max-w-xl">
           Crea títulos, descripciones y etiquetas para posicionarte en tu ciudad y plataforma en segundos.
         </p>
+        {!isActive && (
+          <div className="mt-3 inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-4 py-1.5 text-xs font-medium text-amber-400">
+            <Lock size={11} />
+            Suscripción requerida para generar contenido
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
@@ -270,15 +333,22 @@ function Dashboard() {
           {/* CTA */}
           <button
             onClick={handleGenerate}
-            disabled={!canGenerate || isLoading}
+            disabled={(!canGenerate && isActive) || (isActive && isLoading)}
             className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-xl font-semibold text-sm
               transition-all duration-300 shadow-lg
-              ${canGenerate && !isLoading
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+              ${!isActive
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/25 hover:shadow-amber-500/40 hover:-translate-y-0.5 active:translate-y-0'
+                : canGenerate && !isLoading
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
               }`}
           >
-            {isLoading ? (
+            {!isActive ? (
+              <>
+                {checkoutLoading ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
+                {checkoutLoading ? 'Redirigiendo a pago...' : 'Suscribirse para Generar — 9.99€/mes'}
+              </>
+            ) : isLoading ? (
               <>
                 <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -294,7 +364,7 @@ function Dashboard() {
             )}
           </button>
 
-          {!canGenerate && (
+          {isActive && !canGenerate && (
             <p className="text-xs text-slate-600 text-center -mt-1">
               Introduce un producto o servicio para continuar
             </p>
@@ -312,7 +382,9 @@ function Dashboard() {
               </div>
             </div>
           )}
-          {!hasGenerated ? (
+          {!isActive ? (
+            <SubscriptionGate onSubscribe={onSubscribe} isLoading={checkoutLoading} />
+          ) : !hasGenerated ? (
             <div className="rounded-2xl bg-slate-900/40 border border-slate-800/40 border-dashed p-12 flex flex-col items-center justify-center text-center gap-4 min-h-[400px]">
               <div className="w-14 h-14 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center">
                 <Sparkles size={24} className="text-slate-600" />
@@ -401,92 +473,9 @@ function Dashboard() {
   );
 }
 
-// ─── Root ─────────────────────────────────────────────────────────────────────
+// ─── Pricing card ─────────────────────────────────────────────────────────────
 
-export default function App() {
-  const { user, loading, signOut } = useAuth();
-  const [showLogin, setShowLogin] = useState(false);
-  const [showPricing, setShowPricing] = useState(false);
-
-  // While Supabase resolves the session, show a minimal loader
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <svg className="animate-spin w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      </div>
-    );
-  }
-
-  const handlePricingClick = () => {
-    if (user) {
-      setShowPricing(true);
-    } else {
-      setShowPricing(true);
-    }
-  };
-
-  // Not logged in → show landing (or pricing section of it)
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-950">
-        <Navbar
-          user={null}
-          onLoginClick={() => setShowLogin(true)}
-          onPricingClick={handlePricingClick}
-          onSignOut={signOut}
-        />
-        <LandingPage onLoginClick={() => setShowLogin(true)} scrollToPricing={showPricing} />
-        {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
-      </div>
-    );
-  }
-
-  // Logged in → show dashboard
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <Navbar
-        user={user}
-        onLoginClick={() => setShowLogin(true)}
-        onPricingClick={handlePricingClick}
-        onSignOut={signOut}
-      />
-
-      {/* Pricing overlay when requested */}
-      {showPricing && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={(e) => e.target === e.currentTarget && setShowPricing(false)}
-        >
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
-          <div className="relative w-full max-w-sm">
-            <button
-              onClick={() => setShowPricing(false)}
-              className="absolute -top-10 right-0 text-slate-400 hover:text-white text-sm flex items-center gap-1"
-            >
-              Cerrar
-            </button>
-            <PricingCard />
-          </div>
-        </div>
-      )}
-
-      <Dashboard />
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800/50 mt-16 py-6">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs text-slate-600 font-medium">LocalSEO AI</span>
-          <p className="text-xs text-slate-700">Potenciado por inteligencia artificial generativa</p>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-function PricingCard() {
+function PricingCard({ onSubscribe, isLoading }: { onSubscribe: () => void; isLoading: boolean }) {
   return (
     <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 shadow-2xl shadow-emerald-500/10">
       <div className="text-center mb-6">
@@ -514,11 +503,173 @@ function PricingCard() {
           </li>
         ))}
       </ul>
-      <button className="w-full py-3.5 rounded-xl font-bold text-sm
-        bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-        text-slate-950 shadow-lg shadow-emerald-500/20 transition-all duration-300 hover:-translate-y-0.5">
-        Suscribirse al Plan Pro
+      <button
+        onClick={onSubscribe}
+        disabled={isLoading}
+        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm
+          bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+          text-slate-950 shadow-lg shadow-emerald-500/20 transition-all duration-300 hover:-translate-y-0.5
+          disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
+      >
+        {isLoading ? <Loader2 size={15} className="animate-spin" /> : null}
+        {isLoading ? 'Redirigiendo a pago...' : 'Suscribirse al Plan Pro'}
       </button>
+    </div>
+  );
+}
+
+// ─── Payment success banner ───────────────────────────────────────────────────
+
+function SuccessBanner({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+      <div className="bg-emerald-500 text-slate-950 rounded-2xl px-5 py-4 shadow-xl shadow-emerald-500/30 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-slate-950/20 flex items-center justify-center shrink-0">
+            <Check size={16} className="text-slate-950" />
+          </div>
+          <div>
+            <p className="font-bold text-sm">Suscripción activada</p>
+            <p className="text-slate-950/70 text-xs">Ya puedes generar contenido SEO ilimitado.</p>
+          </div>
+        </div>
+        <button onClick={onDismiss} className="text-slate-950/60 hover:text-slate-950 text-xs font-medium">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
+
+export default function App() {
+  const { user, session, loading, signOut } = useAuth();
+  const { isActive, loadingSubscription, refresh } = useSubscription(user);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showPricing, setShowPricing] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+
+  // Handle Stripe redirect params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      setShowSuccessBanner(true);
+      window.history.replaceState({}, '', '/');
+      // Poll until subscription is active (webhook may take a few seconds)
+      const interval = setInterval(async () => {
+        await refresh();
+      }, 2500);
+      setTimeout(() => clearInterval(interval), 20000);
+    } else if (params.get('payment') === 'canceled') {
+      setShowPricing(true);
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
+  const startCheckout = useCallback(async () => {
+    if (!session?.access_token) {
+      setShowLogin(true);
+      return;
+    }
+    setCheckoutLoading(true);
+    try {
+      const url = await createCheckoutSession(session.access_token);
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setCheckoutLoading(false);
+    }
+  }, [session]);
+
+  const handlePricingClick = () => setShowPricing(true);
+
+  if (loading || (user && loadingSubscription)) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <svg className="animate-spin w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-950">
+        <Navbar
+          user={null}
+          onLoginClick={() => setShowLogin(true)}
+          onPricingClick={handlePricingClick}
+          onSignOut={signOut}
+        />
+        <LandingPage
+          onLoginClick={() => setShowLogin(true)}
+          onSubscribeClick={() => setShowLogin(true)}
+          scrollToPricing={showPricing}
+        />
+        {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      {showSuccessBanner && <SuccessBanner onDismiss={() => setShowSuccessBanner(false)} />}
+
+      <Navbar
+        user={user}
+        onLoginClick={() => setShowLogin(true)}
+        onPricingClick={handlePricingClick}
+        onSignOut={signOut}
+      />
+
+      {showPricing && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={(e) => e.target === e.currentTarget && setShowPricing(false)}
+        >
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
+          <div className="relative w-full max-w-sm">
+            <button
+              onClick={() => setShowPricing(false)}
+              className="absolute -top-10 right-0 text-slate-400 hover:text-white text-sm flex items-center gap-1"
+            >
+              Cerrar
+            </button>
+            {isActive ? (
+              <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 text-center shadow-2xl">
+                <div className="w-14 h-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
+                  <Check size={24} className="text-emerald-400" />
+                </div>
+                <p className="text-white font-bold text-lg mb-1">Plan Pro activo</p>
+                <p className="text-slate-400 text-sm">Ya tienes acceso a todas las funcionalidades.</p>
+                <button
+                  onClick={() => setShowPricing(false)}
+                  className="mt-6 w-full py-3 rounded-xl font-semibold text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            ) : (
+              <PricingCard onSubscribe={() => { setShowPricing(false); startCheckout(); }} isLoading={checkoutLoading} />
+            )}
+          </div>
+        </div>
+      )}
+
+      <Dashboard isActive={isActive} onSubscribe={startCheckout} checkoutLoading={checkoutLoading} />
+
+      <footer className="border-t border-slate-800/50 mt-16 py-6">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between flex-wrap gap-3">
+          <span className="text-xs text-slate-600 font-medium">LocalSEO AI</span>
+          <p className="text-xs text-slate-700">Potenciado por inteligencia artificial generativa</p>
+        </div>
+      </footer>
     </div>
   );
 }
