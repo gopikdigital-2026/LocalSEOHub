@@ -694,8 +694,8 @@ export default function App() {
 
       <footer className="border-t border-slate-800/50 mt-16 py-6">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs text-slate-600 font-medium">LocalSEO AI</span>
-          <p className="text-xs text-slate-700">Potenciado por inteligencia artificial generativa</p>
+          <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
+          <p className="text-xs text-slate-700">Potenciado por inteligencia artificial · localseohub.io</p>
         </div>
       </footer>
     </div>

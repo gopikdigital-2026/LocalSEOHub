@@ -77,7 +77,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           </h1>
 
           <p className="text-slate-400 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            LocalSEO AI genera en segundos los títulos, descripciones y etiquetas perfectas
+            LocalSEOHub genera en segundos los títulos, descripciones y etiquetas perfectas
             para posicionarte en tu ciudad — en Etsy, Shopify, Amazon o Google Business.
           </p>
 
@@ -220,7 +220,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             Listo para aparecer en las búsquedas de tu ciudad
           </h2>
           <p className="text-slate-400 mb-8 max-w-lg mx-auto">
-            Únete a miles de negocios locales que ya generan más clientes con LocalSEO AI.
+            Únete a miles de negocios locales que ya generan más clientes con LocalSEOHub.
           </p>
           <button
             onClick={onLoginClick}
@@ -241,9 +241,9 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             <div className="w-5 h-5 rounded bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
               <Zap size={10} className="text-slate-950" fill="currentColor" />
             </div>
-            <span className="text-xs text-slate-600 font-medium">LocalSEO AI</span>
+            <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
           </div>
-          <p className="text-xs text-slate-700">© 2026 LocalSEO AI · Todos los derechos reservados</p>
+          <p className="text-xs text-slate-700">© 2026 LocalSEOHub · Todos los derechos reservados</p>
         </div>
       </footer>
     </div>

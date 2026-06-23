@@ -23,7 +23,7 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut }
             <Zap size={15} className="text-slate-950" fill="currentColor" />
           </div>
           <span className="font-bold text-base tracking-tight text-white">
-            LocalSEO<span className="text-emerald-400"> AI</span>
+            LocalSEO<span className="text-emerald-400">Hub</span>
           </span>
         </div>
 

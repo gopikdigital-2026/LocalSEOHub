@@ -76,7 +76,7 @@ export default function LoginModal({ onClose }: LoginModalProps) {
                   {mode === 'login' ? 'Bienvenido de nuevo' : 'Crear cuenta gratis'}
                 </h2>
                 <p className="text-slate-500 text-xs mt-0.5">
-                  {mode === 'login' ? 'Accede a tu dashboard LocalSEO AI' : 'Empieza a generar SEO local hoy'}
+                  {mode === 'login' ? 'Accede a tu panel de LocalSEOHub' : 'Empieza a generar SEO local hoy'}
                 </p>
               </div>
             </div>
