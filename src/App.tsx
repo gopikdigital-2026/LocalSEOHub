@@ -31,7 +31,7 @@ import LoginModal from './components/LoginModal';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Platform = 'Etsy' | 'Shopify' | 'Amazon' | 'Google Business' | '';
+type Platform = 'Etsy' | 'Shopify' | 'Amazon' | 'Google Business' | 'Wallapop' | 'Vinted' | 'eBay' | 'Facebook Marketplace' | 'WooCommerce' | '';
 
 interface SEOResult {
   title: string;
@@ -155,6 +155,11 @@ const PLATFORM_ICONS: Record<string, JSX.Element> = {
   Shopify: <Globe size={14} />,
   Amazon: <TrendingUp size={14} />,
   'Google Business': <MapPin size={14} />,
+  Wallapop: <Tag size={14} />,
+  Vinted: <ShoppingBag size={14} />,
+  eBay: <TrendingUp size={14} />,
+  'Facebook Marketplace': <Globe size={14} />,
+  WooCommerce: <Globe size={14} />,
 };
 
 async function callGenerateSEO(
@@ -807,7 +812,12 @@ function Dashboard({
                 <option value="" className="bg-slate-900">Selecciona una plataforma...</option>
                 <option value="Etsy" className="bg-slate-900">Etsy</option>
                 <option value="Shopify" className="bg-slate-900">Shopify</option>
+                <option value="WooCommerce" className="bg-slate-900">WooCommerce</option>
                 <option value="Amazon" className="bg-slate-900">Amazon</option>
+                <option value="eBay" className="bg-slate-900">eBay</option>
+                <option value="Wallapop" className="bg-slate-900">Wallapop</option>
+                <option value="Vinted" className="bg-slate-900">Vinted</option>
+                <option value="Facebook Marketplace" className="bg-slate-900">Facebook Marketplace</option>
                 <option value="Google Business" className="bg-slate-900">Google Business</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
