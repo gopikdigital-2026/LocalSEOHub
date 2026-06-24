@@ -24,6 +24,12 @@ import {
   ImagePlus,
   X,
   Image,
+  Calendar,
+  Instagram,
+  Video,
+  Hash,
+  Lightbulb,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -42,6 +48,14 @@ interface SEOResult {
   tags: string[];
   competitorKeywords?: string[];
   imageOptimization?: { filename: string; altText: string };
+}
+
+interface DayPlan {
+  day: number;
+  network: 'Instagram' | 'TikTok';
+  idea: string;
+  hook: string;
+  hashtag: string;
 }
 
 interface SavedItem {
@@ -223,6 +237,34 @@ async function callGenerateSEO(
     if (err instanceof DOMException && err.name === 'AbortError') {
       throw new Error('La solicitud tardó demasiado. Por favor, inténtalo de nuevo.');
     }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function callGenerateContentPlan(
+  product: string,
+  city: string,
+  platform: string,
+  accessToken: string
+): Promise<DayPlan[]> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45000);
+  try {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-content-plan`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ product, city, platform }),
+      signal: controller.signal,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error ?? 'Error desconocido del servidor');
+    return data.days as DayPlan[];
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError')
+      throw new Error('La solicitud tardó demasiado. Inténtalo de nuevo.');
     throw err;
   } finally {
     clearTimeout(timeout);
@@ -659,6 +701,9 @@ function Dashboard({
   const [isSaving, setIsSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [insightsOpen, setInsightsOpen] = useState(true);
+  const [contentPlan, setContentPlan] = useState<DayPlan[] | null>(null);
+  const [isLoadingPlan, setIsLoadingPlan] = useState(false);
+  const [planError, setPlanError] = useState('');
 
   const handleImageFile = (file: File | null) => {
     if (!file) return;
@@ -780,6 +825,35 @@ function Dashboard({
   };
 
   const canGenerate = product.trim().length > 0;
+
+  const PREVIEW_PLAN: DayPlan[] = [
+    { day: 1, network: 'Instagram', idea: `Muestra el proceso de creación de ${product} en tu taller de ${city || 'tu ciudad'}`, hook: `¿Sabías que cada ${product} que hacemos tarda X horas en completarse? Te lo mostramos.`, hashtag: `#${(city || 'Local').replace(/\s/g, '')}ConsumoLocal` },
+    { day: 2, network: 'TikTok', idea: `Vídeo "antes y después" del ${product} terminado`, hook: `POV: Pediste un ${product} artesanal en ${city || 'tu ciudad'} y así llegó a tu puerta.`, hashtag: `#${(product || 'Producto').replace(/\s/g, '')}Artesanal` },
+    { day: 3, network: 'Instagram', idea: `Comparte una reseña real de un cliente de ${city || 'tu ciudad'}`, hook: `"No pensaba que encontraría algo así tan cerca de casa…" — esto nos escribió @cliente`, hashtag: `#Hecho${(city || 'Aqui').replace(/\s/g, '')}` },
+    { day: 4, network: 'TikTok', idea: `Tendencia viral adaptada a ${product}: reacciona a una búsqueda en Google de tu categoría`, hook: `Busqué "${product} en ${city || 'mi ciudad'}" y lo que vi me sorprendió.`, hashtag: `#${(city || 'Local').replace(/\s/g, '')}ShopLocal` },
+    { day: 5, network: 'Instagram', idea: `Carrusel con los 3 errores más comunes al comprar ${product} online`, hook: `Si vas a comprar ${product} esta semana, lee esto antes.`, hashtag: `#Consejos${(product || 'Producto').replace(/\s/g, '')}` },
+    { day: 6, network: 'TikTok', idea: `Día en el taller: qué pasa entre que recibes el pedido y lo envías`, hook: `Lo que nadie te cuenta del trabajo detrás de un pedido artesanal de ${product}.`, hashtag: `#Emprendedor${(city || 'Local').replace(/\s/g, '')}` },
+    { day: 7, network: 'Instagram', idea: `Oferta o lanzamiento semanal exclusivo para seguidores de ${city || 'tu ciudad'}`, hook: `Solo hoy, solo para vosotros. Nuevo lote de ${product} disponible. Link en bio.`, hashtag: `#${(product || 'Tienda').replace(/\s/g, '')}${(city || 'Local').replace(/\s/g, '')}` },
+  ];
+
+  const handleGeneratePlan = async () => {
+    setIsLoadingPlan(true);
+    setPlanError('');
+    setContentPlan(null);
+    try {
+      if (previewMode) {
+        await new Promise((r) => setTimeout(r, 1400));
+        setContentPlan(PREVIEW_PLAN);
+      } else {
+        const days = await callGenerateContentPlan(product, city, platform, session!.access_token);
+        setContentPlan(days);
+      }
+    } catch (err) {
+      setPlanError(err instanceof Error ? err.message : 'Error al generar el calendario');
+    } finally {
+      setIsLoadingPlan(false);
+    }
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -1246,6 +1320,107 @@ function Dashboard({
           )}
         </div>
       </div>
+
+      {/* ── 7-Day Content Calendar ─────────────────────────────── */}
+      {isActive && hasGenerated && (
+        <div className="mt-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center shrink-0">
+                <Calendar size={16} className="text-violet-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white leading-tight">
+                  Plan de Contenidos Local <span className="text-violet-400">(7 días)</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">Instagram y TikTok adaptados a tu producto y ciudad</p>
+              </div>
+            </div>
+            <button
+              onClick={handleGeneratePlan}
+              disabled={isLoadingPlan}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shrink-0
+                ${isLoadingPlan
+                  ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 hover:-translate-y-0.5 active:translate-y-0'
+                }`}
+            >
+              {isLoadingPlan ? (
+                <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Generando calendario...</>
+              ) : (
+                <><Calendar size={15} />{contentPlan ? 'Regenerar Calendario' : 'Generar Calendario de Contenido para Redes'}</>
+              )}
+            </button>
+          </div>
+
+          {planError && (
+            <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-4">
+              <AlertCircle size={14} className="text-red-400 mt-0.5 shrink-0" />
+              <p className="text-red-400 text-sm">{planError}</p>
+            </div>
+          )}
+
+          {contentPlan && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {contentPlan.map((day) => {
+                const isInsta = day.network === 'Instagram';
+                return (
+                  <div
+                    key={day.day}
+                    className={`rounded-2xl border p-4 space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg
+                      ${isInsta
+                        ? 'bg-gradient-to-b from-pink-500/8 to-slate-900/80 border-pink-500/20 hover:shadow-pink-500/10'
+                        : 'bg-gradient-to-b from-cyan-500/8 to-slate-900/80 border-cyan-500/20 hover:shadow-cyan-500/10'
+                      }`}
+                  >
+                    {/* Day + network badge */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Día {day.day}</span>
+                      <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border
+                        ${isInsta
+                          ? 'bg-pink-500/15 border-pink-500/25 text-pink-300'
+                          : 'bg-cyan-500/15 border-cyan-500/25 text-cyan-300'
+                        }`}>
+                        {isInsta ? <Instagram size={10} /> : <Video size={10} />}
+                        {day.network}
+                      </span>
+                    </div>
+
+                    {/* Content idea */}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <Lightbulb size={10} className="text-amber-400 shrink-0" />
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Idea</span>
+                      </div>
+                      <p className="text-sm text-slate-200 leading-relaxed">{day.idea}</p>
+                    </div>
+
+                    {/* Hook */}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <Zap size={10} className="text-emerald-400 shrink-0" />
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Gancho</span>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed italic">"{day.hook}"</p>
+                    </div>
+
+                    {/* Hashtag */}
+                    <div className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 border
+                      ${isInsta ? 'bg-pink-500/8 border-pink-500/15' : 'bg-cyan-500/8 border-cyan-500/15'}`}>
+                      <Hash size={11} className={isInsta ? 'text-pink-400' : 'text-cyan-400'} />
+                      <span className={`text-xs font-mono font-medium ${isInsta ? 'text-pink-300' : 'text-cyan-300'}`}>
+                        {day.hashtag}
+                      </span>
+                      <CopyButton text={day.hashtag} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
       </>
       )}
     </main>
