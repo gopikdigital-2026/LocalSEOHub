@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, ReactNode } from 'react';
 import {
   Search,
   MapPin,
@@ -35,6 +35,10 @@ import {
   CheckCircle2,
   Circle,
   ChevronDown,
+  Building2,
+  Phone,
+  MapPin,
+  Copy,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -66,6 +70,14 @@ interface DayPlan {
 type DirecRelevancia = 'Alta' | 'Media' | 'Baja';
 type DirecEstado = 'Pendiente' | 'Enviado';
 
+interface NapData {
+  nombre_negocio: string;
+  direccion: string;
+  telefono: string;
+  descripcion: string;
+  categoria_sugerida: string;
+}
+
 interface Directorio {
   id: string;
   nombre: string;
@@ -73,6 +85,8 @@ interface Directorio {
   relevancia: DirecRelevancia;
   estado: DirecEstado;
   categoria: string;
+  razon?: string;
+  nap?: NapData;
 }
 
 interface SavedItem {
@@ -289,6 +303,36 @@ async function callGenerateContentPlan(
   }
 }
 
+async function callScanDirectories(
+  product: string,
+  city: string,
+  businessName: string,
+  address: string,
+  phone: string,
+  accessToken: string
+): Promise<Directorio[]> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45000);
+  try {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-directories`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ product, city, businessName, address, phone }),
+      signal: controller.signal,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error ?? 'Error desconocido del servidor');
+    return (data.directorios as Directorio[]).map((d) => ({ ...d, estado: 'Pendiente' as DirecEstado }));
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError')
+      throw new Error('La solicitud tardó demasiado. Inténtalo de nuevo.');
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function createCheckoutSession(accessToken: string): Promise<string | null> {
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
   const res = await fetch(url, {
@@ -347,6 +391,34 @@ function CopyButton({ text }: { text: string }) {
         </>
       )}
     </button>
+  );
+}
+
+function NapField({ label, icon, value }: { label: string; icon: ReactNode; value: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* ignore */ }
+  };
+  return (
+    <div className="space-y-1">
+      <span className="flex items-center gap-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        {icon}{label}
+      </span>
+      <div className="flex items-center gap-2 rounded-lg bg-slate-900 border border-slate-800 px-3 py-2 group">
+        <span className="flex-1 text-xs text-slate-200 font-mono leading-relaxed">{value}</span>
+        <button
+          onClick={copy}
+          className={`shrink-0 transition-colors duration-200 ${copied ? 'text-emerald-400' : 'text-slate-600 hover:text-amber-400'}`}
+          title="Copiar"
+        >
+          {copied ? <CheckCircle2 size={13} /> : <Copy size={13} />}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -724,6 +796,11 @@ function Dashboard({
   const [planError, setPlanError] = useState('');
   const [directorios, setDirectorios] = useState<Directorio[] | null>(null);
   const [isScanningDirs, setIsScanningDirs] = useState(false);
+  const [napBusinessName, setNapBusinessName] = useState('');
+  const [napAddress, setNapAddress] = useState('');
+  const [napPhone, setNapPhone] = useState('');
+  const [expandedDirId, setExpandedDirId] = useState<string | null>(null);
+  const [dirError, setDirError] = useState('');
 
   const handleImageFile = (file: File | null) => {
     if (!file) return;
@@ -844,30 +921,63 @@ function Dashboard({
     }
   };
 
-  const BASE_DIRECTORIOS: Omit<Directorio, 'estado'>[] = [
-    { id: 'gmb',    nombre: 'Google Business Profile', url: 'https://business.google.com',           relevancia: 'Alta',  categoria: 'Buscadores' },
-    { id: 'bing',   nombre: 'Bing Places',              url: 'https://www.bingplaces.com',            relevancia: 'Alta',  categoria: 'Buscadores' },
-    { id: 'apple',  nombre: 'Apple Maps Connect',       url: 'https://mapsconnect.apple.com',         relevancia: 'Alta',  categoria: 'Buscadores' },
-    { id: 'pa',     nombre: 'Páginas Amarillas',        url: 'https://www.paginasamarillas.es',       relevancia: 'Alta',  categoria: 'Directorios ES' },
-    { id: 'yelp',   nombre: 'Yelp',                     url: 'https://biz.yelp.es',                   relevancia: 'Alta',  categoria: 'Reseñas' },
-    { id: 'fb',     nombre: 'Facebook Business',        url: 'https://www.facebook.com/business',     relevancia: 'Alta',  categoria: 'Social' },
-    { id: 'trip',   nombre: 'TripAdvisor',              url: 'https://www.tripadvisor.es',            relevancia: 'Media', categoria: 'Reseñas' },
-    { id: 'foursq', nombre: 'Foursquare',               url: 'https://foursquare.com/add-place',      relevancia: 'Media', categoria: 'Geolocalización' },
-    { id: 'einf',   nombre: 'Einforma',                 url: 'https://www.einforma.com',              relevancia: 'Media', categoria: 'Directorios ES' },
-    { id: 'hotfr',  nombre: 'Hotfrog España',           url: 'https://www.hotfrog.es',                relevancia: 'Media', categoria: 'Directorios ES' },
-    { id: 'kompass',nombre: 'Kompass',                  url: 'https://es.kompass.com',                relevancia: 'Media', categoria: 'B2B' },
-    { id: 'cylex',  nombre: 'Cylex España',             url: 'https://www.cylex.es',                  relevancia: 'Baja',  categoria: 'Directorios ES' },
-    { id: 'manta',  nombre: 'Manta',                    url: 'https://www.manta.com',                 relevancia: 'Baja',  categoria: 'Directorios INT' },
-    { id: 'europag',nombre: 'Europages',                url: 'https://www.europages.es',              relevancia: 'Baja',  categoria: 'B2B' },
-    { id: 'infois', nombre: 'InfoIsInfo',               url: 'https://www.infoisinfo.es',             relevancia: 'Baja',  categoria: 'Directorios ES' },
+  const nbiz = napBusinessName || '[Nombre del negocio]';
+  const nadr = napAddress || '[Calle], [Número], [CP] ' + (city || '[Ciudad]') + ', España';
+  const ntel = napPhone || '+34 [teléfono]';
+  const napDesc = `${nbiz} es un negocio local especializado en ${p} ubicado en ${c}. Ofrecemos ${p} de calidad con atención personalizada para nuestros clientes de ${c} y alrededores. Nos distinguimos por nuestro compromiso con la calidad y el servicio al cliente. Visítanos en ${nadr} o llámanos al ${ntel}. Somos tu mejor opción local para ${p} en ${c}. ¡Contáctanos hoy!`;
+
+  const PREVIEW_DIRECTORIES: Directorio[] = [
+    {
+      id: 'gmb', nombre: 'Google Business Profile', url: 'https://business.google.com',
+      relevancia: 'Alta', categoria: 'Buscadores', estado: 'Pendiente',
+      razon: `Es el directorio más importante para aparecer en Google Maps y búsquedas locales de "${p} en ${c}". Imprescindible.`,
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+    },
+    {
+      id: 'pa', nombre: 'Páginas Amarillas', url: 'https://www.paginasamarillas.es',
+      relevancia: 'Alta', categoria: 'Directorios ES', estado: 'Pendiente',
+      razon: `Directorio de referencia en España con alta autoridad de dominio. Clave para ${p} en mercados locales como ${c}.`,
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+    },
+    {
+      id: 'yelp', nombre: 'Yelp España', url: 'https://biz.yelp.es',
+      relevancia: 'Alta', categoria: 'Reseñas', estado: 'Pendiente',
+      razon: `Plataforma de reseñas con fuerte impacto en decisiones de compra locales. Muy consultada en ciudades como ${c}.`,
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+    },
+    {
+      id: 'bing', nombre: 'Bing Places', url: 'https://www.bingplaces.com',
+      relevancia: 'Media', categoria: 'Buscadores', estado: 'Pendiente',
+      razon: `Segundo buscador en cuota de mercado en España. Completar el perfil tarda 5 minutos y amplía la cobertura orgánica.`,
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+    },
+    {
+      id: 'einf', nombre: 'Einforma', url: 'https://www.einforma.com',
+      relevancia: 'Media', categoria: 'Directorios ES', estado: 'Pendiente',
+      razon: `Directorio empresarial español con alta visibilidad en búsquedas B2C y B2B de ${p} a nivel nacional.`,
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+    },
   ];
 
   const handleScanDirectories = async () => {
     setIsScanningDirs(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    const withState: Directorio[] = BASE_DIRECTORIOS.map((d) => ({ ...d, estado: 'Pendiente' as DirecEstado }));
-    setDirectorios(withState);
-    setIsScanningDirs(false);
+    setDirError('');
+    setExpandedDirId(null);
+    try {
+      if (previewMode) {
+        await new Promise((r) => setTimeout(r, 1400));
+        setDirectorios(PREVIEW_DIRECTORIES);
+      } else {
+        const dirs = await callScanDirectories(
+          product, city, napBusinessName, napAddress, napPhone, session!.access_token
+        );
+        setDirectorios(dirs);
+      }
+    } catch (err) {
+      setDirError(err instanceof Error ? err.message : 'Error al escanear directorios');
+    } finally {
+      setIsScanningDirs(false);
+    }
   };
 
   const toggleDirEstado = (id: string) => {
@@ -1632,8 +1742,8 @@ function Dashboard({
       {/* ── Citation & Directories Finder ─────────────────────── */}
       {isActive && hasGenerated && (
         <div className="mt-8 mb-4">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          {/* Header row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0">
                 <MapPinned size={16} className="text-amber-400" />
@@ -1644,7 +1754,7 @@ function Dashboard({
                   <span className="text-amber-400">Directorios Locales</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Registra tu negocio en los directorios más relevantes para mejorar tu SEO local
+                  La IA selecciona los 5 directorios óptimos para tu sector y formatea tus datos NAP
                 </p>
               </div>
             </div>
@@ -1658,37 +1768,78 @@ function Dashboard({
                 }`}
             >
               {isScanningDirs ? (
-                <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Escaneando directorios...</>
+                <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Analizando directorios...</>
               ) : (
                 <><MapPinned size={15} />{directorios ? 'Volver a escanear' : 'Escanear Directorios de Oportunidad'}</>
               )}
             </button>
           </div>
 
+          {/* NAP inputs */}
+          <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-4 mb-5">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Building2 size={11} className="text-amber-400" />
+              Datos NAP del negocio
+              <span className="font-normal text-slate-600 normal-case tracking-normal ml-1">— se usan para formatear las fichas de registro</span>
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <Building2 size={10} className="shrink-0" />Nombre del negocio
+                </label>
+                <input
+                  value={napBusinessName}
+                  onChange={(e) => setNapBusinessName(e.target.value)}
+                  placeholder="Ej: Taller Artesanal García"
+                  className="w-full bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <MapPin size={10} className="shrink-0" />Dirección completa
+                </label>
+                <input
+                  value={napAddress}
+                  onChange={(e) => setNapAddress(e.target.value)}
+                  placeholder="Calle Mayor 5, 28001 Madrid"
+                  className="w-full bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <Phone size={10} className="shrink-0" />Teléfono
+                </label>
+                <input
+                  value={napPhone}
+                  onChange={(e) => setNapPhone(e.target.value)}
+                  placeholder="+34 600 000 000"
+                  className="w-full bg-slate-800/70 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Error */}
+          {dirError && (
+            <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
+              <p className="text-red-400 text-sm">{dirError}</p>
+            </div>
+          )}
+
           {directorios && (
             <>
-              {/* Stats row */}
-              <div className="flex flex-wrap gap-3 mb-4">
-                {(['Alta', 'Media', 'Baja'] as DirecRelevancia[]).map((rel) => {
-                  const count = directorios.filter((d) => d.relevancia === rel).length;
-                  const sent  = directorios.filter((d) => d.relevancia === rel && d.estado === 'Enviado').length;
-                  const colors: Record<DirecRelevancia, string> = {
-                    Alta:  'bg-emerald-500/10 border-emerald-500/25 text-emerald-300',
-                    Media: 'bg-amber-500/10 border-amber-500/25 text-amber-300',
-                    Baja:  'bg-slate-700/50 border-slate-600 text-slate-400',
-                  };
-                  return (
-                    <div key={rel} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold ${colors[rel]}`}>
-                      <span>{rel}</span>
-                      <span className="opacity-60">·</span>
-                      <span>{sent}/{count} enviados</span>
-                    </div>
-                  );
-                })}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-slate-800 border-slate-700 text-xs font-semibold text-slate-300 ml-auto">
-                  <CheckCircle2 size={12} className="text-emerald-400" />
-                  {directorios.filter((d) => d.estado === 'Enviado').length} / {directorios.length} completados
+              {/* Progress bar */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500"
+                    style={{ width: `${(directorios.filter((d) => d.estado === 'Enviado').length / directorios.length) * 100}%` }}
+                  />
                 </div>
+                <span className="text-xs font-semibold text-slate-400 shrink-0">
+                  <span className="text-white">{directorios.filter((d) => d.estado === 'Enviado').length}</span>
+                  /{directorios.length} enviados
+                </span>
               </div>
 
               {/* Table */}
@@ -1696,12 +1847,12 @@ function Dashboard({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-slate-900 border-b border-slate-800">
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-8"></th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-8">#</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nombre del Directorio</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Categoría</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Relevancia</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden lg:table-cell">Razón IA</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Relevancia</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</th>
-                      <th className="px-4 py-3 w-10"></th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">NAP</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/70">
@@ -1712,74 +1863,112 @@ function Dashboard({
                         Baja:  'bg-slate-700/60 border-slate-600 text-slate-400',
                       };
                       const sent = dir.estado === 'Enviado';
+                      const expanded = expandedDirId === dir.id;
+
                       return (
-                        <tr
-                          key={dir.id}
-                          className={`transition-colors duration-150 ${idx % 2 === 0 ? 'bg-slate-950/40' : 'bg-slate-900/30'} hover:bg-slate-800/40`}
-                        >
-                          {/* Row number */}
-                          <td className="px-4 py-3 text-xs text-slate-600 font-mono">{idx + 1}</td>
+                        <React.Fragment key={dir.id}>
+                          <tr
+                            className={`transition-colors duration-150 ${idx % 2 === 0 ? 'bg-slate-950/40' : 'bg-slate-900/30'} hover:bg-slate-800/30`}
+                          >
+                            <td className="px-4 py-3 text-xs text-slate-600 font-mono">{idx + 1}</td>
 
-                          {/* Name + link */}
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <span className={`font-medium ${sent ? 'text-slate-400 line-through' : 'text-slate-200'}`}>
-                                {dir.nombre}
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <span className={`font-medium ${sent ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+                                  {dir.nombre}
+                                </span>
+                                <a
+                                  href={dir.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-slate-600 hover:text-amber-400 transition-colors shrink-0"
+                                >
+                                  <ExternalLink size={11} />
+                                </a>
+                              </div>
+                              <span className="text-xs text-slate-600 hidden sm:inline lg:hidden">{dir.categoria}</span>
+                            </td>
+
+                            <td className="px-4 py-3 hidden lg:table-cell max-w-xs">
+                              <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{dir.razon ?? '—'}</p>
+                            </td>
+
+                            <td className="px-4 py-3 hidden sm:table-cell">
+                              <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${relevColors[dir.relevancia]}`}>
+                                {dir.relevancia}
                               </span>
-                              <a
-                                href={dir.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-slate-600 hover:text-amber-400 transition-colors shrink-0"
-                                title="Abrir directorio"
+                            </td>
+
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => toggleDirEstado(dir.id)}
+                                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all duration-200
+                                  ${sent
+                                    ? 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/25'
+                                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-amber-500/40 hover:text-amber-300'
+                                  }`}
                               >
-                                <ExternalLink size={11} />
-                              </a>
-                            </div>
-                          </td>
+                                {sent ? <><CheckCircle2 size={11} />Enviado</> : <><Circle size={11} />Pendiente</>}
+                              </button>
+                            </td>
 
-                          {/* Category */}
-                          <td className="px-4 py-3 hidden sm:table-cell">
-                            <span className="text-xs text-slate-500">{dir.categoria}</span>
-                          </td>
+                            <td className="px-4 py-3 text-center">
+                              {dir.nap ? (
+                                <button
+                                  onClick={() => setExpandedDirId(expanded ? null : dir.id)}
+                                  className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all duration-200
+                                    ${expanded
+                                      ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-amber-500/40 hover:text-amber-300'
+                                    }`}
+                                  title="Ver datos NAP formateados"
+                                >
+                                  Ver NAP
+                                  <ChevronDown size={11} className={`transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+                                </button>
+                              ) : (
+                                <span className="text-slate-700 text-xs">—</span>
+                              )}
+                            </td>
+                          </tr>
 
-                          {/* Relevance badge */}
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${relevColors[dir.relevancia]}`}>
-                              {dir.relevancia}
-                            </span>
-                          </td>
+                          {/* NAP expansion row */}
+                          {expanded && dir.nap && (
+                            <tr key={`${dir.id}-nap`} className="bg-amber-500/4 border-b border-amber-500/10">
+                              <td colSpan={6} className="px-4 py-4">
+                                <div className="rounded-xl border border-amber-500/15 bg-slate-950/60 p-4 space-y-3">
+                                  <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                                    <Building2 size={11} />
+                                    Datos NAP formateados para {dir.nombre}
+                                    <span className="ml-1 font-normal text-slate-500 normal-case tracking-normal">— copia estos datos exactamente en el directorio</span>
+                                  </p>
 
-                          {/* Status toggle */}
-                          <td className="px-4 py-3">
-                            <button
-                              onClick={() => toggleDirEstado(dir.id)}
-                              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all duration-200
-                                ${sent
-                                  ? 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/25'
-                                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-amber-500/40 hover:text-amber-300'
-                                }`}
-                            >
-                              {sent
-                                ? <><CheckCircle2 size={11} />Enviado</>
-                                : <><Circle size={11} />Pendiente</>
-                              }
-                            </button>
-                          </td>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {/* Nombre */}
+                                    <NapField label="Nombre del negocio" icon={<Building2 size={11} />} value={dir.nap.nombre_negocio} />
+                                    {/* Dirección */}
+                                    <NapField label="Dirección" icon={<MapPin size={11} />} value={dir.nap.direccion} />
+                                    {/* Teléfono */}
+                                    <NapField label="Teléfono" icon={<Phone size={11} />} value={dir.nap.telefono} />
+                                    {/* Categoría sugerida */}
+                                    <NapField label="Categoría sugerida" icon={<MapPinned size={11} />} value={dir.nap.categoria_sugerida} />
+                                  </div>
 
-                          {/* External link shortcut */}
-                          <td className="px-4 py-3 text-right">
-                            <a
-                              href={dir.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-500 hover:text-amber-400 hover:border-amber-500/40 transition-all duration-150"
-                              title={`Abrir ${dir.nombre}`}
-                            >
-                              <ExternalLink size={11} />
-                            </a>
-                          </td>
-                        </tr>
+                                  {/* Descripción */}
+                                  <div className="space-y-1.5">
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripción optimizada</span>
+                                    <div className="relative group rounded-lg bg-slate-900 border border-slate-800 p-3 pr-10">
+                                      <p className="text-xs text-slate-300 leading-relaxed">{dir.nap.descripcion}</p>
+                                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <CopyButton text={dir.nap.descripcion} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       );
                     })}
                   </tbody>
