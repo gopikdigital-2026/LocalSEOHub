@@ -52,10 +52,10 @@ interface SEOResult {
 
 interface DayPlan {
   day: number;
-  network: 'Instagram' | 'TikTok';
-  idea: string;
+  platform: string;
   hook: string;
-  hashtag: string;
+  content_idea: string;
+  local_hashtags: string[];
 }
 
 interface SavedItem {
@@ -247,6 +247,7 @@ async function callGenerateContentPlan(
   product: string,
   city: string,
   platform: string,
+  description: string,
   accessToken: string
 ): Promise<DayPlan[]> {
   const controller = new AbortController();
@@ -256,7 +257,7 @@ async function callGenerateContentPlan(
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-      body: JSON.stringify({ product, city, platform }),
+      body: JSON.stringify({ product, city, platform, description }),
       signal: controller.signal,
     });
     const data = await res.json();
@@ -827,13 +828,13 @@ function Dashboard({
   const canGenerate = product.trim().length > 0;
 
   const PREVIEW_PLAN: DayPlan[] = [
-    { day: 1, network: 'Instagram', idea: `Muestra el proceso de creación de ${product} en tu taller de ${city || 'tu ciudad'}`, hook: `¿Sabías que cada ${product} que hacemos tarda X horas en completarse? Te lo mostramos.`, hashtag: `#${(city || 'Local').replace(/\s/g, '')}ConsumoLocal` },
-    { day: 2, network: 'TikTok', idea: `Vídeo "antes y después" del ${product} terminado`, hook: `POV: Pediste un ${product} artesanal en ${city || 'tu ciudad'} y así llegó a tu puerta.`, hashtag: `#${(product || 'Producto').replace(/\s/g, '')}Artesanal` },
-    { day: 3, network: 'Instagram', idea: `Comparte una reseña real de un cliente de ${city || 'tu ciudad'}`, hook: `"No pensaba que encontraría algo así tan cerca de casa…" — esto nos escribió @cliente`, hashtag: `#Hecho${(city || 'Aqui').replace(/\s/g, '')}` },
-    { day: 4, network: 'TikTok', idea: `Tendencia viral adaptada a ${product}: reacciona a una búsqueda en Google de tu categoría`, hook: `Busqué "${product} en ${city || 'mi ciudad'}" y lo que vi me sorprendió.`, hashtag: `#${(city || 'Local').replace(/\s/g, '')}ShopLocal` },
-    { day: 5, network: 'Instagram', idea: `Carrusel con los 3 errores más comunes al comprar ${product} online`, hook: `Si vas a comprar ${product} esta semana, lee esto antes.`, hashtag: `#Consejos${(product || 'Producto').replace(/\s/g, '')}` },
-    { day: 6, network: 'TikTok', idea: `Día en el taller: qué pasa entre que recibes el pedido y lo envías`, hook: `Lo que nadie te cuenta del trabajo detrás de un pedido artesanal de ${product}.`, hashtag: `#Emprendedor${(city || 'Local').replace(/\s/g, '')}` },
-    { day: 7, network: 'Instagram', idea: `Oferta o lanzamiento semanal exclusivo para seguidores de ${city || 'tu ciudad'}`, hook: `Solo hoy, solo para vosotros. Nuevo lote de ${product} disponible. Link en bio.`, hashtag: `#${(product || 'Tienda').replace(/\s/g, '')}${(city || 'Local').replace(/\s/g, '')}` },
+    { day: 1, platform: 'Instagram', content_idea: `Muestra el proceso de creación de ${product || 'tu producto'} en tu taller de ${city || 'tu ciudad'}.`, hook: `¿Sabías que cada ${product || 'pieza'} que hacemos tarda horas en completarse? Te lo mostramos.`, local_hashtags: [`#${(city || 'Local').replace(/\s/g, '')}ConsumoLocal`, `#${(product || 'Producto').replace(/\s/g, '')}Artesanal`] },
+    { day: 2, platform: 'TikTok', content_idea: `Vídeo "antes y después" del ${product || 'producto'} terminado, con música tendencia.`, hook: `POV: Pediste un ${product || 'producto'} artesanal en ${city || 'tu ciudad'} y así llegó a tu puerta.`, local_hashtags: [`#${(product || 'Tienda').replace(/\s/g, '')}${(city || 'Local').replace(/\s/g, '')}`, `#HechoAMano`] },
+    { day: 3, platform: 'Instagram', content_idea: `Carrusel con reseña real de un cliente de ${city || 'tu ciudad'} y foto del producto.`, hook: `"No pensaba que encontraría algo así tan cerca de casa…" — esto nos escribió un cliente.`, local_hashtags: [`#Hecho${(city || 'Aqui').replace(/\s/g, '')}`, `#CompraCercano`] },
+    { day: 4, platform: 'TikTok', content_idea: `Reacciona a una búsqueda viral de "${product || 'tu producto'}" en Google mostrando la tuya.`, hook: `Busqué "${product || 'mi producto'} en ${city || 'mi ciudad'}" y lo que encontré me sorprendió.`, local_hashtags: [`#${(city || 'Local').replace(/\s/g, '')}ShopLocal`, `#TendenciasLocal`] },
+    { day: 5, platform: 'Instagram', content_idea: `3 errores más comunes al comprar ${product || 'productos'} online y cómo evitarlos.`, hook: `Si vas a comprar ${product || 'esto'} esta semana, lee esto antes.`, local_hashtags: [`#Consejos${(product || 'Producto').replace(/\s/g, '')}`, `#CompraBien`] },
+    { day: 6, platform: 'TikTok', content_idea: `Un día en el taller: qué pasa desde que recibes el pedido hasta que lo envías.`, hook: `Lo que nadie te cuenta del trabajo detrás de un pedido artesanal de ${product || 'este producto'}.`, local_hashtags: [`#Emprendedor${(city || 'Local').replace(/\s/g, '')}`, `#DetrasDelTaller`] },
+    { day: 7, platform: 'Instagram', content_idea: `Oferta semanal exclusiva para seguidores de ${city || 'tu ciudad'}. Nuevo lote disponible.`, hook: `Solo hoy, solo para vosotros. Nuevo lote de ${product || 'producto'} disponible. Link en bio.`, local_hashtags: [`#${(product || 'Tienda').replace(/\s/g, '')}${(city || 'Local').replace(/\s/g, '')}`, `#OfertaLocal`] },
   ];
 
   const handleGeneratePlan = async () => {
@@ -845,7 +846,7 @@ function Dashboard({
         await new Promise((r) => setTimeout(r, 1400));
         setContentPlan(PREVIEW_PLAN);
       } else {
-        const days = await callGenerateContentPlan(product, city, platform, session!.access_token);
+        const days = await callGenerateContentPlan(product, city, platform, result?.description ?? '', session!.access_token);
         setContentPlan(days);
       }
     } catch (err) {
@@ -1364,36 +1365,43 @@ function Dashboard({
           {contentPlan && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {contentPlan.map((day) => {
-                const isInsta = day.network === 'Instagram';
+                const isInsta = day.platform?.toLowerCase().includes('instagram');
+                const isTikTok = day.platform?.toLowerCase().includes('tiktok');
+                const colorClass = isInsta
+                  ? 'from-pink-500/8 border-pink-500/20 hover:shadow-pink-500/10'
+                  : isTikTok
+                    ? 'from-cyan-500/8 border-cyan-500/20 hover:shadow-cyan-500/10'
+                    : 'from-violet-500/8 border-violet-500/20 hover:shadow-violet-500/10';
+                const badgeClass = isInsta
+                  ? 'bg-pink-500/15 border-pink-500/25 text-pink-300'
+                  : isTikTok
+                    ? 'bg-cyan-500/15 border-cyan-500/25 text-cyan-300'
+                    : 'bg-violet-500/15 border-violet-500/25 text-violet-300';
+                const hashBgClass = isInsta
+                  ? 'bg-pink-500/8 border-pink-500/15'
+                  : isTikTok
+                    ? 'bg-cyan-500/8 border-cyan-500/15'
+                    : 'bg-violet-500/8 border-violet-500/15';
+                const hashTextClass = isInsta ? 'text-pink-300' : isTikTok ? 'text-cyan-300' : 'text-violet-300';
+                const hashIconClass = isInsta ? 'text-pink-400' : isTikTok ? 'text-cyan-400' : 'text-violet-400';
+                const tags = Array.isArray(day.local_hashtags)
+                  ? day.local_hashtags
+                  : typeof day.local_hashtags === 'string'
+                    ? (day.local_hashtags as string).split(/[\s,]+/).filter(Boolean)
+                    : [];
+
                 return (
                   <div
                     key={day.day}
-                    className={`rounded-2xl border p-4 space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg
-                      ${isInsta
-                        ? 'bg-gradient-to-b from-pink-500/8 to-slate-900/80 border-pink-500/20 hover:shadow-pink-500/10'
-                        : 'bg-gradient-to-b from-cyan-500/8 to-slate-900/80 border-cyan-500/20 hover:shadow-cyan-500/10'
-                      }`}
+                    className={`rounded-2xl border bg-gradient-to-b to-slate-900/80 p-4 space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${colorClass}`}
                   >
-                    {/* Day + network badge */}
+                    {/* Day + platform badge */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Día {day.day}</span>
-                      <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border
-                        ${isInsta
-                          ? 'bg-pink-500/15 border-pink-500/25 text-pink-300'
-                          : 'bg-cyan-500/15 border-cyan-500/25 text-cyan-300'
-                        }`}>
-                        {isInsta ? <Instagram size={10} /> : <Video size={10} />}
-                        {day.network}
+                      <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeClass}`}>
+                        {isInsta ? <Instagram size={10} /> : isTikTok ? <Video size={10} /> : <Globe size={10} />}
+                        {day.platform}
                       </span>
-                    </div>
-
-                    {/* Content idea */}
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <Lightbulb size={10} className="text-amber-400 shrink-0" />
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Idea</span>
-                      </div>
-                      <p className="text-sm text-slate-200 leading-relaxed">{day.idea}</p>
                     </div>
 
                     {/* Hook */}
@@ -1402,18 +1410,38 @@ function Dashboard({
                         <Zap size={10} className="text-emerald-400 shrink-0" />
                         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Gancho</span>
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed italic">"{day.hook}"</p>
+                      <p className="text-xs text-slate-200 leading-relaxed italic">"{day.hook}"</p>
                     </div>
 
-                    {/* Hashtag */}
-                    <div className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 border
-                      ${isInsta ? 'bg-pink-500/8 border-pink-500/15' : 'bg-cyan-500/8 border-cyan-500/15'}`}>
-                      <Hash size={11} className={isInsta ? 'text-pink-400' : 'text-cyan-400'} />
-                      <span className={`text-xs font-mono font-medium ${isInsta ? 'text-pink-300' : 'text-cyan-300'}`}>
-                        {day.hashtag}
-                      </span>
-                      <CopyButton text={day.hashtag} />
+                    {/* Content idea */}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <Lightbulb size={10} className="text-amber-400 shrink-0" />
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Idea de contenido</span>
+                      </div>
+                      <p className="text-sm text-slate-300 leading-relaxed">{day.content_idea}</p>
                     </div>
+
+                    {/* Hashtags */}
+                    {tags.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Hash size={10} className={hashIconClass + ' shrink-0'} />
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Hashtags</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {tags.map((tag, i) => {
+                            const normalized = tag.startsWith('#') ? tag : `#${tag}`;
+                            return (
+                              <div key={i} className={`flex items-center gap-1 rounded-lg px-2 py-1 border ${hashBgClass}`}>
+                                <span className={`text-xs font-mono font-medium ${hashTextClass}`}>{normalized}</span>
+                                <CopyButton text={normalized} />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

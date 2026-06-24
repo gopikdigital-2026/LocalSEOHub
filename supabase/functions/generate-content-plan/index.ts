@@ -7,18 +7,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const SYSTEM_PROMPT = `Eres un experto en marketing de contenidos para pequeñas empresas locales y comercio electrónico.
-Tu tarea es crear un plan de contenidos para redes sociales de 7 días, adaptado específicamente al producto, ciudad y plataforma indicados.
+const SYSTEM_PROMPT = `Eres un Community Manager experto en viralidad local. Crea un plan de contenidos de 7 días para redes sociales. Cada día debe ser una idea de post o vídeo corto enfocada en atraer clientes de la ciudad especificada hacia el producto. Devuelve un formato JSON limpio con un array de 7 objetos, cada uno con las claves: day, platform, hook, content_idea y local_hashtags.
 
-Responde ESTRICTAMENTE con un objeto JSON con la clave "days", que contiene un array de 7 objetos.
-Cada objeto debe tener exactamente estas claves:
+Reglas:
 - "day": número del día (1-7)
-- "network": "Instagram" o "TikTok" (alterna entre ambas, empezando por Instagram)
-- "idea": idea concreta de contenido (2-3 frases, específica para el producto y ciudad)
-- "hook": el gancho o primera frase del post/vídeo (directa, que genere curiosidad o urgencia, en primera persona o dirigida al espectador)
-- "hashtag": UN hashtag local relevante (sin espacios, incluye la ciudad o producto, ej: #ToledoConsumoLocal)
+- "platform": "Instagram" o "TikTok", alternando entre ambas
+- "hook": la primera frase o gancho del post/vídeo, directa y con urgencia o curiosidad
+- "content_idea": descripción concreta de la idea de contenido (2-3 frases, específica para producto y ciudad)
+- "local_hashtags": array de 2-3 hashtags locales relevantes (sin espacios, incluyen ciudad y/o producto)
 
-El contenido debe ser auténtico, local, atractivo y accionable. Usa el nombre de la ciudad de forma natural.`;
+Usa el nombre de la ciudad de forma natural en las ideas. Basa las ideas en la descripción SEO del producto si se proporciona.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -87,7 +85,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { product, city, platform } = await req.json();
+    const { product, city, platform, description } = await req.json();
 
     if (!product?.trim()) {
       return new Response(
@@ -100,9 +98,10 @@ Deno.serve(async (req: Request) => {
       `Producto o servicio: ${product}`,
       city ? `Ciudad / Región objetivo: ${city}` : null,
       platform ? `Plataforma principal de venta: ${platform}` : null,
+      description ? `Descripción SEO del producto:\n${description}` : null,
     ]
       .filter(Boolean)
-      .join("\n");
+      .join("\n\n");
 
     const openAIRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -112,7 +111,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        temperature: 0.8,
+        temperature: 0.85,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
@@ -150,8 +149,18 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Normalise local_hashtags: ensure it's always an array
+    const days = (parsed.days as Record<string, unknown>[]).map((d) => ({
+      ...d,
+      local_hashtags: Array.isArray(d.local_hashtags)
+        ? d.local_hashtags
+        : typeof d.local_hashtags === "string"
+          ? (d.local_hashtags as string).split(/[\s,]+/).filter(Boolean)
+          : [],
+    }));
+
     return new Response(
-      JSON.stringify({ days: parsed.days }),
+      JSON.stringify({ days }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
