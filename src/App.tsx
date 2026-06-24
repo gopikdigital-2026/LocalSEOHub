@@ -928,32 +928,32 @@ function Dashboard({
     {
       id: 'gmb', nombre: 'Google Business Profile', url: 'https://business.google.com',
       relevancia: 'Alta', categoria: 'Buscadores', estado: 'Pendiente',
-      razon: `Es el directorio más importante para aparecer en Google Maps y búsquedas locales de "${p} en ${c}". Imprescindible.`,
-      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+      razon: `Es el directorio más importante para aparecer en Google Maps y búsquedas locales de "${product} en ${city || '[ciudad]'}". Imprescindible.`,
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: product },
     },
     {
       id: 'pa', nombre: 'Páginas Amarillas', url: 'https://www.paginasamarillas.es',
       relevancia: 'Alta', categoria: 'Directorios ES', estado: 'Pendiente',
-      razon: `Directorio de referencia en España con alta autoridad de dominio. Clave para ${p} en mercados locales como ${c}.`,
-      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+      razon: `Directorio de referencia en España con alta autoridad de dominio. Clave para ${product} en mercados locales como ${city || '[ciudad]'}.`,
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: product },
     },
     {
       id: 'yelp', nombre: 'Yelp España', url: 'https://biz.yelp.es',
       relevancia: 'Alta', categoria: 'Reseñas', estado: 'Pendiente',
-      razon: `Plataforma de reseñas con fuerte impacto en decisiones de compra locales. Muy consultada en ciudades como ${c}.`,
-      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+      razon: `Plataforma de reseñas con fuerte impacto en decisiones de compra locales. Muy consultada en ciudades como ${city || '[ciudad]'}.`,
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: product },
     },
     {
       id: 'bing', nombre: 'Bing Places', url: 'https://www.bingplaces.com',
       relevancia: 'Media', categoria: 'Buscadores', estado: 'Pendiente',
       razon: `Segundo buscador en cuota de mercado en España. Completar el perfil tarda 5 minutos y amplía la cobertura orgánica.`,
-      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: product },
     },
     {
       id: 'einf', nombre: 'Einforma', url: 'https://www.einforma.com',
       relevancia: 'Media', categoria: 'Directorios ES', estado: 'Pendiente',
-      razon: `Directorio empresarial español con alta visibilidad en búsquedas B2C y B2B de ${p} a nivel nacional.`,
-      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: p },
+      razon: `Directorio empresarial español con alta visibilidad en búsquedas B2C y B2B de ${product} a nivel nacional.`,
+      nap: { nombre_negocio: nbiz, direccion: nadr, telefono: ntel, descripcion: napDesc, categoria_sugerida: product },
     },
   ];
 
