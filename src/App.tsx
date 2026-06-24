@@ -53,8 +53,8 @@ interface SEOResult {
 interface DayPlan {
   day: number;
   platform: string;
-  hook: string;
-  content_idea: string;
+  hooks: string[];
+  content_ideas: string[];
   local_hashtags: string[];
 }
 
@@ -827,14 +827,110 @@ function Dashboard({
 
   const canGenerate = product.trim().length > 0;
 
+  const p = product || 'tu producto';
+  const c = city || 'tu ciudad';
+  const cSlug = (city || 'Local').replace(/\s/g, '');
+  const pSlug = (product || 'Producto').replace(/\s/g, '');
+
   const PREVIEW_PLAN: DayPlan[] = [
-    { day: 1, platform: 'Instagram', content_idea: `Muestra el proceso de creación de ${product || 'tu producto'} en tu taller de ${city || 'tu ciudad'}.`, hook: `¿Sabías que cada ${product || 'pieza'} que hacemos tarda horas en completarse? Te lo mostramos.`, local_hashtags: [`#${(city || 'Local').replace(/\s/g, '')}ConsumoLocal`, `#${(product || 'Producto').replace(/\s/g, '')}Artesanal`] },
-    { day: 2, platform: 'TikTok', content_idea: `Vídeo "antes y después" del ${product || 'producto'} terminado, con música tendencia.`, hook: `POV: Pediste un ${product || 'producto'} artesanal en ${city || 'tu ciudad'} y así llegó a tu puerta.`, local_hashtags: [`#${(product || 'Tienda').replace(/\s/g, '')}${(city || 'Local').replace(/\s/g, '')}`, `#HechoAMano`] },
-    { day: 3, platform: 'Instagram', content_idea: `Carrusel con reseña real de un cliente de ${city || 'tu ciudad'} y foto del producto.`, hook: `"No pensaba que encontraría algo así tan cerca de casa…" — esto nos escribió un cliente.`, local_hashtags: [`#Hecho${(city || 'Aqui').replace(/\s/g, '')}`, `#CompraCercano`] },
-    { day: 4, platform: 'TikTok', content_idea: `Reacciona a una búsqueda viral de "${product || 'tu producto'}" en Google mostrando la tuya.`, hook: `Busqué "${product || 'mi producto'} en ${city || 'mi ciudad'}" y lo que encontré me sorprendió.`, local_hashtags: [`#${(city || 'Local').replace(/\s/g, '')}ShopLocal`, `#TendenciasLocal`] },
-    { day: 5, platform: 'Instagram', content_idea: `3 errores más comunes al comprar ${product || 'productos'} online y cómo evitarlos.`, hook: `Si vas a comprar ${product || 'esto'} esta semana, lee esto antes.`, local_hashtags: [`#Consejos${(product || 'Producto').replace(/\s/g, '')}`, `#CompraBien`] },
-    { day: 6, platform: 'TikTok', content_idea: `Un día en el taller: qué pasa desde que recibes el pedido hasta que lo envías.`, hook: `Lo que nadie te cuenta del trabajo detrás de un pedido artesanal de ${product || 'este producto'}.`, local_hashtags: [`#Emprendedor${(city || 'Local').replace(/\s/g, '')}`, `#DetrasDelTaller`] },
-    { day: 7, platform: 'Instagram', content_idea: `Oferta semanal exclusiva para seguidores de ${city || 'tu ciudad'}. Nuevo lote disponible.`, hook: `Solo hoy, solo para vosotros. Nuevo lote de ${product || 'producto'} disponible. Link en bio.`, local_hashtags: [`#${(product || 'Tienda').replace(/\s/g, '')}${(city || 'Local').replace(/\s/g, '')}`, `#OfertaLocal`] },
+    {
+      day: 1, platform: 'Instagram',
+      hooks: [
+        `¿Sabías que cada ${p} que hacemos tarda horas en completarse? Te lo mostramos.`,
+        `Nadie te ha enseñado cómo se hace un ${p} de verdad. Hasta hoy.`,
+        `Esto es lo que pasa en nuestro taller antes de que recibas tu ${p}.`,
+      ],
+      content_ideas: [
+        `Muestra el proceso de creación de ${p} desde el inicio en tu taller de ${c}.`,
+        `Carrusel con fotos de cada etapa del proceso artesanal, explicando cada paso.`,
+        `Reel de 30 segundos en time-lapse mostrando el trabajo completo de un pedido.`,
+      ],
+      local_hashtags: [`#${cSlug}ConsumoLocal`, `#${pSlug}Artesanal`, `#HechoEn${cSlug}`],
+    },
+    {
+      day: 2, platform: 'TikTok',
+      hooks: [
+        `POV: Pediste un ${p} artesanal en ${c} y así llegó a tu puerta.`,
+        `Antes vs Después: así transformamos la materia prima en ${p}.`,
+        `Di que no es perfecto sin decir que no es perfecto. Spoiler: sí lo es.`,
+      ],
+      content_ideas: [
+        `Vídeo "antes y después" del ${p} terminado, con música tendencia.`,
+        `Unboxing del pedido desde la perspectiva del cliente, grabado por el equipo.`,
+        `Transición rápida mostrando el material en bruto y el producto final terminado.`,
+      ],
+      local_hashtags: [`#${pSlug}${cSlug}`, `#HechoAMano`, `#ArtesaníaLocal`],
+    },
+    {
+      day: 3, platform: 'Instagram',
+      hooks: [
+        `"No pensaba que encontraría algo así tan cerca de casa" — esto nos escribió un cliente.`,
+        `La mejor reseña que hemos recibido este mes viene de ${c}.`,
+        `Cuando un cliente de ${c} te deja sin palabras con su comentario.`,
+      ],
+      content_ideas: [
+        `Carrusel con reseña real de un cliente de ${c} y foto del producto recibido.`,
+        `Post de texto con cita literal del cliente + imagen del producto en su entorno.`,
+        `Historia destacada con pantallazos de mensajes de clientes satisfechos de ${c}.`,
+      ],
+      local_hashtags: [`#Hecho${cSlug}`, `#CompraCercano`, `#${cSlug}Recomienda`],
+    },
+    {
+      day: 4, platform: 'TikTok',
+      hooks: [
+        `Busqué "${p} en ${c}" y lo que encontré me sorprendió.`,
+        `Respondiendo a los comentarios más frecuentes sobre ${p} en ${c}.`,
+        `Lo que nadie te cuenta cuando buscas ${p} en internet.`,
+      ],
+      content_ideas: [
+        `Reacciona a una búsqueda en Google de "${p} ${c}" mostrando los resultados reales.`,
+        `Vídeo respondiendo las 3 preguntas más comunes que recibís sobre ${p}.`,
+        `Dueto o stitch con un creador que habló de tu nicho, añadiendo tu perspectiva local.`,
+      ],
+      local_hashtags: [`#${cSlug}ShopLocal`, `#TendenciasLocal`, `#${pSlug}Online`],
+    },
+    {
+      day: 5, platform: 'Instagram',
+      hooks: [
+        `Si vas a comprar ${p} esta semana, lee esto antes.`,
+        `3 errores que comete casi todo el mundo al elegir ${p} por internet.`,
+        `Esto es lo que diferencia un buen ${p} de uno mediocre. Hilo.`,
+      ],
+      content_ideas: [
+        `Carrusel educativo: 3 errores al comprar ${p} online y cómo evitarlos.`,
+        `Guía rápida en 5 pasos para elegir el mejor ${p} según tu necesidad.`,
+        `Post comparativo mostrando diferencias de calidad con contexto local de ${c}.`,
+      ],
+      local_hashtags: [`#Consejos${pSlug}`, `#CompraBien`, `#${cSlug}Calidad`],
+    },
+    {
+      day: 6, platform: 'TikTok',
+      hooks: [
+        `Lo que nadie te cuenta del trabajo detrás de un pedido artesanal de ${p}.`,
+        `Así empieza nuestro día en el taller de ${c}. No es lo que imaginas.`,
+        `Un día trabajando en ${c}: esto es lo que realmente hacemos.`,
+      ],
+      content_ideas: [
+        `Vlog rápido de un día en el taller: desde la apertura hasta el envío del último pedido.`,
+        `Vídeo mostrando las herramientas y materiales que usáis cada día para crear ${p}.`,
+        `"Lo que me llevé de un día de trabajo" mostrando el producto terminado y el equipo.`,
+      ],
+      local_hashtags: [`#Emprendedor${cSlug}`, `#DetrasDelTaller`, `#VidaArtesana`],
+    },
+    {
+      day: 7, platform: 'Instagram',
+      hooks: [
+        `Solo hoy, solo para vosotros. Nuevo lote de ${p} disponible. Link en bio.`,
+        `Esta semana tenemos algo especial para los seguidores de ${c}. ¿Listo?`,
+        `Últimas unidades del lote de ${p}. Cuando se acaben, se acaban.`,
+      ],
+      content_ideas: [
+        `Oferta o lanzamiento semanal exclusivo para seguidores, con foto del producto nuevo.`,
+        `Carrusel mostrando el nuevo lote de ${p} con detalles, colores y disponibilidad.`,
+        `Story interactiva con encuesta sobre el próximo producto o diseño para ${c}.`,
+      ],
+      local_hashtags: [`#${pSlug}${cSlug}`, `#OfertaLocal`, `#NuevoLote${cSlug}`],
+    },
   ];
 
   const handleGeneratePlan = async () => {
@@ -1377,14 +1473,23 @@ function Dashboard({
                   : isTikTok
                     ? 'bg-cyan-500/15 border-cyan-500/25 text-cyan-300'
                     : 'bg-violet-500/15 border-violet-500/25 text-violet-300';
+                const accentText = isInsta ? 'text-pink-400' : isTikTok ? 'text-cyan-400' : 'text-violet-400';
                 const hashBgClass = isInsta
                   ? 'bg-pink-500/8 border-pink-500/15'
                   : isTikTok
                     ? 'bg-cyan-500/8 border-cyan-500/15'
                     : 'bg-violet-500/8 border-violet-500/15';
                 const hashTextClass = isInsta ? 'text-pink-300' : isTikTok ? 'text-cyan-300' : 'text-violet-300';
-                const hashIconClass = isInsta ? 'text-pink-400' : isTikTok ? 'text-cyan-400' : 'text-violet-400';
-                const tags = Array.isArray(day.local_hashtags)
+
+                const hooks: string[] = Array.isArray(day.hooks) ? day.hooks
+                  : typeof (day as unknown as { hook?: string }).hook === 'string'
+                    ? [(day as unknown as { hook: string }).hook]
+                    : [];
+                const ideas: string[] = Array.isArray(day.content_ideas) ? day.content_ideas
+                  : typeof (day as unknown as { content_idea?: string }).content_idea === 'string'
+                    ? [(day as unknown as { content_idea: string }).content_idea]
+                    : [];
+                const tags: string[] = Array.isArray(day.local_hashtags)
                   ? day.local_hashtags
                   : typeof day.local_hashtags === 'string'
                     ? (day.local_hashtags as string).split(/[\s,]+/).filter(Boolean)
@@ -1393,40 +1498,61 @@ function Dashboard({
                 return (
                   <div
                     key={day.day}
-                    className={`rounded-2xl border bg-gradient-to-b to-slate-900/80 p-4 space-y-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${colorClass}`}
+                    className={`rounded-2xl border bg-gradient-to-b to-slate-900/80 p-4 space-y-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${colorClass}`}
                   >
                     {/* Day + platform badge */}
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Día {day.day}</span>
+                      <span className={`text-sm font-bold ${accentText}`}>Día {day.day}</span>
                       <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeClass}`}>
                         {isInsta ? <Instagram size={10} /> : isTikTok ? <Video size={10} /> : <Globe size={10} />}
                         {day.platform}
                       </span>
                     </div>
 
-                    {/* Hook */}
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <Zap size={10} className="text-emerald-400 shrink-0" />
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Gancho</span>
+                    {/* Hooks */}
+                    {hooks.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5">
+                          <Zap size={10} className="text-emerald-400 shrink-0" />
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ganchos</span>
+                        </div>
+                        <ol className="space-y-1.5">
+                          {hooks.map((h, i) => (
+                            <li key={i} className="flex gap-2">
+                              <span className="text-emerald-500 text-xs font-bold shrink-0 mt-0.5">{i + 1}.</span>
+                              <p className="text-xs text-slate-200 leading-relaxed italic">"{h}"</p>
+                            </li>
+                          ))}
+                        </ol>
                       </div>
-                      <p className="text-xs text-slate-200 leading-relaxed italic">"{day.hook}"</p>
-                    </div>
+                    )}
 
-                    {/* Content idea */}
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <Lightbulb size={10} className="text-amber-400 shrink-0" />
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Idea de contenido</span>
+                    {/* Content ideas */}
+                    {ideas.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5">
+                          <Lightbulb size={10} className="text-amber-400 shrink-0" />
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ideas de contenido</span>
+                        </div>
+                        <ol className="space-y-1.5">
+                          {ideas.map((idea, i) => (
+                            <li key={i} className="flex gap-2">
+                              <span className="text-amber-500 text-xs font-bold shrink-0 mt-0.5">{i + 1}.</span>
+                              <p className="text-xs text-slate-300 leading-relaxed">{idea}</p>
+                            </li>
+                          ))}
+                        </ol>
                       </div>
-                      <p className="text-sm text-slate-300 leading-relaxed">{day.content_idea}</p>
-                    </div>
+                    )}
+
+                    {/* Divider */}
+                    <div className="border-t border-slate-800" />
 
                     {/* Hashtags */}
                     {tags.length > 0 && (
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
                         <div className="flex items-center gap-1.5">
-                          <Hash size={10} className={hashIconClass + ' shrink-0'} />
+                          <Hash size={10} className={accentText + ' shrink-0'} />
                           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Hashtags</span>
                         </div>
                         <div className="flex flex-wrap gap-1.5">

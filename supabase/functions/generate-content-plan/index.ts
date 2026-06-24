@@ -9,14 +9,14 @@ const corsHeaders = {
 
 const SYSTEM_PROMPT = `Eres un Community Manager experto en viralidad local. Crea un plan de contenidos de 7 días para redes sociales. Cada día debe ser una idea de post o vídeo corto enfocada en atraer clientes de la ciudad especificada hacia el producto. Devuelve un formato JSON limpio con un array de 7 objetos, cada uno con las claves: day, platform, hook, content_idea y local_hashtags.
 
-Reglas:
+Importante: para cada día genera EXACTAMENTE:
 - "day": número del día (1-7)
-- "platform": "Instagram" o "TikTok", alternando entre ambas
-- "hook": la primera frase o gancho del post/vídeo, directa y con urgencia o curiosidad
-- "content_idea": descripción concreta de la idea de contenido (2-3 frases, específica para producto y ciudad)
-- "local_hashtags": array de 2-3 hashtags locales relevantes (sin espacios, incluyen ciudad y/o producto)
+- "platform": "Instagram" o "TikTok", alternando entre ambas empezando por Instagram
+- "hooks": array de 3 ganchos distintos (primera frase del post/vídeo, directa y con urgencia o curiosidad)
+- "content_ideas": array de 3 ideas de contenido distintas (2-3 frases cada una, específicas para el producto y la ciudad)
+- "local_hashtags": array de 3-5 hashtags locales relevantes (sin espacios, combinando ciudad y producto)
 
-Usa el nombre de la ciudad de forma natural en las ideas. Basa las ideas en la descripción SEO del producto si se proporciona.`;
+Usa el nombre de la ciudad de forma natural. Basa las ideas en la descripción SEO del producto si se proporciona. Sé creativo, variado y accionable.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -149,14 +149,18 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Normalise local_hashtags: ensure it's always an array
+    const toArray = (val: unknown): string[] => {
+      if (Array.isArray(val)) return val as string[];
+      if (typeof val === "string") return (val as string).split(/[\s,]+/).filter(Boolean);
+      return [];
+    };
+
     const days = (parsed.days as Record<string, unknown>[]).map((d) => ({
-      ...d,
-      local_hashtags: Array.isArray(d.local_hashtags)
-        ? d.local_hashtags
-        : typeof d.local_hashtags === "string"
-          ? (d.local_hashtags as string).split(/[\s,]+/).filter(Boolean)
-          : [],
+      day: d.day,
+      platform: d.platform,
+      hooks: toArray(d.hooks ?? d.hook),
+      content_ideas: toArray(d.content_ideas ?? d.content_idea),
+      local_hashtags: toArray(d.local_hashtags),
     }));
 
     return new Response(
