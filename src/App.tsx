@@ -40,6 +40,14 @@ import {
   FileText,
   Clock,
   BrainCircuit,
+  Radar,
+  ShieldAlert,
+  Activity,
+  Eye,
+  Swords,
+  Bell,
+  ChevronLeft,
+  Target,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -793,6 +801,447 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
   );
 }
 
+// ─── Radar de Competencia ─────────────────────────────────────────────────────
+
+type ThreatLevel = 'high' | 'medium' | 'low';
+
+interface Rival {
+  id: string;
+  name: string;
+  category: string;
+  threat: ThreatLevel;
+  lastMove: string;
+  lastMoveTime: string;
+  counterStrategy: {
+    title: string;
+    summary: string;
+    actions: { label: string; detail: string }[];
+  };
+}
+
+const RIVALS: Rival[] = [
+  {
+    id: 'r1',
+    name: 'Clínica Dental Alfa',
+    category: 'Odontología',
+    threat: 'high',
+    lastMove: 'Actualización masiva de palabras clave de geolocalización en su ficha',
+    lastMoveTime: 'hace 4 horas',
+    counterStrategy: {
+      title: 'Contraataque de Autoridad Local',
+      summary: 'Clínica Dental Alfa ha reforzado su posicionamiento geográfico. Tu respuesta debe enfocarse en demostrar mayor profundidad de servicio y confianza social antes de que consoliden su ventaja.',
+      actions: [
+        { label: 'Actualizar descripción con hiperlocal', detail: 'Reescribe tu descripción incluyendo el nombre del barrio exacto, referencias a calles conocidas y puntos de referencia locales. Usa frases como "a 2 minutos de [hito local]" para superar el keyword stuffing de la competencia.' },
+        { label: 'Campaña de reseñas de emergencia', detail: 'Contacta a tus 20 últimos clientes satisfechos con un mensaje personalizado pidiendo una reseña de Google. Una ráfaga de 8-10 reseñas nuevas esta semana anulará el impacto de sus cambios de keywords.' },
+        { label: 'Post de respuesta geolocalizado', detail: 'Publica hoy en Google Business Profile un post con el título exacto: "[Tu ciudad] elige [Tu negocio] para [servicio principal]". Incluye foto del local con geoetiqueta activada.' },
+      ],
+    },
+  },
+  {
+    id: 'r2',
+    name: 'FitPro Gym Plus',
+    category: 'Fitness',
+    threat: 'high',
+    lastMove: '12 reseñas nuevas de 5 estrellas en las últimas 48h — posible campaña coordinada',
+    lastMoveTime: 'hace 6 horas',
+    counterStrategy: {
+      title: 'Neutralización de Señal Social',
+      summary: 'FitPro está generando velocidad de reseñas anormalmente alta. Los algoritmos de Google pueden penalizarlos si es artificial, pero mientras tanto necesitas igualar su señal social con reseñas auténticas.',
+      actions: [
+        { label: 'Activar protocolo de reseñas verificadas', detail: 'Envía un QR físico a tus clientes activos enlazando directamente a tu ficha de Google. Las reseñas de usuarios con historial largo de reseñas tienen más peso algorítmico que las nuevas cuentas.' },
+        { label: 'Reportar actividad sospechosa', detail: 'Si las 12 reseñas son de cuentas con poco historial y publicadas en horas seguidas, repórtalas a Google como contenido falso. Esto puede invalidar su campaña completa.' },
+        { label: 'Publicar casos de éxito verificables', detail: 'Sube 3 fotos esta semana con clientes reales (con permiso) y resultados. El contenido visual auténtico contrarresta las reseñas de texto genérico que suelen tener las campañas artificiales.' },
+      ],
+    },
+  },
+  {
+    id: 'r3',
+    name: 'Peluquería Moderna Sol',
+    category: 'Belleza',
+    threat: 'medium',
+    lastMove: 'Añadió servicios premium y actualizó lista de precios en el perfil',
+    lastMoveTime: 'hace 1 día',
+    counterStrategy: {
+      title: 'Diferenciación de Propuesta de Valor',
+      summary: 'Sol está posicionándose en el segmento premium. Esto puede captar clientes de mayor ticket medio. Responde definiendo tu propia propuesta única antes de que el mercado los asocie con esa posición.',
+      actions: [
+        { label: 'Destacar experiencia y especialización', detail: 'Añade a tu descripción los años de experiencia, formaciones específicas o técnicas exclusivas que ofreces. Los clientes premium eligen especialistas, no generalistas con precios altos.' },
+        { label: 'Publicar servicios con detalles técnicos', detail: 'En la sección de servicios de tu GBP, describe cada tratamiento con vocabulario técnico específico (marcas de producto, técnicas certificadas). Esto genera confianza real frente a listas de precios vacías.' },
+        { label: 'Activar preguntas y respuestas', detail: 'Responde públicamente en GBP preguntas frecuentes sobre tus diferenciales: ¿Usáis productos ecológicos? ¿Tenéis servicio sin cita previa? Las Q&A bien escritas son SEO puro.' },
+      ],
+    },
+  },
+  {
+    id: 'r4',
+    name: 'Centro Médico Salud 360',
+    category: 'Salud',
+    threat: 'medium',
+    lastMove: 'Publicó 4 posts de Google en los últimos 3 días con imágenes profesionales',
+    lastMoveTime: 'hace 2 días',
+    counterStrategy: {
+      title: 'Dominio de Contenido Editorial',
+      summary: 'Salud 360 está ejecutando una estrategia de contenido consistente. Si no mantienes el ritmo, Google interpretará su perfil como más activo y relevante. La regularidad supera a la calidad esporádica.',
+      actions: [
+        { label: 'Programar mínimo 1 post diario esta semana', detail: 'Usa el calendario de posts de tu panel para publicar contenido simple: un consejo, una foto del local, un before/after, un dato de salud. El algoritmo de GBP premia la actividad reciente sobre la calidad de cada post.' },
+        { label: 'Contraatacar con contenido de autoridad', detail: 'Publica un post tipo "Guía: cómo elegir [servicio]" — contenido educativo que se comparte y que posiciona como experto. Esto tiene más impacto que cuatro posts de imagen genérica.' },
+        { label: 'Activar publicaciones de oferta', detail: 'Crea una oferta temporal en GBP (formato especial) para esta semana. Los posts de oferta tienen mayor visibilidad en el panel de conocimiento de Google y aparecen destacados frente a posts normales.' },
+      ],
+    },
+  },
+  {
+    id: 'r5',
+    name: 'Restaurante La Terraza',
+    category: 'Hostelería',
+    threat: 'low',
+    lastMove: 'Actualizó horario de apertura y añadió horario de festivos',
+    lastMoveTime: 'hace 3 días',
+    counterStrategy: {
+      title: 'Mantenimiento de Ventaja Actual',
+      summary: 'La Terraza solo ha realizado actualizaciones de mantenimiento básico. No representa amenaza inmediata. Aprovecha para consolidar tu ventaja competitiva en los campos donde ya te diferencias.',
+      actions: [
+        { label: 'Verificar consistencia NAP propia', detail: 'Comprueba que tu nombre, dirección y teléfono son idénticos en Google, Facebook, TripAdvisor y tu web. La consistencia NAP tiene impacto directo en el local pack y es fácil de descuidar.' },
+        { label: 'Añadir atributos de negocio', detail: 'Revisa los atributos disponibles en tu categoría de GBP: accesibilidad, métodos de pago, idiomas, características especiales. Cada atributo activado es un filtro de búsqueda adicional donde puedes aparecer.' },
+        { label: 'Responder reseñas sin contestar', detail: 'Revisa si tienes reseñas sin responder en los últimos 30 días. Responder el 100% de las reseñas —incluidas las negativas con protocolo correcto— es uno de los factores de ranking más fáciles de ejecutar.' },
+      ],
+    },
+  },
+];
+
+const LIVE_ALERTS = [
+  { id: 'a1', icon: '⚠️', rival: 'Clínica Dental Alfa', action: 'ha actualizado sus palabras clave de geolocalización', time: 'hace 4 horas', threat: 'high' as ThreatLevel },
+  { id: 'a2', icon: '🔴', rival: 'FitPro Gym Plus', action: 'ha recibido 12 nuevas reseñas de 5 estrellas en 48h', time: 'hace 6 horas', threat: 'high' as ThreatLevel },
+  { id: 'a3', icon: '🟡', rival: 'Peluquería Moderna Sol', action: 'ha actualizado su lista de servicios y precios premium', time: 'hace 1 día', threat: 'medium' as ThreatLevel },
+  { id: 'a4', icon: '🟡', rival: 'Centro Médico Salud 360', action: 'ha publicado 4 posts consecutivos con imágenes profesionales', time: 'hace 2 días', threat: 'medium' as ThreatLevel },
+  { id: 'a5', icon: '🟢', rival: 'Restaurante La Terraza', action: 'ha actualizado su horario incluyendo festivos', time: 'hace 3 días', threat: 'low' as ThreatLevel },
+  { id: 'a6', icon: '⚠️', rival: 'Clínica Dental Alfa', action: 'ha añadido 6 nuevas fotos del interior con geotags', time: 'hace 5 horas', threat: 'high' as ThreatLevel },
+  { id: 'a7', icon: '🔴', rival: 'FitPro Gym Plus', action: 'ha publicado una oferta de captación con descuento del 30%', time: 'hace 9 horas', threat: 'high' as ThreatLevel },
+];
+
+function ThreatBadge({ level }: { level: ThreatLevel }) {
+  const styles = {
+    high:   'bg-red-500/15 border-red-500/30 text-red-300',
+    medium: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
+    low:    'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
+  };
+  const labels = { high: 'Alto', medium: 'Medio', low: 'Bajo' };
+  const dots = { high: 'bg-red-400', medium: 'bg-amber-400', low: 'bg-emerald-400' };
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border ${styles[level]}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dots[level]}`} />
+      {labels[level]}
+    </span>
+  );
+}
+
+function CompetitorRadar() {
+  const [visibleAlerts, setVisibleAlerts] = useState(LIVE_ALERTS.slice(0, 3));
+  const [alertIdx, setAlertIdx] = useState(3);
+  const [scanAngle, setScanAngle] = useState(0);
+  const [selectedRival, setSelectedRival] = useState<Rival | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const feedRef = React.useRef<HTMLDivElement>(null);
+
+  // Rotate scan line
+  useEffect(() => {
+    const timer = setInterval(() => setScanAngle((a) => (a + 1) % 360), 20);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Rolling alert feed
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisibleAlerts((prev) => {
+        const next = LIVE_ALERTS[alertIdx % LIVE_ALERTS.length];
+        return [next, ...prev].slice(0, 5);
+      });
+      setAlertIdx((i) => i + 1);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [alertIdx]);
+
+  const openDrawer = (rival: Rival) => {
+    setSelectedRival(rival);
+    setDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setTimeout(() => setSelectedRival(null), 300);
+  };
+
+  const threatBorder = { high: 'border-red-500/50 text-red-300', medium: 'border-amber-500/50 text-amber-300', low: 'border-emerald-500/50 text-emerald-300' };
+  const alertBg = { high: 'border-red-500/20 bg-red-500/5', medium: 'border-amber-500/20 bg-amber-500/5', low: 'border-emerald-500/20 bg-emerald-500/5' };
+
+  return (
+    <div className="space-y-8 relative">
+      {/* Header */}
+      <div className="border-b border-slate-800/50 pb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+            Radar de <span className="text-emerald-400">Competencia</span>
+          </h1>
+          <p className="text-slate-400 text-sm max-w-xl">
+            Monitoreo táctico en tiempo real de los movimientos de tus rivales directos. Detecta amenazas y despliega contramedidas de IA.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/8 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Live</span>
+        </div>
+      </div>
+
+      {/* Top row: Mini-radar + Alert feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Radar visual */}
+        <div className="rounded-2xl border border-emerald-900/50 bg-slate-950/80 p-5 flex flex-col items-center justify-center gap-4"
+          style={{ boxShadow: '0 0 40px rgba(16,185,129,0.06), inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+          <p className="text-xs font-bold text-emerald-500/70 uppercase tracking-widest self-start">Sector de Vigilancia</p>
+          <div className="relative w-40 h-40">
+            {/* Grid rings */}
+            {[1,2,3,4].map((n) => (
+              <div key={n} className="absolute inset-0 rounded-full border border-emerald-900/60"
+                style={{ margin: `${(4-n)*20}px` }} />
+            ))}
+            {/* Cross hairs */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-full h-px bg-emerald-900/50" />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-px h-full bg-emerald-900/50" />
+            </div>
+            {/* Scan line */}
+            <div className="absolute inset-0 rounded-full overflow-hidden">
+              <div
+                className="absolute top-1/2 left-1/2 origin-left h-px w-1/2"
+                style={{
+                  background: 'linear-gradient(to right, rgba(16,185,129,0.7), transparent)',
+                  transform: `rotate(${scanAngle}deg)`,
+                  width: '50%',
+                  boxShadow: '0 0 8px rgba(16,185,129,0.5)',
+                }}
+              />
+              {/* Sweep wedge */}
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: `conic-gradient(from ${scanAngle}deg, rgba(16,185,129,0.08) 0deg, transparent 60deg)`,
+                }}
+              />
+            </div>
+            {/* Center dot */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+            </div>
+            {/* Rival blips */}
+            {RIVALS.map((r, i) => {
+              const angle = (i / RIVALS.length) * 2 * Math.PI;
+              const dist = r.threat === 'high' ? 35 : r.threat === 'medium' ? 52 : 64;
+              const x = 50 + dist * Math.cos(angle);
+              const y = 50 + dist * Math.sin(angle);
+              return (
+                <div key={r.id}
+                  className={`absolute w-2 h-2 rounded-full -translate-x-1/2 -translate-y-1/2 ${
+                    r.threat === 'high' ? 'bg-red-400 shadow-[0_0_6px_rgba(239,68,68,0.8)]' :
+                    r.threat === 'medium' ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]' :
+                    'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
+                  } animate-pulse`}
+                  style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.4}s` }}
+                />
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-3 gap-2 w-full text-center">
+            {(['high','medium','low'] as ThreatLevel[]).map((t) => (
+              <div key={t} className="space-y-0.5">
+                <p className="text-lg font-bold text-white">{RIVALS.filter(r=>r.threat===t).length}</p>
+                <p className="text-[10px] text-slate-600 uppercase">{t==='high'?'Alto':t==='medium'?'Medio':'Bajo'}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Alert feed */}
+        <div className="lg:col-span-2 rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+          style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-800/60 bg-slate-900/80">
+            <Bell size={13} className="text-emerald-400" />
+            <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">Feed de Alertas — Tiempo Real</span>
+            <span className="ml-auto text-[10px] text-emerald-500/70 font-mono">SYS_MONITOR v2.4</span>
+          </div>
+          <div ref={feedRef} className="divide-y divide-slate-800/30">
+            {visibleAlerts.map((alert, i) => (
+              <div
+                key={`${alert.id}-${i}`}
+                className={`flex items-start gap-3 px-5 py-3.5 border-l-2 transition-all duration-500 ${
+                  i === 0 ? `${alertBg[alert.threat]} border-l-current animate-[fadeSlideIn_0.4s_ease]` : 'border-l-transparent'
+                }`}
+                style={i === 0 ? { borderLeftColor: alert.threat === 'high' ? '#f87171' : alert.threat === 'medium' ? '#fbbf24' : '#34d399' } : {}}
+              >
+                <span className="text-base shrink-0 mt-0.5">{alert.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-200 leading-snug">
+                    <span className="font-semibold">{alert.rival}</span>
+                    {' '}<span className="text-slate-400">{alert.action}</span>
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5 font-mono">{alert.time}</p>
+                </div>
+                <ThreatBadge level={alert.threat} />
+              </div>
+            ))}
+          </div>
+          <div className="px-5 py-2.5 border-t border-slate-800/40 bg-slate-950/40 flex items-center gap-2">
+            <Activity size={10} className="text-emerald-500/60" />
+            <span className="text-[10px] text-slate-700 font-mono">Escaneando {RIVALS.length} rivales activos · Próxima actualización en 4s</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Competitor table */}
+      <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800/60">
+          <Target size={14} className="text-emerald-400" />
+          <h3 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Tabla de Rivales Directos</h3>
+          <span className="ml-auto text-xs text-slate-600">{RIVALS.length} objetivos monitorizados</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-800/60">
+                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rival Directo</th>
+                <th className="px-4 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Amenaza</th>
+                <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Último Movimiento Detectado</th>
+                <th className="px-6 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/40">
+              {RIVALS.map((rival) => (
+                <tr key={rival.id}
+                  className="group transition-colors duration-150 hover:bg-slate-800/30">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${threatBorder[rival.threat]}`}
+                        style={{ background: 'rgba(15,23,42,0.8)' }}>
+                        <Eye size={13} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-100">{rival.name}</p>
+                        <p className="text-xs text-slate-600">{rival.category}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-center">
+                    <ThreatBadge level={rival.threat} />
+                  </td>
+                  <td className="px-4 py-4">
+                    <div>
+                      <p className="text-sm text-slate-300 leading-snug max-w-sm">{rival.lastMove}</p>
+                      <p className="text-xs text-slate-600 mt-1 font-mono">{rival.lastMoveTime}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => openDrawer(rival)}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold
+                        bg-slate-800/60 border-slate-700/60 text-slate-300
+                        hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-300
+                        transition-all duration-200 group-hover:border-slate-600"
+                    >
+                      <Swords size={12} />
+                      Ver Contramedida de IA
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Drawer overlay */}
+      {(drawerOpen || selectedRival) && (
+        <>
+          <div
+            className={`fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 transition-opacity duration-300 ${drawerOpen ? 'opacity-100' : 'opacity-0'}`}
+            onClick={closeDrawer}
+          />
+          <div className={`fixed right-0 top-0 h-full w-full max-w-lg bg-slate-900 border-l border-slate-700/60 z-50 flex flex-col
+            shadow-2xl transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            style={{ boxShadow: '-8px 0 40px rgba(0,0,0,0.5)' }}>
+            {selectedRival && (
+              <>
+                {/* Drawer header */}
+                <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-800/60 bg-slate-950/50 shrink-0">
+                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${threatBorder[selectedRival.threat]}`}>
+                    <ShieldAlert size={16} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500 font-mono uppercase tracking-widest mb-0.5">Contramedida de IA</p>
+                    <p className="text-sm font-bold text-white truncate">{selectedRival.counterStrategy.title}</p>
+                  </div>
+                  <button onClick={closeDrawer}
+                    className="w-8 h-8 rounded-lg bg-slate-800/60 border border-slate-700/60 flex items-center justify-center
+                      text-slate-400 hover:text-white hover:border-slate-600 transition-all duration-150 shrink-0">
+                    <ChevronLeft size={16} />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  {/* Rival info */}
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-800/50 border border-slate-700/40 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-100">{selectedRival.name}</p>
+                      <p className="text-xs text-slate-500">{selectedRival.lastMove}</p>
+                    </div>
+                    <ThreatBadge level={selectedRival.threat} />
+                  </div>
+
+                  {/* Summary */}
+                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-5 py-4">
+                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <BrainCircuit size={11} /> Análisis IA
+                    </p>
+                    <p className="text-sm text-slate-300 leading-relaxed">{selectedRival.counterStrategy.summary}</p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <Swords size={11} /> Plan de Acción ({selectedRival.counterStrategy.actions.length} pasos)
+                    </p>
+                    {selectedRival.counterStrategy.actions.map((action, i) => (
+                      <div key={i} className="rounded-xl border border-slate-700/50 bg-slate-800/40 overflow-hidden">
+                        <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/30">
+                          <span className="w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-xs font-bold text-emerald-400 shrink-0">
+                            {i + 1}
+                          </span>
+                          <p className="text-sm font-semibold text-slate-200">{action.label}</p>
+                        </div>
+                        <p className="px-4 py-3 text-xs text-slate-400 leading-relaxed">{action.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Drawer footer */}
+                <div className="px-6 py-4 border-t border-slate-800/60 bg-slate-950/40 shrink-0">
+                  <button
+                    onClick={closeDrawer}
+                    className="w-full py-2.5 rounded-xl bg-slate-800 border border-slate-700/60 text-sm font-semibold text-slate-300
+                      hover:bg-slate-700 hover:text-white transition-all duration-150"
+                  >
+                    Cerrar Panel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── AI Digital Twin ──────────────────────────────────────────────────────────
 
 type CategoryOption = 'basic' | 'optimized' | 'hyper';
@@ -1534,7 +1983,7 @@ function Dashboard({
   previewMode?: boolean;
 }) {
   const { session } = useAuth();
-  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin'>('generator');
+  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar'>('generator');
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
@@ -1918,6 +2367,16 @@ function Dashboard({
           <BrainCircuit size={14} />
           AI Digital Twin
         </button>
+        <button
+          onClick={() => setTab('radar')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+            ${tab === 'radar'
+              ? 'bg-slate-800 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <Radar size={14} />
+          Radar de Competencia
+        </button>
       </div>
 
       {tab === 'saved' ? (
@@ -1928,6 +2387,8 @@ function Dashboard({
         <MapsScanner previewMode={previewMode} />
       ) : tab === 'ai-twin' ? (
         <AiDigitalTwin />
+      ) : tab === 'radar' ? (
+        <CompetitorRadar />
       ) : (
       <>
       {/* Page header */}
