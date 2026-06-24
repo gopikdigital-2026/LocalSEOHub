@@ -922,7 +922,7 @@ function Dashboard({
   const nbiz = napBusinessName || '[Nombre del negocio]';
   const nadr = napAddress || '[Calle], [Número], [CP] ' + (city || '[Ciudad]') + ', España';
   const ntel = napPhone || '+34 [teléfono]';
-  const napDesc = `${nbiz} es un negocio local especializado en ${p} ubicado en ${c}. Ofrecemos ${p} de calidad con atención personalizada para nuestros clientes de ${c} y alrededores. Nos distinguimos por nuestro compromiso con la calidad y el servicio al cliente. Visítanos en ${nadr} o llámanos al ${ntel}. Somos tu mejor opción local para ${p} en ${c}. ¡Contáctanos hoy!`;
+  const napDesc = `${nbiz} es un negocio local especializado en ${product} ubicado en ${city || '[Ciudad]'}. Ofrecemos ${product} de calidad con atención personalizada para nuestros clientes de ${city || '[Ciudad]'} y alrededores. Nos distinguimos por nuestro compromiso con la calidad y el servicio al cliente. Visítanos en ${nadr} o llámanos al ${ntel}. Somos tu mejor opción local para ${product} en ${city || '[Ciudad]'}. ¡Contáctanos hoy!`;
 
   const PREVIEW_DIRECTORIES: Directorio[] = [
     {
