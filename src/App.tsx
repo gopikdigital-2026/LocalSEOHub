@@ -39,6 +39,7 @@ import {
   Phone,
   FileText,
   Clock,
+  BrainCircuit,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -792,6 +793,333 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
   );
 }
 
+// ─── AI Digital Twin ──────────────────────────────────────────────────────────
+
+type CategoryOption = 'basic' | 'optimized' | 'hyper';
+
+const CATEGORY_OPTIONS: { value: CategoryOption; label: string }[] = [
+  { value: 'basic',      label: 'Genérica Básica' },
+  { value: 'optimized',  label: 'Optimizada con Facetas Secundarias' },
+  { value: 'hyper',      label: 'Hiper-específica con Esquema 2026' },
+];
+
+const SENTIMENT_MAP: Record<CategoryOption, { low: string; mid: string; high: string }> = {
+  basic: {
+    low:  'El perfil tiene presencia digital mínima. Los motores de IA apenas rastrean señales relevantes de este negocio y lo excluyen de los resultados conversacionales.',
+    mid:  'Visibilidad emergente. La IA detecta el negocio pero lo cataloga como genérico, sin diferenciadores claros frente a la competencia local.',
+    high: 'Presencia sólida. Los LLMs incluyen el negocio en respuestas locales, aunque la categorización genérica limita la aparición en búsquedas de alta intención.',
+  },
+  optimized: {
+    low:  'La optimización secundaria aún no tiene suficiente señal para destacar. Se necesita mayor volumen de actividad para que los motores de IA prioricen este perfil.',
+    mid:  'Los motores de IA reconocen el perfil con facetas secundarias. El negocio empieza a aparecer en búsquedas de nicho con intención media-alta.',
+    high: 'Excelente posicionamiento semántico. Los LLMs asocian el perfil con múltiples consultas relevantes y lo recomiendan en respuestas de alta especificidad.',
+  },
+  hyper: {
+    low:  'El esquema 2026 está configurado pero sin suficiente actividad para generar tracción. Los datos estructurados existen, las señales aún son débiles.',
+    mid:  'Señales de autoridad detectadas. El esquema hiper-específico posiciona el perfil como referencia local en su categoría principal ante los motores de IA.',
+    high: 'Perfil de máxima autoridad. Los motores de IA conversacionales (ChatGPT, Gemini, Perplexity) citan este negocio como referencia prioritaria en su categoría y área geográfica.',
+  },
+};
+
+function CircularProgress({ value, size = 180 }: { value: number; size?: number }) {
+  const r = (size / 2) - 14;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (value / 100) * circ;
+
+  const color = value < 35 ? '#ef4444' : value < 65 ? '#f59e0b' : '#10b981';
+  const glowColor = value < 35 ? 'rgba(239,68,68,0.3)' : value < 65 ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)';
+
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="rotate-[-90deg]">
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        {/* Track */}
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#1e293b" strokeWidth="10" />
+        {/* Progress */}
+        <circle
+          cx={size/2} cy={size/2} r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          filter="url(#glow)"
+          style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1), stroke 0.4s ease' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+        <span
+          className="font-bold tabular-nums"
+          style={{ fontSize: size * 0.22, color, transition: 'color 0.4s ease', lineHeight: 1, filter: `drop-shadow(0 0 8px ${glowColor})` }}
+        >
+          {value}%
+        </span>
+        <span className="text-slate-500 font-medium" style={{ fontSize: size * 0.065 }}>AI VISIBILITY</span>
+      </div>
+    </div>
+  );
+}
+
+function AiDigitalTwin() {
+  const [reviewRate, setReviewRate] = useState(5);
+  const [postFreq, setPostFreq] = useState(2);
+  const [category, setCategory] = useState<CategoryOption>('basic');
+  const [displayIndex, setDisplayIndex] = useState(0);
+
+  const catMultiplier: Record<CategoryOption, number> = { basic: 0.55, optimized: 0.80, hyper: 1.0 };
+  const rawIndex = Math.round(
+    ((reviewRate / 30) * 40 + (postFreq / 7) * 25 + 35) * catMultiplier[category]
+  );
+  const visibilityIndex = Math.min(100, rawIndex);
+  const projectedClients = Math.round(visibilityIndex * 3.4 + reviewRate * 2.1 + postFreq * 4.8);
+
+  const sentimentLevel = visibilityIndex < 35 ? 'low' : visibilityIndex < 65 ? 'mid' : 'high';
+  const sentiment = SENTIMENT_MAP[category][sentimentLevel];
+
+  useEffect(() => {
+    const diff = visibilityIndex - displayIndex;
+    if (diff === 0) return;
+    const step = diff > 0 ? 1 : -1;
+    const timer = setTimeout(() => setDisplayIndex((v) => v + step), 12);
+    return () => clearTimeout(timer);
+  }, [visibilityIndex, displayIndex]);
+
+  const sentimentColor =
+    visibilityIndex < 35 ? { text: 'text-red-300', border: 'border-red-500/20', bg: 'bg-red-500/8', dot: 'bg-red-400', glow: 'shadow-red-500/10' } :
+    visibilityIndex < 65 ? { text: 'text-amber-300', border: 'border-amber-500/20', bg: 'bg-amber-500/8', dot: 'bg-amber-400', glow: 'shadow-amber-500/10' } :
+                           { text: 'text-emerald-300', border: 'border-emerald-500/20', bg: 'bg-emerald-500/8', dot: 'bg-emerald-400', glow: 'shadow-emerald-500/10' };
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="border-b border-slate-800/50 pb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+          AI Digital <span className="text-emerald-400">Twin</span>
+        </h1>
+        <p className="text-slate-400 text-sm max-w-xl">
+          Simula el impacto de tu estrategia digital y predice cómo te verán los motores de búsqueda de IA en tiempo real.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* LEFT — Control Panel */}
+        <div className="rounded-2xl border border-white/8 bg-gradient-to-br from-slate-900/80 to-slate-950/60 backdrop-blur-xl shadow-2xl p-7 space-y-8"
+          style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+              <BrainCircuit size={14} className="text-emerald-400" />
+            </div>
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Panel de Control</h2>
+          </div>
+
+          {/* Slider: Review rate */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Velocidad de Reseñas Mensuales
+              </label>
+              <span className="text-sm font-bold text-white bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 tabular-nums min-w-[3rem] text-center">
+                {reviewRate}
+              </span>
+            </div>
+            <div className="relative">
+              <input
+                type="range" min={0} max={30} value={reviewRate}
+                onChange={(e) => setReviewRate(Number(e.target.value))}
+                className="twin-slider w-full h-2 rounded-full appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #10b981 ${(reviewRate/30)*100}%, #1e293b ${(reviewRate/30)*100}%)`,
+                }}
+              />
+              <div className="flex justify-between mt-1.5">
+                <span className="text-xs text-slate-700">0</span>
+                <span className="text-xs text-slate-700">30 / mes</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Bajo', val: 5, hint: '< 5/mes' },
+                { label: 'Medio', val: 12, hint: '5-15/mes' },
+                { label: 'Alto', val: 25, hint: '> 15/mes' },
+              ].map((p) => (
+                <button
+                  key={p.val}
+                  onClick={() => setReviewRate(p.val)}
+                  className={`rounded-xl border py-2 text-xs font-semibold transition-all duration-200 ${
+                    reviewRate === p.val
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                      : 'bg-slate-800/40 border-slate-700/40 text-slate-500 hover:text-slate-300 hover:border-slate-600'
+                  }`}
+                >
+                  {p.label}
+                  <div className="text-[10px] font-normal opacity-60 mt-0.5">{p.hint}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Slider: Post frequency */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Frecuencia de Publicación Semanal
+              </label>
+              <span className="text-sm font-bold text-white bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 tabular-nums min-w-[3rem] text-center">
+                {postFreq}
+              </span>
+            </div>
+            <div className="relative">
+              <input
+                type="range" min={0} max={7} value={postFreq}
+                onChange={(e) => setPostFreq(Number(e.target.value))}
+                className="twin-slider w-full h-2 rounded-full appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #10b981 ${(postFreq/7)*100}%, #1e293b ${(postFreq/7)*100}%)`,
+                }}
+              />
+              <div className="flex justify-between mt-1.5">
+                <span className="text-xs text-slate-700">0</span>
+                <span className="text-xs text-slate-700">7 / semana</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[0,1,3,7].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setPostFreq(v)}
+                  className={`rounded-xl border py-2 text-xs font-semibold transition-all duration-200 ${
+                    postFreq === v
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                      : 'bg-slate-800/40 border-slate-700/40 text-slate-500 hover:text-slate-300 hover:border-slate-600'
+                  }`}
+                >
+                  {v}x
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dropdown: Category */}
+          <div className="space-y-3">
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+              Optimización de Categorías de Búsqueda
+            </label>
+            <div className="relative">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as CategoryOption)}
+                className="w-full bg-slate-800/80 border border-slate-700/60 rounded-xl px-4 py-3 pr-10 text-sm
+                  text-slate-100 outline-none appearance-none cursor-pointer transition-all duration-200
+                  focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10"
+              >
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            </div>
+            <div className={`rounded-xl border px-4 py-3 text-xs leading-relaxed transition-all duration-300 ${
+              category === 'basic'
+                ? 'bg-slate-800/30 border-slate-700/40 text-slate-500'
+                : category === 'optimized'
+                ? 'bg-blue-500/8 border-blue-500/20 text-blue-400/80'
+                : 'bg-emerald-500/8 border-emerald-500/20 text-emerald-400/80'
+            }`}>
+              {category === 'basic' && 'Sin diferenciación semántica. Visibilidad general limitada.'}
+              {category === 'optimized' && 'Facetas secundarias activas. Mejora el rastreo en búsquedas de nicho.'}
+              {category === 'hyper' && 'Esquema estructurado 2026 activo. Máxima legibilidad para LLMs y modelos de IA conversacional.'}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT — Simulation Viewer */}
+        <div className="rounded-2xl border border-white/8 bg-gradient-to-br from-slate-900/80 to-slate-950/60 backdrop-blur-xl shadow-2xl p-7 flex flex-col gap-6"
+          style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+              <Zap size={14} className="text-emerald-400" />
+            </div>
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Visor de Simulación</h2>
+          </div>
+
+          {/* Circular progress */}
+          <div className="flex flex-col items-center gap-3 py-2">
+            <CircularProgress value={displayIndex} size={192} />
+            <div className="flex items-center gap-4 text-center">
+              <div className="space-y-0.5">
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Nivel de Visibilidad</p>
+                <p className={`text-xs font-bold px-3 py-1 rounded-full border transition-all duration-300 ${
+                  displayIndex < 35
+                    ? 'bg-red-500/15 border-red-500/25 text-red-300'
+                    : displayIndex < 65
+                    ? 'bg-amber-500/15 border-amber-500/25 text-amber-300'
+                    : 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300'
+                }`}>
+                  {displayIndex < 35 ? 'Invisible' : displayIndex < 65 ? 'Emergente' : 'Dominante'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Projected clients card */}
+          <div className="rounded-2xl border border-white/8 bg-slate-800/40 backdrop-blur-sm p-5 flex items-center gap-5"
+            style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)' }}>
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <TrendingUp size={20} className="text-emerald-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-0.5">Clientes Potenciales Proyectados</p>
+              <div className="flex items-end gap-2">
+                <span
+                  className="text-3xl font-bold text-white tabular-nums"
+                  style={{ transition: 'all 0.3s ease' }}
+                >
+                  {projectedClients.toLocaleString()}
+                </span>
+                <span className="text-slate-500 text-sm mb-1">/ mes</span>
+              </div>
+            </div>
+            <div className="shrink-0">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${
+                projectedClients < 100 ? 'bg-red-400' : projectedClients < 300 ? 'bg-amber-400' : 'bg-emerald-400'
+              }`} />
+            </div>
+          </div>
+
+          {/* AI Sentiment box */}
+          <div className={`rounded-2xl border p-5 flex flex-col gap-3 transition-all duration-500 ${sentimentColor.border} ${sentimentColor.bg}`}
+            style={{ boxShadow: `0 4px 24px ${sentimentColor.glow.replace('shadow-', '').replace('/10', '')}` }}>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${sentimentColor.dot}`} />
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">AI Engine Search Sentiment</span>
+            </div>
+            <p className={`text-sm leading-relaxed font-medium transition-all duration-500 ${sentimentColor.text}`}>
+              {sentiment}
+            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex-1 h-1 rounded-full bg-slate-700/60 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${
+                    visibilityIndex < 35 ? 'bg-red-400' : visibilityIndex < 65 ? 'bg-amber-400' : 'bg-emerald-400'
+                  }`}
+                  style={{ width: `${visibilityIndex}%` }}
+                />
+              </div>
+              <span className="text-xs text-slate-500 tabular-nums">{visibilityIndex}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Maps Scanner ─────────────────────────────────────────────────────────────
 
 type ScanStatus = 'idle' | 'searching' | 'done';
@@ -1222,7 +1550,7 @@ function Dashboard({
   previewMode?: boolean;
 }) {
   const { session } = useAuth();
-  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner'>('generator');
+  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin'>('generator');
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
@@ -1596,6 +1924,16 @@ function Dashboard({
           <MapPinned size={14} />
           Escáner de Ficha Maps
         </button>
+        <button
+          onClick={() => setTab('ai-twin')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+            ${tab === 'ai-twin'
+              ? 'bg-slate-800 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <BrainCircuit size={14} />
+          AI Digital Twin
+        </button>
       </div>
 
       {tab === 'saved' ? (
@@ -1604,6 +1942,8 @@ function Dashboard({
         </div>
       ) : tab === 'maps-scanner' ? (
         <MapsScanner previewMode={previewMode} />
+      ) : tab === 'ai-twin' ? (
+        <AiDigitalTwin />
       ) : (
       <>
       {/* Page header */}
