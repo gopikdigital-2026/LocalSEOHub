@@ -803,31 +803,14 @@ const CATEGORY_OPTIONS: { value: CategoryOption; label: string }[] = [
   { value: 'hyper',      label: 'Hiper-específica con Esquema 2026' },
 ];
 
-const SENTIMENT_MAP: Record<CategoryOption, { low: string; mid: string; high: string }> = {
-  basic: {
-    low:  'El perfil tiene presencia digital mínima. Los motores de IA apenas rastrean señales relevantes de este negocio y lo excluyen de los resultados conversacionales.',
-    mid:  'Visibilidad emergente. La IA detecta el negocio pero lo cataloga como genérico, sin diferenciadores claros frente a la competencia local.',
-    high: 'Presencia sólida. Los LLMs incluyen el negocio en respuestas locales, aunque la categorización genérica limita la aparición en búsquedas de alta intención.',
-  },
-  optimized: {
-    low:  'La optimización secundaria aún no tiene suficiente señal para destacar. Se necesita mayor volumen de actividad para que los motores de IA prioricen este perfil.',
-    mid:  'Los motores de IA reconocen el perfil con facetas secundarias. El negocio empieza a aparecer en búsquedas de nicho con intención media-alta.',
-    high: 'Excelente posicionamiento semántico. Los LLMs asocian el perfil con múltiples consultas relevantes y lo recomiendan en respuestas de alta especificidad.',
-  },
-  hyper: {
-    low:  'El esquema 2026 está configurado pero sin suficiente actividad para generar tracción. Los datos estructurados existen, las señales aún son débiles.',
-    mid:  'Señales de autoridad detectadas. El esquema hiper-específico posiciona el perfil como referencia local en su categoría principal ante los motores de IA.',
-    high: 'Perfil de máxima autoridad. Los motores de IA conversacionales (ChatGPT, Gemini, Perplexity) citan este negocio como referencia prioritaria en su categoría y área geográfica.',
-  },
-};
 
 function CircularProgress({ value, size = 180 }: { value: number; size?: number }) {
   const r = (size / 2) - 14;
   const circ = 2 * Math.PI * r;
   const offset = circ - (value / 100) * circ;
 
-  const color = value < 35 ? '#ef4444' : value < 65 ? '#f59e0b' : '#10b981';
-  const glowColor = value < 35 ? 'rgba(239,68,68,0.3)' : value < 65 ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)';
+  const color = value < 50 ? '#ef4444' : value <= 80 ? '#f59e0b' : '#10b981';
+  const glowColor = value < 50 ? 'rgba(239,68,68,0.3)' : value <= 80 ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)';
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
@@ -872,15 +855,16 @@ function AiDigitalTwin() {
   const [category, setCategory] = useState<CategoryOption>('basic');
   const [displayIndex, setDisplayIndex] = useState(0);
 
-  const catMultiplier: Record<CategoryOption, number> = { basic: 0.55, optimized: 0.80, hyper: 1.0 };
-  const rawIndex = Math.round(
-    ((reviewRate / 30) * 40 + (postFreq / 7) * 25 + 35) * catMultiplier[category]
-  );
-  const visibilityIndex = Math.min(100, rawIndex);
-  const projectedClients = Math.round(visibilityIndex * 3.4 + reviewRate * 2.1 + postFreq * 4.8);
+  const catBonus: Record<CategoryOption, number> = { basic: 0, optimized: 15, hyper: 25 };
+  const visibilityIndex = Math.min(100, Math.round(40 + reviewRate * 1.5 + postFreq * 3 + catBonus[category]));
+  const projectedClients = Math.round(visibilityIndex * 3.5);
 
-  const sentimentLevel = visibilityIndex < 35 ? 'low' : visibilityIndex < 65 ? 'mid' : 'high';
-  const sentiment = SENTIMENT_MAP[category][sentimentLevel];
+  const sentiment =
+    visibilityIndex < 50
+      ? 'Invisible para agentes de IA. Los resúmenes automáticos ignorarán tu negocio por falta de consistencia.'
+      : visibilityIndex <= 80
+      ? 'Visibilidad moderada. Tu negocio aparece en menciones secundarias. Incrementa las reseñas para destacar.'
+      : '¡Entidad destacada! Los motores de búsqueda citan activamente tu local en los resúmenes prioritarios de la zona.';
 
   useEffect(() => {
     const diff = visibilityIndex - displayIndex;
@@ -891,9 +875,11 @@ function AiDigitalTwin() {
   }, [visibilityIndex, displayIndex]);
 
   const sentimentColor =
-    visibilityIndex < 35 ? { text: 'text-red-300', border: 'border-red-500/20', bg: 'bg-red-500/8', dot: 'bg-red-400', glow: 'shadow-red-500/10' } :
-    visibilityIndex < 65 ? { text: 'text-amber-300', border: 'border-amber-500/20', bg: 'bg-amber-500/8', dot: 'bg-amber-400', glow: 'shadow-amber-500/10' } :
-                           { text: 'text-emerald-300', border: 'border-emerald-500/20', bg: 'bg-emerald-500/8', dot: 'bg-emerald-400', glow: 'shadow-emerald-500/10' };
+    visibilityIndex < 50
+      ? { text: 'text-red-300',     border: 'border-red-500/20',     bg: 'bg-red-500/8',     dot: 'bg-red-400',     fill: 'bg-red-400' }
+      : visibilityIndex <= 80
+      ? { text: 'text-amber-300',   border: 'border-amber-500/20',   bg: 'bg-amber-500/8',   dot: 'bg-amber-400',   fill: 'bg-amber-400' }
+      : { text: 'text-emerald-300', border: 'border-emerald-500/20', bg: 'bg-emerald-500/8', dot: 'bg-emerald-400', fill: 'bg-emerald-400' };
 
   return (
     <div className="space-y-8">
@@ -1055,13 +1041,13 @@ function AiDigitalTwin() {
               <div className="space-y-0.5">
                 <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Nivel de Visibilidad</p>
                 <p className={`text-xs font-bold px-3 py-1 rounded-full border transition-all duration-300 ${
-                  displayIndex < 35
+                  displayIndex < 50
                     ? 'bg-red-500/15 border-red-500/25 text-red-300'
-                    : displayIndex < 65
+                    : displayIndex <= 80
                     ? 'bg-amber-500/15 border-amber-500/25 text-amber-300'
                     : 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300'
                 }`}>
-                  {displayIndex < 35 ? 'Invisible' : displayIndex < 65 ? 'Emergente' : 'Dominante'}
+                  {displayIndex < 50 ? 'Invisible' : displayIndex <= 80 ? 'Emergente' : 'Dominante'}
                 </p>
               </div>
             </div>
@@ -1087,14 +1073,14 @@ function AiDigitalTwin() {
             </div>
             <div className="shrink-0">
               <div className={`w-2 h-2 rounded-full animate-pulse ${
-                projectedClients < 100 ? 'bg-red-400' : projectedClients < 300 ? 'bg-amber-400' : 'bg-emerald-400'
+                projectedClients < 175 ? 'bg-red-400' : projectedClients < 280 ? 'bg-amber-400' : 'bg-emerald-400'
               }`} />
             </div>
           </div>
 
           {/* AI Sentiment box */}
           <div className={`rounded-2xl border p-5 flex flex-col gap-3 transition-all duration-500 ${sentimentColor.border} ${sentimentColor.bg}`}
-            style={{ boxShadow: `0 4px 24px ${sentimentColor.glow.replace('shadow-', '').replace('/10', '')}` }}>
+            style={{ boxShadow: visibilityIndex < 50 ? '0 4px 24px rgba(239,68,68,0.1)' : visibilityIndex <= 80 ? '0 4px 24px rgba(245,158,11,0.1)' : '0 4px 24px rgba(16,185,129,0.1)' }}>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${sentimentColor.dot}`} />
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">AI Engine Search Sentiment</span>
@@ -1105,9 +1091,7 @@ function AiDigitalTwin() {
             <div className="flex items-center gap-2 mt-1">
               <div className="flex-1 h-1 rounded-full bg-slate-700/60 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-700 ${
-                    visibilityIndex < 35 ? 'bg-red-400' : visibilityIndex < 65 ? 'bg-amber-400' : 'bg-emerald-400'
-                  }`}
+                  className={`h-full rounded-full transition-all duration-700 ${sentimentColor.fill}`}
                   style={{ width: `${visibilityIndex}%` }}
                 />
               </div>
