@@ -759,6 +759,341 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
   );
 }
 
+// ─── Maps Scanner ─────────────────────────────────────────────────────────────
+
+type ScanStatus = 'idle' | 'searching' | 'done';
+
+interface CheckItem {
+  id: string;
+  label: string;
+  category: 'critical' | 'improvable' | 'optimized';
+  checked: boolean;
+}
+
+const CHECKLIST_ITEMS: CheckItem[] = [
+  { id: 'name',       label: 'Nombre del negocio correcto',         category: 'critical',   checked: false },
+  { id: 'address',    label: 'Dirección verificada y completa',      category: 'critical',   checked: false },
+  { id: 'phone',      label: 'Teléfono principal actualizado',       category: 'critical',   checked: false },
+  { id: 'hours',      label: 'Horario de apertura configurado',      category: 'critical',   checked: false },
+  { id: 'category',   label: 'Categoría principal bien definida',    category: 'critical',   checked: false },
+  { id: 'website',    label: 'Web enlazada al perfil',               category: 'improvable', checked: false },
+  { id: 'desc',       label: 'Descripción del negocio completa',     category: 'improvable', checked: false },
+  { id: 'photos',     label: 'Más de 10 fotos publicadas',           category: 'improvable', checked: false },
+  { id: 'reviews',    label: 'Al menos 5 reseñas respondidas',       category: 'improvable', checked: false },
+  { id: 'posts',      label: 'Post publicado en los últimos 30 días',category: 'improvable', checked: false },
+  { id: 'keywords',   label: 'Palabras clave en la descripción',     category: 'optimized',  checked: false },
+  { id: 'qa',         label: 'Preguntas y respuestas activas',       category: 'optimized',  checked: false },
+  { id: 'services',   label: 'Servicios/productos añadidos',         category: 'optimized',  checked: false },
+  { id: 'attributes', label: 'Atributos del negocio configurados',   category: 'optimized',  checked: false },
+];
+
+function Speedometer({ score }: { score: number }) {
+  const R = 90;
+  const cx = 110;
+  const cy = 110;
+  const startAngle = 210;
+  const endAngle = 330;
+  const totalArc = 360 - startAngle + endAngle;
+
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const arcPoint = (angle: number) => ({
+    x: cx + R * Math.cos(toRad(angle)),
+    y: cy + R * Math.sin(toRad(angle)),
+  });
+
+  const describeArc = (start: number, end: number) => {
+    const s = arcPoint(start);
+    const e = arcPoint(end);
+    const large = end - start > 180 ? 1 : 0;
+    return `M ${s.x} ${s.y} A ${R} ${R} 0 ${large} 1 ${e.x} ${e.y}`;
+  };
+
+  const scoreAngle = startAngle + (score / 100) * totalArc;
+
+  const color =
+    score < 40 ? '#ef4444' :
+    score < 70 ? '#f59e0b' :
+    '#10b981';
+
+  const needleRad = toRad(scoreAngle);
+  const needleTip = { x: cx + (R - 12) * Math.cos(needleRad), y: cy + (R - 12) * Math.sin(needleRad) };
+  const needleBase1 = { x: cx + 8 * Math.cos(needleRad + Math.PI / 2), y: cy + 8 * Math.sin(needleRad + Math.PI / 2) };
+  const needleBase2 = { x: cx + 8 * Math.cos(needleRad - Math.PI / 2), y: cy + 8 * Math.sin(needleRad - Math.PI / 2) };
+
+  return (
+    <svg viewBox="0 0 220 160" className="w-full max-w-[280px]">
+      {/* Background track */}
+      <path d={describeArc(startAngle, startAngle + totalArc)} fill="none" stroke="#1e293b" strokeWidth="14" strokeLinecap="round" />
+      {/* Colored fill */}
+      {score > 0 && (
+        <path d={describeArc(startAngle, scoreAngle)} fill="none" stroke={color} strokeWidth="14" strokeLinecap="round" />
+      )}
+      {/* Tick marks */}
+      {[0, 25, 50, 75, 100].map((v) => {
+        const a = toRad(startAngle + (v / 100) * totalArc);
+        const inner = { x: cx + (R - 20) * Math.cos(a), y: cy + (R - 20) * Math.sin(a) };
+        const outer = { x: cx + (R - 8)  * Math.cos(a), y: cy + (R - 8)  * Math.sin(a) };
+        return <line key={v} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke="#334155" strokeWidth="1.5" />;
+      })}
+      {/* Needle */}
+      <polygon
+        points={`${needleTip.x},${needleTip.y} ${needleBase1.x},${needleBase1.y} ${needleBase2.x},${needleBase2.y}`}
+        fill={score > 0 ? color : '#475569'}
+        opacity={0.9}
+      />
+      <circle cx={cx} cy={cy} r={6} fill={score > 0 ? color : '#475569'} />
+      {/* Score text */}
+      <text x={cx} y={cy + 28} textAnchor="middle" fill={score > 0 ? color : '#64748b'} fontSize="28" fontWeight="700" fontFamily="sans-serif">{score}</text>
+      <text x={cx} y={cy + 43} textAnchor="middle" fill="#475569" fontSize="9" fontFamily="sans-serif">SALUD DE FICHA</text>
+      {/* Labels */}
+      <text x={arcPoint(startAngle).x - 2} y={arcPoint(startAngle).y + 14} textAnchor="middle" fill="#475569" fontSize="8" fontFamily="sans-serif">0</text>
+      <text x={arcPoint(startAngle + totalArc).x + 2} y={arcPoint(startAngle + totalArc).y + 14} textAnchor="middle" fill="#475569" fontSize="8" fontFamily="sans-serif">100</text>
+    </svg>
+  );
+}
+
+function MapsScanner({ previewMode }: { previewMode: boolean }) {
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState<ScanStatus>('idle');
+  const [score, setScore] = useState(0);
+  const [items, setItems] = useState<CheckItem[]>(CHECKLIST_ITEMS);
+  const [displayScore, setDisplayScore] = useState(0);
+
+  const handleScan = async () => {
+    if (!query.trim()) return;
+    setStatus('searching');
+    setScore(0);
+    setDisplayScore(0);
+    setItems(CHECKLIST_ITEMS.map((i) => ({ ...i, checked: false })));
+
+    await new Promise((r) => setTimeout(r, 1800));
+
+    const simulatedScore = previewMode
+      ? 68
+      : Math.floor(40 + Math.random() * 55);
+
+    const checkedCount = Math.round((simulatedScore / 100) * CHECKLIST_ITEMS.length);
+    const shuffled = [...CHECKLIST_ITEMS].sort(() => Math.random() - 0.5);
+    const updated = CHECKLIST_ITEMS.map((item) => ({
+      ...item,
+      checked: shuffled.slice(0, checkedCount).some((s) => s.id === item.id),
+    }));
+
+    setItems(updated);
+    setScore(simulatedScore);
+    setStatus('done');
+  };
+
+  useEffect(() => {
+    if (status !== 'done') return;
+    let current = 0;
+    const step = Math.ceil(score / 40);
+    const timer = setInterval(() => {
+      current = Math.min(current + step, score);
+      setDisplayScore(current);
+      if (current >= score) clearInterval(timer);
+    }, 30);
+    return () => clearInterval(timer);
+  }, [status, score]);
+
+  const critical   = items.filter((i) => i.category === 'critical');
+  const improvable = items.filter((i) => i.category === 'improvable');
+  const optimized  = items.filter((i) => i.category === 'optimized');
+
+  const checkedTotal = items.filter((i) => i.checked).length;
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="border-b border-slate-800/50 pb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+          Escáner de Ficha <span className="text-emerald-400">Google Maps</span>
+        </h1>
+        <p className="text-slate-400 text-sm max-w-xl">
+          Analiza la salud de tu ficha de Google Business Profile y descubre qué mejorar para subir en el mapa local.
+        </p>
+      </div>
+
+      {/* Search bar */}
+      <div className="relative max-w-2xl">
+        <div className="flex items-center gap-3 bg-white rounded-2xl shadow-xl shadow-slate-950/30 px-4 py-3.5 border border-slate-200/10">
+          <div className="flex items-center gap-2 flex-1">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="none">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ea4335"/>
+              <circle cx="12" cy="9" r="2.5" fill="white"/>
+            </svg>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+              placeholder='Busca tu negocio en Google Maps (ej: "Peluquería López Barcelona")'
+              className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-sm outline-none font-medium"
+            />
+          </div>
+          <button
+            onClick={handleScan}
+            disabled={status === 'searching' || !query.trim()}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400
+              text-slate-950 text-sm font-bold transition-all duration-200 shadow-md shadow-emerald-500/25
+              disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            {status === 'searching' ? (
+              <><Loader2 size={14} className="animate-spin" /> Analizando...</>
+            ) : (
+              <><Search size={14} /> Escanear Ficha</>
+            )}
+          </button>
+        </div>
+        {status === 'searching' && (
+          <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 px-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Buscando y analizando tu ficha en Google Business Profile...
+          </div>
+        )}
+      </div>
+
+      {/* Main content */}
+      {status !== 'idle' && (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Speedometer */}
+          <div className="lg:col-span-2 rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 flex flex-col items-center justify-center gap-4 shadow-xl">
+            {status === 'searching' ? (
+              <div className="flex flex-col items-center gap-4 py-8">
+                <svg className="animate-spin w-10 h-10 text-emerald-400" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <p className="text-slate-400 text-sm font-medium">Calculando puntuación...</p>
+              </div>
+            ) : (
+              <>
+                <Speedometer score={displayScore} />
+                <div className="text-center">
+                  <p className="text-slate-400 text-xs font-medium uppercase tracking-widest mb-2">Estado de la ficha</p>
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                    displayScore < 40
+                      ? 'bg-red-500/15 border-red-500/25 text-red-300'
+                      : displayScore < 70
+                      ? 'bg-amber-500/15 border-amber-500/25 text-amber-300'
+                      : 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300'
+                  }`}>
+                    {displayScore < 40 ? 'Ficha Deficiente' : displayScore < 70 ? 'Ficha Mejorable' : 'Ficha Optimizada'}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-800/60 rounded-xl p-3 text-center">
+                  <p className="text-xs text-slate-500 mb-0.5">Puntos completados</p>
+                  <p className="text-white font-bold text-lg">{checkedTotal} <span className="text-slate-500 font-normal text-sm">/ {items.length}</span></p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Checklist */}
+          <div className="lg:col-span-3 rounded-2xl bg-slate-900/70 border border-slate-800/60 shadow-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-800/60">
+              <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                <CheckSquare size={15} className="text-emerald-400" />
+                Checklist de Optimización
+              </h3>
+            </div>
+            <div className="divide-y divide-slate-800/40 max-h-[520px] overflow-y-auto">
+              {/* Critical */}
+              <div className="px-5 py-3 bg-red-500/5">
+                <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <AlertCircle size={11} /> Crítico
+                  <span className="ml-auto normal-case font-normal text-red-500/60">
+                    {critical.filter((i) => i.checked).length}/{critical.length} completados
+                  </span>
+                </p>
+                <ul className="space-y-2">
+                  {critical.map((item) => (
+                    <li key={item.id} className="flex items-center gap-3">
+                      {status === 'searching' ? (
+                        <div className="w-4 h-4 rounded bg-slate-800 animate-pulse shrink-0" />
+                      ) : item.checked ? (
+                        <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                      ) : (
+                        <Circle size={16} className="text-red-500/60 shrink-0" />
+                      )}
+                      <span className={`text-sm ${item.checked ? 'text-slate-300' : 'text-slate-400'} ${item.checked ? 'line-through decoration-slate-600' : ''}`}>
+                        {item.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {/* Improvable */}
+              <div className="px-5 py-3 bg-amber-500/5">
+                <p className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <AlertCircle size={11} /> Mejorable
+                  <span className="ml-auto normal-case font-normal text-amber-500/60">
+                    {improvable.filter((i) => i.checked).length}/{improvable.length} completados
+                  </span>
+                </p>
+                <ul className="space-y-2">
+                  {improvable.map((item) => (
+                    <li key={item.id} className="flex items-center gap-3">
+                      {status === 'searching' ? (
+                        <div className="w-4 h-4 rounded bg-slate-800 animate-pulse shrink-0" />
+                      ) : item.checked ? (
+                        <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                      ) : (
+                        <Circle size={16} className="text-amber-500/60 shrink-0" />
+                      )}
+                      <span className={`text-sm ${item.checked ? 'text-slate-300' : 'text-slate-400'} ${item.checked ? 'line-through decoration-slate-600' : ''}`}>
+                        {item.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {/* Optimized */}
+              <div className="px-5 py-3 bg-emerald-500/5">
+                <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <CheckCircle2 size={11} /> Optimizado
+                  <span className="ml-auto normal-case font-normal text-emerald-500/60">
+                    {optimized.filter((i) => i.checked).length}/{optimized.length} completados
+                  </span>
+                </p>
+                <ul className="space-y-2">
+                  {optimized.map((item) => (
+                    <li key={item.id} className="flex items-center gap-3">
+                      {status === 'searching' ? (
+                        <div className="w-4 h-4 rounded bg-slate-800 animate-pulse shrink-0" />
+                      ) : item.checked ? (
+                        <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                      ) : (
+                        <Circle size={16} className="text-emerald-500/30 shrink-0" />
+                      )}
+                      <span className={`text-sm ${item.checked ? 'text-slate-300' : 'text-slate-400'} ${item.checked ? 'line-through decoration-slate-600' : ''}`}>
+                        {item.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Idle state */}
+      {status === 'idle' && (
+        <div className="rounded-2xl border border-dashed border-slate-800 p-16 flex flex-col items-center justify-center text-center gap-4 bg-slate-900/20">
+          <div className="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center">
+            <MapPinned size={24} className="text-slate-500" />
+          </div>
+          <div>
+            <p className="text-slate-400 font-medium text-sm">Introduce el nombre de tu negocio para comenzar</p>
+            <p className="text-slate-600 text-xs mt-1">El escáner simulará la comprobación de tu ficha de Google Business Profile</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 function Dashboard({
@@ -773,7 +1108,7 @@ function Dashboard({
   previewMode?: boolean;
 }) {
   const { session } = useAuth();
-  const [tab, setTab] = useState<'generator' | 'saved'>('generator');
+  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner'>('generator');
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
@@ -1137,12 +1472,24 @@ function Dashboard({
           <History size={14} />
           Mis Textos Guardados
         </button>
+        <button
+          onClick={() => setTab('maps-scanner')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+            ${tab === 'maps-scanner'
+              ? 'bg-slate-800 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <MapPinned size={14} />
+          Escáner de Ficha Maps
+        </button>
       </div>
 
       {tab === 'saved' ? (
         <div>
           <SavedTexts previewMode={previewMode} />
         </div>
+      ) : tab === 'maps-scanner' ? (
+        <MapsScanner previewMode={previewMode} />
       ) : (
       <>
       {/* Page header */}
