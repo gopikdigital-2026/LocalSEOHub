@@ -37,6 +37,8 @@ import {
   ChevronDown,
   Building2,
   Phone,
+  FileText,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -292,6 +294,37 @@ async function callGenerateContentPlan(
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error ?? 'Error desconocido del servidor');
     return data.days as DayPlan[];
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError')
+      throw new Error('La solicitud tardó demasiado. Inténtalo de nuevo.');
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function callAuditMapsProfile(
+  businessName: string,
+  category: string,
+  description: string,
+  hours: string,
+  accessToken: string
+): Promise<{ score: number; recommendations: AuditRec[] }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45000);
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audit-maps-profile`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ businessName, category, description, hours }),
+        signal: controller.signal,
+      }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error ?? 'Error del servidor');
+    return data;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError')
       throw new Error('La solicitud tardó demasiado. Inténtalo de nuevo.');
@@ -763,6 +796,13 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
 
 type ScanStatus = 'idle' | 'searching' | 'done';
 
+interface AuditRec {
+  id: string;
+  title: string;
+  priority: 'high' | 'medium' | 'low';
+  optimized_text: string;
+}
+
 interface CheckItem {
   id: string;
   label: string;
@@ -852,55 +892,124 @@ function Speedometer({ score }: { score: number }) {
   );
 }
 
+function RecGroup({
+  label, color, recs, copiedId, onCopy,
+}: {
+  label: string;
+  color: 'red' | 'amber' | 'emerald';
+  recs: AuditRec[];
+  copiedId: string | null;
+  onCopy: (rec: AuditRec) => void;
+}) {
+  const palette = {
+    red:     { bg: 'bg-red-500/5',     header: 'text-red-400',     icon: 'text-red-500/60',     dot: 'bg-red-500' },
+    amber:   { bg: 'bg-amber-500/5',   header: 'text-amber-400',   icon: 'text-amber-500/60',   dot: 'bg-amber-500' },
+    emerald: { bg: 'bg-emerald-500/5', header: 'text-emerald-400', icon: 'text-emerald-500/60', dot: 'bg-emerald-500' },
+  }[color];
+
+  return (
+    <div className={`px-5 py-4 ${palette.bg}`}>
+      <p className={`text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5 ${palette.header}`}>
+        <AlertCircle size={11} /> {label}
+        <span className="ml-auto normal-case font-normal opacity-60">{recs.length} {recs.length === 1 ? 'tarea' : 'tareas'}</span>
+      </p>
+      <ul className="space-y-3">
+        {recs.map((rec) => (
+          <li key={rec.id} className="rounded-xl bg-slate-800/50 border border-slate-700/40 overflow-hidden">
+            <div className="flex items-center justify-between gap-3 px-3 py-2.5 border-b border-slate-700/30">
+              <div className="flex items-center gap-2">
+                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${palette.dot}`} />
+                <span className="text-slate-200 text-xs font-semibold">{rec.title}</span>
+              </div>
+              <button
+                onClick={() => onCopy(rec)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200 shrink-0 ${
+                  copiedId === rec.id
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    : 'bg-slate-700/60 text-slate-400 hover:bg-slate-700 hover:text-slate-200 border border-transparent'
+                }`}
+              >
+                {copiedId === rec.id ? <><Check size={11} /> Copiado</> : <><Copy size={11} /> Copiar</>}
+              </button>
+            </div>
+            <p className="px-3 py-2.5 text-xs text-slate-400 leading-relaxed">{rec.optimized_text}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function MapsScanner({ previewMode }: { previewMode: boolean }) {
-  const [query, setQuery] = useState('');
+  const { session } = useAuth();
+  const [businessName, setBusinessName] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [hours, setHours] = useState('');
   const [status, setStatus] = useState<ScanStatus>('idle');
   const [score, setScore] = useState(0);
-  const [items, setItems] = useState<CheckItem[]>(CHECKLIST_ITEMS);
   const [displayScore, setDisplayScore] = useState(0);
+  const [recommendations, setRecommendations] = useState<AuditRec[]>([]);
+  const [error, setError] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const PREVIEW_RECS: AuditRec[] = [
+    { id: 'r1', priority: 'high', title: 'Optimizar descripción con palabras clave', optimized_text: 'Peluquería López es tu salón de confianza en el corazón de Barcelona. Especializados en cortes modernos, coloración y tratamientos capilares para hombre y mujer. Más de 15 años cuidando el cabello de los barceloneses. Reserva tu cita hoy y descubre por qué somos la peluquería mejor valorada del Eixample. ¡Te esperamos en C/ Provença, 142!' },
+    { id: 'r2', priority: 'high', title: 'Completar categorías secundarias', optimized_text: 'Categorías sugeridas: Peluquería, Salón de belleza, Barbería, Tratamiento capilar' },
+    { id: 'r3', priority: 'medium', title: 'Añadir horario completo y festivos', optimized_text: 'Lunes a viernes: 9:00–20:00 · Sábado: 9:00–18:00 · Domingo: Cerrado · Festivos: Cerrado' },
+    { id: 'r4', priority: 'medium', title: 'Incorporar servicios al perfil', optimized_text: 'Corte de cabello · Coloración · Balayage · Mechas · Tratamiento de queratina · Peinado para bodas · Alisado permanente · Corte masculino' },
+    { id: 'r5', priority: 'low', title: 'Responder preguntas frecuentes', optimized_text: '¿Es necesario pedir cita? Sí, recomendamos reservar con antelación llamando al teléfono o por WhatsApp para garantizar tu horario preferido.' },
+  ];
 
   const handleScan = async () => {
-    if (!query.trim()) return;
+    if (!businessName.trim()) return;
     setStatus('searching');
     setScore(0);
     setDisplayScore(0);
-    setItems(CHECKLIST_ITEMS.map((i) => ({ ...i, checked: false })));
+    setRecommendations([]);
+    setError('');
 
-    await new Promise((r) => setTimeout(r, 1800));
-
-    const simulatedScore = previewMode
-      ? 68
-      : Math.floor(40 + Math.random() * 55);
-
-    const checkedCount = Math.round((simulatedScore / 100) * CHECKLIST_ITEMS.length);
-    const shuffled = [...CHECKLIST_ITEMS].sort(() => Math.random() - 0.5);
-    const updated = CHECKLIST_ITEMS.map((item) => ({
-      ...item,
-      checked: shuffled.slice(0, checkedCount).some((s) => s.id === item.id),
-    }));
-
-    setItems(updated);
-    setScore(simulatedScore);
-    setStatus('done');
+    try {
+      let result: { score: number; recommendations: AuditRec[] };
+      if (previewMode) {
+        await new Promise((r) => setTimeout(r, 2000));
+        result = { score: 62, recommendations: PREVIEW_RECS };
+      } else {
+        result = await callAuditMapsProfile(
+          businessName, category, description, hours, session!.access_token
+        );
+      }
+      setScore(result.score);
+      setRecommendations(result.recommendations);
+      setStatus('done');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al analizar la ficha');
+      setStatus('idle');
+    }
   };
 
   useEffect(() => {
     if (status !== 'done') return;
     let current = 0;
-    const step = Math.ceil(score / 40);
+    const step = Math.ceil(score / 50);
     const timer = setInterval(() => {
       current = Math.min(current + step, score);
       setDisplayScore(current);
       if (current >= score) clearInterval(timer);
-    }, 30);
+    }, 25);
     return () => clearInterval(timer);
   }, [status, score]);
 
-  const critical   = items.filter((i) => i.category === 'critical');
-  const improvable = items.filter((i) => i.category === 'improvable');
-  const optimized  = items.filter((i) => i.category === 'optimized');
+  const copyText = (rec: AuditRec) => {
+    navigator.clipboard.writeText(rec.optimized_text).then(() => {
+      setCopiedId(rec.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
 
-  const checkedTotal = items.filter((i) => i.checked).length;
+  const highRecs   = recommendations.filter((r) => r.priority === 'high');
+  const mediumRecs = recommendations.filter((r) => r.priority === 'medium');
+  const lowRecs    = recommendations.filter((r) => r.priority === 'low');
 
   return (
     <div className="space-y-8">
@@ -910,50 +1019,110 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
           Escáner de Ficha <span className="text-emerald-400">Google Maps</span>
         </h1>
         <p className="text-slate-400 text-sm max-w-xl">
-          Analiza la salud de tu ficha de Google Business Profile y descubre qué mejorar para subir en el mapa local.
+          Introduce los datos actuales de tu Google Business Profile. La IA auditará tu ficha y generará textos optimizados listos para copiar y pegar.
         </p>
       </div>
 
-      {/* Search bar */}
-      <div className="relative max-w-2xl">
-        <div className="flex items-center gap-3 bg-white rounded-2xl shadow-xl shadow-slate-950/30 px-4 py-3.5 border border-slate-200/10">
-          <div className="flex items-center gap-2 flex-1">
-            <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="none">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ea4335"/>
-              <circle cx="12" cy="9" r="2.5" fill="white"/>
-            </svg>
+      {/* Input form */}
+      <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 shadow-xl space-y-5 max-w-3xl">
+        <div className="flex items-center gap-2 mb-1">
+          <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ea4335"/>
+            <circle cx="12" cy="9" r="2.5" fill="white"/>
+          </svg>
+          <h2 className="font-semibold text-slate-200 text-sm">Datos actuales de tu ficha</h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Building2 size={11} className="text-slate-500" />
+              Nombre del negocio <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-              placeholder='Busca tu negocio en Google Maps (ej: "Peluquería López Barcelona")'
-              className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-sm outline-none font-medium"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder='Ej: Peluquería López Barcelona'
+              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
+                placeholder-slate-600 outline-none transition-all duration-200
+                focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 focus:bg-slate-800"
             />
           </div>
-          <button
-            onClick={handleScan}
-            disabled={status === 'searching' || !query.trim()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400
-              text-slate-950 text-sm font-bold transition-all duration-200 shadow-md shadow-emerald-500/25
-              disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-          >
-            {status === 'searching' ? (
-              <><Loader2 size={14} className="animate-spin" /> Analizando...</>
-            ) : (
-              <><Search size={14} /> Escanear Ficha</>
-            )}
-          </button>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Tag size={11} className="text-slate-500" />
+              Categoría principal
+            </label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder='Ej: Peluquería, Restaurante, Fontanero...'
+              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
+                placeholder-slate-600 outline-none transition-all duration-200
+                focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 focus:bg-slate-800"
+            />
+          </div>
         </div>
-        {status === 'searching' && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 px-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Buscando y analizando tu ficha en Google Business Profile...
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <FileText size={11} className="text-slate-500" />
+            Descripción actual
+            <span className="ml-1 text-slate-600 normal-case font-normal">(déjalo vacío si no tienes)</span>
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            placeholder='Copia aquí tu descripción actual de Google Business Profile...'
+            className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
+              placeholder-slate-600 outline-none resize-none transition-all duration-200
+              focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 focus:bg-slate-800"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <Clock size={11} className="text-slate-500" />
+            Horario de apertura
+            <span className="ml-1 text-slate-600 normal-case font-normal">(déjalo vacío si no está configurado)</span>
+          </label>
+          <input
+            type="text"
+            value={hours}
+            onChange={(e) => setHours(e.target.value)}
+            placeholder='Ej: Lun-Vie 9:00-20:00, Sáb 10:00-14:00, Dom cerrado'
+            className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
+              placeholder-slate-600 outline-none transition-all duration-200
+              focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 focus:bg-slate-800"
+          />
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+            <AlertCircle size={13} className="shrink-0" />
+            {error}
           </div>
         )}
+
+        <button
+          onClick={handleScan}
+          disabled={status === 'searching' || !businessName.trim()}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400
+            text-slate-950 text-sm font-bold transition-all duration-200 shadow-md shadow-emerald-500/25
+            disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {status === 'searching' ? (
+            <><Loader2 size={14} className="animate-spin" /> Analizando con IA...</>
+          ) : (
+            <><Search size={14} /> Auditar Ficha con IA</>
+          )}
+        </button>
       </div>
 
-      {/* Main content */}
+      {/* Results */}
       {status !== 'idle' && (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Speedometer */}
@@ -964,7 +1133,7 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
                   <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                   <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
-                <p className="text-slate-400 text-sm font-medium">Calculando puntuación...</p>
+                <p className="text-slate-400 text-sm font-medium">La IA está auditando tu ficha...</p>
               </div>
             ) : (
               <>
@@ -982,97 +1151,42 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
                   </span>
                 </div>
                 <div className="w-full bg-slate-800/60 rounded-xl p-3 text-center">
-                  <p className="text-xs text-slate-500 mb-0.5">Puntos completados</p>
-                  <p className="text-white font-bold text-lg">{checkedTotal} <span className="text-slate-500 font-normal text-sm">/ {items.length}</span></p>
+                  <p className="text-xs text-slate-500 mb-0.5">Mejoras detectadas</p>
+                  <p className="text-white font-bold text-lg">{recommendations.length} <span className="text-slate-500 font-normal text-sm">recomendaciones</span></p>
                 </div>
               </>
             )}
           </div>
 
-          {/* Checklist */}
+          {/* Recommendations checklist */}
           <div className="lg:col-span-3 rounded-2xl bg-slate-900/70 border border-slate-800/60 shadow-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-800/60">
-              <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                <CheckSquare size={15} className="text-emerald-400" />
-                Checklist de Optimización
-              </h3>
+            <div className="px-5 py-4 border-b border-slate-800/60 flex items-center gap-2">
+              <CheckSquare size={15} className="text-emerald-400" />
+              <h3 className="text-sm font-semibold text-slate-200">Recomendaciones con texto optimizado</h3>
             </div>
-            <div className="divide-y divide-slate-800/40 max-h-[520px] overflow-y-auto">
-              {/* Critical */}
-              <div className="px-5 py-3 bg-red-500/5">
-                <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                  <AlertCircle size={11} /> Crítico
-                  <span className="ml-auto normal-case font-normal text-red-500/60">
-                    {critical.filter((i) => i.checked).length}/{critical.length} completados
-                  </span>
-                </p>
-                <ul className="space-y-2">
-                  {critical.map((item) => (
-                    <li key={item.id} className="flex items-center gap-3">
-                      {status === 'searching' ? (
-                        <div className="w-4 h-4 rounded bg-slate-800 animate-pulse shrink-0" />
-                      ) : item.checked ? (
-                        <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                      ) : (
-                        <Circle size={16} className="text-red-500/60 shrink-0" />
-                      )}
-                      <span className={`text-sm ${item.checked ? 'text-slate-300' : 'text-slate-400'} ${item.checked ? 'line-through decoration-slate-600' : ''}`}>
-                        {item.label}
-                      </span>
-                    </li>
+            <div className="divide-y divide-slate-800/40 max-h-[560px] overflow-y-auto">
+              {status === 'searching' ? (
+                <div className="p-5 space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="space-y-2 animate-pulse">
+                      <div className="h-4 bg-slate-800 rounded w-2/3" />
+                      <div className="h-16 bg-slate-800/60 rounded-lg" />
+                    </div>
                   ))}
-                </ul>
-              </div>
-              {/* Improvable */}
-              <div className="px-5 py-3 bg-amber-500/5">
-                <p className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                  <AlertCircle size={11} /> Mejorable
-                  <span className="ml-auto normal-case font-normal text-amber-500/60">
-                    {improvable.filter((i) => i.checked).length}/{improvable.length} completados
-                  </span>
-                </p>
-                <ul className="space-y-2">
-                  {improvable.map((item) => (
-                    <li key={item.id} className="flex items-center gap-3">
-                      {status === 'searching' ? (
-                        <div className="w-4 h-4 rounded bg-slate-800 animate-pulse shrink-0" />
-                      ) : item.checked ? (
-                        <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                      ) : (
-                        <Circle size={16} className="text-amber-500/60 shrink-0" />
-                      )}
-                      <span className={`text-sm ${item.checked ? 'text-slate-300' : 'text-slate-400'} ${item.checked ? 'line-through decoration-slate-600' : ''}`}>
-                        {item.label}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {/* Optimized */}
-              <div className="px-5 py-3 bg-emerald-500/5">
-                <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                  <CheckCircle2 size={11} /> Optimizado
-                  <span className="ml-auto normal-case font-normal text-emerald-500/60">
-                    {optimized.filter((i) => i.checked).length}/{optimized.length} completados
-                  </span>
-                </p>
-                <ul className="space-y-2">
-                  {optimized.map((item) => (
-                    <li key={item.id} className="flex items-center gap-3">
-                      {status === 'searching' ? (
-                        <div className="w-4 h-4 rounded bg-slate-800 animate-pulse shrink-0" />
-                      ) : item.checked ? (
-                        <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                      ) : (
-                        <Circle size={16} className="text-emerald-500/30 shrink-0" />
-                      )}
-                      <span className={`text-sm ${item.checked ? 'text-slate-300' : 'text-slate-400'} ${item.checked ? 'line-through decoration-slate-600' : ''}`}>
-                        {item.label}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                </div>
+              ) : (
+                <>
+                  {highRecs.length > 0 && (
+                    <RecGroup label="Crítico" color="red" recs={highRecs} copiedId={copiedId} onCopy={copyText} />
+                  )}
+                  {mediumRecs.length > 0 && (
+                    <RecGroup label="Mejorable" color="amber" recs={mediumRecs} copiedId={copiedId} onCopy={copyText} />
+                  )}
+                  {lowRecs.length > 0 && (
+                    <RecGroup label="Optimizado" color="emerald" recs={lowRecs} copiedId={copiedId} onCopy={copyText} />
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -1085,8 +1199,8 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
             <MapPinned size={24} className="text-slate-500" />
           </div>
           <div>
-            <p className="text-slate-400 font-medium text-sm">Introduce el nombre de tu negocio para comenzar</p>
-            <p className="text-slate-600 text-xs mt-1">El escáner simulará la comprobación de tu ficha de Google Business Profile</p>
+            <p className="text-slate-400 font-medium text-sm">Rellena los datos de tu ficha para comenzar</p>
+            <p className="text-slate-600 text-xs mt-1">La IA analizará tu perfil y generará textos optimizados listos para copiar</p>
           </div>
         </div>
       )}
