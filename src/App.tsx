@@ -37,6 +37,7 @@ interface SEOResult {
   title: string;
   description: string;
   tags: string[];
+  competitorKeywords?: string[];
 }
 
 interface SavedItem {
@@ -618,12 +619,14 @@ function Dashboard({
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
   const [keywords, setKeywords] = useState('');
+  const [competitor, setCompetitor] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<SEOResult | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [apiError, setApiError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [insightsOpen, setInsightsOpen] = useState(true);
 
   const handleGenerate = async () => {
     if (!product.trim()) return;
@@ -637,12 +640,24 @@ function Dashboard({
     setResult(null);
     setApiError('');
     setSavedId(null);
+    setInsightsOpen(true);
     try {
       let data: SEOResult;
       if (previewMode) {
         await new Promise((r) => setTimeout(r, 1200));
         const plat = platform || 'Etsy';
         const loc = city || 'tu ciudad';
+        const compKeywords: string[] = competitor.trim()
+          ? [
+              `alternativa a ${competitor.trim().split(/\s+/)[0]}`,
+              `${product.toLowerCase()} mejor precio ${loc}`,
+              `${product.toLowerCase()} sin intermediarios`,
+            ]
+          : [
+              `${product.toLowerCase()} cerca de mi`,
+              `${product.toLowerCase()} barato ${loc}`,
+              `donde comprar ${product.toLowerCase()} ${loc}`,
+            ];
         data = {
           title: `${product} artesanal en ${loc} — ${plat} | Envío rápido`,
           description: `¿Buscas ${product.toLowerCase()} en ${loc}? Encuentra en nuestra tienda de ${plat} los mejores ${product.toLowerCase()} elaborados con materiales de calidad superior.\n\nEnvío en 24-48h a toda España. Fabricación local en ${loc}. Ideal como regalo o uso personal. ¡Pide el tuyo hoy y recíbelo esta semana!\n\nVisítanos en ${plat} y descubre nuestra colección completa.`,
@@ -658,6 +673,7 @@ function Dashboard({
             `envío rápido`,
             `hecho a mano`,
           ],
+          competitorKeywords: compKeywords,
         };
       } else {
         data = await callGenerateSEO(product, city, platform, keywords, session!.access_token);
@@ -854,6 +870,27 @@ function Dashboard({
             />
           </div>
 
+          {/* Competitor */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Search size={11} className="text-slate-500" />
+              Enlace o nombre de un competidor local
+              <span className="text-slate-600 normal-case font-normal">(Opcional)</span>
+            </label>
+            <input
+              type="text"
+              value={competitor}
+              onChange={(e) => setCompetitor(e.target.value)}
+              placeholder="ej. TiendaRopaBarcelona, https://etsy.com/shop/micompetidor..."
+              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
+                placeholder-slate-500 outline-none transition-all duration-200
+                focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/10 focus:bg-slate-800"
+            />
+            <p className="text-xs text-slate-600">
+              La IA detectara oportunidades de posicionamiento frente a ese competidor.
+            </p>
+          </div>
+
           {/* CTA */}
           <button
             onClick={handleGenerate}
@@ -883,7 +920,7 @@ function Dashboard({
             ) : (
               <>
                 <Sparkles size={16} />
-                Generar Contenido SEO
+                Analizar Competencia y Generar SEO
               </>
             )}
           </button>
@@ -916,7 +953,7 @@ function Dashboard({
               <div>
                 <p className="text-slate-400 font-medium text-sm">Resultados SEO aparecerán aquí</p>
                 <p className="text-slate-600 text-xs mt-1">
-                  Completa el formulario y pulsa "Generar Contenido SEO"
+                  Completa el formulario y pulsa "Analizar Competencia y Generar SEO"
                 </p>
               </div>
               <div className="flex gap-2 flex-wrap justify-center mt-2">
@@ -932,6 +969,45 @@ function Dashboard({
             </div>
           ) : (
             <>
+              {/* Insights de la Competencia — collapsible */}
+              {result?.competitorKeywords && result.competitorKeywords.length > 0 && (
+                <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 overflow-hidden">
+                  <button
+                    onClick={() => setInsightsOpen((o) => !o)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-left group"
+                  >
+                    <span className="flex items-center gap-2 text-sm font-semibold text-amber-300">
+                      <span>🎯</span>
+                      Insights de la Competencia
+                      <span className="text-xs font-normal text-amber-400/60 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">
+                        {result.competitorKeywords.length} oportunidades
+                      </span>
+                    </span>
+                    <ChevronRight
+                      size={14}
+                      className={`text-amber-400/60 transition-transform duration-200 group-hover:text-amber-300 ${insightsOpen ? 'rotate-90' : ''}`}
+                    />
+                  </button>
+                  {insightsOpen && (
+                    <div className="border-t border-amber-500/15 px-4 py-4">
+                      <p className="text-xs text-amber-400/70 mb-3">
+                        Palabras clave de oportunidad detectadas frente a la competencia:
+                      </p>
+                      <ol className="space-y-2">
+                        {result.competitorKeywords.map((kw, i) => (
+                          <li key={kw} className="flex items-start gap-3">
+                            <span className="w-5 h-5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                              {i + 1}
+                            </span>
+                            <span className="text-slate-200 text-sm font-medium">{kw}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <ResultSection label="Título Optimizado" icon={<TrendingUp size={13} />} isLoading={isLoading}>
                 {result && (
                   <div className="space-y-3">
