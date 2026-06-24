@@ -172,20 +172,45 @@ async function callGenerateSEO(
   city: string,
   platform: string,
   keywords: string,
-  accessToken: string
+  accessToken: string,
+  imageFile?: File | null
 ): Promise<SEOResult> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
+  const timeout = setTimeout(() => controller.abort(), 45000);
 
   try {
     const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-seo`;
+
+    let body: string;
+    let imageBase64: string | undefined;
+
+    if (imageFile) {
+      imageBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(imageFile);
+      });
+    }
+
+    body = JSON.stringify({
+      product,
+      city,
+      platform,
+      keywords,
+      ...(imageBase64 ? { imageBase64, imageMimeType: imageFile!.type } : {}),
+    });
+
     const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ product, city, platform, keywords }),
+      body,
       signal: controller.signal,
     });
 
@@ -711,7 +736,7 @@ function Dashboard({
           } : undefined,
         };
       } else {
-        data = await callGenerateSEO(product, city, platform, keywords, session!.access_token);
+        data = await callGenerateSEO(product, city, platform, keywords, session!.access_token, imageFile);
       }
       setResult(data);
     } catch (err) {
