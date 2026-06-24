@@ -30,6 +30,11 @@ import {
   Hash,
   Lightbulb,
   Zap,
+  MapPinned,
+  ExternalLink,
+  CheckCircle2,
+  Circle,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -56,6 +61,18 @@ interface DayPlan {
   hooks: string[];
   content_ideas: string[];
   local_hashtags: string[];
+}
+
+type DirecRelevancia = 'Alta' | 'Media' | 'Baja';
+type DirecEstado = 'Pendiente' | 'Enviado';
+
+interface Directorio {
+  id: string;
+  nombre: string;
+  url: string;
+  relevancia: DirecRelevancia;
+  estado: DirecEstado;
+  categoria: string;
 }
 
 interface SavedItem {
@@ -705,6 +722,8 @@ function Dashboard({
   const [contentPlan, setContentPlan] = useState<DayPlan[] | null>(null);
   const [isLoadingPlan, setIsLoadingPlan] = useState(false);
   const [planError, setPlanError] = useState('');
+  const [directorios, setDirectorios] = useState<Directorio[] | null>(null);
+  const [isScanningDirs, setIsScanningDirs] = useState(false);
 
   const handleImageFile = (file: File | null) => {
     if (!file) return;
@@ -823,6 +842,40 @@ function Dashboard({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const BASE_DIRECTORIOS: Omit<Directorio, 'estado'>[] = [
+    { id: 'gmb',    nombre: 'Google Business Profile', url: 'https://business.google.com',           relevancia: 'Alta',  categoria: 'Buscadores' },
+    { id: 'bing',   nombre: 'Bing Places',              url: 'https://www.bingplaces.com',            relevancia: 'Alta',  categoria: 'Buscadores' },
+    { id: 'apple',  nombre: 'Apple Maps Connect',       url: 'https://mapsconnect.apple.com',         relevancia: 'Alta',  categoria: 'Buscadores' },
+    { id: 'pa',     nombre: 'Páginas Amarillas',        url: 'https://www.paginasamarillas.es',       relevancia: 'Alta',  categoria: 'Directorios ES' },
+    { id: 'yelp',   nombre: 'Yelp',                     url: 'https://biz.yelp.es',                   relevancia: 'Alta',  categoria: 'Reseñas' },
+    { id: 'fb',     nombre: 'Facebook Business',        url: 'https://www.facebook.com/business',     relevancia: 'Alta',  categoria: 'Social' },
+    { id: 'trip',   nombre: 'TripAdvisor',              url: 'https://www.tripadvisor.es',            relevancia: 'Media', categoria: 'Reseñas' },
+    { id: 'foursq', nombre: 'Foursquare',               url: 'https://foursquare.com/add-place',      relevancia: 'Media', categoria: 'Geolocalización' },
+    { id: 'einf',   nombre: 'Einforma',                 url: 'https://www.einforma.com',              relevancia: 'Media', categoria: 'Directorios ES' },
+    { id: 'hotfr',  nombre: 'Hotfrog España',           url: 'https://www.hotfrog.es',                relevancia: 'Media', categoria: 'Directorios ES' },
+    { id: 'kompass',nombre: 'Kompass',                  url: 'https://es.kompass.com',                relevancia: 'Media', categoria: 'B2B' },
+    { id: 'cylex',  nombre: 'Cylex España',             url: 'https://www.cylex.es',                  relevancia: 'Baja',  categoria: 'Directorios ES' },
+    { id: 'manta',  nombre: 'Manta',                    url: 'https://www.manta.com',                 relevancia: 'Baja',  categoria: 'Directorios INT' },
+    { id: 'europag',nombre: 'Europages',                url: 'https://www.europages.es',              relevancia: 'Baja',  categoria: 'B2B' },
+    { id: 'infois', nombre: 'InfoIsInfo',               url: 'https://www.infoisinfo.es',             relevancia: 'Baja',  categoria: 'Directorios ES' },
+  ];
+
+  const handleScanDirectories = async () => {
+    setIsScanningDirs(true);
+    await new Promise((r) => setTimeout(r, 1200));
+    const withState: Directorio[] = BASE_DIRECTORIOS.map((d) => ({ ...d, estado: 'Pendiente' as DirecEstado }));
+    setDirectorios(withState);
+    setIsScanningDirs(false);
+  };
+
+  const toggleDirEstado = (id: string) => {
+    setDirectorios((prev) =>
+      prev
+        ? prev.map((d) => d.id === id ? { ...d, estado: d.estado === 'Pendiente' ? 'Enviado' : 'Pendiente' } : d)
+        : prev
+    );
   };
 
   const canGenerate = product.trim().length > 0;
@@ -1572,6 +1625,167 @@ function Dashboard({
                 );
               })}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Citation & Directories Finder ─────────────────────── */}
+      {isActive && hasGenerated && (
+        <div className="mt-8 mb-4">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0">
+                <MapPinned size={16} className="text-amber-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white leading-tight">
+                  Buscador de Citaciones y{' '}
+                  <span className="text-amber-400">Directorios Locales</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Registra tu negocio en los directorios más relevantes para mejorar tu SEO local
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleScanDirectories}
+              disabled={isScanningDirs}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shrink-0
+                ${isScanningDirs
+                  ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 hover:-translate-y-0.5 active:translate-y-0'
+                }`}
+            >
+              {isScanningDirs ? (
+                <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Escaneando directorios...</>
+              ) : (
+                <><MapPinned size={15} />{directorios ? 'Volver a escanear' : 'Escanear Directorios de Oportunidad'}</>
+              )}
+            </button>
+          </div>
+
+          {directorios && (
+            <>
+              {/* Stats row */}
+              <div className="flex flex-wrap gap-3 mb-4">
+                {(['Alta', 'Media', 'Baja'] as DirecRelevancia[]).map((rel) => {
+                  const count = directorios.filter((d) => d.relevancia === rel).length;
+                  const sent  = directorios.filter((d) => d.relevancia === rel && d.estado === 'Enviado').length;
+                  const colors: Record<DirecRelevancia, string> = {
+                    Alta:  'bg-emerald-500/10 border-emerald-500/25 text-emerald-300',
+                    Media: 'bg-amber-500/10 border-amber-500/25 text-amber-300',
+                    Baja:  'bg-slate-700/50 border-slate-600 text-slate-400',
+                  };
+                  return (
+                    <div key={rel} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold ${colors[rel]}`}>
+                      <span>{rel}</span>
+                      <span className="opacity-60">·</span>
+                      <span>{sent}/{count} enviados</span>
+                    </div>
+                  );
+                })}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-slate-800 border-slate-700 text-xs font-semibold text-slate-300 ml-auto">
+                  <CheckCircle2 size={12} className="text-emerald-400" />
+                  {directorios.filter((d) => d.estado === 'Enviado').length} / {directorios.length} completados
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="rounded-2xl border border-slate-800 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-900 border-b border-slate-800">
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-8"></th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nombre del Directorio</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Categoría</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Relevancia</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Estado</th>
+                      <th className="px-4 py-3 w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/70">
+                    {directorios.map((dir, idx) => {
+                      const relevColors: Record<DirecRelevancia, string> = {
+                        Alta:  'bg-emerald-500/15 border-emerald-500/25 text-emerald-300',
+                        Media: 'bg-amber-500/15 border-amber-500/25 text-amber-300',
+                        Baja:  'bg-slate-700/60 border-slate-600 text-slate-400',
+                      };
+                      const sent = dir.estado === 'Enviado';
+                      return (
+                        <tr
+                          key={dir.id}
+                          className={`transition-colors duration-150 ${idx % 2 === 0 ? 'bg-slate-950/40' : 'bg-slate-900/30'} hover:bg-slate-800/40`}
+                        >
+                          {/* Row number */}
+                          <td className="px-4 py-3 text-xs text-slate-600 font-mono">{idx + 1}</td>
+
+                          {/* Name + link */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-medium ${sent ? 'text-slate-400 line-through' : 'text-slate-200'}`}>
+                                {dir.nombre}
+                              </span>
+                              <a
+                                href={dir.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-slate-600 hover:text-amber-400 transition-colors shrink-0"
+                                title="Abrir directorio"
+                              >
+                                <ExternalLink size={11} />
+                              </a>
+                            </div>
+                          </td>
+
+                          {/* Category */}
+                          <td className="px-4 py-3 hidden sm:table-cell">
+                            <span className="text-xs text-slate-500">{dir.categoria}</span>
+                          </td>
+
+                          {/* Relevance badge */}
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border ${relevColors[dir.relevancia]}`}>
+                              {dir.relevancia}
+                            </span>
+                          </td>
+
+                          {/* Status toggle */}
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => toggleDirEstado(dir.id)}
+                              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all duration-200
+                                ${sent
+                                  ? 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/25'
+                                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-amber-500/40 hover:text-amber-300'
+                                }`}
+                            >
+                              {sent
+                                ? <><CheckCircle2 size={11} />Enviado</>
+                                : <><Circle size={11} />Pendiente</>
+                              }
+                            </button>
+                          </td>
+
+                          {/* External link shortcut */}
+                          <td className="px-4 py-3 text-right">
+                            <a
+                              href={dir.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-500 hover:text-amber-400 hover:border-amber-500/40 transition-all duration-150"
+                              title={`Abrir ${dir.nombre}`}
+                            >
+                              <ExternalLink size={11} />
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
