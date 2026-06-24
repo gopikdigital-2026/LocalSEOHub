@@ -21,6 +21,9 @@ import {
   FileDown,
   Square,
   CheckSquare,
+  ImagePlus,
+  X,
+  Image,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -38,6 +41,7 @@ interface SEOResult {
   description: string;
   tags: string[];
   competitorKeywords?: string[];
+  imageOptimization?: { filename: string; altText: string };
 }
 
 interface SavedItem {
@@ -620,6 +624,9 @@ function Dashboard({
   const [platform, setPlatform] = useState<Platform>('');
   const [keywords, setKeywords] = useState('');
   const [competitor, setCompetitor] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<SEOResult | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -627,6 +634,20 @@ function Dashboard({
   const [isSaving, setIsSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [insightsOpen, setInsightsOpen] = useState(true);
+
+  const handleImageFile = (file: File | null) => {
+    if (!file) return;
+    if (!['image/jpeg', 'image/png'].includes(file.type)) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
 
   const handleGenerate = async () => {
     if (!product.trim()) return;
@@ -674,6 +695,20 @@ function Dashboard({
             `hecho a mano`,
           ],
           competitorKeywords: compKeywords,
+          imageOptimization: imageFile ? {
+            filename: [product, city, platform]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9\s]/g, '')
+              .trim()
+              .replace(/\s+/g, '-') + '.jpg',
+            altText: [product, city && `en ${city}`, platform && `para ${platform}`]
+              .filter(Boolean)
+              .join(' ') + ' — artesanal, hecho a mano',
+          } : undefined,
         };
       } else {
         data = await callGenerateSEO(product, city, platform, keywords, session!.access_token);
@@ -776,6 +811,70 @@ function Dashboard({
           <div className="flex items-center gap-2 mb-1">
             <Search size={16} className="text-emerald-400" />
             <h2 className="font-semibold text-slate-200 text-sm">Parámetros de búsqueda</h2>
+          </div>
+
+          {/* Image Upload */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <ImagePlus size={11} className="text-slate-500" />
+              Optimizar Imagen del Producto
+              <span className="text-slate-600 normal-case font-normal">(Opcional)</span>
+            </label>
+            {imagePreview ? (
+              <div className="relative rounded-xl overflow-hidden border border-slate-700/80 group">
+                <img
+                  src={imagePreview}
+                  alt="Vista previa"
+                  className="w-full h-40 object-cover"
+                />
+                <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button
+                    onClick={removeImage}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/90 text-white text-xs font-semibold hover:bg-red-400 transition-colors shadow-lg"
+                  >
+                    <X size={13} />
+                    Eliminar imagen
+                  </button>
+                </div>
+                <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2 bg-slate-950/70 backdrop-blur-sm rounded-lg px-2.5 py-1.5">
+                  <Image size={11} className="text-slate-400 shrink-0" />
+                  <span className="text-xs text-slate-300 truncate">{imageFile?.name}</span>
+                </div>
+              </div>
+            ) : (
+              <label
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const file = e.dataTransfer.files[0];
+                  if (file) handleImageFile(file);
+                }}
+                className={`flex flex-col items-center justify-center gap-3 w-full rounded-xl border-2 border-dashed
+                  py-8 px-4 cursor-pointer transition-all duration-200
+                  ${isDragging
+                    ? 'border-emerald-500/60 bg-emerald-500/8 scale-[0.99]'
+                    : 'border-slate-700/60 bg-slate-800/30 hover:border-slate-600/80 hover:bg-slate-800/50'}`}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  className="hidden"
+                  onChange={(e) => handleImageFile(e.target.files?.[0] ?? null)}
+                />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors
+                  ${isDragging ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-slate-700/60 border border-slate-600/50'}`}>
+                  <ImagePlus size={18} className={isDragging ? 'text-emerald-400' : 'text-slate-500'} />
+                </div>
+                <div className="text-center">
+                  <p className={`text-xs font-semibold transition-colors ${isDragging ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    {isDragging ? 'Suelta la imagen aquí' : 'Arrastra una imagen o haz clic para subir'}
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5">JPEG o PNG — max. 10 MB</p>
+                </div>
+              </label>
+            )}
           </div>
 
           {/* Product */}
@@ -1059,6 +1158,40 @@ function Dashboard({
                   </div>
                 )}
               </ResultSection>
+
+              {/* Image Optimization */}
+              {result?.imageOptimization && (
+                <div className="rounded-2xl border border-slate-800/60 bg-slate-900/70 overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/60">
+                    <div className="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700/60 flex items-center justify-center">
+                      <Image size={12} className="text-slate-400" />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Optimización de Imagen</span>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {/* Filename */}
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Nombre de archivo sugerido</p>
+                      <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700/60 rounded-xl px-3 py-2.5">
+                        <code className="flex-1 text-xs text-emerald-300 font-mono truncate">
+                          {result.imageOptimization.filename}
+                        </code>
+                        <CopyButton text={result.imageOptimization.filename} />
+                      </div>
+                      <p className="text-xs text-slate-600">Renombra tu archivo con este nombre antes de subirlo.</p>
+                    </div>
+                    {/* Alt text */}
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Texto Alternativo (Alt Text)</p>
+                      <div className="flex items-start gap-2 bg-slate-800/60 border border-slate-700/60 rounded-xl px-3 py-2.5">
+                        <p className="flex-1 text-xs text-slate-200 leading-relaxed">{result.imageOptimization.altText}</p>
+                        <CopyButton text={result.imageOptimization.altText} />
+                      </div>
+                      <p className="text-xs text-slate-600">Pégalo en el campo alt="" de tu imagen en la plataforma.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {result && (
                 <div className="flex items-center justify-between gap-3 pt-1">
