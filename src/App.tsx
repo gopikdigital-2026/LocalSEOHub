@@ -37,8 +37,6 @@ import {
   ChevronDown,
   Building2,
   Phone,
-  MapPin,
-  Copy,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
