@@ -812,11 +812,6 @@ interface Rival {
   threat: ThreatLevel;
   lastMove: string;
   lastMoveTime: string;
-  counterStrategy: {
-    title: string;
-    summary: string;
-    actions: { label: string; detail: string }[];
-  };
 }
 
 const RIVALS: Rival[] = [
@@ -827,15 +822,6 @@ const RIVALS: Rival[] = [
     threat: 'high',
     lastMove: 'Actualización masiva de palabras clave de geolocalización en su ficha',
     lastMoveTime: 'hace 4 horas',
-    counterStrategy: {
-      title: 'Contraataque de Autoridad Local',
-      summary: 'Clínica Dental Alfa ha reforzado su posicionamiento geográfico. Tu respuesta debe enfocarse en demostrar mayor profundidad de servicio y confianza social antes de que consoliden su ventaja.',
-      actions: [
-        { label: 'Actualizar descripción con hiperlocal', detail: 'Reescribe tu descripción incluyendo el nombre del barrio exacto, referencias a calles conocidas y puntos de referencia locales. Usa frases como "a 2 minutos de [hito local]" para superar el keyword stuffing de la competencia.' },
-        { label: 'Campaña de reseñas de emergencia', detail: 'Contacta a tus 20 últimos clientes satisfechos con un mensaje personalizado pidiendo una reseña de Google. Una ráfaga de 8-10 reseñas nuevas esta semana anulará el impacto de sus cambios de keywords.' },
-        { label: 'Post de respuesta geolocalizado', detail: 'Publica hoy en Google Business Profile un post con el título exacto: "[Tu ciudad] elige [Tu negocio] para [servicio principal]". Incluye foto del local con geoetiqueta activada.' },
-      ],
-    },
   },
   {
     id: 'r2',
@@ -844,15 +830,6 @@ const RIVALS: Rival[] = [
     threat: 'high',
     lastMove: '12 reseñas nuevas de 5 estrellas en las últimas 48h — posible campaña coordinada',
     lastMoveTime: 'hace 6 horas',
-    counterStrategy: {
-      title: 'Neutralización de Señal Social',
-      summary: 'FitPro está generando velocidad de reseñas anormalmente alta. Los algoritmos de Google pueden penalizarlos si es artificial, pero mientras tanto necesitas igualar su señal social con reseñas auténticas.',
-      actions: [
-        { label: 'Activar protocolo de reseñas verificadas', detail: 'Envía un QR físico a tus clientes activos enlazando directamente a tu ficha de Google. Las reseñas de usuarios con historial largo de reseñas tienen más peso algorítmico que las nuevas cuentas.' },
-        { label: 'Reportar actividad sospechosa', detail: 'Si las 12 reseñas son de cuentas con poco historial y publicadas en horas seguidas, repórtalas a Google como contenido falso. Esto puede invalidar su campaña completa.' },
-        { label: 'Publicar casos de éxito verificables', detail: 'Sube 3 fotos esta semana con clientes reales (con permiso) y resultados. El contenido visual auténtico contrarresta las reseñas de texto genérico que suelen tener las campañas artificiales.' },
-      ],
-    },
   },
   {
     id: 'r3',
@@ -861,15 +838,6 @@ const RIVALS: Rival[] = [
     threat: 'medium',
     lastMove: 'Añadió servicios premium y actualizó lista de precios en el perfil',
     lastMoveTime: 'hace 1 día',
-    counterStrategy: {
-      title: 'Diferenciación de Propuesta de Valor',
-      summary: 'Sol está posicionándose en el segmento premium. Esto puede captar clientes de mayor ticket medio. Responde definiendo tu propia propuesta única antes de que el mercado los asocie con esa posición.',
-      actions: [
-        { label: 'Destacar experiencia y especialización', detail: 'Añade a tu descripción los años de experiencia, formaciones específicas o técnicas exclusivas que ofreces. Los clientes premium eligen especialistas, no generalistas con precios altos.' },
-        { label: 'Publicar servicios con detalles técnicos', detail: 'En la sección de servicios de tu GBP, describe cada tratamiento con vocabulario técnico específico (marcas de producto, técnicas certificadas). Esto genera confianza real frente a listas de precios vacías.' },
-        { label: 'Activar preguntas y respuestas', detail: 'Responde públicamente en GBP preguntas frecuentes sobre tus diferenciales: ¿Usáis productos ecológicos? ¿Tenéis servicio sin cita previa? Las Q&A bien escritas son SEO puro.' },
-      ],
-    },
   },
   {
     id: 'r4',
@@ -878,15 +846,6 @@ const RIVALS: Rival[] = [
     threat: 'medium',
     lastMove: 'Publicó 4 posts de Google en los últimos 3 días con imágenes profesionales',
     lastMoveTime: 'hace 2 días',
-    counterStrategy: {
-      title: 'Dominio de Contenido Editorial',
-      summary: 'Salud 360 está ejecutando una estrategia de contenido consistente. Si no mantienes el ritmo, Google interpretará su perfil como más activo y relevante. La regularidad supera a la calidad esporádica.',
-      actions: [
-        { label: 'Programar mínimo 1 post diario esta semana', detail: 'Usa el calendario de posts de tu panel para publicar contenido simple: un consejo, una foto del local, un before/after, un dato de salud. El algoritmo de GBP premia la actividad reciente sobre la calidad de cada post.' },
-        { label: 'Contraatacar con contenido de autoridad', detail: 'Publica un post tipo "Guía: cómo elegir [servicio]" — contenido educativo que se comparte y que posiciona como experto. Esto tiene más impacto que cuatro posts de imagen genérica.' },
-        { label: 'Activar publicaciones de oferta', detail: 'Crea una oferta temporal en GBP (formato especial) para esta semana. Los posts de oferta tienen mayor visibilidad en el panel de conocimiento de Google y aparecen destacados frente a posts normales.' },
-      ],
-    },
   },
   {
     id: 'r5',
@@ -895,15 +854,6 @@ const RIVALS: Rival[] = [
     threat: 'low',
     lastMove: 'Actualizó horario de apertura y añadió horario de festivos',
     lastMoveTime: 'hace 3 días',
-    counterStrategy: {
-      title: 'Mantenimiento de Ventaja Actual',
-      summary: 'La Terraza solo ha realizado actualizaciones de mantenimiento básico. No representa amenaza inmediata. Aprovecha para consolidar tu ventaja competitiva en los campos donde ya te diferencias.',
-      actions: [
-        { label: 'Verificar consistencia NAP propia', detail: 'Comprueba que tu nombre, dirección y teléfono son idénticos en Google, Facebook, TripAdvisor y tu web. La consistencia NAP tiene impacto directo en el local pack y es fácil de descuidar.' },
-        { label: 'Añadir atributos de negocio', detail: 'Revisa los atributos disponibles en tu categoría de GBP: accesibilidad, métodos de pago, idiomas, características especiales. Cada atributo activado es un filtro de búsqueda adicional donde puedes aparecer.' },
-        { label: 'Responder reseñas sin contestar', detail: 'Revisa si tienes reseñas sin responder en los últimos 30 días. Responder el 100% de las reseñas —incluidas las negativas con protocolo correcto— es uno de los factores de ranking más fáciles de ejecutar.' },
-      ],
-    },
   },
 ];
 
@@ -933,12 +883,98 @@ function ThreatBadge({ level }: { level: ThreatLevel }) {
   );
 }
 
-function CompetitorRadar() {
+// Lightweight markdown renderer for GPT output
+function SimpleMarkdown({ text }: { text: string }) {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+
+  const parseinline = (raw: string): React.ReactNode => {
+    const parts = raw.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+    return parts.map((p, idx) => {
+      if (p.startsWith('**') && p.endsWith('**')) {
+        return <strong key={idx} className="text-slate-100 font-semibold">{p.slice(2,-2)}</strong>;
+      }
+      if (p.startsWith('`') && p.endsWith('`')) {
+        return <code key={idx} className="text-emerald-300 bg-emerald-500/10 px-1.5 py-0.5 rounded text-xs font-mono">{p.slice(1,-1)}</code>;
+      }
+      return p;
+    });
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed) { i++; continue; }
+
+    if (/^#{1,3}\s/.test(trimmed)) {
+      const level = trimmed.match(/^(#{1,3})/)?.[1].length ?? 1;
+      const content = trimmed.replace(/^#{1,3}\s+/, '');
+      const sizeClass = level === 1 ? 'text-base' : 'text-sm';
+      elements.push(
+        <h3 key={i} className={`${sizeClass} font-bold text-emerald-400 mt-5 mb-2 flex items-center gap-2`}>
+          <span className="w-1 h-4 rounded-full bg-emerald-500/60 shrink-0" />
+          {parseinline(content)}
+        </h3>
+      );
+      i++; continue;
+    }
+
+    if (/^\d+\.\s/.test(trimmed)) {
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i].trim())) {
+        const match = lines[i].trim().match(/^\d+\.\s+(.*)/);
+        if (match) items.push(<li key={i} className="text-sm text-slate-300 leading-relaxed">{parseinline(match[1])}</li>);
+        i++;
+      }
+      elements.push(<ol key={`ol-${i}`} className="list-decimal list-inside space-y-1.5 pl-1 mb-3">{items}</ol>);
+      continue;
+    }
+
+    if (/^[-*]\s/.test(trimmed)) {
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && /^[-*]\s/.test(lines[i].trim())) {
+        const match = lines[i].trim().match(/^[-*]\s+(.*)/);
+        if (match) items.push(
+          <li key={i} className="text-sm text-slate-300 leading-relaxed flex gap-2">
+            <span className="text-emerald-500 mt-1 shrink-0">▸</span>
+            <span>{parseinline(match[1])}</span>
+          </li>
+        );
+        i++;
+      }
+      elements.push(<ul key={`ul-${i}`} className="space-y-1.5 mb-3">{items}</ul>);
+      continue;
+    }
+
+    // blockquote-style template text
+    if (trimmed.startsWith('>')) {
+      const content = trimmed.replace(/^>\s*/, '');
+      elements.push(
+        <blockquote key={i} className="border-l-2 border-emerald-500/40 pl-4 py-2 my-2 bg-emerald-500/5 rounded-r-lg text-sm text-slate-300 italic leading-relaxed">
+          {parseinline(content)}
+        </blockquote>
+      );
+      i++; continue;
+    }
+
+    elements.push(<p key={i} className="text-sm text-slate-300 leading-relaxed mb-2">{parseinline(trimmed)}</p>);
+    i++;
+  }
+
+  return <div className="space-y-0.5">{elements}</div>;
+}
+
+function CompetitorRadar({ city }: { city: string }) {
   const [visibleAlerts, setVisibleAlerts] = useState(LIVE_ALERTS.slice(0, 3));
   const [alertIdx, setAlertIdx] = useState(3);
   const [scanAngle, setScanAngle] = useState(0);
   const [selectedRival, setSelectedRival] = useState<Rival | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [aiContent, setAiContent] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
   const feedRef = React.useRef<HTMLDivElement>(null);
 
   // Rotate scan line
@@ -959,14 +995,34 @@ function CompetitorRadar() {
     return () => clearInterval(timer);
   }, [alertIdx]);
 
-  const openDrawer = (rival: Rival) => {
+  const openDrawer = async (rival: Rival) => {
     setSelectedRival(rival);
     setDrawerOpen(true);
+    setAiContent('');
+    setAiError('');
+    setAiLoading(true);
+    try {
+      const res = await supabase.functions.invoke('generate-countermeasure', {
+        body: {
+          city: city || 'tu ciudad',
+          rivalName: rival.name,
+          category: rival.category,
+          lastMove: rival.lastMove,
+          threatLevel: rival.threat,
+        },
+      });
+      if (res.error) throw new Error(res.error.message);
+      setAiContent(res.data?.content ?? '');
+    } catch (err: unknown) {
+      setAiError(err instanceof Error ? err.message : 'Error al generar la contramedida.');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const closeDrawer = () => {
     setDrawerOpen(false);
-    setTimeout(() => setSelectedRival(null), 300);
+    setTimeout(() => { setSelectedRival(null); setAiContent(''); setAiError(''); }, 300);
   };
 
   const threatBorder = { high: 'border-red-500/50 text-red-300', medium: 'border-amber-500/50 text-amber-300', low: 'border-emerald-500/50 text-emerald-300' };
@@ -1177,7 +1233,7 @@ function CompetitorRadar() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-slate-500 font-mono uppercase tracking-widest mb-0.5">Contramedida de IA</p>
-                    <p className="text-sm font-bold text-white truncate">{selectedRival.counterStrategy.title}</p>
+                    <p className="text-sm font-bold text-white truncate">{selectedRival.name}</p>
                   </div>
                   <button onClick={closeDrawer}
                     className="w-8 h-8 rounded-lg bg-slate-800/60 border border-slate-700/60 flex items-center justify-center
@@ -1196,31 +1252,38 @@ function CompetitorRadar() {
                     <ThreatBadge level={selectedRival.threat} />
                   </div>
 
-                  {/* Summary */}
-                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-5 py-4">
-                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <BrainCircuit size={11} /> Análisis IA
-                    </p>
-                    <p className="text-sm text-slate-300 leading-relaxed">{selectedRival.counterStrategy.summary}</p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="space-y-3">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                      <Swords size={11} /> Plan de Acción ({selectedRival.counterStrategy.actions.length} pasos)
-                    </p>
-                    {selectedRival.counterStrategy.actions.map((action, i) => (
-                      <div key={i} className="rounded-xl border border-slate-700/50 bg-slate-800/40 overflow-hidden">
-                        <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/30">
-                          <span className="w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-xs font-bold text-emerald-400 shrink-0">
-                            {i + 1}
-                          </span>
-                          <p className="text-sm font-semibold text-slate-200">{action.label}</p>
-                        </div>
-                        <p className="px-4 py-3 text-xs text-slate-400 leading-relaxed">{action.detail}</p>
+                  {/* AI Response area */}
+                  {aiLoading && (
+                    <div className="flex flex-col items-center justify-center gap-4 py-12">
+                      <div className="relative w-14 h-14">
+                        <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20" />
+                        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-emerald-400 animate-spin" />
+                        <div className="absolute inset-2 rounded-full border border-emerald-500/10 border-t-emerald-500/40 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.2s' }} />
                       </div>
-                    ))}
-                  </div>
+                      <div className="text-center space-y-1">
+                        <p className="text-sm font-semibold text-slate-200">Analizando amenaza...</p>
+                        <p className="text-xs text-slate-500">La IA está diseñando tu contramedida</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {aiError && !aiLoading && (
+                    <div className="rounded-xl border border-red-500/20 bg-red-500/8 px-5 py-4">
+                      <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                        <AlertCircle size={11} /> Error
+                      </p>
+                      <p className="text-sm text-red-300">{aiError}</p>
+                    </div>
+                  )}
+
+                  {aiContent && !aiLoading && (
+                    <div className="rounded-xl border border-slate-700/40 bg-slate-800/30 px-5 py-5">
+                      <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                        <BrainCircuit size={11} /> Contramedida Generada por IA
+                      </p>
+                      <SimpleMarkdown text={aiContent} />
+                    </div>
+                  )}
                 </div>
 
                 {/* Drawer footer */}
@@ -2388,7 +2451,7 @@ function Dashboard({
       ) : tab === 'ai-twin' ? (
         <AiDigitalTwin />
       ) : tab === 'radar' ? (
-        <CompetitorRadar />
+        <CompetitorRadar city={city} />
       ) : (
       <>
       {/* Page header */}
