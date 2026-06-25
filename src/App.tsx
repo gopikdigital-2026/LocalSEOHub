@@ -4640,15 +4640,6 @@ export default function App() {
     }
   }, [loading, user]);
 
-  // Auto-checkout after sign-up / Google OAuth when user clicked "Start trial"
-  // Waits for session.access_token to be ready to avoid stale-closure on startCheckout
-  useEffect(() => {
-    if (!pendingCheckout || !session?.access_token || loadingSubscription || isActive) return;
-    setPendingCheckout(false);
-    try { sessionStorage.removeItem('postAuthAction'); } catch { /* sandboxed */ }
-    startCheckout();
-  }, [pendingCheckout, session?.access_token, loadingSubscription, isActive, startCheckout]);
-
   const startCheckout = useCallback(async () => {
     if (!session?.access_token) {
       setShowLogin(true);
@@ -4665,6 +4656,15 @@ export default function App() {
       setCheckoutLoading(false);
     }
   }, [session]);
+
+  // Auto-checkout after sign-up / Google OAuth when user clicked "Start trial"
+  // Waits for session.access_token to be ready to avoid stale-closure on startCheckout
+  useEffect(() => {
+    if (!pendingCheckout || !session?.access_token || loadingSubscription || isActive) return;
+    setPendingCheckout(false);
+    try { sessionStorage.removeItem('postAuthAction'); } catch { /* sandboxed */ }
+    startCheckout();
+  }, [pendingCheckout, session?.access_token, loadingSubscription, isActive, startCheckout]);
 
   const handlePricingClick = () => setShowPricing(true);
 
