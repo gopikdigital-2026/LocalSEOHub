@@ -165,6 +165,7 @@ async function syncCustomerFromStripe(customerId: string) {
         price_id: subscription.items.data[0].price.id,
         current_period_start: subscription.current_period_start,
         current_period_end: subscription.current_period_end,
+        trial_end: subscription.trial_end ?? null,
         cancel_at_period_end: subscription.cancel_at_period_end,
         ...(subscription.default_payment_method && typeof subscription.default_payment_method !== 'string'
           ? {

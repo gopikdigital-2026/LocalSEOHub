@@ -190,6 +190,11 @@ Deno.serve(async (req) => {
       mode,
       success_url,
       cancel_url,
+      ...(mode === 'subscription' ? {
+        subscription_data: {
+          trial_period_days: 7,
+        },
+      } : {}),
     });
 
     console.log(`Created checkout session ${session.id} for customer ${customerId}`);

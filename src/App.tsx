@@ -4560,6 +4560,31 @@ function SuccessBanner({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
+// ─── Trial banner ─────────────────────────────────────────────────────────────
+
+function TrialBanner({ daysLeft, onDismiss }: { daysLeft: number; onDismiss: () => void }) {
+  return (
+    <div className="bg-slate-900 border-b border-emerald-500/20">
+      <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-400 text-xs font-bold uppercase tracking-wide">Prueba gratuita</span>
+          </div>
+          <span className="text-slate-300 text-xs">
+            {daysLeft <= 1
+              ? 'Tu prueba termina hoy — activa el plan para no perder el acceso'
+              : `Te quedan ${daysLeft} días de prueba gratuita`}
+          </span>
+        </div>
+        <button onClick={onDismiss} className="text-slate-600 hover:text-slate-400 text-xs shrink-0">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 // Set to true while building to skip auth and preview the dashboard directly
@@ -4567,11 +4592,12 @@ const DEV_PREVIEW = false;
 
 export default function App() {
   const { user, session, loading, signOut } = useAuth();
-  const { isActive, loadingSubscription, refresh } = useSubscription(user);
+  const { isActive, status, trialDaysLeft, loadingSubscription, refresh } = useSubscription(user);
   const [showLogin, setShowLogin] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  const [showTrialBanner, setShowTrialBanner] = useState(true);
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
 
   // Handle Stripe redirect params
@@ -4643,6 +4669,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {showSuccessBanner && <SuccessBanner onDismiss={() => setShowSuccessBanner(false)} />}
+      {status === 'trialing' && trialDaysLeft !== null && showTrialBanner && (
+        <TrialBanner daysLeft={trialDaysLeft} onDismiss={() => setShowTrialBanner(false)} />
+      )}
 
       <Navbar
         user={user}

@@ -265,7 +265,11 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                   <span className="text-5xl font-bold text-white">9.99</span>
                   <span className="text-slate-400 mb-2">€/mes</span>
                 </div>
-                <p className="text-slate-500 text-xs mt-1">{t('landing_plan_billing')}</p>
+                <div className="inline-flex items-center gap-1.5 mt-2 bg-emerald-500/15 border border-emerald-500/25 rounded-full px-3 py-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-emerald-400 text-xs font-semibold">7 días gratis incluidos</span>
+                </div>
+                <p className="text-slate-500 text-xs mt-2">{t('landing_plan_billing')}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-8">
