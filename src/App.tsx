@@ -3540,10 +3540,10 @@ function Dashboard({
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       {/* Tabs */}
-      <div className="flex gap-1 mb-8 bg-slate-900/60 border border-slate-800/60 rounded-2xl p-1 w-fit">
+      <div className="grid grid-cols-2 sm:flex gap-1 mb-8 bg-slate-900/60 border border-slate-800/60 rounded-2xl p-1 w-full sm:w-fit">
         <button
           onClick={() => setTab('generator')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'generator'
               ? 'bg-slate-800 text-white shadow-md'
               : 'text-slate-500 hover:text-slate-300'}`}
@@ -3553,7 +3553,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('saved')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'saved'
               ? 'bg-slate-800 text-white shadow-md'
               : 'text-slate-500 hover:text-slate-300'}`}
@@ -3563,7 +3563,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('maps-scanner')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'maps-scanner'
               ? 'bg-slate-800 text-white shadow-md'
               : 'text-slate-500 hover:text-slate-300'}`}
@@ -3573,7 +3573,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('ai-twin')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'ai-twin'
               ? 'bg-slate-800 text-white shadow-md'
               : 'text-slate-500 hover:text-slate-300'}`}
@@ -3583,7 +3583,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('radar')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'radar'
               ? 'bg-slate-800 text-white shadow-md'
               : 'text-slate-500 hover:text-slate-300'}`}
@@ -3593,7 +3593,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('geo-audit')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'geo-audit'
               ? 'bg-slate-800 text-white shadow-md'
               : 'text-slate-500 hover:text-slate-300'}`}
