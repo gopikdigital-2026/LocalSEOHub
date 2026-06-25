@@ -8,6 +8,8 @@ export function useSubscription(user: User | null) {
   const [isActive, setIsActive] = useState(false);
   const [status, setStatus] = useState<SubscriptionStatus>('loading');
   const [trialEnd, setTrialEnd] = useState<Date | null>(null);
+  const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<Date | null>(null);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
 
   const fetchStatus = useCallback(async () => {
@@ -15,6 +17,8 @@ export function useSubscription(user: User | null) {
       setIsActive(false);
       setStatus('inactive');
       setTrialEnd(null);
+      setCancelAtPeriodEnd(false);
+      setCurrentPeriodEnd(null);
       setLoadingSubscription(false);
       return;
     }
@@ -30,13 +34,15 @@ export function useSubscription(user: User | null) {
       setIsActive(false);
       setStatus('inactive');
       setTrialEnd(null);
+      setCancelAtPeriodEnd(false);
+      setCurrentPeriodEnd(null);
       setLoadingSubscription(false);
       return;
     }
 
     const { data: sub } = await supabase
       .from('stripe_subscriptions')
-      .select('status, trial_end')
+      .select('status, trial_end, cancel_at_period_end, current_period_end')
       .eq('customer_id', customer.customer_id)
       .maybeSingle();
 
@@ -45,6 +51,8 @@ export function useSubscription(user: User | null) {
     setIsActive(active);
     setStatus(active ? (subStatus as SubscriptionStatus) : 'inactive');
     setTrialEnd(sub?.trial_end ? new Date(sub.trial_end * 1000) : null);
+    setCancelAtPeriodEnd(sub?.cancel_at_period_end ?? false);
+    setCurrentPeriodEnd(sub?.current_period_end ? new Date(sub.current_period_end * 1000) : null);
     setLoadingSubscription(false);
   }, [user]);
 
@@ -57,5 +65,5 @@ export function useSubscription(user: User | null) {
     ? Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : null;
 
-  return { isActive, status, trialEnd, trialDaysLeft, loadingSubscription, refresh: fetchStatus };
+  return { isActive, status, trialEnd, trialDaysLeft, cancelAtPeriodEnd, currentPeriodEnd, loadingSubscription, refresh: fetchStatus };
 }

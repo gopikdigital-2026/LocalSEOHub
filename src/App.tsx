@@ -4592,13 +4592,17 @@ const DEV_PREVIEW = false;
 
 export default function App() {
   const { user, session, loading, signOut } = useAuth();
-  const { isActive, status, trialDaysLeft, loadingSubscription, refresh } = useSubscription(user);
+  const { isActive, status, trialDaysLeft, cancelAtPeriodEnd, currentPeriodEnd, loadingSubscription, refresh } = useSubscription(user);
   const [showLogin, setShowLogin] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [showTrialBanner, setShowTrialBanner] = useState(true);
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState('');
+  const [cancelDone, setCancelDone] = useState(false);
 
   // Handle Stripe redirect params
   useEffect(() => {
@@ -4635,6 +4639,32 @@ export default function App() {
   }, [session]);
 
   const handlePricingClick = () => setShowPricing(true);
+
+  const handleCancelSubscription = useCallback(async () => {
+    if (!session?.access_token) return;
+    setCancelLoading(true);
+    setCancelError('');
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-cancel-subscription`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? 'Error desconocido');
+      await refresh();
+      setCancelDone(true);
+    } catch (err: any) {
+      setCancelError(err.message);
+    } finally {
+      setCancelLoading(false);
+    }
+  }, [session, refresh]);
 
   if (!DEV_PREVIEW && (loading || (user && loadingSubscription))) {
     return (
@@ -4678,7 +4708,72 @@ export default function App() {
         onLoginClick={() => setShowLogin(true)}
         onPricingClick={handlePricingClick}
         onSignOut={signOut}
+        isActive={DEV_PREVIEW || isActive}
+        cancelAtPeriodEnd={cancelAtPeriodEnd}
+        onCancelSubscription={() => { setCancelDone(false); setCancelError(''); setShowCancelModal(true); }}
       />
+
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => !cancelLoading && setShowCancelModal(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700/60 p-6 shadow-2xl">
+            {cancelDone ? (
+              <div className="text-center py-4">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
+                  <Check size={20} className="text-emerald-400" />
+                </div>
+                <p className="text-white font-bold text-base mb-1">Suscripción cancelada</p>
+                <p className="text-slate-400 text-sm mb-6">Tu acceso Pro continúa activo hasta el final del período de facturación.</p>
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  className="w-full py-3 rounded-xl text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <AlertCircle size={18} className="text-amber-400" />
+                  </div>
+                  <h2 className="text-white font-bold text-base">Cancelar suscripción</h2>
+                </div>
+                <p className="text-slate-400 text-sm mb-3">
+                  Si cancelas, perderás el acceso a todas las herramientas Pro al final del período de facturación actual.
+                </p>
+                {currentPeriodEnd && (
+                  <div className="bg-slate-800/60 border border-slate-700/40 rounded-xl px-4 py-3 mb-4 text-sm">
+                    <span className="text-slate-400">Tendrás acceso hasta el </span>
+                    <span className="text-white font-semibold">
+                      {currentPeriodEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
+                  </div>
+                )}
+                {cancelError && (
+                  <p className="text-red-400 text-xs mb-3">{cancelError}</p>
+                )}
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={handleCancelSubscription}
+                    disabled={cancelLoading}
+                    className="w-full py-3 rounded-xl text-sm font-semibold bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {cancelLoading ? 'Cancelando...' : 'Sí, cancelar suscripción'}
+                  </button>
+                  <button
+                    onClick={() => setShowCancelModal(false)}
+                    disabled={cancelLoading}
+                    className="w-full py-3 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300 transition-colors disabled:opacity-50"
+                  >
+                    Mantener suscripción
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {showPricing && (
         <div

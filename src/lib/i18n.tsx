@@ -267,6 +267,20 @@ const translations = {
     login_register: 'Crear cuenta',
     login_switch_register: '¿No tienes cuenta?',
     login_switch_login: '¿Ya tienes cuenta?',
+
+    // Cancel subscription
+    nav_cancel_sub: 'Cancelar suscripción',
+    nav_sub_active: 'Plan Pro activo',
+    nav_sub_canceling: 'Suscripción cancelada',
+    cancel_modal_title: 'Cancelar suscripción',
+    cancel_modal_desc: 'Si cancelas, perderás el acceso a todas las herramientas Pro al final del período de facturación actual.',
+    cancel_modal_access_until: 'Tendrás acceso hasta el',
+    cancel_modal_confirm: 'Sí, cancelar suscripción',
+    cancel_modal_abort: 'Mantener suscripción',
+    cancel_modal_canceling: 'Cancelando...',
+    cancel_modal_error: 'No se pudo cancelar. Inténtalo de nuevo.',
+    cancel_success_title: 'Suscripción cancelada',
+    cancel_success_desc: 'Tu acceso Pro continúa activo hasta el final del período de facturación.',
   },
 
   en: {
@@ -533,6 +547,20 @@ const translations = {
     login_register: 'Create account',
     login_switch_register: 'Don\'t have an account?',
     login_switch_login: 'Already have an account?',
+
+    // Cancel subscription
+    nav_cancel_sub: 'Cancel subscription',
+    nav_sub_active: 'Pro plan active',
+    nav_sub_canceling: 'Subscription canceled',
+    cancel_modal_title: 'Cancel subscription',
+    cancel_modal_desc: 'If you cancel, you will lose access to all Pro tools at the end of your current billing period.',
+    cancel_modal_access_until: 'You will have access until',
+    cancel_modal_confirm: 'Yes, cancel subscription',
+    cancel_modal_abort: 'Keep subscription',
+    cancel_modal_canceling: 'Canceling...',
+    cancel_modal_error: 'Could not cancel. Please try again.',
+    cancel_success_title: 'Subscription canceled',
+    cancel_success_desc: 'Your Pro access remains active until the end of the billing period.',
   },
 } as const;
 

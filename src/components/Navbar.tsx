@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, ChevronDown, User } from 'lucide-react';
+import { LogOut, ChevronDown, User, XCircle, CheckCircle } from 'lucide-react';
 import type { User as SupaUser } from '@supabase/supabase-js';
 import { useI18n, type Lang } from '../lib/i18n';
 import { LogoIcon } from './Logo';
@@ -9,9 +9,12 @@ interface NavbarProps {
   onLoginClick: () => void;
   onPricingClick: () => void;
   onSignOut: () => void;
+  isActive?: boolean;
+  cancelAtPeriodEnd?: boolean;
+  onCancelSubscription?: () => void;
 }
 
-export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut }: NavbarProps) {
+export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, isActive, cancelAtPeriodEnd, onCancelSubscription }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, setLang, t } = useI18n();
 
@@ -78,10 +81,25 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut }
               {menuOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-52 rounded-xl bg-slate-900 border border-slate-700/60 shadow-2xl shadow-black/50 z-20 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl bg-slate-900 border border-slate-700/60 shadow-2xl shadow-black/50 z-20 overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-800">
                       <p className="text-xs text-slate-500">{t('nav_connected_as')}</p>
                       <p className="text-xs text-slate-300 font-medium truncate mt-0.5">{user.email}</p>
+                      {isActive && (
+                        <div className="flex items-center gap-1.5 mt-2">
+                          {cancelAtPeriodEnd ? (
+                            <>
+                              <XCircle size={11} className="text-amber-400" />
+                              <span className="text-xs text-amber-400 font-medium">{t('nav_sub_canceling')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle size={11} className="text-emerald-400" />
+                              <span className="text-xs text-emerald-400 font-medium">{t('nav_sub_active')}</span>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="py-1">
                       <button
@@ -91,6 +109,15 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut }
                         <User size={14} />
                         {t('nav_view_pricing')}
                       </button>
+                      {isActive && !cancelAtPeriodEnd && onCancelSubscription && (
+                        <button
+                          onClick={() => { setMenuOpen(false); onCancelSubscription(); }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-400 hover:text-amber-300 hover:bg-slate-800 transition-colors"
+                        >
+                          <XCircle size={14} />
+                          {t('nav_cancel_sub')}
+                        </button>
+                      )}
                       <button
                         onClick={() => { setMenuOpen(false); onSignOut(); }}
                         className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-slate-800 transition-colors"
