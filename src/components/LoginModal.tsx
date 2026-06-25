@@ -44,12 +44,20 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
   const handleGoogle = async () => {
     setGoogleLoading(true);
     clearMessages();
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
-    if (authError) setError(translateError(authError.message));
-    setGoogleLoading(false);
+    try {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+      if (authError) {
+        setError(translateError(authError.message));
+        setGoogleLoading(false);
+      }
+      // On success the page navigates to Google — keep the loading state visible
+    } catch {
+      setError('No se pudo conectar con Google. Prueba a registrarte con email.');
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -222,5 +230,8 @@ function translateError(msg: string): string {
   if (msg.includes('Email not confirmed')) return 'Confirma tu email antes de iniciar sesión.';
   if (msg.includes('User already registered')) return 'Este email ya está registrado. Inicia sesión.';
   if (msg.includes('Password should be')) return 'La contraseña debe tener al menos 6 caracteres.';
+  if (msg.toLowerCase().includes('provider') || msg.toLowerCase().includes('oauth') || msg.toLowerCase().includes('unsupported')) {
+    return 'Google OAuth no está habilitado en este proyecto. Usa el registro por email o contacta al administrador.';
+  }
   return msg;
 }
