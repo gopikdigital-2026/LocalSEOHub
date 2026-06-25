@@ -7,7 +7,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const SYSTEM_PROMPT_TEXT = `Eres un consultor experto en SEO Local y Copywriting. Tu objetivo es redactar títulos, descripciones y etiquetas optimizadas para la plataforma elegida, integrando de forma natural la ciudad o región para maximizar el impacto en búsquedas locales.
+const SYSTEM_PROMPT_PRODUCT = `Eres un consultor experto en SEO Local y Copywriting para e-commerce y marketplaces. Tu objetivo es redactar títulos, descripciones y etiquetas optimizadas para la plataforma elegida, integrando de forma natural la ciudad o región para maximizar el impacto en búsquedas locales.
+
+El copy debe estar orientado a la venta del producto: destaca características, materiales, usos y ventajas competitivas.
+
+Responde ESTRICTAMENTE en formato JSON con las siguientes claves:
+- título
+- descripción (con saltos de línea limpios)
+- etiquetas (cadena de etiquetas separadas por comas)`;
+
+const SYSTEM_PROMPT_SERVICE = `Eres un consultor experto en SEO Local y Copywriting para negocios de servicios. Tu objetivo es redactar contenido que posicione el negocio en búsquedas locales, genere confianza y fomente la acción (llamar, reservar cita, solicitar presupuesto, visitar).
+
+El copy debe estar orientado al posicionamiento del servicio: destaca la especialización, la experiencia, la cercanía local y los beneficios para el cliente. Usa un tono profesional y cercano. Evita el lenguaje de ficha de producto; escribe como si fuera la descripción de un negocio local de confianza.
+
+Para la descripción, incluye siempre una llamada a la acción al final (ej: "Pide tu cita sin compromiso", "Solicita presupuesto gratuito", "Llámanos hoy").
 
 Responde ESTRICTAMENTE en formato JSON con las siguientes claves:
 - título
@@ -92,7 +105,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { product, city, platform, keywords, imageBase64, imageMimeType } = await req.json();
+    const { product, city, platform, keywords, tipo, imageBase64, imageMimeType } = await req.json();
 
     if (!product?.trim()) {
       return new Response(
@@ -102,11 +115,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const hasImage = typeof imageBase64 === "string" && imageBase64.length > 0;
+    const isService = tipo === "servicio";
 
     const userTextContent = [
+      isService ? `Tipo de negocio: Servicio` : `Tipo de negocio: Producto`,
       `Producto o servicio: ${product}`,
       city ? `Ciudad / Región objetivo: ${city}` : null,
-      platform ? `Plataforma: ${platform}` : null,
+      platform ? (isService ? `Canal de presencia: ${platform}` : `Plataforma: ${platform}`) : null,
       keywords ? `Palabras clave adicionales: ${keywords}` : null,
     ]
       .filter(Boolean)
@@ -130,6 +145,15 @@ Deno.serve(async (req: Request) => {
         ]
       : userTextContent;
 
+    let systemPrompt: string;
+    if (hasImage) {
+      systemPrompt = SYSTEM_PROMPT_VISION;
+    } else if (isService) {
+      systemPrompt = SYSTEM_PROMPT_SERVICE;
+    } else {
+      systemPrompt = SYSTEM_PROMPT_PRODUCT;
+    }
+
     const openAIRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -143,7 +167,7 @@ Deno.serve(async (req: Request) => {
         messages: [
           {
             role: "system",
-            content: hasImage ? SYSTEM_PROMPT_VISION : SYSTEM_PROMPT_TEXT,
+            content: systemPrompt,
           },
           { role: "user", content: userContent },
         ],

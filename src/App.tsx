@@ -66,7 +66,8 @@ import { LogoIcon } from './components/Logo';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Platform = 'Etsy' | 'Shopify' | 'Amazon' | 'Google Business' | 'Wallapop' | 'Vinted' | 'eBay' | 'Facebook Marketplace' | 'WooCommerce' | '';
+type Platform = 'Etsy' | 'Shopify' | 'Amazon' | 'Google Business' | 'Wallapop' | 'Vinted' | 'eBay' | 'Facebook Marketplace' | 'WooCommerce' | 'Web propia / Blog' | 'Instagram / Facebook' | 'Booking.com' | 'Doctoralia' | 'TripAdvisor' | 'Habitissimo' | 'Treatwell' | '';
+type Tipo = 'producto' | 'servicio';
 
 interface SEOResult {
   title: string;
@@ -227,6 +228,13 @@ const PLATFORM_ICONS: Record<string, JSX.Element> = {
   eBay: <TrendingUp size={14} />,
   'Facebook Marketplace': <Globe size={14} />,
   WooCommerce: <Globe size={14} />,
+  'Web propia / Blog': <Globe size={14} />,
+  'Instagram / Facebook': <Globe size={14} />,
+  'Booking.com': <MapPin size={14} />,
+  Doctoralia: <MapPin size={14} />,
+  TripAdvisor: <Star size={14} />,
+  Habitissimo: <MapPin size={14} />,
+  Treatwell: <Star size={14} />,
 };
 
 async function callGenerateSEO(
@@ -235,6 +243,7 @@ async function callGenerateSEO(
   platform: string,
   keywords: string,
   accessToken: string,
+  tipo: Tipo,
   imageFile?: File | null
 ): Promise<SEOResult> {
   const controller = new AbortController();
@@ -263,6 +272,7 @@ async function callGenerateSEO(
       city,
       platform,
       keywords,
+      tipo,
       ...(imageBase64 ? { imageBase64, imageMimeType: imageFile!.type } : {}),
     });
 
@@ -3189,6 +3199,7 @@ function Dashboard({
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
+  const [tipo, setTipo] = useState<Tipo>('producto');
   const [keywords, setKeywords] = useState('');
   const [competitor, setCompetitor] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -3288,7 +3299,7 @@ function Dashboard({
           } : undefined,
         };
       } else {
-        data = await callGenerateSEO(product, city, platform, keywords, session!.access_token, imageFile);
+        data = await callGenerateSEO(product, city, platform, keywords, session!.access_token, tipo, imageFile);
       }
       setResult(data);
     } catch (err) {
@@ -3727,11 +3738,35 @@ function Dashboard({
             />
           </div>
 
+          {/* Tipo de negocio */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Tag size={11} className="text-slate-500" />
+              Tipo de negocio
+            </label>
+            <div className="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700 rounded-xl p-1 w-fit">
+              {(['producto', 'servicio'] as Tipo[]).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setTipo(t); setPlatform(''); }}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 capitalize ${
+                    tipo === t
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {t === 'producto' ? 'Producto' : 'Servicio'}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Platform */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <ShoppingBag size={11} className="text-slate-500" />
-              Plataforma
+              {tipo === 'servicio' ? 'Canal de presencia' : 'Plataforma'}
             </label>
             <div className="relative">
               <select
@@ -3741,16 +3776,31 @@ function Dashboard({
                   outline-none appearance-none cursor-pointer transition-all duration-200
                   focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 focus:bg-slate-800"
               >
-                <option value="" className="bg-slate-900">Selecciona una plataforma...</option>
-                <option value="Etsy" className="bg-slate-900">Etsy</option>
-                <option value="Shopify" className="bg-slate-900">Shopify</option>
-                <option value="WooCommerce" className="bg-slate-900">WooCommerce</option>
-                <option value="Amazon" className="bg-slate-900">Amazon</option>
-                <option value="eBay" className="bg-slate-900">eBay</option>
-                <option value="Wallapop" className="bg-slate-900">Wallapop</option>
-                <option value="Vinted" className="bg-slate-900">Vinted</option>
-                <option value="Facebook Marketplace" className="bg-slate-900">Facebook Marketplace</option>
-                <option value="Google Business" className="bg-slate-900">Google Business</option>
+                {tipo === 'producto' ? (
+                  <>
+                    <option value="" className="bg-slate-900">Selecciona una plataforma...</option>
+                    <option value="Etsy" className="bg-slate-900">Etsy</option>
+                    <option value="Shopify" className="bg-slate-900">Shopify</option>
+                    <option value="WooCommerce" className="bg-slate-900">WooCommerce</option>
+                    <option value="Amazon" className="bg-slate-900">Amazon</option>
+                    <option value="eBay" className="bg-slate-900">eBay</option>
+                    <option value="Wallapop" className="bg-slate-900">Wallapop</option>
+                    <option value="Vinted" className="bg-slate-900">Vinted</option>
+                    <option value="Facebook Marketplace" className="bg-slate-900">Facebook Marketplace</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="" className="bg-slate-900">Selecciona un canal...</option>
+                    <option value="Google Business" className="bg-slate-900">Google Business (Ficha de empresa)</option>
+                    <option value="Web propia / Blog" className="bg-slate-900">Web propia / Blog SEO</option>
+                    <option value="Instagram / Facebook" className="bg-slate-900">Instagram / Facebook</option>
+                    <option value="Booking.com" className="bg-slate-900">Booking.com</option>
+                    <option value="Doctoralia" className="bg-slate-900">Doctoralia</option>
+                    <option value="TripAdvisor" className="bg-slate-900">TripAdvisor</option>
+                    <option value="Habitissimo" className="bg-slate-900">Habitissimo</option>
+                    <option value="Treatwell" className="bg-slate-900">Treatwell</option>
+                  </>
+                )}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                 <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
