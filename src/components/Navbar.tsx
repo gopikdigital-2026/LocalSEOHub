@@ -55,9 +55,9 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut }
                 }`}
               >
                 <span className="text-base leading-none" style={{ fontFamily: 'system-ui' }}>
-                  {l === 'es' ? '🇪🇸' : '🇬🇧'}
+                  {l === 'es' ? '🇪🇸' : ''}
                 </span>
-                <span className="hidden sm:inline">{l === 'es' ? 'ES' : 'EN'}</span>
+                <span className={l === 'en' ? 'inline' : 'hidden sm:inline'}>{l === 'es' ? 'ES' : 'EN'}</span>
               </button>
             ))}
           </div>
