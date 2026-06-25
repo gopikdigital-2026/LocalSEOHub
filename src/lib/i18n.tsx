@@ -50,6 +50,16 @@ const translations = {
     landing_bottom_desc: 'Únete a miles de negocios locales que ya generan más clientes con LocalSEOHub.',
     landing_bottom_cta: 'Crear cuenta gratis',
     landing_footer: '© 2026 LocalSEOHub · Todos los derechos reservados',
+    footer_privacy: 'Política de Privacidad',
+    footer_terms: 'Términos de Servicio',
+    footer_contact: 'Contacto',
+    privacy_title: 'Política de Privacidad',
+    privacy_updated: 'Última actualización: junio 2026',
+    terms_title: 'Términos de Servicio',
+    terms_updated: 'Última actualización: junio 2026',
+    contact_title: 'Contacto',
+    contact_desc: '¿Tienes alguna pregunta o necesitas ayuda? Escríbenos y te responderemos lo antes posible.',
+    contact_email_label: 'Correo electrónico',
 
     // Tabs
     tab_generator: 'Generador',
@@ -268,6 +278,16 @@ const translations = {
     landing_bottom_desc: 'Join thousands of local businesses already generating more customers with LocalSEOHub.',
     landing_bottom_cta: 'Create free account',
     landing_footer: '© 2026 LocalSEOHub · All rights reserved',
+    footer_privacy: 'Privacy Policy',
+    footer_terms: 'Terms of Service',
+    footer_contact: 'Contact',
+    privacy_title: 'Privacy Policy',
+    privacy_updated: 'Last updated: June 2026',
+    terms_title: 'Terms of Service',
+    terms_updated: 'Last updated: June 2026',
+    contact_title: 'Contact',
+    contact_desc: 'Have a question or need help? Write to us and we will get back to you as soon as possible.',
+    contact_email_label: 'Email address',
 
     // Tabs
     tab_generator: 'Generator',

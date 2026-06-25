@@ -61,6 +61,7 @@ import { useI18n } from './lib/i18n';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
 import LoginModal from './components/LoginModal';
+import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './components/LegalModals';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -4520,6 +4521,7 @@ export default function App() {
   const [showPricing, setShowPricing] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  const [legalModal, setLegalModal] = useState<LegalModal>(null);
 
   // Handle Stripe redirect params
   useEffect(() => {
@@ -4635,11 +4637,26 @@ export default function App() {
       <Dashboard isActive={DEV_PREVIEW || isActive} onSubscribe={startCheckout} checkoutLoading={checkoutLoading} previewMode={DEV_PREVIEW} />
 
       <footer className="border-t border-slate-800/50 mt-16 py-6">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between flex-wrap gap-3">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
           <p className="text-xs text-slate-700">Potenciado por inteligencia artificial · localseohub.io</p>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setLegalModal('privacy')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
+              Política de Privacidad
+            </button>
+            <button onClick={() => setLegalModal('terms')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
+              Términos de Servicio
+            </button>
+            <button onClick={() => setLegalModal('contact')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
+              Contacto
+            </button>
+          </div>
         </div>
       </footer>
+
+      {legalModal === 'privacy' && <PrivacyModal onClose={() => setLegalModal(null)} />}
+      {legalModal === 'terms' && <TermsModal onClose={() => setLegalModal(null)} />}
+      {legalModal === 'contact' && <ContactModal onClose={() => setLegalModal(null)} />}
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { useState } from 'react';
 import { useI18n } from '../lib/i18n';
+import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 
 interface LandingPageProps {
   onLoginClick: () => void;
@@ -9,6 +11,7 @@ interface LandingPageProps {
 
 export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
   const { t } = useI18n();
+  const [legalModal, setLegalModal] = useState<LegalModal>(null);
 
   const BENEFITS = [
     { icon: <MapPin size={20} />,    title: t('landing_f1_title'), desc: t('landing_f1_desc') },
@@ -213,7 +216,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
 
       {/* Footer */}
       <footer className="border-t border-slate-800/50 py-6">
-        <div className="max-w-5xl mx-auto px-6 flex items-center justify-between flex-wrap gap-3">
+        <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
               <Zap size={10} className="text-slate-950" fill="currentColor" />
@@ -221,8 +224,23 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
           </div>
           <p className="text-xs text-slate-700">{t('landing_footer')}</p>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setLegalModal('privacy')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
+              {t('footer_privacy')}
+            </button>
+            <button onClick={() => setLegalModal('terms')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
+              {t('footer_terms')}
+            </button>
+            <button onClick={() => setLegalModal('contact')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
+              {t('footer_contact')}
+            </button>
+          </div>
         </div>
       </footer>
+
+      {legalModal === 'privacy' && <PrivacyModal onClose={() => setLegalModal(null)} />}
+      {legalModal === 'terms' && <TermsModal onClose={() => setLegalModal(null)} />}
+      {legalModal === 'contact' && <ContactModal onClose={() => setLegalModal(null)} />}
     </div>
   );
 }
