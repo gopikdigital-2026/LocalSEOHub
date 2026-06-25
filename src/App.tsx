@@ -4596,6 +4596,10 @@ export default function App() {
   const { isActive, status, trialDaysLeft, cancelAtPeriodEnd, currentPeriodEnd, loadingSubscription, refresh } = useSubscription(user);
   const [showLogin, setShowLogin] = useState(false);
   const [loginInitialMode, setLoginInitialMode] = useState<'login' | 'signup'>('login');
+  // Initialized from sessionStorage so Google OAuth redirect restores the intent
+  const [pendingCheckout, setPendingCheckout] = useState(
+    () => sessionStorage.getItem('postAuthAction') === 'checkout',
+  );
   const [showPricing, setShowPricing] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
@@ -4636,14 +4640,14 @@ export default function App() {
     }
   }, [loading, user]);
 
-  // Auto-checkout after sign-up when the user clicked "Start trial" from the landing page
+  // Auto-checkout after sign-up / Google OAuth when user clicked "Start trial"
+  // Waits for session.access_token to be ready to avoid stale-closure on startCheckout
   useEffect(() => {
-    if (!user || loadingSubscription || isActive) return;
-    if (sessionStorage.getItem('postAuthAction') !== 'checkout') return;
+    if (!pendingCheckout || !session?.access_token || loadingSubscription || isActive) return;
+    setPendingCheckout(false);
     sessionStorage.removeItem('postAuthAction');
     startCheckout();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, loadingSubscription, isActive]);
+  }, [pendingCheckout, session?.access_token, loadingSubscription, isActive, startCheckout]);
 
   const startCheckout = useCallback(async () => {
     if (!session?.access_token) {
@@ -4714,6 +4718,7 @@ export default function App() {
           onLoginClick={() => { setLoginInitialMode('login'); setShowLogin(true); }}
           onSubscribeClick={() => {
             sessionStorage.setItem('postAuthAction', 'checkout');
+            setPendingCheckout(true);
             setLoginInitialMode('signup');
             setShowLogin(true);
           }}
