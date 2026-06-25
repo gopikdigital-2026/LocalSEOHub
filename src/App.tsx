@@ -545,6 +545,7 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [exportFormat, setExportFormat] = useState<ExportFormat>('shopify');
   const [exportOpen, setExportOpen] = useState(false);
+  const [items, setItems] = useState<SavedItem[]>([]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
