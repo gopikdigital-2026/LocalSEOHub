@@ -57,6 +57,7 @@ import {
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
 import { supabase } from './lib/supabase';
+import { useI18n } from './lib/i18n';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
 import LoginModal from './components/LoginModal';
@@ -537,7 +538,7 @@ type ExportFormat = 'shopify' | 'etsy';
 
 function SavedTexts({ previewMode }: { previewMode: boolean }) {
   const { session } = useAuth();
-  const [items, setItems] = useState<SavedItem[]>([]);
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -612,7 +613,7 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
             Mis Textos <span className="text-emerald-400">Guardados</span>
           </h1>
           <p className="text-slate-400 text-sm">
-            Historial de contenido SEO vinculado a tu cuenta. Selecciona textos para exportar.
+            {t('saved_desc')}
           </p>
         </div>
         {items.length > 0 && (
@@ -917,6 +918,7 @@ function GeoFactorRow({ factor }: { factor: GeoFactor }) {
 }
 
 function ChatGptSimulator({ response, businessName, loading }: { response: string; businessName: string; loading: boolean }) {
+  const { t } = useI18n();
   const isMentioned = businessName && response
     ? new RegExp(businessName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(response)
     : false;
@@ -980,16 +982,16 @@ function ChatGptSimulator({ response, businessName, loading }: { response: strin
                     <>
                       <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-bold text-emerald-400">Tu negocio aparece en la respuesta</p>
-                        <p className="text-xs text-slate-500 mt-0.5">La IA lo menciona como una opción relevante. Buen indicio de visibilidad.</p>
+                        <p className="text-xs font-bold text-emerald-400">{t('geo_mentioned')}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{t('geo_mentioned_desc')}</p>
                       </div>
                     </>
                   ) : (
                     <>
                       <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-bold text-amber-400">Tu negocio no aparece en la respuesta</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Aplica las recomendaciones GEO para mejorar tu visibilidad en motores de IA.</p>
+                        <p className="text-xs font-bold text-amber-400">{t('geo_not_mentioned')}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{t('geo_not_mentioned_desc')}</p>
                       </div>
                     </>
                   )}
@@ -1006,6 +1008,7 @@ function ChatGptSimulator({ response, businessName, loading }: { response: strin
 }
 
 function GeoAuditPanel({ product, city }: { product: string; city: string }) {
+  const { t } = useI18n();
   const [businessInput, setBusinessInput] = useState(product || '');
   const [cityInput, setCityInput] = useState(city || '');
   const [sectorInput, setSectorInput] = useState('');
@@ -1057,7 +1060,7 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
             GEO <span className="text-emerald-400">Audit</span>
           </h1>
           <p className="text-slate-400 text-sm max-w-xl">
-            Mide tu visibilidad en motores de búsqueda de IA (ChatGPT, Gemini, Perplexity) y descubre si te mencionan cuando alguien busca tu servicio.
+            {t('geo_desc')}
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/25 bg-blue-500/8 shrink-0">
@@ -1071,48 +1074,48 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
         style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
           <Building2 size={12} className="text-emerald-400" />
-          Datos del Negocio
+          {t('geo_section_data')}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre del negocio *</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('geo_label_name')}</label>
             <input
               value={businessInput}
               onChange={e => setBusinessInput(e.target.value)}
-              placeholder="Ej: Clínica Dental Sonrisa"
+              placeholder={t('geo_ph_name')}
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-sm text-slate-100
                 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ciudad</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('geo_label_city')}</label>
             <div className="relative">
               <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
               <input
                 value={cityInput}
                 onChange={e => setCityInput(e.target.value)}
-                placeholder="Ej: Madrid"
+                placeholder={t('dash_ph_city')}
                 className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-sm text-slate-100
                   placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
               />
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sector / Tipo de negocio</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('geo_label_sector')}</label>
             <input
               value={sectorInput}
               onChange={e => setSectorInput(e.target.value)}
-              placeholder="Ej: clínica dental, peluquería, fontanero"
+              placeholder={t('geo_ph_sector')}
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-sm text-slate-100
                 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripción breve (opcional)</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('geo_label_desc')}</label>
             <input
               value={descInput}
               onChange={e => setDescInput(e.target.value)}
-              placeholder="Ej: especialistas en ortodoncia invisible, 15 años de experiencia"
+              placeholder={t('geo_ph_desc')}
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-sm text-slate-100
                 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
             />
@@ -1130,9 +1133,9 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
               disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
           >
             {loading ? (
-              <><div className="w-4 h-4 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />Analizando...</>
+              <><div className="w-4 h-4 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />{t('geo_btn_running')}</>
             ) : (
-              <><ScanSearch size={15} />Lanzar GEO Audit</>
+              <><ScanSearch size={15} />{t('geo_btn_run')}</>
             )}
           </button>
           {result && (
@@ -1141,7 +1144,7 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
               className="px-4 py-2.5 rounded-xl border border-slate-700/60 bg-slate-800/50 text-sm text-slate-400
                 hover:text-slate-200 hover:border-slate-600 transition-all duration-150"
             >
-              Nuevo Análisis
+              {t('geo_btn_new')}
             </button>
           )}
         </div>
@@ -1172,7 +1175,7 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
                 style={{ boxShadow: '0 0 20px rgba(16,185,129,0.04)' }}>
                 <Zap size={15} className="text-emerald-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-1">Acción Prioritaria</p>
+                  <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-1">{t('geo_top_action')}</p>
                   <p className="text-sm text-slate-300 leading-snug">{topAction}</p>
                 </div>
               </div>
@@ -1184,7 +1187,7 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
                 style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-800/60">
                   <Activity size={13} className="text-emerald-400" />
-                  <h3 className="text-xs font-bold text-slate-200 uppercase tracking-widest">Desglose de Factores GEO</h3>
+                  <h3 className="text-xs font-bold text-slate-200 uppercase tracking-widest">{t('geo_factors_title')}</h3>
                 </div>
                 {loading && !result ? (
                   <div className="divide-y divide-slate-800/40">
@@ -1211,7 +1214,7 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
           <div className="xl:col-span-2 space-y-4">
             <div className="flex items-center gap-2 px-1">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Simulación en Vivo</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('geo_sim_live')}</p>
             </div>
             <ChatGptSimulator
               response={result?.simulatedResponse ?? ''}
@@ -1220,13 +1223,13 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
             />
             {result && (
               <div className="rounded-xl border border-slate-800/50 bg-slate-900/40 px-4 py-3.5 space-y-2">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Cómo Mejorar tu Mención</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('geo_improve_title')}</p>
                 <ul className="space-y-1.5">
                   {[
-                    'Añade Schema markup de LocalBusiness a tu web',
-                    'Consigue menciones en blogs locales y medios digitales',
-                    'Responde todas las reseñas con palabras clave de sector',
-                    'Publica contenido E-E-A-T con tu nombre y ciudad',
+                    t('geo_improve_1'),
+                    t('geo_improve_2'),
+                    t('geo_improve_3'),
+                    t('geo_improve_4'),
                   ].map((tip, i) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-slate-500">
                       <span className="text-emerald-500/60 mt-0.5 shrink-0">▸</span>
@@ -1247,8 +1250,8 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
             <ScanSearch size={28} className="text-slate-600" />
           </div>
           <div className="space-y-1.5">
-            <p className="text-base font-semibold text-slate-400">Listo para analizar tu visibilidad en IA</p>
-            <p className="text-sm text-slate-600 max-w-sm">Introduce el nombre de tu negocio y sector arriba, y la IA simulará cómo te presenta ChatGPT a tus clientes.</p>
+            <p className="text-base font-semibold text-slate-400">{t('geo_empty_title')}</p>
+            <p className="text-sm text-slate-600 max-w-sm">{t('geo_empty_desc')}</p>
           </div>
         </div>
       )}
@@ -1703,6 +1706,7 @@ const RANDOM_ENV_RIVALS: Rival[] = [
 ];
 
 function CompetitorRadar({ city }: { city: string }) {
+  const { t } = useI18n();
   const [radarTab, setRadarTab] = useState<'local' | 'url'>('local');
   const [visibleAlerts, setVisibleAlerts] = useState(LIVE_ALERTS.slice(0, 3));
   const [alertIdx, setAlertIdx] = useState(3);
@@ -1778,7 +1782,7 @@ function CompetitorRadar({ city }: { city: string }) {
             Radar de <span className="text-emerald-400">Competencia</span>
           </h1>
           <p className="text-slate-400 text-sm max-w-xl">
-            Monitoreo táctico en tiempo real de tus rivales. Analiza negocios de tu entorno o pega la URL de cualquier competidor para un informe completo.
+            {t('radar_desc')}
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/8 shrink-0">
@@ -2072,10 +2076,10 @@ function CompetitorRadar({ city }: { city: string }) {
 
 type CategoryOption = 'basic' | 'optimized' | 'hyper';
 
-const CATEGORY_OPTIONS: { value: CategoryOption; label: string }[] = [
-  { value: 'basic',      label: 'Genérica Básica' },
-  { value: 'optimized',  label: 'Optimizada con Facetas Secundarias' },
-  { value: 'hyper',      label: 'Hiper-específica con Esquema 2026' },
+const CATEGORY_OPTIONS: { value: CategoryOption; label_key: string }[] = [
+  { value: 'basic',     label_key: 'twin_cat_basic' },
+  { value: 'optimized', label_key: 'twin_cat_optimized' },
+  { value: 'hyper',     label_key: 'twin_cat_hyper' },
 ];
 
 
@@ -2188,19 +2192,20 @@ function buildPins(visibilityIndex: number, reviewRate: number): HeatPin[] {
   return pins;
 }
 
-const TIER_STYLES: Record<PinTier, { bg: string; border: string; text: string; dot: string; glow: string; label: string; badge: string }> = {
-  top3:      { bg: 'bg-emerald-500/20', border: 'border-emerald-400/60', text: 'text-emerald-300', dot: 'bg-emerald-400', glow: 'rgba(16,185,129,0.5)', label: 'Top 3', badge: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' },
-  top10:     { bg: 'bg-amber-500/20',   border: 'border-amber-400/60',   text: 'text-amber-300',   dot: 'bg-amber-400',   glow: 'rgba(245,158,11,0.5)',  label: 'Top 10', badge: 'bg-amber-500/15 border-amber-500/30 text-amber-300' },
-  invisible: { bg: 'bg-red-500/20',     border: 'border-red-400/60',     text: 'text-red-300',     dot: 'bg-red-400',     glow: 'rgba(239,68,68,0.5)',   label: 'Invisible', badge: 'bg-red-500/15 border-red-500/30 text-red-300' },
+const TIER_STYLES: Record<PinTier, { bg: string; border: string; text: string; dot: string; glow: string; labelKey: string; badge: string }> = {
+  top3:      { bg: 'bg-emerald-500/20', border: 'border-emerald-400/60', text: 'text-emerald-300', dot: 'bg-emerald-400', glow: 'rgba(16,185,129,0.5)', labelKey: 'twin_tier_top3', badge: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' },
+  top10:     { bg: 'bg-amber-500/20',   border: 'border-amber-400/60',   text: 'text-amber-300',   dot: 'bg-amber-400',   glow: 'rgba(245,158,11,0.5)',  labelKey: 'twin_tier_top10', badge: 'bg-amber-500/15 border-amber-500/30 text-amber-300' },
+  invisible: { bg: 'bg-red-500/20',     border: 'border-red-400/60',     text: 'text-red-300',     dot: 'bg-red-400',     glow: 'rgba(239,68,68,0.5)',   labelKey: 'twin_tier_inv', badge: 'bg-red-500/15 border-red-500/30 text-red-300' },
 };
 
-const TIER_TIPS: Record<PinTier, string> = {
-  top3:      'Excelente. Los clientes en esta zona te encuentran fácilmente.',
-  top10:     'Visible pero mejorable. Aumenta reseñas y frecuencia de posts.',
-  invisible: 'Crítico. Los competidores te bloquean en esta zona.',
+const TIER_TIP_KEYS: Record<PinTier, string> = {
+  top3:      'twin_tip_top3',
+  top10:     'twin_tip_top10',
+  invisible: 'twin_tip_inv',
 };
 
 function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number; reviewRate: number }) {
+  const { t } = useI18n();
   const [pins, setPins] = useState<HeatPin[]>(() => buildPins(visibilityIndex, reviewRate));
   const [selected, setSelected] = useState<HeatPin | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -2240,8 +2245,8 @@ function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number
             <MapPinned size={14} className="text-blue-400" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Mapa de Calor Local</h2>
-            <p className="text-xs text-slate-600 mt-0.5">Posición estimada en búsquedas según zona geográfica</p>
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">{t('twin_heatmap_title')}</h2>
+            <p className="text-xs text-slate-600 mt-0.5">{t('twin_heatmap_desc')}</p>
           </div>
         </div>
         <div className="flex items-center gap-5 shrink-0">
@@ -2259,14 +2264,14 @@ function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number
                 );
               })}
             </div>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cobertura</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t('twin_heatmap_coverage')}</span>
           </div>
           <div className="flex items-center gap-4">
             {(['top3', 'top10', 'invisible'] as PinTier[]).map(tier => (
               <div key={tier} className="flex items-center gap-1.5">
                 <div className={`w-2.5 h-2.5 rounded-full ${TIER_STYLES[tier].dot}`}
                   style={{ boxShadow: `0 0 6px ${TIER_STYLES[tier].glow}` }} />
-                <span className="text-[10px] font-semibold text-slate-500">{TIER_STYLES[tier].label}</span>
+                <span className="text-[10px] font-semibold text-slate-500">{t(TIER_STYLES[tier].labelKey as Parameters<typeof t>[0])}</span>
               </div>
             ))}
           </div>
@@ -2388,7 +2393,7 @@ function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number
               return (
                 <div key={tier} className={`rounded-xl border px-3 py-2.5 text-center ${s.badge}`}>
                   <p className="text-xl font-black tabular-nums">{count}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">{s.label}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">{t(s.labelKey as Parameters<typeof t>[0])}</p>
                 </div>
               );
             })}
@@ -2423,17 +2428,17 @@ function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Zona {selected.label}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className={`text-base font-black tabular-nums ${s.text}`}>#{selected.rank}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${s.badge}`}>{s.label}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${s.badge}`}>{t(s.labelKey as Parameters<typeof t>[0])}</span>
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">{TIER_TIPS[tier]}</p>
+                  <p className="text-xs text-slate-400 leading-relaxed">{t(TIER_TIP_KEYS[tier] as Parameters<typeof t>[0])}</p>
                 </div>
 
                 {/* Visibility bar */}
                 <div className="rounded-xl border border-slate-800/50 bg-slate-900/40 px-4 py-3.5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Visibilidad Estimada</p>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('twin_vis_estimated')}</p>
                     <span className={`text-sm font-black tabular-nums ${s.text}`}>{visEst}%</span>
                   </div>
                   <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
@@ -2444,7 +2449,7 @@ function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number
 
                 {/* Keyword trigger */}
                 <div className="rounded-xl border border-slate-800/50 bg-slate-900/40 px-4 py-3.5 space-y-2">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Búsqueda Simulada</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('twin_sim_search')}</p>
                   <div className="flex items-center gap-2 bg-slate-800/60 rounded-lg px-3 py-2 border border-slate-700/50">
                     <Search size={11} className="text-slate-500 shrink-0" />
                     <span className="text-xs text-slate-300 font-mono">"{selected.keyword}"</span>
@@ -2459,9 +2464,7 @@ function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number
                   <div className="flex items-start gap-2.5 rounded-xl border border-blue-500/20 bg-blue-500/6 px-4 py-3">
                     <Lightbulb size={13} className="text-blue-400 shrink-0 mt-0.5" />
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      {tier === 'top10'
-                        ? 'Publica 2 posts con la keyword de esta zona esta semana para subir al Top 3.'
-                        : 'Genera reseñas de clientes en este barrio y añade la zona en tu descripción de Google Business.'}
+                      {tier === 'top10' ? t('twin_action_tip_top10') : t('twin_action_tip_inv')}
                     </p>
                   </div>
                 )}
@@ -2473,12 +2476,12 @@ function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number
                 <MapPinned size={22} className="text-slate-600" />
               </div>
               <div className="space-y-1.5">
-                <p className="text-sm font-semibold text-slate-500">Haz clic en un pin</p>
-                <p className="text-xs text-slate-700 max-w-[200px]">Selecciona cualquier punto del mapa para ver la visibilidad estimada en esa zona.</p>
+                <p className="text-sm font-semibold text-slate-500">{t('twin_heatmap_click')}</p>
+                <p className="text-xs text-slate-700 max-w-[200px]">{t('twin_heatmap_click_desc')}</p>
               </div>
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold ${TIER_STYLES[dominantTier()].badge}`}>
                 <div className={`w-2 h-2 rounded-full ${TIER_STYLES[dominantTier()].dot}`} />
-                Zona dominante: {TIER_STYLES[dominantTier()].label}
+                {t('twin_heatmap_dominant')}: {t(TIER_STYLES[dominantTier()].labelKey as Parameters<typeof t>[0])}
               </div>
             </div>
           )}
@@ -2489,6 +2492,7 @@ function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number
 }
 
 function AiDigitalTwin() {
+  const { t } = useI18n();
   const [reviewRate, setReviewRate] = useState(5);
   const [postFreq, setPostFreq] = useState(2);
   const [category, setCategory] = useState<CategoryOption>('basic');
@@ -2500,10 +2504,10 @@ function AiDigitalTwin() {
 
   const sentiment =
     visibilityIndex < 50
-      ? 'Invisible para agentes de IA. Los resúmenes automáticos ignorarán tu negocio por falta de consistencia.'
+      ? t('twin_s_invisible')
       : visibilityIndex <= 80
-      ? 'Visibilidad moderada. Tu negocio aparece en menciones secundarias. Incrementa las reseñas para destacar.'
-      : '¡Entidad destacada! Los motores de búsqueda citan activamente tu local en los resúmenes prioritarios de la zona.';
+      ? t('twin_s_moderate')
+      : t('twin_s_dominant');
 
   useEffect(() => {
     const diff = visibilityIndex - displayIndex;
@@ -2528,7 +2532,7 @@ function AiDigitalTwin() {
           AI Digital <span className="text-emerald-400">Twin</span>
         </h1>
         <p className="text-slate-400 text-sm max-w-xl">
-          Simula el impacto de tu estrategia digital y predice cómo te verán los motores de búsqueda de IA en tiempo real.
+          {t('twin_desc')}
         </p>
       </div>
 
@@ -2540,14 +2544,14 @@ function AiDigitalTwin() {
             <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
               <BrainCircuit size={14} className="text-emerald-400" />
             </div>
-            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Panel de Control</h2>
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">{t('twin_control')}</h2>
           </div>
 
           {/* Slider: Review rate */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Velocidad de Reseñas Mensuales
+                {t('twin_slider_reviews')}
               </label>
               <span className="text-sm font-bold text-white bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 tabular-nums min-w-[3rem] text-center">
                 {reviewRate}
@@ -2569,9 +2573,9 @@ function AiDigitalTwin() {
             </div>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: 'Bajo', val: 5, hint: '< 5/mes' },
-                { label: 'Medio', val: 12, hint: '5-15/mes' },
-                { label: 'Alto', val: 25, hint: '> 15/mes' },
+                { label: t('twin_reviews_low'), val: 5, hint: '< 5/mes' },
+                { label: t('twin_reviews_mid'), val: 12, hint: '5-15/mes' },
+                { label: t('twin_reviews_high'), val: 25, hint: '> 15/mes' },
               ].map((p) => (
                 <button
                   key={p.val}
@@ -2593,7 +2597,7 @@ function AiDigitalTwin() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Frecuencia de Publicación Semanal
+                {t('twin_slider_posts')}
               </label>
               <span className="text-sm font-bold text-white bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 tabular-nums min-w-[3rem] text-center">
                 {postFreq}
@@ -2633,7 +2637,7 @@ function AiDigitalTwin() {
           {/* Dropdown: Category */}
           <div className="space-y-3">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-              Optimización de Categorías de Búsqueda
+              {t('twin_category_label')}
             </label>
             <div className="relative">
               <select
@@ -2644,7 +2648,7 @@ function AiDigitalTwin() {
                   focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10"
               >
                 {CATEGORY_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>{t(opt.label_key as Parameters<typeof t>[0])}</option>
                 ))}
               </select>
               <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -2656,9 +2660,9 @@ function AiDigitalTwin() {
                 ? 'bg-blue-500/8 border-blue-500/20 text-blue-400/80'
                 : 'bg-emerald-500/8 border-emerald-500/20 text-emerald-400/80'
             }`}>
-              {category === 'basic' && 'Sin diferenciación semántica. Visibilidad general limitada.'}
-              {category === 'optimized' && 'Facetas secundarias activas. Mejora el rastreo en búsquedas de nicho.'}
-              {category === 'hyper' && 'Esquema estructurado 2026 activo. Máxima legibilidad para LLMs y modelos de IA conversacional.'}
+              {category === 'basic' && t('twin_cat_basic_hint')}
+              {category === 'optimized' && t('twin_cat_optimized_hint')}
+              {category === 'hyper' && t('twin_cat_hyper_hint')}
             </div>
           </div>
         </div>
@@ -2670,7 +2674,7 @@ function AiDigitalTwin() {
             <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
               <Zap size={14} className="text-emerald-400" />
             </div>
-            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Visor de Simulación</h2>
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">{t('twin_viewer')}</h2>
           </div>
 
           {/* Circular progress */}
@@ -2678,7 +2682,7 @@ function AiDigitalTwin() {
             <CircularProgress value={displayIndex} size={192} />
             <div className="flex items-center gap-4 text-center">
               <div className="space-y-0.5">
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Nivel de Visibilidad</p>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{t('twin_level_label')}</p>
                 <p className={`text-xs font-bold px-3 py-1 rounded-full border transition-all duration-300 ${
                   displayIndex < 50
                     ? 'bg-red-500/15 border-red-500/25 text-red-300'
@@ -2686,7 +2690,7 @@ function AiDigitalTwin() {
                     ? 'bg-amber-500/15 border-amber-500/25 text-amber-300'
                     : 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300'
                 }`}>
-                  {displayIndex < 50 ? 'Invisible' : displayIndex <= 80 ? 'Emergente' : 'Dominante'}
+                  {displayIndex < 50 ? t('twin_level_invisible') : displayIndex <= 80 ? t('twin_level_emerging') : t('twin_level_dominant')}
                 </p>
               </div>
             </div>
@@ -2699,7 +2703,7 @@ function AiDigitalTwin() {
               <TrendingUp size={20} className="text-emerald-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-0.5">Clientes Potenciales Proyectados</p>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-0.5">{t('twin_projected')}</p>
               <div className="flex items-end gap-2">
                 <span
                   className="text-3xl font-bold text-white tabular-nums"
@@ -2707,7 +2711,7 @@ function AiDigitalTwin() {
                 >
                   {projectedClients.toLocaleString()}
                 </span>
-                <span className="text-slate-500 text-sm mb-1">/ mes</span>
+                <span className="text-slate-500 text-sm mb-1">{t('twin_per_month')}</span>
               </div>
             </div>
             <div className="shrink-0">
@@ -2722,7 +2726,7 @@ function AiDigitalTwin() {
             style={{ boxShadow: visibilityIndex < 50 ? '0 4px 24px rgba(239,68,68,0.1)' : visibilityIndex <= 80 ? '0 4px 24px rgba(245,158,11,0.1)' : '0 4px 24px rgba(16,185,129,0.1)' }}>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${sentimentColor.dot}`} />
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">AI Engine Search Sentiment</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{t('twin_sentiment_label')}</span>
             </div>
             <p className={`text-sm leading-relaxed font-medium transition-all duration-500 ${sentimentColor.text}`}>
               {sentiment}
@@ -2896,6 +2900,7 @@ function RecGroup({
 
 function MapsScanner({ previewMode }: { previewMode: boolean }) {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [businessName, setBusinessName] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
@@ -2973,7 +2978,7 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
           Escáner de Ficha <span className="text-emerald-400">Google Maps</span>
         </h1>
         <p className="text-slate-400 text-sm max-w-xl">
-          Introduce los datos actuales de tu Google Business Profile. La IA auditará tu ficha y generará textos optimizados listos para copiar y pegar.
+          {t('maps_desc')}
         </p>
       </div>
 
@@ -2984,7 +2989,7 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ea4335"/>
             <circle cx="12" cy="9" r="2.5" fill="white"/>
           </svg>
-          <h2 className="font-semibold text-slate-200 text-sm">Datos actuales de tu ficha</h2>
+          <h2 className="font-semibold text-slate-200 text-sm">{t('maps_section_data')}</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -3176,6 +3181,7 @@ function Dashboard({
   previewMode?: boolean;
 }) {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit'>('generator');
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
@@ -3528,7 +3534,7 @@ function Dashboard({
               : 'text-slate-500 hover:text-slate-300'}`}
         >
           <Sparkles size={14} />
-          Generador
+          {t('tab_generator')}
         </button>
         <button
           onClick={() => setTab('saved')}
@@ -3538,7 +3544,7 @@ function Dashboard({
               : 'text-slate-500 hover:text-slate-300'}`}
         >
           <History size={14} />
-          Mis Textos Guardados
+          {t('tab_saved')}
         </button>
         <button
           onClick={() => setTab('maps-scanner')}
@@ -3548,7 +3554,7 @@ function Dashboard({
               : 'text-slate-500 hover:text-slate-300'}`}
         >
           <MapPinned size={14} />
-          Escáner de Ficha Maps
+          {t('tab_maps')}
         </button>
         <button
           onClick={() => setTab('ai-twin')}
@@ -3558,7 +3564,7 @@ function Dashboard({
               : 'text-slate-500 hover:text-slate-300'}`}
         >
           <BrainCircuit size={14} />
-          AI Digital Twin
+          {t('tab_twin')}
         </button>
         <button
           onClick={() => setTab('radar')}
@@ -3568,7 +3574,7 @@ function Dashboard({
               : 'text-slate-500 hover:text-slate-300'}`}
         >
           <Radar size={14} />
-          Radar de Competencia
+          {t('tab_radar')}
         </button>
         <button
           onClick={() => setTab('geo-audit')}
@@ -3578,7 +3584,7 @@ function Dashboard({
               : 'text-slate-500 hover:text-slate-300'}`}
         >
           <ScanSearch size={14} />
-          GEO Audit
+          {t('tab_geo')}
         </button>
       </div>
 
@@ -3599,11 +3605,11 @@ function Dashboard({
       {/* Page header */}
       <div className="border-b border-slate-800/50 mb-8 pb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
-          Genera contenido SEO local{' '}
-          <span className="text-emerald-400">optimizado con IA</span>
+          {t('dash_title')}{' '}
+          <span className="text-emerald-400">{t('dash_title_highlight')}</span>
         </h1>
         <p className="text-slate-400 text-sm sm:text-base max-w-xl">
-          Crea títulos, descripciones y etiquetas para posicionarte en tu ciudad y plataforma en segundos.
+          {t('dash_desc')}
         </p>
         {!isActive && (
           <div className="mt-3 inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-4 py-1.5 text-xs font-medium text-amber-400">

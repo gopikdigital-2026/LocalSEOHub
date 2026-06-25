@@ -1,4 +1,5 @@
-import { MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
+import { MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { useI18n } from '../lib/i18n';
 
 interface LandingPageProps {
   onLoginClick: () => void;
@@ -6,54 +7,32 @@ interface LandingPageProps {
   scrollToPricing?: boolean;
 }
 
-const BENEFITS = [
-  {
-    icon: <MapPin size={20} />,
-    title: 'SEO Local sin esfuerzo',
-    desc: 'Genera contenido optimizado para tu ciudad en segundos, sin conocimientos técnicos.',
-  },
-  {
-    icon: <TrendingUp size={20} />,
-    title: 'Más clientes locales',
-    desc: 'Aparece primero cuando alguien busca tu producto en tu ciudad. Convierte búsquedas en ventas.',
-  },
-  {
-    icon: <Zap size={20} />,
-    title: 'Listo para publicar',
-    desc: 'Títulos, descripciones y etiquetas listos para Etsy, Shopify, Amazon o Google Business.',
-  },
-  {
-    icon: <Shield size={20} />,
-    title: 'IA entrenada en SEO local',
-    desc: 'Nuestro motor entiende las búsquedas locales y genera textos que Google ama.',
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    name: 'Marta G.',
-    city: 'Toledo',
-    business: 'Cerámica artesanal',
-    text: 'En 2 semanas tripl​iqué las visitas a mi tienda de Etsy. No sabía nada de SEO.',
-    stars: 5,
-  },
-  {
-    name: 'Carlos R.',
-    city: 'Valencia',
-    business: 'Reparación de móviles',
-    text: 'Mi Google Business aparece ahora en el top 3 de Valencia. Increíble herramienta.',
-    stars: 5,
-  },
-  {
-    name: 'Laura M.',
-    city: 'Sevilla',
-    business: 'Floristería online',
-    text: 'Genera en 30 segundos lo que antes me costaba horas escribir. Vale cada euro.',
-    stars: 5,
-  },
-];
-
 export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
+  const { t } = useI18n();
+
+  const BENEFITS = [
+    { icon: <MapPin size={20} />,    title: t('landing_f1_title'), desc: t('landing_f1_desc') },
+    { icon: <TrendingUp size={20} />, title: t('landing_f2_title'), desc: t('landing_f2_desc') },
+    { icon: <Zap size={20} />,        title: t('landing_f3_title'), desc: t('landing_f3_desc') },
+    { icon: <Shield size={20} />,     title: t('landing_f4_title'), desc: t('landing_f4_desc') },
+  ];
+
+  const TESTIMONIALS = [
+    { name: 'Marta G.',  city: 'Toledo',   business: 'Cerámica artesanal',    text: 'En 2 semanas tripli​qué las visitas a mi tienda de Etsy. No sabía nada de SEO.', stars: 5 },
+    { name: 'Carlos R.', city: 'Valencia', business: 'Reparación de móviles', text: 'Mi Google Business aparece ahora en el top 3 de Valencia. Increíble herramienta.', stars: 5 },
+    { name: 'Laura M.',  city: 'Sevilla',  business: 'Floristería online',     text: 'Genera en 30 segundos lo que antes me costaba horas escribir. Vale cada euro.', stars: 5 },
+  ];
+
+  const FEATURES = [
+    t('landing_feature_1'),
+    t('landing_feature_2'),
+    t('landing_feature_3'),
+    t('landing_feature_4'),
+    t('landing_feature_5'),
+    t('landing_feature_6'),
+    t('landing_feature_7'),
+  ];
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Hero */}
@@ -66,19 +45,17 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         <div className="max-w-5xl mx-auto px-6 pt-20 pb-24 text-center relative">
           <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-medium text-emerald-400 mb-8">
             <Sparkles size={12} />
-            Potenciado por Inteligencia Artificial
+            {t('landing_badge')}
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 tracking-tight">
-            Atrae clientes locales en<br />
             <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              tu ciudad sin saber de SEO
+              {t('landing_hero_title')}
             </span>
           </h1>
 
           <p className="text-slate-400 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            LocalSEOHub genera en segundos los títulos, descripciones y etiquetas perfectas
-            para posicionarte en tu ciudad — en Etsy, Shopify, Amazon o Google Business.
+            {t('landing_hero_desc')}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -88,10 +65,10 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                 text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0"
             >
-              Empieza gratis ahora
+              {t('landing_cta_start')}
               <ArrowRight size={18} />
             </button>
-            <p className="text-xs text-slate-600">Cancela cuando quieras</p>
+            <p className="text-xs text-slate-600">{t('landing_cta_cancel')}</p>
           </div>
 
           <div className="flex items-center justify-center gap-6 mt-12 flex-wrap">
@@ -99,12 +76,12 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
               {[...Array(5)].map((_, i) => (
                 <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
               ))}
-              <span className="text-slate-400 text-sm ml-1">4.9/5</span>
+              <span className="text-slate-400 text-sm ml-1">{t('landing_rating')}</span>
             </div>
             <div className="w-px h-4 bg-slate-700" />
-            <span className="text-slate-400 text-sm">+2.400 negocios locales confían en nosotros</span>
+            <span className="text-slate-400 text-sm">{t('landing_social_proof')}</span>
             <div className="w-px h-4 bg-slate-700 hidden sm:block" />
-            <span className="text-slate-400 text-sm hidden sm:block">Disponible en toda España</span>
+            <span className="text-slate-400 text-sm hidden sm:block">{t('landing_available')}</span>
           </div>
         </div>
       </section>
@@ -113,10 +90,10 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <section className="max-w-5xl mx-auto px-6 py-16">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            Todo lo que necesitas para dominar el SEO local
+            {t('landing_features_title')}
           </h2>
           <p className="text-slate-400 max-w-xl mx-auto">
-            Sin cursos, sin agencias caras, sin horas de trabajo manual.
+            {t('landing_features_sub')}
           </p>
         </div>
 
@@ -139,20 +116,20 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       {/* Testimonials */}
       <section className="max-w-5xl mx-auto px-6 py-10">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold text-white mb-2">Lo que dicen nuestros clientes</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('landing_testimonials_title')}</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {TESTIMONIALS.map((t) => (
-            <div key={t.name} className="rounded-2xl bg-slate-900/60 border border-slate-800/60 p-5 space-y-3">
+          {TESTIMONIALS.map((item) => (
+            <div key={item.name} className="rounded-2xl bg-slate-900/60 border border-slate-800/60 p-5 space-y-3">
               <div className="flex gap-0.5">
-                {[...Array(t.stars)].map((_, i) => (
+                {[...Array(item.stars)].map((_, i) => (
                   <Star key={i} size={12} className="text-amber-400 fill-amber-400" />
                 ))}
               </div>
-              <p className="text-slate-300 text-sm leading-relaxed">"{t.text}"</p>
+              <p className="text-slate-300 text-sm leading-relaxed">"{item.text}"</p>
               <div className="pt-1 border-t border-slate-800">
-                <p className="text-white text-xs font-semibold">{t.name}</p>
-                <p className="text-slate-500 text-xs">{t.business} · {t.city}</p>
+                <p className="text-white text-xs font-semibold">{item.name}</p>
+                <p className="text-slate-500 text-xs">{item.business} · {item.city}</p>
               </div>
             </div>
           ))}
@@ -162,38 +139,30 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       {/* Pricing */}
       <section id="pricing" className="max-w-5xl mx-auto px-6 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Precio simple y transparente</h2>
-          <p className="text-slate-400">Sin sorpresas. Sin letra pequeña.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">{t('landing_pricing_title')}</h2>
+          <p className="text-slate-400">{t('landing_pricing_sub')}</p>
         </div>
 
         <div className="flex justify-center">
           <div className="relative w-full max-w-sm">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
               <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold px-4 py-1 rounded-full shadow-lg shadow-emerald-500/30">
-                MAS POPULAR
+                {t('landing_plan_badge')}
               </span>
             </div>
 
             <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 shadow-2xl shadow-emerald-500/10">
               <div className="text-center mb-6">
-                <p className="text-slate-400 text-sm font-medium mb-2">Plan Pro</p>
+                <p className="text-slate-400 text-sm font-medium mb-2">{t('landing_plan_name')}</p>
                 <div className="flex items-end justify-center gap-1">
                   <span className="text-5xl font-bold text-white">9.99</span>
-                  <span className="text-slate-400 mb-2">€/mes</span>
+                  <span className="text-slate-400 mb-2">{t('landing_plan_price').replace('9,99 ', '').replace('9.99/', '/').replace('€/mes','€/mes').replace('€/mo','€/mo')}</span>
                 </div>
-                <p className="text-slate-500 text-xs mt-1">Facturado mensualmente · Cancela cuando quieras</p>
+                <p className="text-slate-500 text-xs mt-1">{t('landing_plan_billing')}</p>
               </div>
 
               <ul className="space-y-3 mb-8">
-                {[
-                  'Generaciones ilimitadas de contenido SEO',
-                  'Optimización para 4 plataformas',
-                  'SEO localizado en toda España',
-                  'Títulos, descripciones y etiquetas',
-                  'Botón de copia con 1 clic',
-                  'Actualizaciones del motor IA incluidas',
-                  'Soporte prioritario por email',
-                ].map((feature) => (
+                {FEATURES.map((feature) => (
                   <li key={feature} className="flex items-start gap-3 text-sm text-slate-300">
                     <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
                       <Check size={11} className="text-emerald-400" />
@@ -203,10 +172,18 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                 ))}
               </ul>
 
-              <LandingPricingButton onSubscribeClick={onSubscribeClick} />
+              <button
+                onClick={onSubscribeClick}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-sm transition-all duration-300
+                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                  text-slate-950 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
+              >
+                <Sparkles size={15} />
+                {t('landing_plan_cta')}
+              </button>
 
               <p className="text-center text-xs text-slate-600 mt-3">
-                Pago seguro con Stripe · Cancela cuando quieras
+                {t('landing_plan_secure')}
               </p>
             </div>
           </div>
@@ -217,10 +194,10 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <section className="max-w-5xl mx-auto px-6 pb-20">
         <div className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 p-10 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            Listo para aparecer en las búsquedas de tu ciudad
+            {t('landing_bottom_title')}
           </h2>
           <p className="text-slate-400 mb-8 max-w-lg mx-auto">
-            Únete a miles de negocios locales que ya generan más clientes con LocalSEOHub.
+            {t('landing_bottom_desc')}
           </p>
           <button
             onClick={onLoginClick}
@@ -228,7 +205,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
               bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
               text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
           >
-            Crear cuenta gratis
+            {t('landing_bottom_cta')}
             <ArrowRight size={18} />
           </button>
         </div>
@@ -243,23 +220,9 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             </div>
             <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
           </div>
-          <p className="text-xs text-slate-700">© 2026 LocalSEOHub · Todos los derechos reservados</p>
+          <p className="text-xs text-slate-700">{t('landing_footer')}</p>
         </div>
       </footer>
     </div>
-  );
-}
-
-function LandingPricingButton({ onSubscribeClick }: { onSubscribeClick: () => void }) {
-  return (
-    <button
-      onClick={onSubscribeClick}
-      className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-sm transition-all duration-300
-        bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-        text-slate-950 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
-    >
-      <Sparkles size={15} />
-      Empezar con Plan Pro
-    </button>
   );
 }
