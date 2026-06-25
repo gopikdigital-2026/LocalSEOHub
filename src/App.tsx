@@ -4597,9 +4597,9 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [loginInitialMode, setLoginInitialMode] = useState<'login' | 'signup'>('login');
   // Initialized from sessionStorage so Google OAuth redirect restores the intent
-  const [pendingCheckout, setPendingCheckout] = useState(
-    () => sessionStorage.getItem('postAuthAction') === 'checkout',
-  );
+  const [pendingCheckout, setPendingCheckout] = useState(() => {
+    try { return sessionStorage.getItem('postAuthAction') === 'checkout'; } catch { return false; }
+  });
   const [showPricing, setShowPricing] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
@@ -4645,7 +4645,7 @@ export default function App() {
   useEffect(() => {
     if (!pendingCheckout || !session?.access_token || loadingSubscription || isActive) return;
     setPendingCheckout(false);
-    sessionStorage.removeItem('postAuthAction');
+    try { sessionStorage.removeItem('postAuthAction'); } catch { /* sandboxed */ }
     startCheckout();
   }, [pendingCheckout, session?.access_token, loadingSubscription, isActive, startCheckout]);
 
@@ -4717,7 +4717,7 @@ export default function App() {
         <LandingPage
           onLoginClick={() => { setLoginInitialMode('login'); setShowLogin(true); }}
           onSubscribeClick={() => {
-            sessionStorage.setItem('postAuthAction', 'checkout');
+            try { sessionStorage.setItem('postAuthAction', 'checkout'); } catch { /* sandboxed */ }
             setPendingCheckout(true);
             setLoginInitialMode('signup');
             setShowLogin(true);
