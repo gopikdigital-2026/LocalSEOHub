@@ -62,6 +62,7 @@ import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
 import LoginModal from './components/LoginModal';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './components/LegalModals';
+import { LogoIcon } from './components/Logo';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -4638,7 +4639,10 @@ export default function App() {
 
       <footer className="border-t border-slate-800/50 mt-16 py-6">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
+          <div className="flex items-center gap-2">
+            <LogoIcon size={22} />
+            <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
+          </div>
           <p className="text-xs text-slate-700">Potenciado por inteligencia artificial · localseohub.io</p>
           <div className="flex items-center gap-4">
             <button onClick={() => setLegalModal('privacy')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">

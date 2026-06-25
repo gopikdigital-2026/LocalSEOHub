@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Zap, LogOut, ChevronDown, User } from 'lucide-react';
+import { LogOut, ChevronDown, User } from 'lucide-react';
 import type { User as SupaUser } from '@supabase/supabase-js';
 import { useI18n, type Lang } from '../lib/i18n';
+import { LogoIcon } from './Logo';
 
 interface NavbarProps {
   user: SupaUser | null;
@@ -20,10 +21,8 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut }
     <header className="border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Zap size={15} className="text-slate-950" fill="currentColor" />
-          </div>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <LogoIcon size={34} />
           <span className="font-bold text-base tracking-tight text-white">
             LocalSEO<span className="text-emerald-400">Hub</span>
           </span>

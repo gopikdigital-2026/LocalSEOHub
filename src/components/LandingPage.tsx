@@ -2,6 +2,7 @@ import { MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles } fr
 import { useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
+import { LogoIcon } from './Logo';
 
 interface LandingPageProps {
   onLoginClick: () => void;
@@ -218,9 +219,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <footer className="border-t border-slate-800/50 py-6">
         <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-              <Zap size={10} className="text-slate-950" fill="currentColor" />
-            </div>
+            <LogoIcon size={22} />
             <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
           </div>
           <p className="text-xs text-slate-700">{t('landing_footer')}</p>
