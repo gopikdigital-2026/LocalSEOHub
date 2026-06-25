@@ -2124,6 +2124,325 @@ function CircularProgress({ value, size = 180 }: { value: number; size?: number 
   );
 }
 
+// ─── Local Heat Map ────────────────────────────────────────────────────────────
+
+interface HeatPin {
+  row: number;
+  col: number;
+  rank: number;       // 1-20+
+  label: string;      // street label
+  keyword: string;
+}
+
+type PinTier = 'top3' | 'top10' | 'invisible';
+
+function pinTier(rank: number): PinTier {
+  if (rank <= 3) return 'top3';
+  if (rank <= 10) return 'top10';
+  return 'invisible';
+}
+
+const GRID_LABELS = [
+  ['NO', 'Norte', 'NE'],
+  ['Oeste', 'Tu local', 'Este'],
+  ['SO', 'Sur', 'SE'],
+];
+
+const KEYWORD_POOL = [
+  'dentista cerca', 'mejor dentista', 'clínica dental',
+  'dentista urgente', 'dentista económico', 'ortodoncia',
+];
+
+function buildPins(visibilityIndex: number): HeatPin[] {
+  const pins: HeatPin[] = [];
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      const isCenter = row === 1 && col === 1;
+      const distFromCenter = Math.abs(row - 1) + Math.abs(col - 1);
+
+      let baseRank: number;
+      if (isCenter) {
+        baseRank = Math.max(1, Math.round(20 - visibilityIndex * 0.18));
+      } else {
+        const penalty = distFromCenter === 1 ? 3 : 6;
+        baseRank = Math.max(1, Math.round(20 - visibilityIndex * 0.18 + penalty));
+      }
+
+      const jitter = isCenter ? 0 : (Math.sin((row * 3 + col) * 7.3) * 2);
+      const rank = Math.min(20, Math.max(1, Math.round(baseRank + jitter)));
+
+      pins.push({
+        row, col,
+        rank,
+        label: GRID_LABELS[row][col],
+        keyword: KEYWORD_POOL[(row * 3 + col) % KEYWORD_POOL.length],
+      });
+    }
+  }
+  return pins;
+}
+
+const TIER_STYLES: Record<PinTier, { bg: string; border: string; text: string; dot: string; glow: string; label: string; badge: string }> = {
+  top3:      { bg: 'bg-emerald-500/20', border: 'border-emerald-400/60', text: 'text-emerald-300', dot: 'bg-emerald-400', glow: 'rgba(16,185,129,0.5)', label: 'Top 3', badge: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' },
+  top10:     { bg: 'bg-amber-500/20',   border: 'border-amber-400/60',   text: 'text-amber-300',   dot: 'bg-amber-400',   glow: 'rgba(245,158,11,0.5)',  label: 'Top 10', badge: 'bg-amber-500/15 border-amber-500/30 text-amber-300' },
+  invisible: { bg: 'bg-red-500/20',     border: 'border-red-400/60',     text: 'text-red-300',     dot: 'bg-red-400',     glow: 'rgba(239,68,68,0.5)',   label: 'Invisible', badge: 'bg-red-500/15 border-red-500/30 text-red-300' },
+};
+
+const TIER_TIPS: Record<PinTier, string> = {
+  top3:      'Excelente. Los clientes en esta zona te encuentran fácilmente.',
+  top10:     'Visible pero mejorable. Aumenta reseñas y frecuencia de posts.',
+  invisible: 'Crítico. Los competidores te bloquean en esta zona.',
+};
+
+function LocalHeatMap({ visibilityIndex }: { visibilityIndex: number }) {
+  const [pins, setPins] = useState<HeatPin[]>(() => buildPins(visibilityIndex));
+  const [selected, setSelected] = useState<HeatPin | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const prevVis = React.useRef(visibilityIndex);
+
+  useEffect(() => {
+    if (Math.abs(visibilityIndex - prevVis.current) >= 2) {
+      prevVis.current = visibilityIndex;
+      setPins(buildPins(visibilityIndex));
+      setSelected(prev => prev
+        ? buildPins(visibilityIndex).find(p => p.row === prev.row && p.col === prev.col) ?? null
+        : null
+      );
+    }
+  }, [visibilityIndex]);
+
+  const dominantTier = (): PinTier => {
+    const counts = { top3: 0, top10: 0, invisible: 0 };
+    pins.forEach(p => counts[pinTier(p.rank)]++);
+    if (counts.top3 >= 5) return 'top3';
+    if (counts.invisible >= 5) return 'invisible';
+    return 'top10';
+  };
+
+  return (
+    <div className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-slate-900/80 to-slate-950/60 overflow-hidden"
+      style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-800/60">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/25 flex items-center justify-center">
+            <MapPinned size={14} className="text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Mapa de Calor Local</h2>
+            <p className="text-xs text-slate-600 mt-0.5">Posición estimada en búsquedas según zona geográfica</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 shrink-0">
+          {(['top3', 'top10', 'invisible'] as PinTier[]).map(tier => (
+            <div key={tier} className="flex items-center gap-1.5">
+              <div className={`w-2.5 h-2.5 rounded-full ${TIER_STYLES[tier].dot}`}
+                style={{ boxShadow: `0 0 6px ${TIER_STYLES[tier].glow}` }} />
+              <span className="text-[10px] font-semibold text-slate-500">{TIER_STYLES[tier].label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Map canvas */}
+        <div className="lg:col-span-3 space-y-3">
+          {/* Compass rose + city center label */}
+          <div className="relative rounded-2xl border border-slate-800/50 bg-slate-950/60 p-4 overflow-hidden"
+            style={{ boxShadow: 'inset 0 0 60px rgba(0,0,0,0.3)' }}>
+            {/* Background map grid lines */}
+            <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" style={{ zIndex: 0 }}>
+              <defs>
+                <pattern id="mapgrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#64748b" strokeWidth="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#mapgrid)" />
+            </svg>
+
+            {/* Compass */}
+            <div className="absolute top-3 right-3 w-8 h-8 opacity-30 pointer-events-none" style={{ zIndex: 1 }}>
+              <svg viewBox="0 0 32 32" className="w-full h-full">
+                <circle cx="16" cy="16" r="14" fill="none" stroke="#64748b" strokeWidth="1"/>
+                <text x="16" y="6" textAnchor="middle" fill="#94a3b8" fontSize="6" fontWeight="bold">N</text>
+                <text x="26" y="18" textAnchor="middle" fill="#64748b" fontSize="5">E</text>
+                <text x="6" y="18" textAnchor="middle" fill="#64748b" fontSize="5">O</text>
+                <text x="16" y="28" textAnchor="middle" fill="#64748b" fontSize="5">S</text>
+              </svg>
+            </div>
+
+            {/* Radius rings */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
+              {[0.85, 0.6, 0.35].map((scale, i) => (
+                <div key={i} className="absolute rounded-full border border-slate-700/25"
+                  style={{ width: `${scale * 100}%`, height: `${scale * 100}%` }} />
+              ))}
+            </div>
+
+            {/* 3×3 pin grid */}
+            <div className="relative grid grid-cols-3 gap-3" style={{ zIndex: 2 }}>
+              {pins.map((pin) => {
+                const tier = pinTier(pin.rank);
+                const s = TIER_STYLES[tier];
+                const isCenter = pin.row === 1 && pin.col === 1;
+                const pinKey = `${pin.row}-${pin.col}`;
+                const isSelected = selected?.row === pin.row && selected?.col === pin.col;
+                const isHovered = hovered === pinKey;
+
+                return (
+                  <button
+                    key={pinKey}
+                    onClick={() => setSelected(isSelected ? null : pin)}
+                    onMouseEnter={() => setHovered(pinKey)}
+                    onMouseLeave={() => setHovered(null)}
+                    className={`group relative flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all duration-200
+                      ${isSelected
+                        ? `${s.bg} ${s.border} scale-105`
+                        : isHovered
+                          ? 'bg-slate-800/60 border-slate-600/50 scale-102'
+                          : 'bg-slate-900/40 border-slate-800/40 hover:bg-slate-800/40'
+                      }`}
+                    style={isSelected ? { boxShadow: `0 0 20px ${s.glow}40` } : {}}
+                  >
+                    {/* Pin icon */}
+                    <div className="relative">
+                      <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-200
+                        ${isSelected || isHovered ? `${s.bg} ${s.border}` : 'bg-slate-800/80 border-slate-700/60'}`}
+                        style={isSelected ? { boxShadow: `0 0 12px ${s.glow}` } : {}}>
+                        {isCenter ? (
+                          <div className={`w-3 h-3 rounded-full ${s.dot} transition-colors duration-300`}
+                            style={{ boxShadow: `0 0 8px ${s.glow}` }} />
+                        ) : (
+                          <MapPin size={13} className={`transition-colors duration-200 ${isSelected || isHovered ? s.text : 'text-slate-500'}`} />
+                        )}
+                      </div>
+                      {/* Rank badge */}
+                      <div className={`absolute -top-1.5 -right-1.5 w-4.5 h-4.5 rounded-full border text-[8px] font-black flex items-center justify-center
+                        transition-all duration-200 min-w-[18px] min-h-[18px]
+                        ${isSelected ? s.badge : 'bg-slate-800 border-slate-700/60 text-slate-400'}`}>
+                        #{pin.rank}
+                      </div>
+                    </div>
+                    {/* Label */}
+                    <span className={`text-[10px] font-semibold text-center leading-tight transition-colors duration-200 ${
+                      isSelected ? s.text : isCenter ? 'text-slate-300' : 'text-slate-600'
+                    }`}>
+                      {pin.label}
+                    </span>
+                    {/* Tier dot */}
+                    <div className={`w-1.5 h-1.5 rounded-full ${s.dot} transition-all duration-200`}
+                      style={{ opacity: isSelected || isHovered ? 1 : 0.5, boxShadow: isSelected ? `0 0 6px ${s.glow}` : 'none' }} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-3">
+            {(['top3', 'top10', 'invisible'] as PinTier[]).map(tier => {
+              const count = pins.filter(p => pinTier(p.rank) === tier).length;
+              const s = TIER_STYLES[tier];
+              return (
+                <div key={tier} className={`rounded-xl border px-3 py-2.5 text-center ${s.badge}`}>
+                  <p className="text-xl font-black tabular-nums">{count}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">{s.label}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Detail panel */}
+        <div className="lg:col-span-2 space-y-4">
+          {selected ? (() => {
+            const tier = pinTier(selected.rank);
+            const s = TIER_STYLES[tier];
+            const isCenter = selected.row === 1 && selected.col === 1;
+            const visEst = Math.max(5, Math.min(98, Math.round(
+              visibilityIndex - (Math.abs(selected.row - 1) + Math.abs(selected.col - 1)) * 8
+            )));
+            return (
+              <div className="space-y-4">
+                {/* Pin header */}
+                <div className={`rounded-xl border px-4 py-4 ${s.badge}`}
+                  style={{ boxShadow: `0 0 20px ${s.glow}20` }}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-9 h-9 rounded-full border-2 ${s.border} ${s.bg} flex items-center justify-center shrink-0`}
+                      style={{ boxShadow: `0 0 12px ${s.glow}` }}>
+                      {isCenter
+                        ? <div className={`w-3.5 h-3.5 rounded-full ${s.dot}`} style={{ boxShadow: `0 0 8px ${s.glow}` }} />
+                        : <MapPin size={15} className={s.text} />}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Zona {selected.label}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={`text-base font-black tabular-nums ${s.text}`}>#{selected.rank}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${s.badge}`}>{s.label}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">{TIER_TIPS[tier]}</p>
+                </div>
+
+                {/* Visibility bar */}
+                <div className="rounded-xl border border-slate-800/50 bg-slate-900/40 px-4 py-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Visibilidad Estimada</p>
+                    <span className={`text-sm font-black tabular-nums ${s.text}`}>{visEst}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-700 ${s.dot === 'bg-emerald-400' ? 'bg-emerald-500' : s.dot === 'bg-amber-400' ? 'bg-amber-500' : 'bg-red-500'}`}
+                      style={{ width: `${visEst}%` }} />
+                  </div>
+                </div>
+
+                {/* Keyword trigger */}
+                <div className="rounded-xl border border-slate-800/50 bg-slate-900/40 px-4 py-3.5 space-y-2">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Búsqueda Simulada</p>
+                  <div className="flex items-center gap-2 bg-slate-800/60 rounded-lg px-3 py-2 border border-slate-700/50">
+                    <Search size={11} className="text-slate-500 shrink-0" />
+                    <span className="text-xs text-slate-300 font-mono">"{selected.keyword}"</span>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    En esta zona, para esta búsqueda tu negocio aparece en posición <span className={`font-bold ${s.text}`}>#{selected.rank}</span>.
+                  </p>
+                </div>
+
+                {/* Action tip */}
+                {tier !== 'top3' && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-blue-500/20 bg-blue-500/6 px-4 py-3">
+                    <Lightbulb size={13} className="text-blue-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      {tier === 'top10'
+                        ? 'Publica 2 posts con la keyword de esta zona esta semana para subir al Top 3.'
+                        : 'Genera reseñas de clientes en este barrio y añade la zona en tu descripción de Google Business.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })() : (
+            <div className="flex flex-col items-center justify-center gap-4 h-full py-10 text-center">
+              <div className="w-14 h-14 rounded-2xl border border-slate-700/50 bg-slate-800/50 flex items-center justify-center">
+                <MapPinned size={22} className="text-slate-600" />
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-sm font-semibold text-slate-500">Haz clic en un pin</p>
+                <p className="text-xs text-slate-700 max-w-[200px]">Selecciona cualquier punto del mapa para ver la visibilidad estimada en esa zona.</p>
+              </div>
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold ${TIER_STYLES[dominantTier()].badge}`}>
+                <div className={`w-2 h-2 rounded-full ${TIER_STYLES[dominantTier()].dot}`} />
+                Zona dominante: {TIER_STYLES[dominantTier()].label}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AiDigitalTwin() {
   const [reviewRate, setReviewRate] = useState(5);
   const [postFreq, setPostFreq] = useState(2);
@@ -2375,6 +2694,9 @@ function AiDigitalTwin() {
           </div>
         </div>
       </div>
+
+      {/* Local heat map */}
+      <LocalHeatMap visibilityIndex={visibilityIndex} />
     </div>
   );
 }
