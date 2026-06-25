@@ -57,7 +57,7 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
                 }`}
               >
                 {l === 'es'
-                  ? <span className="text-sm" style={{ fontFamily: 'system-ui', lineHeight: 1 }}>🇪🇸</span>
+                  ? <span className="text-xs" style={{ fontFamily: 'system-ui', lineHeight: 1 }}>🇪🇸</span>
                   : <span className="text-xs font-bold" style={{ lineHeight: 1 }}>EN</span>
                 }
               </button>
