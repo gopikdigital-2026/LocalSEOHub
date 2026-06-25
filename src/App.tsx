@@ -2153,23 +2153,29 @@ const KEYWORD_POOL = [
   'dentista urgente', 'dentista económico', 'ortodoncia',
 ];
 
-function buildPins(visibilityIndex: number): HeatPin[] {
+function buildPins(visibilityIndex: number, reviewRate: number): HeatPin[] {
+  // Higher reviewRate = smaller distance penalty = green coverage extends further.
+  // At reviewRate=0 : penaltyPerUnit = 9 → corners go invisible fast.
+  // At reviewRate=30: penaltyPerUnit = 2 → coverage stays green at distance 2.
+  const penaltyPerUnit = 9 - (reviewRate / 30) * 7;   // [9 → 2]
+
   const pins: HeatPin[] = [];
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
       const isCenter = row === 1 && col === 1;
-      const distFromCenter = Math.abs(row - 1) + Math.abs(col - 1);
+      // Manhattan distance from center cell (1,1)
+      const dist = Math.abs(row - 1) + Math.abs(col - 1);
 
-      let baseRank: number;
-      if (isCenter) {
-        baseRank = Math.max(1, Math.round(20 - visibilityIndex * 0.18));
-      } else {
-        const penalty = distFromCenter === 1 ? 3 : 6;
-        baseRank = Math.max(1, Math.round(20 - visibilityIndex * 0.18 + penalty));
-      }
+      // Base rank from global visibility (lower = better)
+      const baseRank = Math.max(1, Math.round(20 - visibilityIndex * 0.18));
 
-      const jitter = isCenter ? 0 : (Math.sin((row * 3 + col) * 7.3) * 2);
-      const rank = Math.min(20, Math.max(1, Math.round(baseRank + jitter)));
+      // Geographic penalty: grows with distance, shrinks with more reviews
+      const geopenalty = isCenter ? 0 : dist * penaltyPerUnit;
+
+      // Small deterministic jitter per cell to avoid flat grid feel
+      const jitter = isCenter ? 0 : Math.sin((row * 3 + col) * 7.3) * 1.5;
+
+      const rank = Math.min(20, Math.max(1, Math.round(baseRank + geopenalty + jitter)));
 
       pins.push({
         row, col,
@@ -2194,22 +2200,27 @@ const TIER_TIPS: Record<PinTier, string> = {
   invisible: 'Crítico. Los competidores te bloquean en esta zona.',
 };
 
-function LocalHeatMap({ visibilityIndex }: { visibilityIndex: number }) {
-  const [pins, setPins] = useState<HeatPin[]>(() => buildPins(visibilityIndex));
+function LocalHeatMap({ visibilityIndex, reviewRate }: { visibilityIndex: number; reviewRate: number }) {
+  const [pins, setPins] = useState<HeatPin[]>(() => buildPins(visibilityIndex, reviewRate));
   const [selected, setSelected] = useState<HeatPin | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const prevVis = React.useRef(visibilityIndex);
+  const prevRate = React.useRef(reviewRate);
 
   useEffect(() => {
-    if (Math.abs(visibilityIndex - prevVis.current) >= 2) {
+    const visChanged = Math.abs(visibilityIndex - prevVis.current) >= 1;
+    const rateChanged = reviewRate !== prevRate.current;
+    if (visChanged || rateChanged) {
       prevVis.current = visibilityIndex;
-      setPins(buildPins(visibilityIndex));
+      prevRate.current = reviewRate;
+      const next = buildPins(visibilityIndex, reviewRate);
+      setPins(next);
       setSelected(prev => prev
-        ? buildPins(visibilityIndex).find(p => p.row === prev.row && p.col === prev.col) ?? null
+        ? next.find(p => p.row === prev.row && p.col === prev.col) ?? null
         : null
       );
     }
-  }, [visibilityIndex]);
+  }, [visibilityIndex, reviewRate]);
 
   const dominantTier = (): PinTier => {
     const counts = { top3: 0, top10: 0, invisible: 0 };
@@ -2233,14 +2244,32 @@ function LocalHeatMap({ visibilityIndex }: { visibilityIndex: number }) {
             <p className="text-xs text-slate-600 mt-0.5">Posición estimada en búsquedas según zona geográfica</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 shrink-0">
-          {(['top3', 'top10', 'invisible'] as PinTier[]).map(tier => (
-            <div key={tier} className="flex items-center gap-1.5">
-              <div className={`w-2.5 h-2.5 rounded-full ${TIER_STYLES[tier].dot}`}
-                style={{ boxShadow: `0 0 6px ${TIER_STYLES[tier].glow}` }} />
-              <span className="text-[10px] font-semibold text-slate-500">{TIER_STYLES[tier].label}</span>
+        <div className="flex items-center gap-5 shrink-0">
+          {/* Coverage radius indicator */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50">
+            <div className="flex items-end gap-0.5">
+              {[...Array(5)].map((_, i) => {
+                const filled = i < Math.ceil((reviewRate / 30) * 5);
+                const barColor = filled
+                  ? (reviewRate >= 20 ? 'bg-emerald-400' : reviewRate >= 10 ? 'bg-amber-400' : 'bg-red-400')
+                  : 'bg-slate-700';
+                return (
+                  <div key={i} className={`w-1.5 rounded-sm transition-all duration-300 ${barColor}`}
+                    style={{ height: `${8 + i * 3}px` }} />
+                );
+              })}
             </div>
-          ))}
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cobertura</span>
+          </div>
+          <div className="flex items-center gap-4">
+            {(['top3', 'top10', 'invisible'] as PinTier[]).map(tier => (
+              <div key={tier} className="flex items-center gap-1.5">
+                <div className={`w-2.5 h-2.5 rounded-full ${TIER_STYLES[tier].dot}`}
+                  style={{ boxShadow: `0 0 6px ${TIER_STYLES[tier].glow}` }} />
+                <span className="text-[10px] font-semibold text-slate-500">{TIER_STYLES[tier].label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -2271,12 +2300,25 @@ function LocalHeatMap({ visibilityIndex }: { visibilityIndex: number }) {
               </svg>
             </div>
 
-            {/* Radius rings */}
+            {/* Radius rings — color reflects review-rate coverage */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
-              {[0.85, 0.6, 0.35].map((scale, i) => (
-                <div key={i} className="absolute rounded-full border border-slate-700/25"
-                  style={{ width: `${scale * 100}%`, height: `${scale * 100}%` }} />
-              ))}
+              {[0.85, 0.6, 0.35].map((scale, i) => {
+                // ring 2 (outer) = distance-2 coverage, ring 1 = distance-1, ring 0 = center
+                const ringDist = 2 - i;   // 2, 1, 0
+                const penaltyPerUnit = 9 - (reviewRate / 30) * 7;
+                const worstRankAtRing = Math.round(20 - visibilityIndex * 0.18 + ringDist * penaltyPerUnit);
+                const ringTier: PinTier = worstRankAtRing <= 3 ? 'top3' : worstRankAtRing <= 10 ? 'top10' : 'invisible';
+                const ringColor = ringTier === 'top3' ? 'rgba(16,185,129,0.25)' : ringTier === 'top10' ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.15)';
+                return (
+                  <div key={i} className="absolute rounded-full border transition-all duration-500"
+                    style={{
+                      width: `${scale * 100}%`,
+                      height: `${scale * 100}%`,
+                      borderColor: ringColor,
+                      boxShadow: `0 0 12px ${ringColor}`,
+                    }} />
+                );
+              })}
             </div>
 
             {/* 3×3 pin grid */}
@@ -2359,8 +2401,11 @@ function LocalHeatMap({ visibilityIndex }: { visibilityIndex: number }) {
             const tier = pinTier(selected.rank);
             const s = TIER_STYLES[tier];
             const isCenter = selected.row === 1 && selected.col === 1;
+            const dist = Math.abs(selected.row - 1) + Math.abs(selected.col - 1);
+            // Visibility drop per distance unit decreases as reviewRate increases
+            const dropPerUnit = 12 - (reviewRate / 30) * 9;  // [12 → 3]
             const visEst = Math.max(5, Math.min(98, Math.round(
-              visibilityIndex - (Math.abs(selected.row - 1) + Math.abs(selected.col - 1)) * 8
+              visibilityIndex - dist * dropPerUnit
             )));
             return (
               <div className="space-y-4">
@@ -2696,7 +2741,7 @@ function AiDigitalTwin() {
       </div>
 
       {/* Local heat map */}
-      <LocalHeatMap visibilityIndex={visibilityIndex} />
+      <LocalHeatMap visibilityIndex={visibilityIndex} reviewRate={reviewRate} />
     </div>
   );
 }
