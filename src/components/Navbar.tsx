@@ -48,15 +48,15 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut }
                 key={l}
                 onClick={() => setLang(l)}
                 aria-label={l === 'es' ? 'Español' : 'English'}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                className={`flex items-center justify-center h-7 w-9 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
                   lang === l
                     ? 'bg-slate-700 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
                 {l === 'es'
-                  ? <span className="text-base leading-none" style={{ fontFamily: 'system-ui' }}>🇪🇸</span>
-                  : <span className="text-xs font-bold">EN</span>
+                  ? <span className="text-sm" style={{ fontFamily: 'system-ui', lineHeight: 1 }}>🇪🇸</span>
+                  : <span className="text-xs font-bold" style={{ lineHeight: 1 }}>EN</span>
                 }
               </button>
             ))}
