@@ -58,6 +58,7 @@ import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
 import { supabase } from './lib/supabase';
 import { useI18n } from './lib/i18n';
+import { trackPageView, trackViewContent } from './lib/pixel';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
 import LoginModal from './components/LoginModal';
@@ -4620,6 +4621,19 @@ export default function App() {
       window.history.replaceState({}, '', '/');
     }
   }, []);
+
+  // Fire pixel events once auth state is resolved
+  useEffect(() => {
+    if (loading) return;
+    if (user) {
+      trackPageView();
+    } else {
+      trackViewContent({
+        content_name: 'Landing Page',
+        content_category: 'SEO Tool',
+      });
+    }
+  }, [loading, user]);
 
   const startCheckout = useCallback(async () => {
     if (!session?.access_token) {
