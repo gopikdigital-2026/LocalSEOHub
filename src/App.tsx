@@ -48,6 +48,10 @@ import {
   Bell,
   ChevronLeft,
   Target,
+  Link,
+  Plus,
+  ScanSearch,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -966,7 +970,289 @@ function SimpleMarkdown({ text }: { text: string }) {
   return <div className="space-y-0.5">{elements}</div>;
 }
 
+// ─── URL Competitor Analysis ──────────────────────────────────────────────────
+
+interface UrlRival extends Rival {
+  url: string;
+  analysisContent?: string;
+  analysed?: boolean;
+}
+
+function UrlAnalysisPanel({ city }: { city: string }) {
+  const [urlInput, setUrlInput] = useState('');
+  const [urlError, setUrlError] = useState('');
+  const [rivals, setRivals] = useState<UrlRival[]>([]);
+  const [analyzing, setAnalyzing] = useState<string | null>(null);
+  const [selectedRival, setSelectedRival] = useState<UrlRival | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const threatBorder = { high: 'border-red-500/50 text-red-300', medium: 'border-amber-500/50 text-amber-300', low: 'border-emerald-500/50 text-emerald-300' };
+
+  const validateUrl = (val: string) => {
+    try { new URL(val.startsWith('http') ? val : `https://${val}`); return true; }
+    catch { return false; }
+  };
+
+  const normalizeUrl = (val: string) => val.startsWith('http') ? val : `https://${val}`;
+
+  const addUrl = () => {
+    const normalized = normalizeUrl(urlInput.trim());
+    if (!urlInput.trim()) { setUrlError('Introduce una URL'); return; }
+    if (!validateUrl(urlInput.trim())) { setUrlError('URL no válida. Ej: https://negocio.com'); return; }
+    if (rivals.find(r => r.url === normalized)) { setUrlError('Esta URL ya está en la lista'); return; }
+    setUrlError('');
+    const domain = normalized.replace(/https?:\/\/(www\.)?/, '').split('/')[0];
+    const newRival: UrlRival = {
+      id: `url-${Date.now()}`,
+      url: normalized,
+      name: domain,
+      category: 'Pendiente de análisis',
+      threat: 'medium',
+      lastMove: 'Sin analizar aún',
+      lastMoveTime: 'Ahora',
+      analysed: false,
+    };
+    setRivals(prev => [newRival, ...prev]);
+    setUrlInput('');
+  };
+
+  const removeRival = (id: string) => setRivals(prev => prev.filter(r => r.id !== id));
+
+  const analyzeRival = async (rival: UrlRival) => {
+    setAnalyzing(rival.id);
+    try {
+      const res = await supabase.functions.invoke('analyze-competitor-url', {
+        body: { url: rival.url, city: city || 'tu ciudad' },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const { content, detectedThreat, detectedName } = res.data ?? {};
+      setRivals(prev => prev.map(r => r.id === rival.id ? {
+        ...r,
+        name: detectedName || r.name,
+        threat: detectedThreat || 'medium',
+        lastMove: 'Análisis de IA completado',
+        lastMoveTime: 'hace un momento',
+        analysisContent: content,
+        analysed: true,
+      } : r));
+    } catch (err) {
+      setRivals(prev => prev.map(r => r.id === rival.id ? {
+        ...r,
+        lastMove: 'Error al analizar',
+        analysisContent: err instanceof Error ? err.message : 'Error desconocido',
+        analysed: true,
+      } : r));
+    } finally {
+      setAnalyzing(null);
+    }
+  };
+
+  const openDrawer = (rival: UrlRival) => {
+    setSelectedRival(rival);
+    setDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setTimeout(() => setSelectedRival(null), 300);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* URL input */}
+      <div className="rounded-2xl border border-slate-700/50 bg-slate-900/60 p-5"
+        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+        <div className="flex items-center gap-2 mb-4">
+          <Link size={13} className="text-emerald-400" />
+          <h3 className="text-xs font-bold text-slate-200 uppercase tracking-widest">Añadir URL de Competidor</h3>
+        </div>
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <Globe size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <input
+              type="text"
+              value={urlInput}
+              onChange={e => { setUrlInput(e.target.value); setUrlError(''); }}
+              onKeyDown={e => e.key === 'Enter' && addUrl()}
+              placeholder="https://competidor.com o competidor.com"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-sm text-slate-100 placeholder-slate-600
+                focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all duration-150"
+            />
+          </div>
+          <button
+            onClick={addUrl}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300
+              text-sm font-semibold hover:bg-emerald-500/20 hover:border-emerald-500/50 transition-all duration-150 shrink-0"
+          >
+            <Plus size={14} />
+            Añadir
+          </button>
+        </div>
+        {urlError && <p className="mt-2 text-xs text-red-400 flex items-center gap-1.5"><AlertCircle size={11} />{urlError}</p>}
+        <p className="mt-2.5 text-xs text-slate-600">Puedes añadir hasta 10 URLs. La IA extraerá y analizará el contenido de cada sitio.</p>
+      </div>
+
+      {/* Rival list */}
+      {rivals.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/30 py-16 flex flex-col items-center gap-3 text-center px-6">
+          <ScanSearch size={32} className="text-slate-700" />
+          <p className="text-sm font-semibold text-slate-500">No hay URLs añadidas</p>
+          <p className="text-xs text-slate-700 max-w-xs">Introduce la URL de un negocio competidor arriba y la IA realizará un análisis táctico completo de su sitio web.</p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+          style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800/60">
+            <Target size={13} className="text-emerald-400" />
+            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-widest">Competidores a Analizar</h3>
+            <span className="ml-auto text-xs text-slate-600">{rivals.length} URL{rivals.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="divide-y divide-slate-800/40">
+            {rivals.map(rival => (
+              <div key={rival.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-800/20 transition-colors duration-150">
+                <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${
+                  rival.analysed
+                    ? threatBorder[rival.threat]
+                    : 'border-slate-700/60 text-slate-500'
+                }`} style={{ background: 'rgba(15,23,42,0.8)' }}>
+                  {analyzing === rival.id
+                    ? <div className="w-4 h-4 border-2 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin" />
+                    : rival.analysed
+                      ? <ShieldCheck size={14} />
+                      : <Globe size={14} />
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-slate-100 truncate">{rival.name}</p>
+                    {rival.analysed && <ThreatBadge level={rival.threat} />}
+                  </div>
+                  <p className="text-xs text-slate-600 truncate font-mono mt-0.5">{rival.url}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {!rival.analysed && (
+                    <button
+                      onClick={() => analyzeRival(rival)}
+                      disabled={analyzing !== null}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300
+                        text-xs font-semibold hover:bg-emerald-500/20 transition-all duration-150
+                        disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ScanSearch size={11} />
+                      {analyzing === rival.id ? 'Analizando...' : 'Analizar'}
+                    </button>
+                  )}
+                  {rival.analysed && rival.analysisContent && (
+                    <button
+                      onClick={() => openDrawer(rival)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/60 text-slate-300
+                        text-xs font-semibold hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-300
+                        transition-all duration-150"
+                    >
+                      <Swords size={11} />
+                      Ver Informe
+                    </button>
+                  )}
+                  <button
+                    onClick={() => removeRival(rival.id)}
+                    className="w-7 h-7 rounded-lg bg-slate-800/50 border border-slate-700/50 flex items-center justify-center
+                      text-slate-600 hover:text-red-400 hover:border-red-500/30 transition-all duration-150"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          {rivals.some(r => !r.analysed) && (
+            <div className="px-6 py-3.5 border-t border-slate-800/50 bg-slate-950/40 flex items-center justify-between">
+              <span className="text-xs text-slate-600 font-mono">{rivals.filter(r => !r.analysed).length} pendiente{rivals.filter(r => !r.analysed).length !== 1 ? 's' : ''} de análisis</span>
+              <button
+                onClick={() => {
+                  const pending = rivals.filter(r => !r.analysed && analyzing === null);
+                  if (pending.length > 0) analyzeRival(pending[0]);
+                }}
+                disabled={analyzing !== null}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300
+                  text-xs font-bold hover:bg-emerald-500/20 transition-all duration-150
+                  disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ScanSearch size={11} />
+                Analizar Siguiente
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Drawer */}
+      {(drawerOpen || selectedRival) && (
+        <>
+          <div
+            className={`fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 transition-opacity duration-300 ${drawerOpen ? 'opacity-100' : 'opacity-0'}`}
+            onClick={closeDrawer}
+          />
+          <div className={`fixed right-0 top-0 h-full w-full max-w-lg bg-slate-900 border-l border-slate-700/60 z-50 flex flex-col
+            shadow-2xl transition-transform duration-300 ease-in-out ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            style={{ boxShadow: '-8px 0 40px rgba(0,0,0,0.5)' }}>
+            {selectedRival && (
+              <>
+                <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-800/60 bg-slate-950/50 shrink-0">
+                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${threatBorder[selectedRival.threat]}`}>
+                    <ShieldAlert size={16} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500 font-mono uppercase tracking-widest mb-0.5">Informe de Inteligencia IA</p>
+                    <p className="text-sm font-bold text-white truncate">{selectedRival.name}</p>
+                  </div>
+                  <button onClick={closeDrawer}
+                    className="w-8 h-8 rounded-lg bg-slate-800/60 border border-slate-700/60 flex items-center justify-center
+                      text-slate-400 hover:text-white hover:border-slate-600 transition-all duration-150 shrink-0">
+                    <ChevronLeft size={16} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                  <div className="flex items-center gap-3 rounded-xl bg-slate-800/50 border border-slate-700/40 px-4 py-3">
+                    <Globe size={13} className="text-slate-500 shrink-0" />
+                    <p className="text-xs text-slate-400 font-mono truncate flex-1">{selectedRival.url}</p>
+                    <ThreatBadge level={selectedRival.threat} />
+                  </div>
+                  <div className="rounded-xl border border-slate-700/40 bg-slate-800/30 px-5 py-5">
+                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                      <BrainCircuit size={11} /> Análisis Táctico Completo
+                    </p>
+                    <SimpleMarkdown text={selectedRival.analysisContent ?? ''} />
+                  </div>
+                </div>
+                <div className="px-6 py-4 border-t border-slate-800/60 bg-slate-950/40 shrink-0">
+                  <button onClick={closeDrawer}
+                    className="w-full py-2.5 rounded-xl bg-slate-800 border border-slate-700/60 text-sm font-semibold text-slate-300
+                      hover:bg-slate-700 hover:text-white transition-all duration-150">
+                    Cerrar Panel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Random Environment Analysis ─────────────────────────────────────────────
+
+const RANDOM_ENV_RIVALS: Rival[] = [
+  { id: 'env1', name: 'Clínica Estética Central', category: 'Estética', threat: 'high', lastMove: 'Lanzó campaña de Google Ads con 8 nuevas extensiones de llamada', lastMoveTime: 'hace 2 horas' },
+  { id: 'env2', name: 'Taller Mecánico Rápido', category: 'Automoción', threat: 'medium', lastMove: 'Subió 6 fotos nuevas al perfil de Google Business', lastMoveTime: 'hace 5 horas' },
+  { id: 'env3', name: 'Óptica Visión Plus', category: 'Salud Visual', threat: 'low', lastMove: 'Actualizó horario de verano y descripción del perfil', lastMoveTime: 'hace 1 día' },
+  { id: 'env4', name: 'Academia de Idiomas GlobalTalk', category: 'Educación', threat: 'medium', lastMove: 'Publicó post con oferta de matrícula gratuita en septiembre', lastMoveTime: 'hace 3 horas' },
+  { id: 'env5', name: 'Farmacia Bienestar 24h', category: 'Salud', threat: 'high', lastMove: '15 reseñas nuevas de 5 estrellas en 72h — campaña coordinada', lastMoveTime: 'hace 1 hora' },
+  { id: 'env6', name: 'Clínica Dental Familiar', category: 'Odontología', threat: 'medium', lastMove: 'Añadió nuevos servicios: blanqueamiento y ortodoncia invisible', lastMoveTime: 'hace 4 horas' },
+];
+
 function CompetitorRadar({ city }: { city: string }) {
+  const [radarTab, setRadarTab] = useState<'local' | 'url'>('local');
   const [visibleAlerts, setVisibleAlerts] = useState(LIVE_ALERTS.slice(0, 3));
   const [alertIdx, setAlertIdx] = useState(3);
   const [scanAngle, setScanAngle] = useState(0);
@@ -975,6 +1261,10 @@ function CompetitorRadar({ city }: { city: string }) {
   const [aiContent, setAiContent] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [envRivals] = useState<Rival[]>(() => {
+    const shuffled = [...RANDOM_ENV_RIVALS].sort(() => Math.random() - 0.5);
+    return [...RIVALS, ...shuffled].slice(0, 6);
+  });
   const feedRef = React.useRef<HTMLDivElement>(null);
 
   // Rotate scan line
@@ -1037,7 +1327,7 @@ function CompetitorRadar({ city }: { city: string }) {
             Radar de <span className="text-emerald-400">Competencia</span>
           </h1>
           <p className="text-slate-400 text-sm max-w-xl">
-            Monitoreo táctico en tiempo real de los movimientos de tus rivales directos. Detecta amenazas y despliega contramedidas de IA.
+            Monitoreo táctico en tiempo real de tus rivales. Analiza negocios de tu entorno o pega la URL de cualquier competidor para un informe completo.
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/8 shrink-0">
@@ -1046,175 +1336,206 @@ function CompetitorRadar({ city }: { city: string }) {
         </div>
       </div>
 
-      {/* Top row: Mini-radar + Alert feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Radar visual */}
-        <div className="rounded-2xl border border-emerald-900/50 bg-slate-950/80 p-5 flex flex-col items-center justify-center gap-4"
-          style={{ boxShadow: '0 0 40px rgba(16,185,129,0.06), inset 0 1px 0 rgba(255,255,255,0.03)' }}>
-          <p className="text-xs font-bold text-emerald-500/70 uppercase tracking-widest self-start">Sector de Vigilancia</p>
-          <div className="relative w-40 h-40">
-            {/* Grid rings */}
-            {[1,2,3,4].map((n) => (
-              <div key={n} className="absolute inset-0 rounded-full border border-emerald-900/60"
-                style={{ margin: `${(4-n)*20}px` }} />
-            ))}
-            {/* Cross hairs */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-full h-px bg-emerald-900/50" />
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-px h-full bg-emerald-900/50" />
-            </div>
-            {/* Scan line */}
-            <div className="absolute inset-0 rounded-full overflow-hidden">
-              <div
-                className="absolute top-1/2 left-1/2 origin-left h-px w-1/2"
-                style={{
-                  background: 'linear-gradient(to right, rgba(16,185,129,0.7), transparent)',
-                  transform: `rotate(${scanAngle}deg)`,
-                  width: '50%',
-                  boxShadow: '0 0 8px rgba(16,185,129,0.5)',
-                }}
-              />
-              {/* Sweep wedge */}
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background: `conic-gradient(from ${scanAngle}deg, rgba(16,185,129,0.08) 0deg, transparent 60deg)`,
-                }}
-              />
-            </div>
-            {/* Center dot */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-            </div>
-            {/* Rival blips */}
-            {RIVALS.map((r, i) => {
-              const angle = (i / RIVALS.length) * 2 * Math.PI;
-              const dist = r.threat === 'high' ? 35 : r.threat === 'medium' ? 52 : 64;
-              const x = 50 + dist * Math.cos(angle);
-              const y = 50 + dist * Math.sin(angle);
-              return (
-                <div key={r.id}
-                  className={`absolute w-2 h-2 rounded-full -translate-x-1/2 -translate-y-1/2 ${
-                    r.threat === 'high' ? 'bg-red-400 shadow-[0_0_6px_rgba(239,68,68,0.8)]' :
-                    r.threat === 'medium' ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]' :
-                    'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
-                  } animate-pulse`}
-                  style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.4}s` }}
-                />
-              );
-            })}
-          </div>
-          <div className="grid grid-cols-3 gap-2 w-full text-center">
-            {(['high','medium','low'] as ThreatLevel[]).map((t) => (
-              <div key={t} className="space-y-0.5">
-                <p className="text-lg font-bold text-white">{RIVALS.filter(r=>r.threat===t).length}</p>
-                <p className="text-[10px] text-slate-600 uppercase">{t==='high'?'Alto':t==='medium'?'Medio':'Bajo'}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Alert feed */}
-        <div className="lg:col-span-2 rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
-          style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
-          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-800/60 bg-slate-900/80">
-            <Bell size={13} className="text-emerald-400" />
-            <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">Feed de Alertas — Tiempo Real</span>
-            <span className="ml-auto text-[10px] text-emerald-500/70 font-mono">SYS_MONITOR v2.4</span>
-          </div>
-          <div ref={feedRef} className="divide-y divide-slate-800/30">
-            {visibleAlerts.map((alert, i) => (
-              <div
-                key={`${alert.id}-${i}`}
-                className={`flex items-start gap-3 px-5 py-3.5 border-l-2 transition-all duration-500 ${
-                  i === 0 ? `${alertBg[alert.threat]} border-l-current animate-[fadeSlideIn_0.4s_ease]` : 'border-l-transparent'
-                }`}
-                style={i === 0 ? { borderLeftColor: alert.threat === 'high' ? '#f87171' : alert.threat === 'medium' ? '#fbbf24' : '#34d399' } : {}}
-              >
-                <span className="text-base shrink-0 mt-0.5">{alert.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-200 leading-snug">
-                    <span className="font-semibold">{alert.rival}</span>
-                    {' '}<span className="text-slate-400">{alert.action}</span>
-                  </p>
-                  <p className="text-xs text-slate-600 mt-0.5 font-mono">{alert.time}</p>
-                </div>
-                <ThreatBadge level={alert.threat} />
-              </div>
-            ))}
-          </div>
-          <div className="px-5 py-2.5 border-t border-slate-800/40 bg-slate-950/40 flex items-center gap-2">
-            <Activity size={10} className="text-emerald-500/60" />
-            <span className="text-[10px] text-slate-700 font-mono">Escaneando {RIVALS.length} rivales activos · Próxima actualización en 4s</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Competitor table */}
-      <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+      {/* Sub-tab switcher */}
+      <div className="flex gap-1 p-1 rounded-xl bg-slate-900/80 border border-slate-800/60 w-fit"
         style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800/60">
-          <Target size={14} className="text-emerald-400" />
-          <h3 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Tabla de Rivales Directos</h3>
-          <span className="ml-auto text-xs text-slate-600">{RIVALS.length} objetivos monitorizados</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-800/60">
-                <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rival Directo</th>
-                <th className="px-4 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Amenaza</th>
-                <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Último Movimiento Detectado</th>
-                <th className="px-6 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">Acción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/40">
-              {RIVALS.map((rival) => (
-                <tr key={rival.id}
-                  className="group transition-colors duration-150 hover:bg-slate-800/30">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${threatBorder[rival.threat]}`}
-                        style={{ background: 'rgba(15,23,42,0.8)' }}>
-                        <Eye size={13} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-100">{rival.name}</p>
-                        <p className="text-xs text-slate-600">{rival.category}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    <ThreatBadge level={rival.threat} />
-                  </td>
-                  <td className="px-4 py-4">
-                    <div>
-                      <p className="text-sm text-slate-300 leading-snug max-w-sm">{rival.lastMove}</p>
-                      <p className="text-xs text-slate-600 mt-1 font-mono">{rival.lastMoveTime}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => openDrawer(rival)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold
-                        bg-slate-800/60 border-slate-700/60 text-slate-300
-                        hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-300
-                        transition-all duration-200 group-hover:border-slate-600"
-                    >
-                      <Swords size={12} />
-                      Ver Contramedida de IA
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <button
+          onClick={() => setRadarTab('local')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200
+            ${radarTab === 'local'
+              ? 'bg-slate-800 text-white shadow-md border border-slate-700/50'
+              : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <Radar size={13} />
+          Entorno Local
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+            radarTab === 'local' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800/60 text-slate-600'
+          }`}>{envRivals.length}</span>
+        </button>
+        <button
+          onClick={() => setRadarTab('url')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200
+            ${radarTab === 'url'
+              ? 'bg-slate-800 text-white shadow-md border border-slate-700/50'
+              : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <Link size={13} />
+          Analizar URL
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+            radarTab === 'url' ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800/60 text-slate-600'
+          }`}>IA</span>
+        </button>
       </div>
 
-      {/* Drawer overlay */}
+      {radarTab === 'url' ? (
+        <UrlAnalysisPanel city={city} />
+      ) : (
+        <>
+          {/* Top row: Mini-radar + Alert feed */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Radar visual */}
+            <div className="rounded-2xl border border-emerald-900/50 bg-slate-950/80 p-5 flex flex-col items-center justify-center gap-4"
+              style={{ boxShadow: '0 0 40px rgba(16,185,129,0.06), inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+              <p className="text-xs font-bold text-emerald-500/70 uppercase tracking-widest self-start">Sector de Vigilancia</p>
+              <div className="relative w-40 h-40">
+                {[1,2,3,4].map((n) => (
+                  <div key={n} className="absolute inset-0 rounded-full border border-emerald-900/60"
+                    style={{ margin: `${(4-n)*20}px` }} />
+                ))}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-full h-px bg-emerald-900/50" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-px h-full bg-emerald-900/50" />
+                </div>
+                <div className="absolute inset-0 rounded-full overflow-hidden">
+                  <div
+                    className="absolute top-1/2 left-1/2 origin-left h-px"
+                    style={{
+                      background: 'linear-gradient(to right, rgba(16,185,129,0.7), transparent)',
+                      transform: `rotate(${scanAngle}deg)`,
+                      width: '50%',
+                      boxShadow: '0 0 8px rgba(16,185,129,0.5)',
+                    }}
+                  />
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: `conic-gradient(from ${scanAngle}deg, rgba(16,185,129,0.08) 0deg, transparent 60deg)`,
+                    }}
+                  />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                </div>
+                {envRivals.map((r, i) => {
+                  const angle = (i / envRivals.length) * 2 * Math.PI;
+                  const dist = r.threat === 'high' ? 35 : r.threat === 'medium' ? 52 : 64;
+                  const x = 50 + dist * Math.cos(angle);
+                  const y = 50 + dist * Math.sin(angle);
+                  return (
+                    <div key={r.id}
+                      className={`absolute w-2 h-2 rounded-full -translate-x-1/2 -translate-y-1/2 ${
+                        r.threat === 'high' ? 'bg-red-400 shadow-[0_0_6px_rgba(239,68,68,0.8)]' :
+                        r.threat === 'medium' ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]' :
+                        'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
+                      } animate-pulse`}
+                      style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.4}s` }}
+                    />
+                  );
+                })}
+              </div>
+              <div className="grid grid-cols-3 gap-2 w-full text-center">
+                {(['high','medium','low'] as ThreatLevel[]).map((t) => (
+                  <div key={t} className="space-y-0.5">
+                    <p className="text-lg font-bold text-white">{envRivals.filter(r=>r.threat===t).length}</p>
+                    <p className="text-[10px] text-slate-600 uppercase">{t==='high'?'Alto':t==='medium'?'Medio':'Bajo'}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Alert feed */}
+            <div className="lg:col-span-2 rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+              <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-800/60 bg-slate-900/80">
+                <Bell size={13} className="text-emerald-400" />
+                <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">Feed de Alertas — Tiempo Real</span>
+                <span className="ml-auto text-[10px] text-emerald-500/70 font-mono">SYS_MONITOR v2.4</span>
+              </div>
+              <div ref={feedRef} className="divide-y divide-slate-800/30">
+                {visibleAlerts.map((alert, i) => (
+                  <div
+                    key={`${alert.id}-${i}`}
+                    className={`flex items-start gap-3 px-5 py-3.5 border-l-2 transition-all duration-500 ${
+                      i === 0 ? `${alertBg[alert.threat]} border-l-current animate-[fadeSlideIn_0.4s_ease]` : 'border-l-transparent'
+                    }`}
+                    style={i === 0 ? { borderLeftColor: alert.threat === 'high' ? '#f87171' : alert.threat === 'medium' ? '#fbbf24' : '#34d399' } : {}}
+                  >
+                    <span className="text-base shrink-0 mt-0.5">{alert.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-200 leading-snug">
+                        <span className="font-semibold">{alert.rival}</span>
+                        {' '}<span className="text-slate-400">{alert.action}</span>
+                      </p>
+                      <p className="text-xs text-slate-600 mt-0.5 font-mono">{alert.time}</p>
+                    </div>
+                    <ThreatBadge level={alert.threat} />
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-2.5 border-t border-slate-800/40 bg-slate-950/40 flex items-center gap-2">
+                <Activity size={10} className="text-emerald-500/60" />
+                <span className="text-[10px] text-slate-700 font-mono">Escaneando {envRivals.length} rivales activos · Próxima actualización en 4s</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Competitor table */}
+          <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+            style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800/60">
+              <Target size={14} className="text-emerald-400" />
+              <h3 className="text-sm font-bold text-slate-200 uppercase tracking-widest">Rivales del Entorno</h3>
+              <span className="ml-auto text-xs text-slate-600">{envRivals.length} objetivos monitorizados</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-800/60">
+                    <th className="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Rival Directo</th>
+                    <th className="px-4 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Amenaza</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest">Último Movimiento Detectado</th>
+                    <th className="px-6 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/40">
+                  {envRivals.map((rival) => (
+                    <tr key={rival.id}
+                      className="group transition-colors duration-150 hover:bg-slate-800/30">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${threatBorder[rival.threat]}`}
+                            style={{ background: 'rgba(15,23,42,0.8)' }}>
+                            <Eye size={13} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-100">{rival.name}</p>
+                            <p className="text-xs text-slate-600">{rival.category}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <ThreatBadge level={rival.threat} />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div>
+                          <p className="text-sm text-slate-300 leading-snug max-w-sm">{rival.lastMove}</p>
+                          <p className="text-xs text-slate-600 mt-1 font-mono">{rival.lastMoveTime}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => openDrawer(rival)}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold
+                            bg-slate-800/60 border-slate-700/60 text-slate-300
+                            hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-300
+                            transition-all duration-200 group-hover:border-slate-600"
+                        >
+                          <Swords size={12} />
+                          Ver Contramedida de IA
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Drawer overlay (Entorno Local) */}
       {(drawerOpen || selectedRival) && (
         <>
           <div
@@ -1226,7 +1547,6 @@ function CompetitorRadar({ city }: { city: string }) {
             style={{ boxShadow: '-8px 0 40px rgba(0,0,0,0.5)' }}>
             {selectedRival && (
               <>
-                {/* Drawer header */}
                 <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-800/60 bg-slate-950/50 shrink-0">
                   <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${threatBorder[selectedRival.threat]}`}>
                     <ShieldAlert size={16} />
@@ -1241,9 +1561,7 @@ function CompetitorRadar({ city }: { city: string }) {
                     <ChevronLeft size={16} />
                   </button>
                 </div>
-
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                  {/* Rival info */}
                   <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-800/50 border border-slate-700/40 px-4 py-3">
                     <div>
                       <p className="text-sm font-semibold text-slate-100">{selectedRival.name}</p>
@@ -1251,8 +1569,6 @@ function CompetitorRadar({ city }: { city: string }) {
                     </div>
                     <ThreatBadge level={selectedRival.threat} />
                   </div>
-
-                  {/* AI Response area */}
                   {aiLoading && (
                     <div className="flex flex-col items-center justify-center gap-4 py-12">
                       <div className="relative w-14 h-14">
@@ -1266,7 +1582,6 @@ function CompetitorRadar({ city }: { city: string }) {
                       </div>
                     </div>
                   )}
-
                   {aiError && !aiLoading && (
                     <div className="rounded-xl border border-red-500/20 bg-red-500/8 px-5 py-4">
                       <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
@@ -1275,7 +1590,6 @@ function CompetitorRadar({ city }: { city: string }) {
                       <p className="text-sm text-red-300">{aiError}</p>
                     </div>
                   )}
-
                   {aiContent && !aiLoading && (
                     <div className="rounded-xl border border-slate-700/40 bg-slate-800/30 px-5 py-5">
                       <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
@@ -1285,8 +1599,6 @@ function CompetitorRadar({ city }: { city: string }) {
                     </div>
                   )}
                 </div>
-
-                {/* Drawer footer */}
                 <div className="px-6 py-4 border-t border-slate-800/60 bg-slate-950/40 shrink-0">
                   <button
                     onClick={closeDrawer}
