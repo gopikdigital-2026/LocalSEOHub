@@ -4595,6 +4595,7 @@ export default function App() {
   const { user, session, loading, signOut } = useAuth();
   const { isActive, status, trialDaysLeft, cancelAtPeriodEnd, currentPeriodEnd, loadingSubscription, refresh } = useSubscription(user);
   const [showLogin, setShowLogin] = useState(false);
+  const [loginInitialMode, setLoginInitialMode] = useState<'login' | 'signup'>('login');
   const [showPricing, setShowPricing] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
@@ -4634,6 +4635,15 @@ export default function App() {
       });
     }
   }, [loading, user]);
+
+  // Auto-checkout after sign-up when the user clicked "Start trial" from the landing page
+  useEffect(() => {
+    if (!user || loadingSubscription || isActive) return;
+    if (sessionStorage.getItem('postAuthAction') !== 'checkout') return;
+    sessionStorage.removeItem('postAuthAction');
+    startCheckout();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loadingSubscription, isActive]);
 
   const startCheckout = useCallback(async () => {
     if (!session?.access_token) {
@@ -4701,11 +4711,15 @@ export default function App() {
           onSignOut={signOut}
         />
         <LandingPage
-          onLoginClick={() => setShowLogin(true)}
-          onSubscribeClick={() => setShowLogin(true)}
+          onLoginClick={() => { setLoginInitialMode('login'); setShowLogin(true); }}
+          onSubscribeClick={() => {
+            sessionStorage.setItem('postAuthAction', 'checkout');
+            setLoginInitialMode('signup');
+            setShowLogin(true);
+          }}
           scrollToPricing={showPricing}
         />
-        {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+        {showLogin && <LoginModal onClose={() => setShowLogin(false)} initialMode={loginInitialMode} />}
       </div>
     );
   }

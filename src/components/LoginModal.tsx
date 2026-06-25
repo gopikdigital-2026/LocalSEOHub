@@ -4,12 +4,13 @@ import { supabase } from '../lib/supabase';
 
 interface LoginModalProps {
   onClose: () => void;
+  initialMode?: Mode;
 }
 
 type Mode = 'login' | 'signup';
 
-export default function LoginModal({ onClose }: LoginModalProps) {
-  const [mode, setMode] = useState<Mode>('login');
+export default function LoginModal({ onClose, initialMode = 'login' }: LoginModalProps) {
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
