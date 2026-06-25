@@ -34,6 +34,7 @@ import {
   ExternalLink,
   CheckCircle2,
   Circle,
+  Star,
   ChevronDown,
   Building2,
   Phone,
@@ -800,6 +801,456 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
             </p>
           )}
         </>
+      )}
+    </div>
+  );
+}
+
+// ─── GEO Audit ───────────────────────────────────────────────────────────────
+
+interface GeoFactor {
+  name: string;
+  score: number;
+  status: 'ok' | 'warn' | 'bad';
+  tip: string;
+}
+
+interface GeoScoreData {
+  score: number;
+  factors: GeoFactor[];
+  topAction: string;
+}
+
+interface GeoAuditResult {
+  simulatedResponse: string;
+  businessName: string;
+  score: GeoScoreData;
+}
+
+function highlightBusiness(text: string, name: string): React.ReactNode[] {
+  if (!name) return [<span key="0">{text}</span>];
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  return parts.map((part, i) =>
+    new RegExp(`^${escaped}$`, 'i').test(part)
+      ? <mark key={i} className="bg-emerald-400/20 text-emerald-300 px-1 rounded font-semibold not-italic">{part}</mark>
+      : <span key={i}>{part}</span>
+  );
+}
+
+const GEO_FACTOR_ICONS: Record<string, React.ReactNode> = {
+  'Autoridad de Reseñas':    <Star size={13} />,
+  'Presencia en Directorios': <Globe size={13} />,
+  'Coherencia NAP':           <MapPin size={13} />,
+  'Contenido Estructurado':   <FileText size={13} />,
+  'Señales de Entidad':       <BrainCircuit size={13} />,
+  'Velocidad de Respuesta IA': <Zap size={13} />,
+};
+
+function GeoScoreBar({ value, animate }: { value: number; animate: boolean }) {
+  const color = value >= 70 ? '#10b981' : value >= 40 ? '#f59e0b' : '#ef4444';
+  const label = value >= 70 ? 'Buena' : value >= 40 ? 'Media' : 'Baja';
+  const labelColor = value >= 70 ? 'text-emerald-400' : value >= 40 ? 'text-amber-400' : 'text-red-400';
+  return (
+    <div className="space-y-2">
+      <div className="flex items-end justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-0.5">AI Search Visibility Score</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-5xl font-black text-white tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {animate ? value : 0}
+            </span>
+            <span className="text-xl font-bold text-slate-600">/100</span>
+            <span className={`text-sm font-bold ${labelColor} ml-1`}>{label} Visibilidad</span>
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-xs text-slate-600 font-mono">ChatGPT · Gemini · Perplexity</p>
+          <p className="text-xs text-slate-700 font-mono">GEO Score v1.0</p>
+        </div>
+      </div>
+      <div className="relative h-3 rounded-full bg-slate-800/80 overflow-hidden">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out"
+          style={{ width: animate ? `${value}%` : '0%', background: `linear-gradient(to right, ${color}99, ${color})`, boxShadow: `0 0 12px ${color}60` }}
+        />
+        {[25, 50, 75].map(mark => (
+          <div key={mark} className="absolute top-0 bottom-0 w-px bg-slate-700/60" style={{ left: `${mark}%` }} />
+        ))}
+      </div>
+      <div className="flex justify-between text-[10px] text-slate-700 font-mono px-0.5">
+        <span>0</span><span>Bajo</span><span>Medio</span><span>Alto</span><span>100</span>
+      </div>
+    </div>
+  );
+}
+
+function GeoFactorRow({ factor }: { factor: GeoFactor }) {
+  const statusStyles = {
+    ok:   { bar: 'bg-emerald-500', text: 'text-emerald-400', badge: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400' },
+    warn: { bar: 'bg-amber-500',   text: 'text-amber-400',   badge: 'bg-amber-500/10 border-amber-500/25 text-amber-400' },
+    bad:  { bar: 'bg-red-500',     text: 'text-red-400',     badge: 'bg-red-500/10 border-red-500/25 text-red-400' },
+  };
+  const s = statusStyles[factor.status];
+  const statusLabel = { ok: 'Óptimo', warn: 'Mejorable', bad: 'Crítico' }[factor.status];
+
+  return (
+    <div className="group flex items-center gap-4 px-5 py-3.5 hover:bg-slate-800/20 transition-colors duration-150">
+      <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${s.badge}`}>
+        {GEO_FACTOR_ICONS[factor.name] ?? <Circle size={13} />}
+      </div>
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-slate-200">{factor.name}</p>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${s.badge}`}>{statusLabel}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+            <div className={`h-full rounded-full ${s.bar} transition-all duration-700`} style={{ width: `${factor.score}%` }} />
+          </div>
+          <span className={`text-xs font-bold tabular-nums shrink-0 ${s.text}`}>{factor.score}</span>
+        </div>
+        <p className="text-xs text-slate-600 leading-snug">{factor.tip}</p>
+      </div>
+    </div>
+  );
+}
+
+function ChatGptSimulator({ response, businessName, loading }: { response: string; businessName: string; loading: boolean }) {
+  const isMentioned = businessName && response
+    ? new RegExp(businessName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(response)
+    : false;
+
+  return (
+    <div className="rounded-2xl border border-slate-700/50 bg-slate-950/70 overflow-hidden"
+      style={{ boxShadow: '0 0 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
+      {/* Browser chrome */}
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-800/60 bg-slate-900/80">
+        <div className="flex gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-slate-700" />
+          <div className="w-3 h-3 rounded-full bg-slate-700" />
+          <div className="w-3 h-3 rounded-full bg-slate-700" />
+        </div>
+        <div className="flex-1 mx-3 flex items-center gap-2 bg-slate-800/60 rounded-lg px-3 py-1.5 border border-slate-700/50">
+          <Globe size={11} className="text-slate-500 shrink-0" />
+          <span className="text-xs text-slate-500 font-mono">chatgpt.com</span>
+          <Lock size={10} className="text-emerald-500/50 ml-auto shrink-0" />
+        </div>
+      </div>
+      {/* ChatGPT UI */}
+      <div className="p-6 space-y-5">
+        {/* User message */}
+        <div className="flex justify-end">
+          <div className="max-w-xs bg-slate-700/60 border border-slate-600/40 rounded-2xl rounded-tr-sm px-4 py-3">
+            <p className="text-sm text-slate-200">
+              Recomiéndame un <span className="text-emerald-300 font-semibold">[sector]</span> en <span className="text-blue-300 font-semibold">[ciudad]</span> con buenas opciones
+            </p>
+          </div>
+        </div>
+        {/* AI response */}
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-slate-600/60 flex items-center justify-center shrink-0 mt-0.5">
+            <span className="text-xs font-black text-white">G</span>
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-slate-400 mb-2">ChatGPT</p>
+            {loading ? (
+              <div className="space-y-2">
+                {[90, 75, 85, 60].map((w, i) => (
+                  <div key={i} className="h-3.5 rounded-full bg-slate-800 animate-pulse" style={{ width: `${w}%`, animationDelay: `${i * 0.1}s` }} />
+                ))}
+                <div className="flex items-center gap-1.5 mt-3">
+                  {[0, 0.2, 0.4].map((d, i) => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 animate-bounce" style={{ animationDelay: `${d}s` }} />
+                  ))}
+                  <span className="text-xs text-slate-600 ml-1">Generando respuesta...</span>
+                </div>
+              </div>
+            ) : response ? (
+              <div className="space-y-3">
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  {highlightBusiness(response, businessName)}
+                </p>
+                <div className={`flex items-start gap-2.5 rounded-xl px-4 py-3 border ${
+                  isMentioned
+                    ? 'bg-emerald-500/8 border-emerald-500/25'
+                    : 'bg-amber-500/8 border-amber-500/20'
+                }`}>
+                  {isMentioned ? (
+                    <>
+                      <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-bold text-emerald-400">Tu negocio aparece en la respuesta</p>
+                        <p className="text-xs text-slate-500 mt-0.5">La IA lo menciona como una opción relevante. Buen indicio de visibilidad.</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-bold text-amber-400">Tu negocio no aparece en la respuesta</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Aplica las recomendaciones GEO para mejorar tu visibilidad en motores de IA.</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-600 italic">Lanza el análisis para ver cómo te presenta la IA.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GeoAuditPanel({ product, city }: { product: string; city: string }) {
+  const [businessInput, setBusinessInput] = useState(product || '');
+  const [cityInput, setCityInput] = useState(city || '');
+  const [sectorInput, setSectorInput] = useState('');
+  const [descInput, setDescInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [result, setResult] = useState<GeoAuditResult | null>(null);
+  const [scoreAnimate, setScoreAnimate] = useState(false);
+
+  // Sync props when form changes
+  useEffect(() => { if (product && !businessInput) setBusinessInput(product); }, [product]);
+  useEffect(() => { if (city && !cityInput) setCityInput(city); }, [city]);
+
+  const runAudit = async () => {
+    if (!businessInput.trim()) { setError('Introduce el nombre de tu negocio'); return; }
+    setError('');
+    setLoading(true);
+    setResult(null);
+    setScoreAnimate(false);
+    try {
+      const res = await supabase.functions.invoke('generate-geo-audit', {
+        body: {
+          businessName: businessInput.trim(),
+          sector: sectorInput.trim() || product.trim() || 'negocio local',
+          city: cityInput.trim() || city || 'tu ciudad',
+          description: descInput.trim(),
+        },
+      });
+      if (res.error) throw new Error(res.error.message);
+      setResult(res.data as GeoAuditResult);
+      setTimeout(() => setScoreAnimate(true), 100);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const score = result?.score?.score ?? 0;
+  const factors = result?.score?.factors ?? [];
+  const topAction = result?.score?.topAction ?? '';
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="border-b border-slate-800/50 pb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+            GEO <span className="text-emerald-400">Audit</span>
+          </h1>
+          <p className="text-slate-400 text-sm max-w-xl">
+            Mide tu visibilidad en motores de búsqueda de IA (ChatGPT, Gemini, Perplexity) y descubre si te mencionan cuando alguien busca tu servicio.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/25 bg-blue-500/8 shrink-0">
+          <ScanSearch size={12} className="text-blue-400" />
+          <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">GEO v1.0</span>
+        </div>
+      </div>
+
+      {/* Config form */}
+      <div className="rounded-2xl border border-slate-700/50 bg-slate-900/60 p-6"
+        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <Building2 size={12} className="text-emerald-400" />
+          Datos del Negocio
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre del negocio *</label>
+            <input
+              value={businessInput}
+              onChange={e => setBusinessInput(e.target.value)}
+              placeholder="Ej: Clínica Dental Sonrisa"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-sm text-slate-100
+                placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ciudad</label>
+            <div className="relative">
+              <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <input
+                value={cityInput}
+                onChange={e => setCityInput(e.target.value)}
+                placeholder="Ej: Madrid"
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-sm text-slate-100
+                  placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sector / Tipo de negocio</label>
+            <input
+              value={sectorInput}
+              onChange={e => setSectorInput(e.target.value)}
+              placeholder="Ej: clínica dental, peluquería, fontanero"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-sm text-slate-100
+                placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripción breve (opcional)</label>
+            <input
+              value={descInput}
+              onChange={e => setDescInput(e.target.value)}
+              placeholder="Ej: especialistas en ortodoncia invisible, 15 años de experiencia"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/70 border border-slate-700/60 text-sm text-slate-100
+                placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+            />
+          </div>
+        </div>
+        {error && (
+          <p className="mt-3 text-xs text-red-400 flex items-center gap-1.5"><AlertCircle size={11} />{error}</p>
+        )}
+        <div className="mt-5 flex items-center gap-3">
+          <button
+            onClick={runAudit}
+            disabled={loading}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-sm
+              hover:bg-emerald-400 active:scale-95 transition-all duration-150
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+          >
+            {loading ? (
+              <><div className="w-4 h-4 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />Analizando...</>
+            ) : (
+              <><ScanSearch size={15} />Lanzar GEO Audit</>
+            )}
+          </button>
+          {result && (
+            <button
+              onClick={() => { setResult(null); setScoreAnimate(false); }}
+              className="px-4 py-2.5 rounded-xl border border-slate-700/60 bg-slate-800/50 text-sm text-slate-400
+                hover:text-slate-200 hover:border-slate-600 transition-all duration-150"
+            >
+              Nuevo Análisis
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Score section */}
+      {(result || loading) && (
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+          {/* Left: Score + factors */}
+          <div className="xl:col-span-3 space-y-4">
+            {/* Score card */}
+            <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 p-6"
+              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+              {loading && !result ? (
+                <div className="space-y-3">
+                  <div className="h-4 w-48 rounded-full bg-slate-800 animate-pulse" />
+                  <div className="h-12 w-32 rounded-xl bg-slate-800 animate-pulse" />
+                  <div className="h-3 rounded-full bg-slate-800 animate-pulse" />
+                </div>
+              ) : result ? (
+                <GeoScoreBar value={score} animate={scoreAnimate} />
+              ) : null}
+            </div>
+
+            {/* Top action */}
+            {result && topAction && (
+              <div className="flex items-start gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/6 px-5 py-4"
+                style={{ boxShadow: '0 0 20px rgba(16,185,129,0.04)' }}>
+                <Zap size={15} className="text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-1">Acción Prioritaria</p>
+                  <p className="text-sm text-slate-300 leading-snug">{topAction}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Factor breakdown */}
+            {(result || loading) && (
+              <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+                <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-800/60">
+                  <Activity size={13} className="text-emerald-400" />
+                  <h3 className="text-xs font-bold text-slate-200 uppercase tracking-widest">Desglose de Factores GEO</h3>
+                </div>
+                {loading && !result ? (
+                  <div className="divide-y divide-slate-800/40">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-4 px-5 py-4">
+                        <div className="w-7 h-7 rounded-lg bg-slate-800 animate-pulse" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3 w-40 rounded-full bg-slate-800 animate-pulse" />
+                          <div className="h-1.5 rounded-full bg-slate-800 animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-800/40">
+                    {factors.map((f, i) => <GeoFactorRow key={i} factor={f} />)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right: ChatGPT simulator */}
+          <div className="xl:col-span-2 space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Simulación en Vivo</p>
+            </div>
+            <ChatGptSimulator
+              response={result?.simulatedResponse ?? ''}
+              businessName={result?.businessName ?? businessInput}
+              loading={loading}
+            />
+            {result && (
+              <div className="rounded-xl border border-slate-800/50 bg-slate-900/40 px-4 py-3.5 space-y-2">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Cómo Mejorar tu Mención</p>
+                <ul className="space-y-1.5">
+                  {[
+                    'Añade Schema markup de LocalBusiness a tu web',
+                    'Consigue menciones en blogs locales y medios digitales',
+                    'Responde todas las reseñas con palabras clave de sector',
+                    'Publica contenido E-E-A-T con tu nombre y ciudad',
+                  ].map((tip, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-slate-500">
+                      <span className="text-emerald-500/60 mt-0.5 shrink-0">▸</span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!result && !loading && (
+        <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/30 py-20 flex flex-col items-center gap-4 text-center px-6">
+          <div className="w-16 h-16 rounded-2xl border border-slate-700/50 bg-slate-800/50 flex items-center justify-center">
+            <ScanSearch size={28} className="text-slate-600" />
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-base font-semibold text-slate-400">Listo para analizar tu visibilidad en IA</p>
+            <p className="text-sm text-slate-600 max-w-sm">Introduce el nombre de tu negocio y sector arriba, y la IA simulará cómo te presenta ChatGPT a tus clientes.</p>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -2358,7 +2809,7 @@ function Dashboard({
   previewMode?: boolean;
 }) {
   const { session } = useAuth();
-  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar'>('generator');
+  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit'>('generator');
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
@@ -2752,6 +3203,16 @@ function Dashboard({
           <Radar size={14} />
           Radar de Competencia
         </button>
+        <button
+          onClick={() => setTab('geo-audit')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+            ${tab === 'geo-audit'
+              ? 'bg-slate-800 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <ScanSearch size={14} />
+          GEO Audit
+        </button>
       </div>
 
       {tab === 'saved' ? (
@@ -2764,6 +3225,8 @@ function Dashboard({
         <AiDigitalTwin />
       ) : tab === 'radar' ? (
         <CompetitorRadar city={city} />
+      ) : tab === 'geo-audit' ? (
+        <GeoAuditPanel product={product} city={city} />
       ) : (
       <>
       {/* Page header */}
