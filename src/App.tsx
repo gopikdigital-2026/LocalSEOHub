@@ -4563,7 +4563,7 @@ function SuccessBanner({ onDismiss }: { onDismiss: () => void }) {
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 // Set to true while building to skip auth and preview the dashboard directly
-const DEV_PREVIEW = true;
+const DEV_PREVIEW = false;
 
 export default function App() {
   const { user, session, loading, signOut } = useAuth();
