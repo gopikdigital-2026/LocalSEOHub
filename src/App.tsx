@@ -64,6 +64,7 @@ import LandingPage from './components/LandingPage';
 import LoginModal from './components/LoginModal';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './components/LegalModals';
 import { LogoIcon } from './components/Logo';
+import AdminDashboard from './components/AdminDashboard';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -4706,6 +4707,14 @@ export default function App() {
   }
 
   if (!DEV_PREVIEW && !user) {
+    // If user navigates to /admin while logged out, show login modal directly
+    if (window.location.pathname === '/admin') {
+      return (
+        <div className="min-h-screen bg-slate-950">
+          <LoginModal onClose={() => window.history.back()} initialMode="login" />
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-slate-950">
         <Navbar
@@ -4727,6 +4736,11 @@ export default function App() {
         {showLogin && <LoginModal onClose={() => setShowLogin(false)} initialMode={loginInitialMode} />}
       </div>
     );
+  }
+
+  // Admin route — authenticated users only
+  if (window.location.pathname === '/admin') {
+    return <AdminDashboard session={session} />;
   }
 
   return (
