@@ -186,18 +186,23 @@ export default function AdminDashboard({ session }: { session: Session | null })
 
   // ── CSV export: full list (no filter)
   const exportLeads = () => {
-    const headers = ['Email', 'Nombre', 'Fecha Registro', 'Estado', 'SEO Generados', 'Imágenes', 'Leads', 'Última Actividad'];
-    const rows = users.map((u) => [
-      u.email,
-      u.full_name,
-      formatDate(u.created_at),
-      u.stripe_status,
-      String(u.usage?.total_seo_generations ?? 0),
-      String(u.usage?.total_images_optimized ?? 0),
-      String(u.usage?.total_leads_scanned ?? 0),
-      u.usage?.last_active ? formatDate(u.usage.last_active) : '',
-    ]);
-    downloadCSV([headers, ...rows], `leads-${new Date().toISOString().slice(0, 10)}.csv`);
+    const today = new Date().toISOString().slice(0, 10);
+    const headers = ['ID', 'Email', 'Nombre', 'Fecha de Registro', 'Estado de Suscripción', 'Total de Usos'];
+    const rows = users.map((u) => {
+      const totalUsos =
+        (u.usage?.total_seo_generations ?? 0) +
+        (u.usage?.total_images_optimized ?? 0) +
+        (u.usage?.total_leads_scanned ?? 0);
+      return [
+        u.id,
+        u.email,
+        u.full_name,
+        formatDate(u.created_at),
+        u.stripe_status,
+        String(totalUsos),
+      ];
+    });
+    downloadCSV([headers, ...rows], `localseohub_leads_${today}.csv`);
   };
 
   // ── Loading state
