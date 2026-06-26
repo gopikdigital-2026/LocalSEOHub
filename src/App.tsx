@@ -53,6 +53,7 @@ import {
   Plus,
   ScanSearch,
   ShieldCheck,
+  BarChart2,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -65,6 +66,7 @@ import LoginModal from './components/LoginModal';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './components/LegalModals';
 import { LogoIcon } from './components/Logo';
 import AdminDashboard from './components/AdminDashboard';
+import AIBusinessAdvisor from './components/AIBusinessAdvisor';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -3197,7 +3199,7 @@ function Dashboard({
 }) {
   const { session } = useAuth();
   const { t } = useI18n();
-  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit'>('generator');
+  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit' | 'ai-advisor'>('generator');
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
@@ -3602,6 +3604,16 @@ function Dashboard({
           <ScanSearch size={14} />
           {t('tab_geo')}
         </button>
+        <button
+          onClick={() => setTab('ai-advisor')}
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
+            ${tab === 'ai-advisor'
+              ? 'bg-slate-800 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <BarChart2 size={14} />
+          AI Advisor
+        </button>
       </div>
 
       {tab === 'saved' ? (
@@ -3616,6 +3628,8 @@ function Dashboard({
         <CompetitorRadar city={city} />
       ) : tab === 'geo-audit' ? (
         <GeoAuditPanel product={product} city={city} />
+      ) : tab === 'ai-advisor' ? (
+        <AIBusinessAdvisor session={session} previewMode={previewMode} />
       ) : (
       <>
       {/* Page header */}
