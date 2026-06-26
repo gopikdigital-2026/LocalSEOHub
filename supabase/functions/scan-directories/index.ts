@@ -79,6 +79,8 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const inTrial = Date.now() < new Date(user.created_at).getTime() + 7 * 24 * 60 * 60 * 1000;
+
     const { data: customer } = await serviceSupabase
       .from("stripe_customers")
       .select("customer_id")
@@ -86,20 +88,20 @@ Deno.serve(async (req: Request) => {
       .is("deleted_at", null)
       .maybeSingle();
 
-    if (!customer?.customer_id) {
-      return new Response(
-        JSON.stringify({ error: "Se requiere una suscripción activa" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (customer?.customer_id) {
+      const { data: sub } = await serviceSupabase
+        .from("stripe_subscriptions")
+        .select("status")
+        .eq("customer_id", customer.customer_id)
+        .maybeSingle();
 
-    const { data: sub } = await serviceSupabase
-      .from("stripe_subscriptions")
-      .select("status")
-      .eq("customer_id", customer.customer_id)
-      .maybeSingle();
-
-    if (sub?.status !== "active" && sub?.status !== "trialing") {
+      if (sub?.status !== "active" && sub?.status !== "trialing" && !inTrial) {
+        return new Response(
+          JSON.stringify({ error: "Se requiere una suscripción activa" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else if (!inTrial) {
       return new Response(
         JSON.stringify({ error: "Se requiere una suscripción activa" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
