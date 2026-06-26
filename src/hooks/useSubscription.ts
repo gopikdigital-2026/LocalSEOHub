@@ -4,6 +4,18 @@ import type { User } from '@supabase/supabase-js';
 
 export type SubscriptionStatus = 'trialing' | 'active' | 'inactive' | 'loading';
 
+const TRIAL_DAYS = 7;
+
+function getAccountTrialEnd(user: User): Date | null {
+  if (!user.created_at) return null;
+  return new Date(new Date(user.created_at).getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+}
+
+function isInAccountTrial(user: User): boolean {
+  const end = getAccountTrialEnd(user);
+  return end !== null && end.getTime() > Date.now();
+}
+
 export function useSubscription(user: User | null) {
   const [isActive, setIsActive] = useState(false);
   const [status, setStatus] = useState<SubscriptionStatus>('loading');
@@ -31,9 +43,11 @@ export function useSubscription(user: User | null) {
       .maybeSingle();
 
     if (!customer?.customer_id) {
-      setIsActive(false);
-      setStatus('inactive');
-      setTrialEnd(null);
+      // No Stripe customer yet — grant access during account trial period
+      const inTrial = isInAccountTrial(user);
+      setIsActive(inTrial);
+      setStatus(inTrial ? 'trialing' : 'inactive');
+      setTrialEnd(inTrial ? getAccountTrialEnd(user) : null);
       setCancelAtPeriodEnd(false);
       setCurrentPeriodEnd(null);
       setLoadingSubscription(false);
@@ -47,10 +61,21 @@ export function useSubscription(user: User | null) {
       .maybeSingle();
 
     const subStatus = sub?.status;
-    const active = subStatus === 'active' || subStatus === 'trialing';
+    const stripeActive = subStatus === 'active' || subStatus === 'trialing';
+
+    // Fall back to account trial if Stripe subscription is not yet active
+    const inTrial = !stripeActive && isInAccountTrial(user);
+    const active = stripeActive || inTrial;
+
     setIsActive(active);
-    setStatus(active ? (subStatus as SubscriptionStatus) : 'inactive');
-    setTrialEnd(sub?.trial_end ? new Date(sub.trial_end * 1000) : null);
+    setStatus(active ? (stripeActive ? (subStatus as SubscriptionStatus) : 'trialing') : 'inactive');
+    setTrialEnd(
+      sub?.trial_end
+        ? new Date(sub.trial_end * 1000)
+        : inTrial
+          ? getAccountTrialEnd(user)
+          : null
+    );
     setCancelAtPeriodEnd(sub?.cancel_at_period_end ?? false);
     setCurrentPeriodEnd(sub?.current_period_end ? new Date(sub.current_period_end * 1000) : null);
     setLoadingSubscription(false);
@@ -67,3 +92,4 @@ export function useSubscription(user: User | null) {
 
   return { isActive, status, trialEnd, trialDaysLeft, cancelAtPeriodEnd, currentPeriodEnd, loadingSubscription, refresh: fetchStatus };
 }
+
