@@ -4562,6 +4562,28 @@ function SuccessBanner({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
+// ─── Admin denied toast ───────────────────────────────────────────────────────
+
+function AdminDeniedToast({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 pointer-events-none">
+      <div className="pointer-events-auto bg-slate-900 border border-slate-700/80 rounded-2xl px-5 py-3.5 shadow-2xl shadow-black/50 flex items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-300">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+            <Lock size={13} className="text-red-400" />
+          </div>
+          <p className="text-sm text-slate-300 font-medium">
+            Acceso restringido a administradores.
+          </p>
+        </div>
+        <button onClick={onDismiss} className="text-slate-600 hover:text-slate-400 transition-colors shrink-0">
+          <X size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Trial banner ─────────────────────────────────────────────────────────────
 
 function TrialBanner({ daysLeft, onDismiss }: { daysLeft: number; onDismiss: () => void }) {
@@ -4610,6 +4632,9 @@ export default function App() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState('');
   const [cancelDone, setCancelDone] = useState(false);
+  const [showAdminDenied, setShowAdminDenied] = useState(false);
+
+  const isAdminEmail = !!(import.meta.env.VITE_ADMIN_EMAIL && user?.email === import.meta.env.VITE_ADMIN_EMAIL);
 
   // Handle Stripe redirect params
   useEffect(() => {
@@ -4625,6 +4650,10 @@ export default function App() {
     } else if (params.get('payment') === 'canceled') {
       setShowPricing(true);
       window.history.replaceState({}, '', '/');
+    } else if (params.get('admin_denied') === '1') {
+      setShowAdminDenied(true);
+      window.history.replaceState({}, '', '/');
+      setTimeout(() => setShowAdminDenied(false), 4000);
     }
   }, []);
 
@@ -4738,14 +4767,19 @@ export default function App() {
     );
   }
 
-  // Admin route — authenticated users only
+  // Admin route — guarded: only the VITE_ADMIN_EMAIL user can access
   if (window.location.pathname === '/admin') {
+    if (!isAdminEmail) {
+      window.location.replace('/?admin_denied=1');
+      return null;
+    }
     return <AdminDashboard session={session} />;
   }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {showSuccessBanner && <SuccessBanner onDismiss={() => setShowSuccessBanner(false)} />}
+      {showAdminDenied && <AdminDeniedToast onDismiss={() => setShowAdminDenied(false)} />}
       {status === 'trialing' && trialDaysLeft !== null && showTrialBanner && (
         <TrialBanner daysLeft={trialDaysLeft} onDismiss={() => setShowTrialBanner(false)} />
       )}
@@ -4756,6 +4790,7 @@ export default function App() {
         onPricingClick={handlePricingClick}
         onSignOut={signOut}
         isActive={DEV_PREVIEW || isActive}
+        isAdmin={isAdminEmail}
         cancelAtPeriodEnd={cancelAtPeriodEnd}
         onCancelSubscription={() => { setCancelDone(false); setCancelError(''); setShowCancelModal(true); }}
       />

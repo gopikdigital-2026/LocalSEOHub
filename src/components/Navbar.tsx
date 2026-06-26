@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, ChevronDown, User, XCircle, CheckCircle } from 'lucide-react';
+import { LogOut, ChevronDown, User, XCircle, CheckCircle, ShieldCheck } from 'lucide-react';
 import type { User as SupaUser } from '@supabase/supabase-js';
 import { useI18n, type Lang } from '../lib/i18n';
 import { LogoIcon } from './Logo';
@@ -10,11 +10,12 @@ interface NavbarProps {
   onPricingClick: () => void;
   onSignOut: () => void;
   isActive?: boolean;
+  isAdmin?: boolean;
   cancelAtPeriodEnd?: boolean;
   onCancelSubscription?: () => void;
 }
 
-export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, isActive, cancelAtPeriodEnd, onCancelSubscription }: NavbarProps) {
+export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, isActive, isAdmin, cancelAtPeriodEnd, onCancelSubscription }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, setLang, t } = useI18n();
 
@@ -99,6 +100,16 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
                       )}
                     </div>
                     <div className="py-1">
+                      {isAdmin && (
+                        <a
+                          href="/admin"
+                          onClick={() => setMenuOpen(false)}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-violet-400 hover:text-violet-300 hover:bg-slate-800 transition-colors"
+                        >
+                          <ShieldCheck size={14} />
+                          Panel de administración
+                        </a>
+                      )}
                       <button
                         onClick={() => { setMenuOpen(false); onPricingClick(); }}
                         className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
