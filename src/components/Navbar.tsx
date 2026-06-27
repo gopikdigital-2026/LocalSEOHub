@@ -22,13 +22,16 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
   const avatarLetter = user?.email?.[0]?.toUpperCase() ?? 'U';
 
   return (
-    <header className="border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-sm sticky top-0 z-40">
+    <header
+      className="sticky top-0 z-40 border-b border-white/5"
+      style={{ background: 'rgba(7,8,15,0.88)', backdropFilter: 'blur(20px) saturate(160%)' }}
+    >
       <div className="max-w-7xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <LogoIcon size={34} />
-          <span className="font-bold text-base tracking-tight text-white">
-            LocalSEO<span className="text-emerald-400">Hub</span>
+          <LogoIcon size={32} />
+          <span className="font-extrabold text-base tracking-tight text-white">
+            LocalSEO<span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Hub</span>
           </span>
         </div>
 
@@ -37,9 +40,8 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
           <nav className="hidden sm:flex items-center gap-1">
             <button
               onClick={onPricingClick}
-              className="px-4 py-2 rounded-lg text-sm font-semibold text-emerald-400 hover:text-emerald-300
-                hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20
-                transition-all duration-200"
+              className="px-4 py-2 rounded-full text-sm font-semibold text-emerald-400 hover:text-emerald-300
+                hover:bg-emerald-500/10 transition-all duration-200"
             >
               {t('nav_pricing')}
             </button>
@@ -47,21 +49,24 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
         )}
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Language toggle */}
-          <div className="flex items-center gap-0.5 bg-slate-800/70 border border-slate-700/60 rounded-xl p-0.5">
+          <div
+            className="flex items-center gap-0.5 rounded-full p-0.5"
+            style={{ background: 'rgba(30,41,59,0.55)', border: '1px solid rgba(255,255,255,0.07)' }}
+          >
             {(['es', 'en'] as Lang[]).map((l) => (
               <button
                 key={l}
                 onClick={() => setLang(l)}
                 aria-label={l === 'es' ? 'Español' : 'English'}
-                className={`flex items-center justify-center h-7 w-9 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                className={`flex items-center justify-center h-7 w-9 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
                   lang === l
                     ? 'bg-slate-700 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
-                {l === 'es' ? 'ES' : 'EN'}
+                {l.toUpperCase()}
               </button>
             ))}
           </div>
@@ -70,71 +75,74 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-800/70 border border-slate-700/60
-                  hover:border-slate-600 hover:bg-slate-800 transition-all duration-200 text-sm text-slate-300"
+                className="flex items-center gap-2.5 pl-2 pr-3.5 py-1.5 rounded-full transition-all duration-200 text-sm text-slate-300 hover:text-white"
+                style={{ background: 'rgba(30,41,59,0.55)', border: '1px solid rgba(255,255,255,0.07)' }}
               >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-slate-950 text-xs font-bold">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/25">
                   {avatarLetter}
                 </div>
-                <span className="hidden sm:block max-w-[120px] truncate text-xs">{user.email}</span>
-                <ChevronDown size={13} className={`text-slate-500 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} />
+                <span className="hidden sm:block max-w-[120px] truncate text-xs font-medium">{user.email}</span>
+                <ChevronDown size={12} className={`text-slate-500 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {menuOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-56 rounded-xl bg-slate-900 border border-slate-700/60 shadow-2xl shadow-black/50 z-20 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-slate-800">
-                      <p className="text-xs text-slate-500">{t('nav_connected_as')}</p>
-                      <p className="text-xs text-slate-300 font-medium truncate mt-0.5">{user.email}</p>
+                  <div
+                    className="absolute right-0 mt-2.5 w-60 rounded-2xl z-20 overflow-hidden"
+                    style={{
+                      background: 'rgba(10,12,22,0.97)',
+                      backdropFilter: 'blur(24px)',
+                      border: '1px solid rgba(255,255,255,0.07)',
+                      boxShadow: '0 25px 50px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)',
+                    }}
+                  >
+                    <div className="px-4 py-3.5 border-b border-white/5">
+                      <p className="text-[10px] text-slate-600 uppercase tracking-widest font-semibold">{t('nav_connected_as')}</p>
+                      <p className="text-xs text-slate-200 font-medium truncate mt-1">{user.email}</p>
                       {isActive && (
                         <div className="flex items-center gap-1.5 mt-2">
                           {cancelAtPeriodEnd ? (
-                            <>
-                              <XCircle size={11} className="text-amber-400" />
-                              <span className="text-xs text-amber-400 font-medium">{t('nav_sub_canceling')}</span>
-                            </>
+                            <><XCircle size={10} className="text-amber-400" /><span className="text-[11px] text-amber-400 font-semibold">{t('nav_sub_canceling')}</span></>
                           ) : (
-                            <>
-                              <CheckCircle size={11} className="text-emerald-400" />
-                              <span className="text-xs text-emerald-400 font-medium">{t('nav_sub_active')}</span>
-                            </>
+                            <><CheckCircle size={10} className="text-emerald-400" /><span className="text-[11px] text-emerald-400 font-semibold">{t('nav_sub_active')}</span></>
                           )}
                         </div>
                       )}
                     </div>
-                    <div className="py-1">
+                    <div className="py-1.5">
                       {isAdmin && (
                         <a
                           href="/admin"
                           onClick={() => setMenuOpen(false)}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-violet-400 hover:text-violet-300 hover:bg-slate-800 transition-colors"
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-violet-400 hover:text-violet-300 hover:bg-white/5 transition-colors"
                         >
-                          <ShieldCheck size={14} />
+                          <ShieldCheck size={13} />
                           Panel de administración
                         </a>
                       )}
                       <button
                         onClick={() => { setMenuOpen(false); onPricingClick(); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
                       >
-                        <User size={14} />
+                        <User size={13} />
                         {t('nav_view_pricing')}
                       </button>
                       {isActive && !cancelAtPeriodEnd && onCancelSubscription && (
                         <button
                           onClick={() => { setMenuOpen(false); onCancelSubscription(); }}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-amber-400 hover:text-amber-300 hover:bg-slate-800 transition-colors"
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-amber-400 hover:text-amber-300 hover:bg-white/5 transition-colors"
                         >
-                          <XCircle size={14} />
+                          <XCircle size={13} />
                           {t('nav_cancel_sub')}
                         </button>
                       )}
+                      <div className="mx-3 my-1.5 border-t border-white/5" />
                       <button
                         onClick={() => { setMenuOpen(false); onSignOut(); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-slate-800 transition-colors"
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors"
                       >
-                        <LogOut size={14} />
+                        <LogOut size={13} />
                         {t('nav_sign_out')}
                       </button>
                     </div>
@@ -152,9 +160,9 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
               </button>
               <button
                 onClick={onLoginClick}
-                className="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200
+                className="px-5 py-2 rounded-full text-sm font-bold transition-all duration-200
                   bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                  text-slate-950 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/35 hover:-translate-y-0.5 active:translate-y-0"
+                  text-slate-950 shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0"
               >
                 {t('nav_login')}
               </button>

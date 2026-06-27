@@ -96,7 +96,9 @@ function KPICard({
   color: string;
 }) {
   return (
-    <div className="relative rounded-2xl bg-slate-900/60 border border-slate-800/80 p-5 overflow-hidden group hover:border-slate-700 transition-colors">
+    <div className="relative rounded-2xl border border-slate-800/80 p-5 overflow-hidden group hover:border-white/10 transition-all duration-300 hover:-translate-y-0.5"
+      style={{ background: 'rgba(10,13,24,0.7)', backdropFilter: 'blur(12px)' }}
+    >
       <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${color} blur-3xl`} />
       <div className="relative">
         <div className="flex items-center justify-between mb-3">
@@ -238,7 +240,7 @@ export default function AdminDashboard({ session }: { session: Session | null })
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* ── Top bar */}
-      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/60">
+      <header className="sticky top-0 z-40 border-b border-white/5" style={{ background: 'rgba(7,8,15,0.88)', backdropFilter: 'blur(20px)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
@@ -334,7 +336,7 @@ export default function AdminDashboard({ session }: { session: Session | null })
                   placeholder="Buscar email o nombre…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-7 pr-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700/60 text-slate-200 text-xs placeholder-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors w-48"
+                  className="pl-7 pr-3 py-1.5 rounded-lg bg-slate-950/60 border border-slate-800/80 text-slate-200 text-xs placeholder-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors w-48"
                 />
               </div>
               {/* Filter buttons */}
@@ -359,7 +361,10 @@ export default function AdminDashboard({ session }: { session: Session | null })
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800/80 overflow-hidden bg-slate-900/40">
+          <div
+            className="rounded-2xl border border-slate-800/80 overflow-hidden"
+            style={{ background: 'rgba(10,13,24,0.6)', backdropFilter: 'blur(12px)' }}
+          >
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

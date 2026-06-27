@@ -489,7 +489,10 @@ function ResultSection({
   isLoading: boolean;
 }) {
   return (
-    <div className="rounded-xl bg-slate-800/60 border border-slate-700/60 p-5 space-y-3">
+    <div
+      className="rounded-xl p-5 space-y-3"
+      style={{ background: 'rgba(10,13,24,0.6)', border: '1px solid rgba(255,255,255,0.07)' }}
+    >
       <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-widest">
         <span className="text-emerald-400">{icon}</span>
         {label}
@@ -503,7 +506,10 @@ function ResultSection({
 
 function SubscriptionGate({ onSubscribe, isLoading }: { onSubscribe: () => void; isLoading: boolean }) {
   return (
-    <div className="rounded-2xl bg-slate-900/70 border border-emerald-500/20 p-8 flex flex-col items-center text-center gap-5 min-h-[400px] justify-center">
+    <div
+      className="rounded-2xl border border-emerald-500/20 p-8 flex flex-col items-center text-center gap-5 min-h-[400px] justify-center"
+      style={{ background: 'rgba(10,13,24,0.6)' }}
+    >
       <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
         <Lock size={22} className="text-emerald-400" />
       </div>
@@ -3214,13 +3220,17 @@ function Dashboard({
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       {/* Tabs */}
-      <div className="grid grid-cols-2 sm:flex gap-1 mb-8 bg-slate-900/60 border border-slate-800/60 rounded-2xl p-1 w-full sm:w-fit">
+      <div
+        className="grid grid-cols-2 sm:flex gap-1.5 mb-8 rounded-2xl p-1.5 w-full sm:w-fit overflow-x-auto"
+        style={{ background: 'rgba(15,18,30,0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.06)' }}
+      >
         <button
           onClick={() => setTab('generator')}
           className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'generator'
-              ? 'bg-slate-800 text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-300'}`}
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+          style={tab === 'generator' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
         >
           <Sparkles size={14} />
           {t('tab_generator')}
@@ -3229,8 +3239,9 @@ function Dashboard({
           onClick={() => setTab('saved')}
           className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'saved'
-              ? 'bg-slate-800 text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-300'}`}
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+          style={tab === 'saved' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
         >
           <History size={14} />
           {t('tab_saved')}
@@ -3239,8 +3250,9 @@ function Dashboard({
           onClick={() => setTab('maps-scanner')}
           className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'maps-scanner'
-              ? 'bg-slate-800 text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-300'}`}
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+          style={tab === 'maps-scanner' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
         >
           <MapPinned size={14} />
           {t('tab_maps')}
@@ -3249,8 +3261,9 @@ function Dashboard({
           onClick={() => setTab('ai-twin')}
           className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'ai-twin'
-              ? 'bg-slate-800 text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-300'}`}
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+          style={tab === 'ai-twin' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
         >
           <BrainCircuit size={14} />
           {t('tab_twin')}
@@ -3259,8 +3272,9 @@ function Dashboard({
           onClick={() => setTab('radar')}
           className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'radar'
-              ? 'bg-slate-800 text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-300'}`}
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+          style={tab === 'radar' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
         >
           <Radar size={14} />
           {t('tab_radar')}
@@ -3269,8 +3283,9 @@ function Dashboard({
           onClick={() => setTab('geo-audit')}
           className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'geo-audit'
-              ? 'bg-slate-800 text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-300'}`}
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+          style={tab === 'geo-audit' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
         >
           <ScanSearch size={14} />
           {t('tab_geo')}
@@ -3279,8 +3294,9 @@ function Dashboard({
           onClick={() => setTab('ai-advisor')}
           className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
             ${tab === 'ai-advisor'
-              ? 'bg-slate-800 text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-300'}`}
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+          style={tab === 'ai-advisor' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
         >
           <BarChart2 size={14} />
           AI Advisor
@@ -3304,10 +3320,10 @@ function Dashboard({
       ) : (
       <>
       {/* Page header */}
-      <div className="border-b border-slate-800/50 mb-8 pb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+      <div className="border-b border-white/5 mb-8 pb-6">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 tracking-tight">
           {t('dash_title')}{' '}
-          <span className="text-emerald-400">{t('dash_title_highlight')}</span>
+          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-blue-400 bg-clip-text text-transparent">{t('dash_title_highlight')}</span>
         </h1>
         <p className="text-slate-400 text-sm sm:text-base max-w-xl">
           {t('dash_desc')}
@@ -3322,7 +3338,10 @@ function Dashboard({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
         {/* LEFT — Form */}
-        <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 shadow-xl space-y-5">
+        <div
+          className="rounded-2xl p-6 shadow-2xl shadow-black/40 space-y-5"
+          style={{ background: 'rgba(10,13,24,0.7)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.07)' }}
+        >
           <div className="flex items-center gap-2 mb-1">
             <Search size={16} className="text-emerald-400" />
             <h2 className="font-semibold text-slate-200 text-sm">Parámetros de búsqueda</h2>
@@ -3402,9 +3421,9 @@ function Dashboard({
               value={product}
               onChange={(e) => setProduct(e.target.value)}
               placeholder="ej. Camisetas personalizadas, Reparación de móviles..."
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
-                placeholder-slate-500 outline-none transition-all duration-200
-                focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 focus:bg-slate-800"
+              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
+                placeholder-slate-600 outline-none transition-all duration-200
+                focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 focus:bg-slate-950/80"
             />
           </div>
 
@@ -3419,9 +3438,9 @@ function Dashboard({
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="ej. Toledo, Madrid, Barcelona..."
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
-                placeholder-slate-500 outline-none transition-all duration-200
-                focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 focus:bg-slate-800"
+              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
+                placeholder-slate-600 outline-none transition-all duration-200
+                focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 focus:bg-slate-950/80"
             />
           </div>
 
@@ -3431,7 +3450,7 @@ function Dashboard({
               <Tag size={11} className="text-slate-500" />
               Tipo de negocio
             </label>
-            <div className="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700 rounded-xl p-1 w-fit">
+            <div className="flex items-center gap-1.5 bg-slate-950/60 border border-slate-800/80 rounded-xl p-1 w-fit">
               {(['producto', 'servicio'] as Tipo[]).map((t) => (
                 <button
                   key={t}
@@ -3459,9 +3478,9 @@ function Dashboard({
               <select
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value as Platform)}
-                className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
+                className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
                   outline-none appearance-none cursor-pointer transition-all duration-200
-                  focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 focus:bg-slate-800"
+                  focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 focus:bg-slate-950/80"
               >
                 {tipo === 'producto' ? (
                   <>
@@ -3517,9 +3536,9 @@ function Dashboard({
               onChange={(e) => setKeywords(e.target.value)}
               placeholder="ej. hecho a mano, envío 24h, regalo, económico, alta calidad..."
               rows={3}
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
-                placeholder-slate-500 outline-none resize-none transition-all duration-200
-                focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10 focus:bg-slate-800"
+              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
+                placeholder-slate-600 outline-none resize-none transition-all duration-200
+                focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 focus:bg-slate-950/80"
             />
           </div>
 
@@ -3535,9 +3554,9 @@ function Dashboard({
               value={competitor}
               onChange={(e) => setCompetitor(e.target.value)}
               placeholder="ej. TiendaRopaBarcelona, https://etsy.com/shop/micompetidor..."
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100
-                placeholder-slate-500 outline-none transition-all duration-200
-                focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/10 focus:bg-slate-800"
+              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
+                placeholder-slate-600 outline-none transition-all duration-200
+                focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/15 focus:bg-slate-950/80"
             />
             <p className="text-xs text-slate-600">
               La IA detectara oportunidades de posicionamiento frente a ese competidor.
@@ -3599,7 +3618,10 @@ function Dashboard({
           {!isActive ? (
             <SubscriptionGate onSubscribe={onSubscribe} isLoading={checkoutLoading} />
           ) : !hasGenerated ? (
-            <div className="rounded-2xl bg-slate-900/40 border border-slate-800/40 border-dashed p-12 flex flex-col items-center justify-center text-center gap-4 min-h-[400px]">
+            <div
+              className="rounded-2xl border-dashed border border-white/8 p-12 flex flex-col items-center justify-center text-center gap-4 min-h-[400px]"
+              style={{ background: 'rgba(10,13,24,0.4)' }}
+            >
               <div className="w-14 h-14 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center">
                 <Sparkles size={24} className="text-slate-600" />
               </div>

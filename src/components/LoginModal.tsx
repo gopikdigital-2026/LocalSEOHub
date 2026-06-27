@@ -56,26 +56,34 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-[#05060b]/85 backdrop-blur-md" />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700/60 shadow-2xl shadow-black/60 overflow-hidden">
+      <div
+        className="relative w-full max-w-md rounded-2xl overflow-hidden"
+        style={{
+          background: 'rgba(10,13,24,0.92)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)',
+        }}
+      >
         {/* Top accent bar */}
-        <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
+        <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-blue-500" />
 
         <div className="p-7">
           {/* Header */}
           <div className="flex items-start justify-between mb-7">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-                <Zap size={17} className="text-slate-950" fill="currentColor" />
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/30">
+                <Zap size={18} className="text-slate-950" fill="currentColor" />
               </div>
               <div>
-                <h2 className="font-bold text-white text-lg leading-tight">
+                <h2 className="font-extrabold text-white text-lg leading-tight tracking-tight">
                   {mode === 'login' ? 'Bienvenido de nuevo' : 'Crear cuenta gratis'}
                 </h2>
                 <p className="text-slate-500 text-xs mt-0.5">
-                  {mode === 'login' ? 'Accede a tu panel de LocalSEOHub' : 'Empieza tu prueba de 7 días gratis'}
+                  {mode === 'login' ? 'Accede a tu panel de LocalSEOHub' : '7 días gratis · sin tarjeta hasta decidir'}
                 </p>
               </div>
             </div>
@@ -99,9 +107,9 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="tu@email.com"
-                  className="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm
-                    text-slate-100 placeholder-slate-500 outline-none transition-all duration-200
-                    focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10"
+                  className="w-full bg-slate-950/70 border border-slate-800/80 rounded-xl pl-10 pr-4 py-3.5 text-sm
+                    text-slate-100 placeholder-slate-600 outline-none transition-all duration-200
+                    focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
                 />
               </div>
             </div>
@@ -117,9 +125,9 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
                   required
                   minLength={6}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-10 pr-11 py-3 text-sm
-                    text-slate-100 placeholder-slate-500 outline-none transition-all duration-200
-                    focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10"
+                  className="w-full bg-slate-950/70 border border-slate-800/80 rounded-xl pl-10 pr-11 py-3.5 text-sm
+                    text-slate-100 placeholder-slate-600 outline-none transition-all duration-200
+                    focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
                 />
                 <button
                   type="button"
@@ -147,9 +155,9 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-300
+              className="w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all duration-300
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/35
+                text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40
                 disabled:opacity-60 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
             >
               {loading ? (
