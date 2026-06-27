@@ -259,7 +259,6 @@ async function callGenerateSEO(
   accessToken: string,
   tipo: Tipo,
   imageFile?: File | null,
-  generateSchema?: boolean
 ): Promise<SEOResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
@@ -288,7 +287,6 @@ async function callGenerateSEO(
       platform,
       keywords,
       tipo,
-      ...(generateSchema ? { generateSchema: true } : {}),
       ...(imageBase64 ? { imageBase64, imageMimeType: imageFile!.type } : {}),
     });
 
@@ -2856,7 +2854,7 @@ function Dashboard({
   const [tipo, setTipo] = useState<Tipo>('producto');
   const [keywords, setKeywords] = useState('');
   const [competitor, setCompetitor] = useState('');
-  const [generateSchema, setGenerateSchema] = useState(false);
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -2952,21 +2950,31 @@ function Dashboard({
               .filter(Boolean)
               .join(' ') + ' — artesanal, hecho a mano',
           } : undefined,
-          schema: generateSchema ? JSON.stringify({
+          schema: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": tipo === 'servicio' ? "LocalBusiness" : "Product",
+            "@type": tipo === 'servicio' ? "LocalBusiness" : "Store",
             "name": `${product}${city ? ` — ${city}` : ''}`,
             "description": `${product} de calidad superior en ${city || 'España'}. Disponible en ${platform || 'nuestra tienda'}.`,
-            ...(tipo === 'servicio' ? {
-              "address": { "@type": "PostalAddress", "addressLocality": city || "España", "addressCountry": "ES" },
-              "areaServed": city || "España",
-            } : {
-              "offers": { "@type": "Offer", "availability": "https://schema.org/InStock", "priceCurrency": "EUR" },
-            }),
-          }, null, 2) : undefined,
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "",
+              "addressLocality": city || "España",
+              "addressRegion": "",
+              "postalCode": "",
+              "addressCountry": "ES"
+            },
+            "geo": { "@type": "GeoCoordinates", "latitude": "", "longitude": "" },
+            "telephone": "",
+            "url": "",
+            "openingHours": [],
+            "priceRange": "€€",
+            "areaServed": city || "España",
+            "hasOfferCatalog": { "@type": "OfferCatalog", "name": product },
+            "sameAs": [],
+          }, null, 2),
         };
       } else {
-        data = await callGenerateSEO(product, city, platform, keywords, session!.access_token, tipo, imageFile, generateSchema);
+        data = await callGenerateSEO(product, city, platform, keywords, session!.access_token, tipo, imageFile);
       }
       setResult(data);
     } catch (err) {
@@ -3536,28 +3544,6 @@ function Dashboard({
             </p>
           </div>
 
-          {/* Schema toggle */}
-          <label className="flex items-center gap-3 cursor-pointer select-none group">
-            <div
-              onClick={() => setGenerateSchema(!generateSchema)}
-              className={`relative w-10 h-5 rounded-full transition-all duration-300 shrink-0 ${
-                generateSchema ? 'bg-emerald-500' : 'bg-slate-700 border border-slate-600'
-              }`}
-            >
-              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 ${
-                generateSchema ? 'left-5' : 'left-0.5'
-              }`} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">
-                Generar Marcado Schema (JSON-LD)
-              </p>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Código estructurado listo para pegar en tu web y mejorar el SEO técnico
-              </p>
-            </div>
-          </label>
-
           {/* CTA — generate */}
           <button
             onClick={handleGenerate}
@@ -3763,7 +3749,16 @@ function Dashboard({
 
               {/* ── Schema JSON-LD code editor ─────────────────────── */}
               {result?.schema && (
-                <SchemaCodePanel schema={result.schema} />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-px bg-slate-800/60" />
+                    <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest px-2">
+                      Código Estructurado · LocalBusiness Schema
+                    </span>
+                    <div className="flex-1 h-px bg-slate-800/60" />
+                  </div>
+                  <SchemaCodePanel schema={result.schema} />
+                </div>
               )}
 
               {result && (

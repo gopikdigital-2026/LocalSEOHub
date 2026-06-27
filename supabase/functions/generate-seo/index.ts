@@ -38,6 +38,25 @@ Responde ESTRICTAMENTE en formato JSON con las siguientes claves:
 - nombre_archivo (slug SEO para renombrar la imagen, ej: sillas-madera-artesanal-toledo.jpg)
 - alt_text (descripción alt para la imagen, con localización integrada de forma natural)`;
 
+const SYSTEM_PROMPT_SCHEMA = `Eres un experto en SEO técnico especializado en schema.org para negocios locales españoles.
+
+Genera un JSON-LD de tipo LocalBusiness ultra-preciso y técnicamente impecable. Incluye TODOS estos campos:
+- @context: "https://schema.org"
+- @type: "LocalBusiness" (o subtipo más específico si aplica: "Restaurant", "MedicalBusiness", "HealthAndBeautyBusiness", "HomeAndConstructionBusiness", "LegalService", "FinancialService", "Store", etc.)
+- name: nombre del negocio inferido del producto/servicio
+- description: descripción breve orientada a búsqueda local (1-2 frases, incluye ciudad)
+- address: objeto PostalAddress con streetAddress "", addressLocality (ciudad exacta proporcionada), addressRegion (comunidad autónoma española inferida de la ciudad), postalCode "", addressCountry "ES"
+- geo: objeto GeoCoordinates con latitude y longitude aproximadas reales de la ciudad española (si no conoces la ciudad exacta usa "")
+- telephone: ""
+- url: ""
+- openingHours: []
+- priceRange: inferido del tipo de negocio (usa "€", "€€", "€€€" o "€€€€")
+- areaServed: nombre de la ciudad o región
+- hasOfferCatalog: objeto con @type "OfferCatalog" y name con el nombre del servicio o producto estrella
+- sameAs: []
+
+Responde SOLO con el objeto JSON, sin bloques de código markdown ni texto adicional.`;
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -107,7 +126,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { product, city, platform, keywords, tipo, imageBase64, imageMimeType, generateSchema } = await req.json();
+    const { product, city, platform, keywords, tipo, imageBase64, imageMimeType } = await req.json();
 
     if (!product?.trim()) {
       return new Response(
@@ -129,7 +148,6 @@ Deno.serve(async (req: Request) => {
       .filter(Boolean)
       .join("\n");
 
-    // Build the user message — vision or text-only
     type ContentPart =
       | { type: "text"; text: string }
       | { type: "image_url"; image_url: { url: string; detail: "low" } };
@@ -156,25 +174,50 @@ Deno.serve(async (req: Request) => {
       systemPrompt = SYSTEM_PROMPT_PRODUCT;
     }
 
-    const openAIRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        temperature: 0.7,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          { role: "user", content: userContent },
-        ],
+    // Schema context — always generated in parallel with the main SEO call
+    const schemaUserMsg = [
+      `Tipo de negocio: ${isService ? "Servicio" : "Producto"}`,
+      `Nombre / descripción: ${product}`,
+      city ? `Ciudad española: ${city}` : null,
+      platform ? `Canal / plataforma: ${platform}` : null,
+      keywords ? `Palabras clave del sector: ${keywords}` : null,
+    ].filter(Boolean).join("\n");
+
+    // Both OpenAI calls fire simultaneously
+    const [openAIRes, schemaRes] = await Promise.all([
+      fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          temperature: 0.7,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+          ],
+        }),
       }),
-    });
+      fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          temperature: 0.2,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT_SCHEMA },
+            { role: "user", content: schemaUserMsg },
+          ],
+        }),
+      }),
+    ]);
 
     if (!openAIRes.ok) {
       const errBody = await openAIRes.text();
@@ -220,47 +263,18 @@ Deno.serve(async (req: Request) => {
         }
       : undefined;
 
+    // Parse schema — best-effort, never blocks the main response
     let schema: string | undefined;
-
-    if (generateSchema) {
-      const schemaType = isService ? "LocalBusiness" : "Product";
-      const schemaPrompt = isService
-        ? `Eres un experto en SEO técnico. Genera un JSON-LD schema.org válido de tipo LocalBusiness para este negocio local español. Incluye todos los campos relevantes: @context, @type, name, description, address (PostalAddress con addressLocality y addressCountry ES), telephone (vacío si no hay), openingHours (vacío si no hay), areaServed, priceRange, url. Usa los datos del negocio proporcionados. Responde SOLO con el objeto JSON, sin bloques de código ni texto adicional.`
-        : `Eres un experto en SEO técnico. Genera un JSON-LD schema.org válido de tipo Product para este producto de e-commerce español. Incluye todos los campos relevantes: @context, @type, name, description, brand (@type Brand), offers (@type Offer con availability InStock, priceCurrency EUR, itemCondition NewCondition). Usa los datos del producto proporcionados. Responde SOLO con el objeto JSON, sin bloques de código ni texto adicional.`;
-
-      const schemaUserMsg = [
-        isService ? `Tipo de negocio: ${product}` : `Producto: ${product}`,
-        city ? `Ciudad/Región: ${city}` : null,
-        platform ? `Canal/Plataforma: ${platform}` : null,
-        `Título generado: ${title}`,
-        `Descripción generada: ${description}`,
-      ].filter(Boolean).join("\n");
-
-      const schemaRes = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          temperature: 0.2,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: schemaPrompt },
-            { role: "user", content: schemaUserMsg },
-          ],
-        }),
-      });
-
-      if (schemaRes.ok) {
+    if (schemaRes.ok) {
+      try {
         const schemaData = await schemaRes.json();
         const rawSchema = schemaData.choices?.[0]?.message?.content ?? "{}";
-        try {
-          const parsed = JSON.parse(rawSchema);
-          if (!parsed["@context"]) parsed["@context"] = "https://schema.org";
-          if (!parsed["@type"]) parsed["@type"] = schemaType;
-          schema = JSON.stringify(parsed, null, 2);
-        } catch {
-          schema = undefined;
-        }
+        const parsedSchema = JSON.parse(rawSchema);
+        if (!parsedSchema["@context"]) parsedSchema["@context"] = "https://schema.org";
+        if (!parsedSchema["@type"]) parsedSchema["@type"] = "LocalBusiness";
+        schema = JSON.stringify(parsedSchema, null, 2);
+      } catch {
+        schema = undefined;
       }
     }
 
