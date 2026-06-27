@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Mail, Lock, Zap, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { trackCompleteRegistration } from '../lib/pixel';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -38,6 +39,7 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
         setError(translateError(authError.message));
       } else if (data.session) {
         // Email confirmation disabled — user is immediately logged in
+        trackCompleteRegistration();
         onClose();
       } else {
         // Email confirmation enabled — ask user to check inbox
