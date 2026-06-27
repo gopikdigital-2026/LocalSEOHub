@@ -107,7 +107,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { product, city, platform, keywords, tipo, imageBase64, imageMimeType } = await req.json();
+    const { product, city, platform, keywords, tipo, imageBase64, imageMimeType, generateSchema } = await req.json();
 
     if (!product?.trim()) {
       return new Response(
@@ -220,8 +220,52 @@ Deno.serve(async (req: Request) => {
         }
       : undefined;
 
+    let schema: string | undefined;
+
+    if (generateSchema) {
+      const schemaType = isService ? "LocalBusiness" : "Product";
+      const schemaPrompt = isService
+        ? `Eres un experto en SEO técnico. Genera un JSON-LD schema.org válido de tipo LocalBusiness para este negocio local español. Incluye todos los campos relevantes: @context, @type, name, description, address (PostalAddress con addressLocality y addressCountry ES), telephone (vacío si no hay), openingHours (vacío si no hay), areaServed, priceRange, url. Usa los datos del negocio proporcionados. Responde SOLO con el objeto JSON, sin bloques de código ni texto adicional.`
+        : `Eres un experto en SEO técnico. Genera un JSON-LD schema.org válido de tipo Product para este producto de e-commerce español. Incluye todos los campos relevantes: @context, @type, name, description, brand (@type Brand), offers (@type Offer con availability InStock, priceCurrency EUR, itemCondition NewCondition). Usa los datos del producto proporcionados. Responde SOLO con el objeto JSON, sin bloques de código ni texto adicional.`;
+
+      const schemaUserMsg = [
+        isService ? `Tipo de negocio: ${product}` : `Producto: ${product}`,
+        city ? `Ciudad/Región: ${city}` : null,
+        platform ? `Canal/Plataforma: ${platform}` : null,
+        `Título generado: ${title}`,
+        `Descripción generada: ${description}`,
+      ].filter(Boolean).join("\n");
+
+      const schemaRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          temperature: 0.2,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: schemaPrompt },
+            { role: "user", content: schemaUserMsg },
+          ],
+        }),
+      });
+
+      if (schemaRes.ok) {
+        const schemaData = await schemaRes.json();
+        const rawSchema = schemaData.choices?.[0]?.message?.content ?? "{}";
+        try {
+          const parsed = JSON.parse(rawSchema);
+          if (!parsed["@context"]) parsed["@context"] = "https://schema.org";
+          if (!parsed["@type"]) parsed["@type"] = schemaType;
+          schema = JSON.stringify(parsed, null, 2);
+        } catch {
+          schema = undefined;
+        }
+      }
+    }
+
     return new Response(
-      JSON.stringify({ title, description, tags, imageOptimization }),
+      JSON.stringify({ title, description, tags, imageOptimization, ...(schema ? { schema } : {}) }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
