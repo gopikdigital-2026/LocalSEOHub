@@ -59,6 +59,7 @@ import {
   Newspaper,
   Award,
   RefreshCw,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -1811,12 +1812,28 @@ interface UrlRival extends Rival {
   analysed?: boolean;
 }
 
+interface PositioningWeakness {
+  title: string;
+  description: string;
+  opportunity: string;
+}
+
+interface ContentRecommendation {
+  strategy: string;
+  actions: string[];
+  samplePost: string;
+}
+
 interface QuickScanResult {
   url: string;
   name: string;
   threat: 'high' | 'medium' | 'low';
   keywords: string[];
   activityIndex: ActivityIndex;
+  contentFocus: string;
+  keyReviews: string[];
+  positioningWeaknesses: PositioningWeakness[];
+  contentRecommendation: ContentRecommendation;
   content: string;
 }
 
@@ -1905,6 +1922,10 @@ function DirectUrlScanner({ city }: { city: string }) {
         threat: d.detectedThreat ?? 'medium',
         keywords: Array.isArray(d.keywords) ? d.keywords : [],
         activityIndex: d.activityIndex ?? { score: 50, seoOptimization: 'Media', contentFreshness: 'Media', onlinePresence: 'Media', callsToAction: 'Ausente', summary: '' },
+        contentFocus: d.contentFocus ?? '',
+        keyReviews: Array.isArray(d.keyReviews) ? d.keyReviews : [],
+        positioningWeaknesses: Array.isArray(d.positioningWeaknesses) ? d.positioningWeaknesses : [],
+        contentRecommendation: d.contentRecommendation ?? { strategy: '', actions: [], samplePost: '' },
         content: d.content ?? '',
       });
       setTimeout(() => { setGaugeAnimate(true); setBarAnimate(true); }, 120);
@@ -1993,6 +2014,7 @@ function DirectUrlScanner({ city }: { city: string }) {
             <ThreatBadge level={result.threat} />
           </div>
 
+          {/* Row 1: Keywords + Activity Index */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Keywords card */}
             <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
@@ -2006,13 +2028,10 @@ function DirectUrlScanner({ city }: { city: string }) {
                 {result.keywords.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {result.keywords.map((kw, i) => (
-                      <span
-                        key={i}
+                      <span key={i}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
-                          bg-sky-500/10 border border-sky-500/25 text-sky-300 hover:bg-sky-500/18 transition-colors cursor-default"
-                      >
-                        <Hash size={9} className="text-sky-500/60" />
-                        {kw}
+                          bg-sky-500/10 border border-sky-500/25 text-sky-300 hover:bg-sky-500/18 transition-colors cursor-default">
+                        <Hash size={9} className="text-sky-500/60" />{kw}
                       </span>
                     ))}
                   </div>
@@ -2020,7 +2039,7 @@ function DirectUrlScanner({ city }: { city: string }) {
                   <p className="text-xs text-slate-600 italic">No se detectaron keywords en este análisis.</p>
                 )}
                 <p className="mt-4 text-[11px] text-slate-600 leading-relaxed">
-                  Estas son las palabras por las que tu rival compite en búsquedas. Úsalas como referencia para tu estrategia de contenidos.
+                  Palabras por las que tu rival compite en búsquedas locales.
                 </p>
               </div>
             </div>
@@ -2060,18 +2079,131 @@ function DirectUrlScanner({ city }: { city: string }) {
                     {result.activityIndex.summary}
                   </p>
                 )}
-                {result.content && (
-                  <button
-                    onClick={() => setCopied(false) || navigator.clipboard.writeText(result.content).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border w-full justify-center
-                      ${copied ? 'bg-emerald-500/12 border-emerald-500/25 text-emerald-400' : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200'}`}
-                  >
-                    {copied ? <><Check size={11} />Informe copiado</> : <><Copy size={11} />Copiar informe completo</>}
-                  </button>
-                )}
               </div>
             </div>
           </div>
+
+          {/* Row 2: Content Focus + Key Reviews */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Content Focus */}
+            {result.contentFocus && (
+              <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+                <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-800/60 bg-slate-900/50">
+                  <TrendingUp size={12} className="text-emerald-400" />
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-widest">Enfoque de Contenidos Local</h4>
+                </div>
+                <div className="p-5">
+                  <p className="text-sm text-slate-300 leading-relaxed">{result.contentFocus}</p>
+                  <p className="mt-3 text-[11px] text-slate-600">Estrategia de contenidos inferida de su presencia web.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Key Reviews */}
+            {result.keyReviews.length > 0 && (
+              <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+                <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-800/60 bg-slate-900/50">
+                  <MessageSquare size={12} className="text-amber-400" />
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-widest flex-1">Reseñas Clave en el Mercado</h4>
+                  <span className="text-[10px] text-slate-600">Simuladas por IA</span>
+                </div>
+                <div className="p-5 space-y-3">
+                  {result.keyReviews.map((review, i) => (
+                    <div key={i} className="flex gap-3">
+                      <div className="w-6 h-6 rounded-full bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-[10px] font-black text-amber-400">{i + 1}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed">{review}</p>
+                    </div>
+                  ))}
+                  <p className="text-[11px] text-slate-700 pt-1">Percepciones simuladas basadas en el perfil del negocio.</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Row 3: Positioning Weaknesses */}
+          {result.positioningWeaknesses.length > 0 && (
+            <div className="rounded-2xl border border-red-500/20 bg-slate-900/60 overflow-hidden"
+              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+              <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-red-500/15 bg-red-500/5">
+                <ShieldAlert size={12} className="text-red-400" />
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-widest flex-1">3 Debilidades de Posicionamiento</h4>
+                <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Puntos de ataque</span>
+              </div>
+              <div className="divide-y divide-slate-800/40">
+                {result.positioningWeaknesses.map((w, i) => (
+                  <div key={i} className="flex gap-4 px-5 py-4">
+                    <div className="w-7 h-7 rounded-lg bg-red-500/10 border border-red-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-xs font-black text-red-400">{i + 1}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-100 mb-1">{w.title}</p>
+                      <p className="text-xs text-slate-400 leading-relaxed mb-2">{w.description}</p>
+                      {w.opportunity && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold
+                          bg-emerald-500/10 border border-emerald-500/25 text-emerald-400">
+                          <Sparkles size={9} />
+                          {w.opportunity}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Row 4: Content Recommendation */}
+          {result.contentRecommendation?.strategy && (
+            <div className="rounded-2xl border border-emerald-500/20 bg-slate-900/60 overflow-hidden"
+              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+              <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-emerald-500/15 bg-emerald-500/5">
+                <BrainCircuit size={12} className="text-emerald-400" />
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-widest flex-1">Recomendación Automatizada de Contenidos</h4>
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">IA · gpt-4o-mini</span>
+              </div>
+              <div className="p-5 space-y-4">
+                <p className="text-sm text-slate-300 leading-relaxed">{result.contentRecommendation.strategy}</p>
+
+                {result.contentRecommendation.actions?.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Acciones inmediatas</p>
+                    {result.contentRecommendation.actions.map((action, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[9px] font-black text-emerald-400">{i + 1}</span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">{action}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {result.contentRecommendation.samplePost && (
+                  <div className="rounded-xl bg-slate-800/50 border border-slate-700/40 p-4">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Texto listo para publicar</p>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(result.contentRecommendation.samplePost);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border
+                          ${copied ? 'bg-emerald-500/12 border-emerald-500/25 text-emerald-400' : 'bg-slate-700/60 border-slate-600/60 text-slate-400 hover:text-slate-200'}`}
+                      >
+                        {copied ? <><Check size={10} />Copiado</> : <><Copy size={10} />Copiar</>}
+                      </button>
+                    </div>
+                    <p className="text-sm text-slate-200 leading-relaxed italic">"{result.contentRecommendation.samplePost}"</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
