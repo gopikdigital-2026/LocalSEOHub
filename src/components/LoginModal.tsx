@@ -25,18 +25,26 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
     setLoading(true);
     clearMessages();
 
-    const { error: authError } =
-      mode === 'login'
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
-
-    if (authError) {
-      setError(translateError(authError.message));
-    } else if (mode === 'signup') {
-      setSuccess('¡Cuenta creada! Revisa tu email para confirmar y luego inicia sesión.');
+    if (mode === 'login') {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) {
+        setError(translateError(authError.message));
+      } else {
+        onClose();
+      }
     } else {
-      onClose();
+      const { data, error: authError } = await supabase.auth.signUp({ email, password });
+      if (authError) {
+        setError(translateError(authError.message));
+      } else if (data.session) {
+        // Email confirmation disabled — user is immediately logged in
+        onClose();
+      } else {
+        // Email confirmation enabled — ask user to check inbox
+        setSuccess('¡Cuenta creada! Revisa tu email para confirmar y luego inicia sesión.');
+      }
     }
+
     setLoading(false);
   };
 
