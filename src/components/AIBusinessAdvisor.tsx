@@ -18,6 +18,10 @@ import {
   CheckCircle2,
   ClipboardCopy,
   Check,
+  Mail,
+  Image,
+  MessageSquare,
+  Copy,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -40,6 +44,20 @@ interface AuditResult {
   tips: Tip[];
 }
 
+interface TipContent {
+  email: { subject: string; body: string };
+  caption: string;
+  sms: string;
+}
+
+interface BusinessContext {
+  businessType: string;
+  avgTicket: string;
+  starProduct: string;
+  mainChallenge: string;
+  accessToken: string;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CHALLENGE_OPTIONS = [
@@ -48,28 +66,6 @@ const CHALLENGE_OPTIONS = [
   'Fidelizar y hacer que vuelvan (Retención)',
   'Optimizar el inventario o servicios',
 ];
-
-// Simulated promotional content per tip index
-const SIMULATED_OUTPUTS: Record<number, { headline: string; copy: string; cta: string; hashtags: string[] }> = {
-  0: {
-    headline: '¿Buscas [servicio] en tu ciudad? ¡Somos los mejor valorados!',
-    copy: 'Más de [X] clientes confían en nosotros cada mes. Visita nuestro perfil en Google Maps, mira las fotos reales de nuestro trabajo y reserva ahora con un solo clic. Respondemos en menos de 2 horas.',
-    cta: 'Ver opiniones y reservar →',
-    hashtags: ['#negociolocal', '#googlereviews', '#reservaahora', '#elmejorprecio'],
-  },
-  1: {
-    headline: '¡Vuelve y ahorra! Tu próxima visita tiene premio.',
-    copy: 'Cada vez que nos visitas, acumulas sellos en tu tarjeta digital. A la 6ª visita, disfruta de tu premio. Sin papel, sin complicaciones — solo abre el enlace y muestra tu tarjeta.',
-    cta: 'Activar mi tarjeta de fidelización →',
-    hashtags: ['#fidelización', '#clientevip', '#premiosporcomprar', '#tarjetadigital'],
-  },
-  2: {
-    headline: 'Pack Exclusivo: tu favorito + el complemento perfecto.',
-    copy: 'Hemos creado un bundle especial con nuestro producto estrella y dos complementos que lo hacen aún mejor. Disponible solo esta semana en edición limitada. No te quedes sin el tuyo.',
-    cta: 'Ver el pack exclusivo →',
-    hashtags: ['#edicionlimitada', '#packexclusivo', '#ofertespecial', '#ticketmedio'],
-  },
-};
 
 const PREVIEW_RESULT: AuditResult = {
   dafo: {
@@ -220,18 +216,9 @@ function RoiBar({ pct, visible }: { pct: number; visible: boolean }) {
   );
 }
 
-// ─── Agent Execution Panel ────────────────────────────────────────────────────
+// ─── Copy Button ──────────────────────────────────────────────────────────────
 
-type AgentState = 'idle' | 'loading' | 'done';
-
-const LOADING_STEPS = [
-  'El agente de IA está preparando tu contenido promocional...',
-  'Analizando el contexto del consejo y el sector...',
-  'Redactando copy persuasivo y llamadas a la acción...',
-  'Ajustando el tono para tu audiencia local...',
-];
-
-function CopyBtn({ text }: { text: string }) {
+function CopyBtn({ text, label }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(text).then(() => {
@@ -242,46 +229,120 @@ function CopyBtn({ text }: { text: string }) {
   return (
     <button
       onClick={copy}
-      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-700/60 transition-all"
+      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium
+        transition-all duration-200 border
+        ${copied
+          ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+          : 'bg-slate-800/60 border-slate-700/60 text-slate-500 hover:text-slate-300 hover:border-slate-600'
+        }`}
     >
-      {copied ? <Check size={11} className="text-emerald-400" /> : <ClipboardCopy size={11} />}
+      {copied ? <Check size={10} /> : <ClipboardCopy size={10} />}
+      {label && <span>{copied ? 'Copiado' : label}</span>}
     </button>
   );
 }
 
-function AgentPanel({ index, visible }: { index: number; visible: boolean }) {
+// ─── Loading Steps ────────────────────────────────────────────────────────────
+
+const LOADING_STEPS = [
+  'El agente de IA está preparando tu contenido promocional...',
+  'Redactando correo persuasivo para tus clientes...',
+  'Optimizando pie de foto para redes sociales...',
+  'Creando plantilla SMS/WhatsApp de alta conversión...',
+];
+
+// ─── Agent Execution Panel ────────────────────────────────────────────────────
+
+type AgentState = 'idle' | 'loading' | 'done' | 'error';
+
+function AgentPanel({
+  visible,
+  tip,
+  ctx,
+}: {
+  visible: boolean;
+  tip: Tip;
+  ctx: BusinessContext;
+}) {
   const [state, setState] = useState<AgentState>('idle');
   const [stepIdx, setStepIdx] = useState(0);
+  const [content, setContent] = useState<TipContent | null>(null);
+  const [errMsg, setErrMsg] = useState('');
   const [revealed, setRevealed] = useState(false);
+  const [allCopied, setAllCopied] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const output = SIMULATED_OUTPUTS[index] ?? SIMULATED_OUTPUTS[0];
 
-  const run = () => {
+  const run = async () => {
     if (state === 'loading') return;
     setState('loading');
+    setContent(null);
     setRevealed(false);
+    setErrMsg('');
     setStepIdx(0);
 
+    // Advance loading text steps for UX
     let step = 0;
     intervalRef.current = setInterval(() => {
       step += 1;
-      if (step < LOADING_STEPS.length) {
-        setStepIdx(step);
-      } else {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        setState('done');
-        setTimeout(() => setRevealed(true), 120);
-      }
-    }, 900);
+      if (step < LOADING_STEPS.length) setStepIdx(step);
+    }, 1100);
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-tip-content`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${ctx.accessToken}`,
+          },
+          body: JSON.stringify({
+            businessType: ctx.businessType,
+            avgTicket: ctx.avgTicket ? Number(ctx.avgTicket) : null,
+            starProduct: ctx.starProduct,
+            mainChallenge: ctx.mainChallenge,
+            tipTitle: tip.title,
+            tipDescription: tip.description,
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? 'Error al generar contenido');
+      setContent(data as TipContent);
+      setState('done');
+      setTimeout(() => setRevealed(true), 100);
+    } catch (err) {
+      setErrMsg(err instanceof Error ? err.message : 'Error desconocido');
+      setState('error');
+    } finally {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
   };
 
   useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
 
-  const isDone = state === 'done';
+  const copyAll = () => {
+    if (!content) return;
+    const text = [
+      `📧 CORREO — Asunto: ${content.email.subject}`,
+      content.email.body,
+      '',
+      `📸 PIE DE FOTO`,
+      content.caption,
+      '',
+      `💬 SMS / WHATSAPP`,
+      content.sms,
+    ].join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      setAllCopied(true);
+      setTimeout(() => setAllCopied(false), 2500);
+    });
+  };
 
   return (
     <div className={`transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-      {/* Trigger button */}
+
+      {/* Trigger */}
       {state === 'idle' && (
         <button
           onClick={run}
@@ -295,7 +356,7 @@ function AgentPanel({ index, visible }: { index: number; visible: boolean }) {
         </button>
       )}
 
-      {/* Loading state */}
+      {/* Loading */}
       {state === 'loading' && (
         <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
           <div className="flex items-center gap-3">
@@ -309,7 +370,6 @@ function AgentPanel({ index, visible }: { index: number; visible: boolean }) {
               {LOADING_STEPS[stepIdx]}
             </p>
           </div>
-          {/* Progress dots */}
           <div className="flex gap-1 pl-10">
             {LOADING_STEPS.map((_, i) => (
               <div
@@ -323,68 +383,113 @@ function AgentPanel({ index, visible }: { index: number; visible: boolean }) {
         </div>
       )}
 
+      {/* Error */}
+      {state === 'error' && (
+        <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/8 p-4">
+          <div className="flex items-start gap-2.5 mb-3">
+            <AlertCircle size={13} className="text-red-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-red-400 leading-relaxed">{errMsg}</p>
+          </div>
+          <button
+            onClick={() => setState('idle')}
+            className="text-xs text-slate-500 hover:text-slate-400 underline transition-colors"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* Result */}
-      {isDone && (
+      {state === 'done' && content && (
         <div
           className={`mt-3 rounded-xl border border-slate-700/60 bg-slate-900/80 overflow-hidden
             transition-all duration-500 ${revealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
         >
           {/* Header */}
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/8 border-b border-slate-700/50">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-800/50 border-b border-slate-700/50">
             <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
-            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">Contenido generado</span>
-            <button
-              onClick={() => { setState('idle'); setRevealed(false); }}
-              className="ml-auto text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
-            >
-              Regenerar
-            </button>
+            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest flex-1">
+              Contenido listo para usar
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={run}
+                className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
+              >
+                Regenerar
+              </button>
+              <button
+                onClick={copyAll}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold
+                  transition-all duration-200 border
+                  ${allCopied
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                    : 'bg-slate-700/60 border-slate-600/60 text-slate-300 hover:bg-slate-700 hover:border-slate-500'
+                  }`}
+              >
+                {allCopied ? <Check size={10} /> : <Copy size={10} />}
+                {allCopied ? 'Copiado todo' : 'Copiar todo'}
+              </button>
+            </div>
           </div>
 
-          <div className="p-4 space-y-3.5">
-            {/* Headline */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Titular</span>
-                <CopyBtn text={output.headline} />
-              </div>
-              <p className="text-sm font-semibold text-white leading-snug">{output.headline}</p>
-            </div>
+          <div className="divide-y divide-slate-800/60">
 
-            {/* Copy */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Copy promocional</span>
-                <CopyBtn text={output.copy} />
+            {/* Email */}
+            <div className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                  <Mail size={11} className="text-blue-400" />
+                </div>
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex-1">Correo Promocional</span>
+                <CopyBtn text={`Asunto: ${content.email.subject}\n\n${content.email.body}`} label="Copiar" />
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">{output.copy}</p>
-            </div>
-
-            {/* CTA */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">CTA</span>
-                <CopyBtn text={output.cta} />
-              </div>
-              <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-bold rounded-lg px-3 py-1.5">
-                {output.cta}
+              <div className="rounded-lg bg-slate-800/50 border border-slate-700/40 p-3 space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0 mt-0.5 w-12">Asunto</span>
+                  <p className="text-xs text-white font-semibold leading-snug">{content.email.subject}</p>
+                </div>
+                <div className="border-t border-slate-700/40 pt-2 flex items-start gap-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0 mt-0.5 w-12">Cuerpo</span>
+                  <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">{content.email.body}</p>
+                </div>
               </div>
             </div>
 
-            {/* Hashtags */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Hashtags</span>
-              <div className="flex flex-wrap gap-1.5">
-                {output.hashtags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-[11px] font-mono font-medium bg-slate-800 border border-slate-700/60 text-slate-400 rounded-lg px-2 py-0.5"
-                  >
-                    {tag}
+            {/* Caption */}
+            <div className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center shrink-0">
+                  <Image size={11} className="text-pink-400" />
+                </div>
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex-1">Pie de Foto (Redes)</span>
+                <CopyBtn text={content.caption} label="Copiar" />
+              </div>
+              <div className="rounded-lg bg-slate-800/50 border border-slate-700/40 p-3">
+                <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">{content.caption}</p>
+              </div>
+            </div>
+
+            {/* SMS */}
+            <div className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                  <MessageSquare size={11} className="text-emerald-400" />
+                </div>
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex-1">SMS / WhatsApp</span>
+                <CopyBtn text={content.sms} label="Copiar" />
+              </div>
+              <div className="rounded-lg bg-slate-800/50 border border-slate-700/40 p-3">
+                <p className="text-xs text-slate-300 leading-relaxed font-mono">{content.sms}</p>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-700/40">
+                  <span className="text-[10px] text-slate-600">Longitud</span>
+                  <span className={`text-[10px] font-mono font-bold ${content.sms.length > 160 ? 'text-amber-400' : 'text-slate-500'}`}>
+                    {content.sms.length} / 160 caracteres
                   </span>
-                ))}
+                </div>
               </div>
             </div>
+
           </div>
         </div>
       )}
@@ -394,7 +499,7 @@ function AgentPanel({ index, visible }: { index: number; visible: boolean }) {
 
 // ─── Tip Card ─────────────────────────────────────────────────────────────────
 
-function TipCard({ tip, index, visible }: { tip: Tip; index: number; visible: boolean }) {
+function TipCard({ tip, index, visible, ctx }: { tip: Tip; index: number; visible: boolean; ctx: BusinessContext }) {
   const icons = [<Zap size={15} />, <Users size={15} />, <DollarSign size={15} />];
   const delays = ['delay-100', 'delay-200', 'delay-300'];
   return (
@@ -420,9 +525,7 @@ function TipCard({ tip, index, visible }: { tip: Tip; index: number; visible: bo
       </div>
 
       <RoiBar pct={tip.impact_roi_percentage} visible={visible} />
-
-      {/* Agent execution panel */}
-      <AgentPanel index={index} visible={visible} />
+      <AgentPanel visible={visible} tip={tip} ctx={ctx} />
     </div>
   );
 }
@@ -487,6 +590,14 @@ export default function AIBusinessAdvisor({
   const [resultsVisible, setResultsVisible] = useState(false);
 
   const canGenerate = businessType.trim().length > 0;
+
+  const ctx: BusinessContext = {
+    businessType,
+    avgTicket,
+    starProduct,
+    mainChallenge,
+    accessToken: session?.access_token ?? '',
+  };
 
   const handleGenerate = async () => {
     if (!canGenerate) return;
@@ -679,7 +790,6 @@ export default function AIBusinessAdvisor({
         {/* ── RIGHT — Results ── */}
         <div className="space-y-5">
 
-          {/* Empty state */}
           {!result && !loading && (
             <div className="rounded-2xl border border-slate-800/60 bg-slate-900/30 min-h-[420px] flex flex-col items-center justify-center gap-4 p-10 text-center">
               <div className="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center">
@@ -694,10 +804,8 @@ export default function AIBusinessAdvisor({
             </div>
           )}
 
-          {/* Loading */}
           {loading && <AuditSpinner />}
 
-          {/* Results */}
           {result && !loading && (
             <>
               {/* DAFO Matrix */}
@@ -725,7 +833,7 @@ export default function AIBusinessAdvisor({
                   </h3>
                 </div>
                 {result.tips.map((tip, i) => (
-                  <TipCard key={i} tip={tip} index={i} visible={resultsVisible} />
+                  <TipCard key={i} tip={tip} index={i} visible={resultsVisible} ctx={ctx} />
                 ))}
               </div>
             </>
