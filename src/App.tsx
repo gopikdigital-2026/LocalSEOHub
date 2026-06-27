@@ -2861,6 +2861,28 @@ function AiDigitalTwin() {
 
 type CanalOption = 'ads' | 'reviews' | 'seo';
 
+interface SimulationResult {
+  leadIncrease?: {
+    month3: number; month6: number; month12: number;
+    yearlyTotal: number; cpl: string; vsBaseline: string;
+  };
+  agentOptimization?: {
+    strategy: string;
+    budgetSplit: { channel: string; pct: number; euros: number; reason: string }[];
+    optimizedLeads12: number; optimizedROI: number; deltaVsOriginal: string;
+  };
+  risk?: { level: string; score: number; factors: string[]; mitigation: string };
+  projectedROI?: {
+    month6: number; month12: number; multiplier: string;
+    breakeven: string; annualNetProfit: number;
+  };
+  verdict?: {
+    recommendation: string; title: string; reasoning: string;
+    confidence: number; urgency: string;
+  };
+  keyInsights?: string[];
+}
+
 const CANAL_CONFIG: Record<CanalOption, {
   label: string; lineColor: string; rgb: string; desc: string;
   badge: string; icon: string;
@@ -2989,6 +3011,9 @@ function CampaignChart({ investment, canal }: { investment: number; canal: Canal
 function AiCampaignSandbox() {
   const [investment, setInvestment] = useState(300);
   const [canal, setCanal] = useState<CanalOption>('ads');
+  const [simulating, setSimulating] = useState(false);
+  const [simResult, setSimResult] = useState<SimulationResult | null>(null);
+  const [simError, setSimError] = useState('');
 
   const cfg = CANAL_CONFIG[canal];
   const data = ROI_MULTIPLIERS[canal].map(m => Math.round(investment * m));
@@ -2999,6 +3024,35 @@ function AiCampaignSandbox() {
   const beLabel = breakeven >= 0 ? `Mes ${breakeven + 1}` : 'No alcanzado';
 
   const sliderBg = `linear-gradient(to right, ${cfg.lineColor} ${(investment / 1000) * 100}%, #1e293b ${(investment / 1000) * 100}%)`;
+
+  const runSimulation = async () => {
+    if (investment === 0) return;
+    setSimulating(true);
+    setSimResult(null);
+    setSimError('');
+    try {
+      const res = await supabase.functions.invoke('simulate-campaign', {
+        body: { investment, canal, roiMonth6: roi6, roiMonth12: roi12 },
+      });
+      if (res.error) throw new Error(res.error.message);
+      if (res.data?.error) throw new Error(res.data.error);
+      setSimResult(res.data as SimulationResult);
+    } catch (err) {
+      setSimError(err instanceof Error ? err.message : 'Error al simular');
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  const verdictStyles: Record<string, { bg: string; border: string; text: string; icon: string }> = {
+    ejecutar:     { bg: 'bg-emerald-500/8',  border: 'border-emerald-500/30', text: 'text-emerald-300', icon: '✅' },
+    revisar:      { bg: 'bg-amber-500/8',    border: 'border-amber-500/30',   text: 'text-amber-300',   icon: '⚠️' },
+    no_ejecutar:  { bg: 'bg-red-500/8',      border: 'border-red-500/30',     text: 'text-red-300',     icon: '🚫' },
+  };
+  const riskColor = (score: number) =>
+    score < 35 ? { text: 'text-emerald-400', bar: 'bg-emerald-500', label: 'Bajo' }
+    : score < 60 ? { text: 'text-amber-400',   bar: 'bg-amber-500',   label: 'Medio' }
+    : { text: 'text-red-400', bar: 'bg-red-500', label: 'Alto' };
 
   return (
     <div className="rounded-2xl border border-slate-700/50 bg-slate-900/60 overflow-hidden"
@@ -3014,7 +3068,7 @@ function AiCampaignSandbox() {
           <p className="text-[11px] text-slate-600 mt-0.5">Simulación predictiva de retorno por canal</p>
         </div>
         <span className="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/12 border border-amber-500/25 text-amber-400 uppercase tracking-wider">
-          IA · Predictivo
+          IA · gpt-4o-mini
         </span>
       </div>
 
@@ -3035,16 +3089,12 @@ function AiCampaignSandbox() {
             </div>
             <input
               type="range" min={0} max={1000} step={10} value={investment}
-              onChange={e => setInvestment(Number(e.target.value))}
+              onChange={e => { setInvestment(Number(e.target.value)); setSimResult(null); }}
               className="twin-slider w-full h-2 rounded-full appearance-none cursor-pointer"
               style={{ background: sliderBg }}
             />
             <div className="flex justify-between text-[10px] text-slate-700 font-mono">
-              <span>0€</span>
-              <span>250€</span>
-              <span>500€</span>
-              <span>750€</span>
-              <span>1000€</span>
+              <span>0€</span><span>250€</span><span>500€</span><span>750€</span><span>1000€</span>
             </div>
           </div>
 
@@ -3053,21 +3103,13 @@ function AiCampaignSandbox() {
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Canal</label>
             <div className="flex flex-col gap-2">
               {(Object.entries(CANAL_CONFIG) as [CanalOption, typeof CANAL_CONFIG[CanalOption]][]).map(([key, c]) => (
-                <button
-                  key={key}
-                  onClick={() => setCanal(key)}
+                <button key={key} onClick={() => { setCanal(key); setSimResult(null); }}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all duration-200 ${
-                    canal === key
-                      ? `${c.badge} ring-1 ring-inset`
-                      : 'border-slate-700/50 bg-slate-800/30 text-slate-400 hover:border-slate-600/60 hover:bg-slate-800/60'
-                  }`}
-                  style={canal === key ? { ringColor: c.lineColor } : {}}
-                >
+                    canal === key ? `${c.badge} ring-1 ring-inset` : 'border-slate-700/50 bg-slate-800/30 text-slate-400 hover:border-slate-600/60 hover:bg-slate-800/60'
+                  }`}>
                   <span className="text-base shrink-0">{c.icon}</span>
                   <span className="text-xs font-bold">{c.label}</span>
-                  {canal === key && (
-                    <span className="ml-auto w-2 h-2 rounded-full shrink-0" style={{ background: c.lineColor }} />
-                  )}
+                  {canal === key && <span className="ml-auto w-2 h-2 rounded-full shrink-0" style={{ background: c.lineColor }} />}
                 </button>
               ))}
             </div>
@@ -3077,20 +3119,39 @@ function AiCampaignSandbox() {
           {/* Stats row */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Retorno mes 6',  value: investment > 0 ? `${roi6}€` : '—', color: 'text-slate-200' },
-              { label: 'Retorno mes 12', value: investment > 0 ? `${roi12}€` : '—', color: `text-[${cfg.lineColor}]` },
-              { label: 'Multiplicador',  value: investment > 0 ? `${mult}×` : '—', color: 'text-slate-200' },
-              { label: 'Break-even',     value: beLabel, color: breakeven >= 0 ? 'text-emerald-400' : 'text-red-400' },
+              { label: 'Retorno mes 6',  value: investment > 0 ? `${roi6}€` : '—' },
+              { label: 'Retorno mes 12', value: investment > 0 ? `${roi12}€` : '—', accent: true },
+              { label: 'Multiplicador',  value: investment > 0 ? `${mult}×` : '—' },
+              { label: 'Break-even',     value: beLabel, beColor: breakeven >= 0 ? 'text-emerald-400' : 'text-red-400' },
             ].map((s, i) => (
               <div key={i} className="rounded-xl bg-slate-800/50 border border-slate-700/40 px-3 py-2.5">
                 <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-1">{s.label}</p>
-                <p className="text-sm font-black text-slate-100 tabular-nums" style={i === 1 ? { color: cfg.lineColor } : {}}>{s.value}</p>
+                <p className={`text-sm font-black tabular-nums ${'beColor' in s ? s.beColor : 'accent' in s && s.accent ? '' : 'text-slate-100'}`}
+                  style={'accent' in s && s.accent ? { color: cfg.lineColor } : {}}>
+                  {s.value}
+                </p>
               </div>
             ))}
           </div>
+
+          {/* CTA */}
+          <button
+            onClick={runSimulation}
+            disabled={simulating || investment === 0}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-200
+              bg-amber-500/15 border border-amber-500/30 text-amber-300
+              hover:bg-amber-500/25 hover:border-amber-500/50 hover:text-amber-200
+              disabled:opacity-40 disabled:cursor-not-allowed active:scale-98"
+          >
+            {simulating
+              ? <><Loader2 size={14} className="animate-spin" />Agente optimizando...</>
+              : <><BrainCircuit size={14} />Simular con Agente IA</>
+            }
+          </button>
+          {simError && <p className="text-xs text-red-400 flex items-center gap-1.5"><AlertCircle size={11} />{simError}</p>}
         </div>
 
-        {/* RIGHT — Chart */}
+        {/* RIGHT — Chart + AI results */}
         <div className="lg:col-span-3 p-6 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Curva de Retorno Esperado (12 meses)</p>
@@ -3107,18 +3168,239 @@ function AiCampaignSandbox() {
               <div className="relative rounded-xl bg-slate-950/50 border border-slate-800/50 p-3 overflow-hidden">
                 <CampaignChart investment={investment} canal={canal} />
               </div>
-
               <div className="flex items-start gap-2 px-1">
                 <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: cfg.lineColor }} />
                 <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Con <span className="text-slate-400 font-bold">{investment}€/mes</span> en {cfg.label.toLowerCase()}, el modelo predice un retorno acumulado de <span style={{ color: cfg.lineColor }} className="font-bold">{roi12}€</span> al mes 12 ({mult}× la inversión mensual).
+                  Con <span className="text-slate-400 font-bold">{investment}€/mes</span> en {cfg.label.toLowerCase()}, el modelo predice un retorno acumulado de{' '}
+                  <span style={{ color: cfg.lineColor }} className="font-bold">{roi12}€</span> al mes 12 ({mult}× la inversión mensual).
                   {breakeven >= 0 && ` Break-even estimado en el mes ${breakeven + 1}.`}
                 </p>
               </div>
             </>
           )}
+
+          {/* Loading state */}
+          {simulating && (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-6 flex flex-col items-center gap-3 text-center">
+              <div className="relative w-12 h-12">
+                <div className="absolute inset-0 rounded-full border-2 border-amber-500/20" />
+                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-amber-400 animate-spin" />
+                <div className="absolute inset-2 rounded-full border border-transparent border-t-amber-500/40 animate-spin" style={{ animationDuration: '1.4s', animationDirection: 'reverse' }} />
+              </div>
+              <p className="text-xs font-bold text-amber-400 uppercase tracking-widest">Agente optimizando presupuesto</p>
+              <p className="text-[11px] text-slate-600">Calculando leads, ROI y veredicto estratégico...</p>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* AI Analysis Results — full width below the grid */}
+      {simResult && !simulating && (
+        <div className="border-t border-slate-800/60 p-6 space-y-5">
+
+          {/* Section label */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-slate-800/60" />
+            <span className="flex items-center gap-2 text-[10px] font-bold text-amber-400 uppercase tracking-widest px-3 py-1 rounded-full bg-amber-500/8 border border-amber-500/20">
+              <BrainCircuit size={10} />
+              Análisis del Agente Autónomo
+            </span>
+            <div className="flex-1 h-px bg-slate-800/60" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            {/* Lead Volume Increment */}
+            {simResult.leadIncrease && (
+              <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+                <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-800/60 bg-slate-900/50">
+                  <TrendingUp size={11} className="text-sky-400" />
+                  <h4 className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Volumen de Leads</h4>
+                </div>
+                <div className="p-4 space-y-3">
+                  {[
+                    { label: 'Mes 3',  value: simResult.leadIncrease.month3 },
+                    { label: 'Mes 6',  value: simResult.leadIncrease.month6 },
+                    { label: 'Mes 12', value: simResult.leadIncrease.month12 },
+                  ].map((m, i) => {
+                    const maxLeads = simResult.leadIncrease.month12 || 1;
+                    const pct = Math.min((m.value / maxLeads) * 100, 100);
+                    return (
+                      <div key={i} className="space-y-1">
+                        <div className="flex justify-between text-[11px]">
+                          <span className="text-slate-500">{m.label}</span>
+                          <span className="font-bold text-slate-200">{m.value} leads/mes</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                          <div className="h-full rounded-full bg-sky-500 transition-all duration-700" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="pt-2 border-t border-slate-800/50 space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">Total anual</span>
+                      <span className="font-black text-sky-400">{simResult.leadIncrease.yearlyTotal} leads</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">CPL medio</span>
+                      <span className="font-bold text-slate-300">{simResult.leadIncrease.cpl}€/lead</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">vs sin inversión</span>
+                      <span className="font-bold text-emerald-400">{simResult.leadIncrease.vsBaseline}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Agent Optimization */}
+            {simResult.agentOptimization && (
+              <div className="rounded-2xl border border-amber-500/20 bg-slate-900/60 overflow-hidden"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+                <div className="flex items-center gap-2.5 px-4 py-3 border-b border-amber-500/15 bg-amber-500/5">
+                  <Sparkles size={11} className="text-amber-400" />
+                  <h4 className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Optimización del Agente</h4>
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-[11px] text-slate-400 leading-relaxed">{simResult.agentOptimization.strategy}</p>
+                  <div className="space-y-2">
+                    {simResult.agentOptimization.budgetSplit?.map((split, i) => (
+                      <div key={i} className="rounded-lg bg-slate-800/50 border border-slate-700/40 px-3 py-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-bold text-slate-300">{split.channel}</span>
+                          <span className="text-[10px] font-black text-amber-400">{split.pct}% · {split.euros}€</span>
+                        </div>
+                        <p className="text-[10px] text-slate-600 leading-snug">{split.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-2 border-t border-slate-800/50 space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">Leads/mes m12 optimizado</span>
+                      <span className="font-black text-amber-400">{simResult.agentOptimization.optimizedLeads12}</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">ROI adicional agente</span>
+                      <span className="font-black text-emerald-400">+{simResult.agentOptimization.optimizedROI}€</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">Delta vs original</span>
+                      <span className="font-bold text-emerald-400">{simResult.agentOptimization.deltaVsOriginal}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Risk + ROI Summary */}
+            <div className="space-y-4">
+              {simResult.risk && (() => {
+                const rc = riskColor(simResult.risk.score);
+                return (
+                  <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+                    style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+                    <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-800/60 bg-slate-900/50">
+                      <ShieldAlert size={11} className={rc.text} />
+                      <h4 className="text-[10px] font-bold text-slate-300 uppercase tracking-widest flex-1">Riesgo Estimado</h4>
+                      <span className={`text-[10px] font-black ${rc.text}`}>{rc.label} · {simResult.risk.score}/100</span>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-700 ${rc.bar}`} style={{ width: `${simResult.risk.score}%` }} />
+                      </div>
+                      <div className="space-y-1">
+                        {simResult.risk.factors?.map((f, i) => (
+                          <div key={i} className="flex items-start gap-1.5 text-[10px] text-slate-500">
+                            <span className={`mt-0.5 shrink-0 ${rc.text}`}>▸</span>{f}
+                          </div>
+                        ))}
+                      </div>
+                      {simResult.risk.mitigation && (
+                        <div className="rounded-lg bg-slate-800/40 border border-slate-700/30 px-3 py-2">
+                          <p className="text-[10px] text-slate-500 leading-snug">{simResult.risk.mitigation}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {simResult.projectedROI && (
+                <div className="rounded-xl border border-slate-800/60 bg-slate-900/60 px-4 py-3 space-y-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">ROI Proyectado</p>
+                  {[
+                    { k: 'Mes 6', v: `${simResult.projectedROI.month6}€` },
+                    { k: 'Mes 12', v: `${simResult.projectedROI.month12}€` },
+                    { k: 'Multiplicador', v: simResult.projectedROI.multiplier },
+                    { k: 'Break-even', v: simResult.projectedROI.breakeven },
+                    { k: 'Beneficio neto', v: `${simResult.projectedROI.annualNetProfit}€` },
+                  ].map((r, i) => (
+                    <div key={i} className="flex justify-between text-[11px]">
+                      <span className="text-slate-600">{r.k}</span>
+                      <span className={`font-bold ${i >= 3 ? (simResult.projectedROI!.annualNetProfit > 0 ? 'text-emerald-400' : 'text-red-400') : 'text-slate-200'}`}>{r.v}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Key Insights */}
+          {simResult.keyInsights && simResult.keyInsights.length > 0 && (
+            <div className="rounded-xl border border-slate-800/50 bg-slate-900/40 px-5 py-4 space-y-2">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Insights Clave del Agente</p>
+              {simResult.keyInsights.map((insight, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-[9px] font-black text-amber-400">{i + 1}</span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">{insight}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Verdict */}
+          {simResult.verdict && (() => {
+            const vs = verdictStyles[simResult.verdict.recommendation] ?? verdictStyles.revisar;
+            return (
+              <div className={`rounded-2xl border p-5 ${vs.border} ${vs.bg}`}>
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-xl border flex items-center justify-center text-2xl shrink-0 ${vs.border} bg-slate-900/60`}>
+                    {vs.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1 flex-wrap">
+                      <h3 className={`text-base font-black ${vs.text}`}>{simResult.verdict.title}</h3>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider ${vs.border} ${vs.bg} ${vs.text}`}>
+                        {simResult.verdict.recommendation.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-3">{simResult.verdict.reasoning}</p>
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-600 uppercase tracking-widest">Confianza</span>
+                        <div className="w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                          <div className={`h-full rounded-full transition-all duration-700 ${vs.text === 'text-emerald-300' ? 'bg-emerald-500' : vs.text === 'text-amber-300' ? 'bg-amber-500' : 'bg-red-500'}`}
+                            style={{ width: `${simResult.verdict.confidence}%` }} />
+                        </div>
+                        <span className={`text-[10px] font-bold ${vs.text}`}>{simResult.verdict.confidence}%</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-slate-600 uppercase tracking-widest">Urgencia:</span>
+                        <span className={`text-[10px] font-bold ${vs.text}`}>{simResult.verdict.urgency}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }
