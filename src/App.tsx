@@ -4334,7 +4334,7 @@ function TrialBanner({ daysLeft, onDismiss }: { daysLeft: number; onDismiss: () 
 // v2.6
 
 // Set to true while building to skip auth and preview the dashboard directly
-const DEV_PREVIEW = false;
+const DEV_PREVIEW = true;
 
 
 export default function App() {
