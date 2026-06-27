@@ -7,4 +7,12 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  server: {
+    hmr: {
+      overlay: true,
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+  },
 });

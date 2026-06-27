@@ -3292,7 +3292,7 @@ function Dashboard({
       ) : tab === 'geo-audit' ? (
         <GeoAuditPanel product={product} city={city} />
       ) : tab === 'ai-advisor' ? (
-        <AIBusinessAdvisor session={session} previewMode={previewMode} />
+        <AIBusinessAdvisor session={session!} previewMode={previewMode} />
       ) : (
       <>
       {/* Page header */}
