@@ -54,6 +54,11 @@ import {
   ScanSearch,
   ShieldCheck,
   BarChart2,
+  Send,
+  BookOpen,
+  Newspaper,
+  Award,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -1024,6 +1029,283 @@ function ChatGptSimulator({ response, businessName, loading }: { response: strin
   );
 }
 
+// ─── Citation Conquest Panel ──────────────────────────────────────────────────
+
+interface CitationSource {
+  id: string;
+  name: string;
+  domain: string;
+  type: 'blog' | 'directory' | 'ranking' | 'news';
+  tag: string;
+  description: string;
+  authorityScore: number;
+  monthlyVisitors: string;
+}
+
+const SECTOR_SOURCES: Record<string, CitationSource[]> = {
+  restaurant: [
+    { id: 'r1', name: 'Los 10 Mejores Restaurantes', domain: 'gastronomiahoy.es', type: 'ranking', tag: 'Top Lists', description: 'Ranking editorial mensual citado por ChatGPT y Perplexity para recomendaciones gastronómicas locales.', authorityScore: 91, monthlyVisitors: '380K' },
+    { id: 'r2', name: 'Guía Foodie Local', domain: 'guiafoodie.com', type: 'blog', tag: 'Blog Nicho', description: 'Blog especializado en gastronomía local con alta frecuencia de citas en respuestas IA de restaurantes de zona.', authorityScore: 76, monthlyVisitors: '120K' },
+    { id: 'r3', name: 'TripAdvisor Restaurantes', domain: 'tripadvisor.es', type: 'directory', tag: 'Directorio', description: 'Directorio de referencia obligatoria. Las IAs rastrean sus reseñas y puntuaciones para construir respuestas.', authorityScore: 98, monthlyVisitors: '12M' },
+    { id: 'r4', name: 'Come y Calla Magazine', domain: 'comeyccalla.es', type: 'news', tag: 'Prensa Digital', description: 'Revista digital de tendencias gastronómicas. Artículos de "dónde comer en [ciudad]" con alta autoridad SEO.', authorityScore: 68, monthlyVisitors: '85K' },
+  ],
+  peluqueria: [
+    { id: 'p1', name: 'Las Mejores Peluquerías', domain: 'bellezatop.es', type: 'ranking', tag: 'Top Lists', description: 'Lista de referencia citada por modelos IA al responder "mejores peluquerías de [ciudad]" o búsquedas de salón.', authorityScore: 84, monthlyVisitors: '210K' },
+    { id: 'p2', name: 'Tendencias Pelo Blog', domain: 'tendenciaspelo.com', type: 'blog', tag: 'Blog Nicho', description: 'Blog de belleza y tendencias capilar con artículos "salones recomendados" que las IA procesan como fuente.', authorityScore: 71, monthlyVisitors: '95K' },
+    { id: 'p3', name: 'Booksy Directorio', domain: 'booksy.com', type: 'directory', tag: 'Directorio', description: 'Plataforma de reservas con perfil de negocio indizado por modelos IA para recomendar profesionales cercanos.', authorityScore: 89, monthlyVisitors: '5M' },
+    { id: 'p4', name: 'Look Magazine España', domain: 'lookmagazine.es', type: 'news', tag: 'Prensa Digital', description: 'Artículos "los mejores salones de belleza de 2024" con links que aumentan visibilidad en respuestas de IA.', authorityScore: 63, monthlyVisitors: '60K' },
+  ],
+  tienda: [
+    { id: 't1', name: 'Directorio Comercio Local', domain: 'compralolocal.es', type: 'directory', tag: 'Directorio', description: 'Directorio especializado en comercio local de proximidad. Alta tasa de cita en búsquedas "comprar en [ciudad]".', authorityScore: 79, monthlyVisitors: '180K' },
+    { id: 't2', name: 'Blog Consumidor Inteligente', domain: 'consumidorinteligente.com', type: 'blog', tag: 'Blog Nicho', description: 'Comparativas y guías de compra citadas por IA para recomendar tiendas especializadas en múltiples categorías.', authorityScore: 73, monthlyVisitors: '140K' },
+    { id: 't3', name: 'Top Tiendas España', domain: 'toptiendas.es', type: 'ranking', tag: 'Top Lists', description: 'Rankings editoriales "mejores tiendas de [producto] en [ciudad]" con fuerte posicionamiento en IA generativa.', authorityScore: 85, monthlyVisitors: '290K' },
+    { id: 't4', name: 'Retail Insider ES', domain: 'retailinsider.es', type: 'news', tag: 'Prensa Digital', description: 'Prensa especializada en retail. Sus artículos de "mejores locales" son fuente de entrenamiento IA.', authorityScore: 67, monthlyVisitors: '75K' },
+  ],
+  default: [
+    { id: 'd1', name: 'Mejores Negocios Locales', domain: 'negocioslocales.es', type: 'ranking', tag: 'Top Lists', description: 'Portal editorial de rankings locales con alta tasa de cita en ChatGPT, Gemini y Perplexity para búsquedas de "mejor [negocio] en [ciudad]".', authorityScore: 83, monthlyVisitors: '320K' },
+    { id: 'd2', name: 'Guía Local Interactiva', domain: 'guialocal.com', type: 'directory', tag: 'Directorio', description: 'Directorio geolocalizado de negocios. Listado activo aumenta probabilidad de ser citado por IA en respuestas de recomendación.', authorityScore: 77, monthlyVisitors: '260K' },
+    { id: 'd3', name: 'Blog Expertos del Sector', domain: 'expertossector.es', type: 'blog', tag: 'Blog Nicho', description: 'Blog de autoridad de nicho con artículos "los mejores de [sector]" citados directamente como fuente en respuestas IA.', authorityScore: 69, monthlyVisitors: '88K' },
+    { id: 'd4', name: 'Noticias Locales Digital', domain: 'noticiaslocales.es', type: 'news', tag: 'Prensa Digital', description: 'Prensa local digital con sección de negocios destacados. Los modelos de IA usan artículos de prensa como señales de autoridad.', authorityScore: 61, monthlyVisitors: '145K' },
+    { id: 'd5', name: 'Yelp España', domain: 'yelp.es', type: 'directory', tag: 'Directorio', description: 'Plataforma de reseñas de referencia global. Presencia activa aumenta citas de IA en búsquedas de comparación y selección.', authorityScore: 94, monthlyVisitors: '8M' },
+  ],
+};
+
+function getSectorKey(sector: string): keyof typeof SECTOR_SOURCES {
+  const s = sector.toLowerCase();
+  if (/restaur|bar |cafeter|gastro|comida|cocina|tapas|pizza/.test(s)) return 'restaurant';
+  if (/pelucas|peluqu|barbería|barber|salón de bell|salon|belleza|estética|estetica/.test(s)) return 'peluqueria';
+  if (/tienda|comercio|shop|boutique|moda|ropa|calzado|librería|farmac/.test(s)) return 'tienda';
+  return 'default';
+}
+
+const SOURCE_TYPE_ICONS: Record<CitationSource['type'], React.ReactNode> = {
+  blog: <BookOpen size={11} />,
+  directory: <Globe size={11} />,
+  ranking: <Award size={11} />,
+  news: <Newspaper size={11} />,
+};
+
+const SOURCE_TYPE_COLORS: Record<CitationSource['type'], string> = {
+  blog:      'text-sky-400 bg-sky-400/10 border-sky-400/25',
+  directory: 'text-violet-400 bg-violet-400/10 border-violet-400/25',
+  ranking:   'text-amber-400 bg-amber-400/10 border-amber-400/25',
+  news:      'text-pink-400 bg-pink-400/10 border-pink-400/25',
+};
+
+function authorityBarColor(score: number) {
+  if (score >= 85) return 'from-emerald-500 to-teal-400';
+  if (score >= 70) return 'from-blue-500 to-cyan-400';
+  if (score >= 50) return 'from-amber-500 to-yellow-400';
+  return 'from-red-500 to-orange-400';
+}
+
+function authorityLabel(score: number) {
+  if (score >= 85) return { text: 'Muy Alta', color: 'text-emerald-400' };
+  if (score >= 70) return { text: 'Alta', color: 'text-blue-400' };
+  if (score >= 50) return { text: 'Media', color: 'text-amber-400' };
+  return { text: 'Baja', color: 'text-red-400' };
+}
+
+const PITCH_TEMPLATES: Record<CitationSource['type'], (src: CitationSource, businessName: string, sector: string, city: string) => string> = {
+  ranking: (src, biz, sector, city) =>
+    `Asunto: Candidatura para "${src.name}" — ${biz}\n\nHola equipo de ${src.domain},\n\nSomos ${biz}, un negocio de ${sector} en ${city} con más de [X] años de experiencia y más de [Y] reseñas verificadas con una valoración media de [Z]/5.\n\nHemos visto que ${src.name} es una referencia muy consultada en la zona y nos gustaría proponernos como candidatos para aparecer en vuestra próxima edición o actualización.\n\nPodemos ofreceros:\n• Acceso exclusivo para una visita o prueba del servicio\n• Fotos en alta resolución de nuestras instalaciones\n• Testimonios reales de clientes satisfechos\n\n¿Cuál es el proceso para que nos incluyáis en ${src.name}?\n\nQuedamos a vuestra disposición.\n\nUn saludo,\n${biz}`,
+
+  blog: (src, biz, sector, city) =>
+    `Asunto: Colaboración editorial — ${biz} para tu artículo sobre ${sector} en ${city}\n\nHola,\n\nSoy [tu nombre] de ${biz}, un negocio especializado en ${sector} ubicado en ${city}.\n\nHe leído con interés varios artículos de ${src.domain} y creo que podríamos ser una aportación de valor para tu audiencia.\n\nTe propongo:\n• Una entrevista o caso práctico sobre nuestra especialidad\n• Datos exclusivos de nuestro sector en ${city}\n• Un descuento especial para tus lectores\n\nA cambio, solo pedimos una mención o enlace en tu próximo artículo relacionado con ${sector} en ${city}.\n\n¿Te interesa explorar esta colaboración?\n\nUn saludo,\n${biz}`,
+
+  directory: (src, biz, sector, city) =>
+    `Asunto: Alta de negocio — ${biz} en ${src.domain}\n\nHola equipo de ${src.domain},\n\nMe pongo en contacto para solicitar el alta de nuestro negocio en vuestro directorio.\n\nDatos del negocio:\n• Nombre: ${biz}\n• Sector: ${sector}\n• Ubicación: ${city}\n• Descripción: [descripción de tu negocio en 2-3 frases]\n• Web: [tu web]\n• Teléfono: [tu teléfono]\n• Horario: [horario de apertura]\n\nSomos un negocio consolidado con excelentes valoraciones en Google y estaríamos encantados de aparecer en ${src.domain} para llegar a más clientes potenciales.\n\nAdjunto logo en alta resolución y fotografías si las necesitáis.\n\n¿Cuáles son los siguientes pasos?\n\nGracias,\n${biz}`,
+
+  news: (src, biz, sector, city) =>
+    `Asunto: Nota de prensa — ${biz}, referente en ${sector} en ${city}\n\nEstimada redacción de ${src.domain},\n\nOs enviamos esta nota de prensa sobre ${biz}, un negocio de ${sector} en ${city} que [logro reciente o novedad destacable].\n\n[Párrafo 1: qué es tu negocio, cuándo abrió, qué os diferencia]\n\n[Párrafo 2: la novedad que justifica la noticia — nueva apertura, premio, récord de clientes, servicio innovador]\n\n[Párrafo 3: cita del responsable del negocio sobre el hito]\n\nSi os interesa desarrollar este artículo, podemos facilitar imágenes exclusivas, acceso a instalaciones y entrevista con el equipo.\n\nContacto para medios:\n• Nombre: [tu nombre]\n• Email: [tu email]\n• Tel: [tu teléfono]\n\nGracias por su atención,\n${biz}`,
+};
+
+function CitationConquestPanel({ sector, city, businessName }: { sector: string; city: string; businessName: string }) {
+  const key = getSectorKey(sector);
+  const sources = SECTOR_SOURCES[key];
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [pitches, setPitches] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState<Record<string, boolean>>({});
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => { setTimeout(() => setAnimate(true), 80); }, []);
+
+  const generatePitch = async (src: CitationSource) => {
+    if (pitches[src.id]) { setExpanded(e => ({ ...e, [src.id]: !e[src.id] })); return; }
+    setLoading(l => ({ ...l, [src.id]: true }));
+    await new Promise(r => setTimeout(r, 1600));
+    const biz = businessName || 'Tu negocio';
+    const s = sector || 'negocio local';
+    const c = city || 'tu ciudad';
+    const pitch = PITCH_TEMPLATES[src.type](src, biz, s, c);
+    setPitches(p => ({ ...p, [src.id]: pitch }));
+    setExpanded(e => ({ ...e, [src.id]: true }));
+    setLoading(l => ({ ...l, [src.id]: false }));
+  };
+
+  const copyPitch = (id: string, text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(c => ({ ...c, [id]: true }));
+      setTimeout(() => setCopied(c => ({ ...c, [id]: false })), 2200);
+    });
+  };
+
+  return (
+    <div className={`space-y-4 transition-all duration-500 ${animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
+
+      {/* Section header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-xl bg-amber-500/12 border border-amber-500/25 flex items-center justify-center shrink-0">
+              <Target size={14} className="text-amber-400" />
+            </div>
+            <h2 className="text-base font-bold text-white">
+              AI Citation Conquest
+              <span className="ml-2 text-amber-400">Fuentes Clave de la IA</span>
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 pl-9 leading-snug">
+            Portales de referencia que ChatGPT, Perplexity y Gemini citan para recomendar negocios de tu sector.
+            Infiltrarte en ellos impulsa tus apariciones en respuestas de IA.
+          </p>
+        </div>
+        <span className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-500/25 bg-amber-500/8 text-[10px] font-bold text-amber-400 uppercase tracking-widest whitespace-nowrap">
+          <Zap size={9} />
+          {sources.length} fuentes
+        </span>
+      </div>
+
+      {/* Sources list */}
+      <div className="rounded-2xl border border-slate-800/60 bg-slate-900/60 overflow-hidden"
+        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-800/60 bg-slate-900/40">
+          <Globe size={12} className="text-slate-500" />
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex-1">
+            Portales de Referencia Citados por la IA
+          </span>
+          <span className="text-[10px] text-slate-600">Sector: {sector || 'negocio local'} · {city || 'tu ciudad'}</span>
+        </div>
+
+        <div className="divide-y divide-slate-800/50">
+          {sources.map((src, i) => {
+            const label = authorityLabel(src.authorityScore);
+            const barColor = authorityBarColor(src.authorityScore);
+            const isLoading = loading[src.id];
+            const isExpanded = expanded[src.id];
+            const pitch = pitches[src.id];
+            const isCopied = copied[src.id];
+
+            return (
+              <div
+                key={src.id}
+                className={`transition-all duration-500 delay-${i * 75}
+                  ${animate ? 'opacity-100' : 'opacity-0'}`}
+              >
+                {/* Source row */}
+                <div className="px-5 py-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    {/* Icon */}
+                    <div className="w-8 h-8 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400 shrink-0 mt-0.5">
+                      {SOURCE_TYPE_ICONS[src.type]}
+                    </div>
+
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-white leading-snug">{src.name}</span>
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${SOURCE_TYPE_COLORS[src.type]}`}>
+                          {SOURCE_TYPE_ICONS[src.type]}
+                          {src.tag}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-600">
+                        <ExternalLink size={9} />
+                        <span className="font-mono">{src.domain}</span>
+                        <span>·</span>
+                        <span>{src.monthlyVisitors}/mes</span>
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">{src.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Authority bar */}
+                  <div className="space-y-1.5 pl-11">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-600 font-medium flex items-center gap-1">
+                        <Activity size={9} />
+                        Fuerza de Autoridad en IA
+                      </span>
+                      <span className={`font-bold ${label.color}`}>{label.text} · {src.authorityScore}/100</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r ${barColor} transition-all duration-1000 ease-out`}
+                        style={{ width: animate ? `${src.authorityScore}%` : '0%', transitionDelay: `${i * 120 + 300}ms` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action button */}
+                  <div className="pl-11">
+                    <button
+                      onClick={() => generatePitch(src)}
+                      disabled={isLoading}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 border
+                        ${pitch && isExpanded
+                          ? 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-300'
+                          : 'bg-amber-500/10 border-amber-500/25 text-amber-400 hover:bg-amber-500/18 hover:border-amber-500/40'
+                        }
+                        disabled:opacity-60 disabled:cursor-not-allowed`}
+                    >
+                      {isLoading ? (
+                        <><RefreshCw size={11} className="animate-spin" />Generando pitch...</>
+                      ) : pitch && isExpanded ? (
+                        <><ChevronDown size={11} />Ocultar pitch</>
+                      ) : pitch ? (
+                        <><Send size={11} />Ver pitch generado</>
+                      ) : (
+                        <><Send size={11} />Generar Pitch de Infiltración</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Pitch panel */}
+                {pitch && isExpanded && (
+                  <div className="mx-5 mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-amber-500/15 bg-amber-500/8">
+                      <Send size={10} className="text-amber-400" />
+                      <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest flex-1">
+                        Pitch de Infiltración — Listo para enviar
+                      </span>
+                      <button
+                        onClick={() => copyPitch(src.id, pitch)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border
+                          ${isCopied
+                            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                            : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200'
+                          }`}
+                      >
+                        {isCopied ? <Check size={9} /> : <Copy size={9} />}
+                        {isCopied ? 'Copiado' : 'Copiar'}
+                      </button>
+                    </div>
+                    <pre className="px-4 py-3.5 text-[11px] text-slate-300 leading-relaxed whitespace-pre-wrap font-sans">
+                      {pitch}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function GeoAuditPanel({ product, city }: { product: string; city: string }) {
   const { t } = useI18n();
   const [businessInput, setBusinessInput] = useState(product || '');
@@ -1258,6 +1540,15 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
             )}
           </div>
         </div>
+      )}
+
+      {/* AI Citation Conquest */}
+      {result && !loading && (
+        <CitationConquestPanel
+          sector={sectorInput || product || 'negocio local'}
+          city={cityInput || city || 'tu ciudad'}
+          businessName={businessInput}
+        />
       )}
 
       {/* Empty state */}
