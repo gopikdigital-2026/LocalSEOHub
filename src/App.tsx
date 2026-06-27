@@ -3199,7 +3199,7 @@ function Dashboard({
 }) {
   const { session } = useAuth();
   const { t } = useI18n();
-  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit' | 'ai-advisor'>('generator');
+  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit' | 'ai-advisor'>('ai-advisor');
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
@@ -4626,7 +4626,7 @@ function TrialBanner({ daysLeft, onDismiss }: { daysLeft: number; onDismiss: () 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 // Set to true while building to skip auth and preview the dashboard directly
-const DEV_PREVIEW = false;
+const DEV_PREVIEW = true;
 
 export default function App() {
   const { user, session, loading, signOut } = useAuth();
