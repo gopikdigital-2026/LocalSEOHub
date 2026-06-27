@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
   BarChart2,
@@ -14,6 +14,10 @@ import {
   Package,
   DollarSign,
   Sparkles,
+  PlayCircle,
+  CheckCircle2,
+  ClipboardCopy,
+  Check,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -44,6 +48,28 @@ const CHALLENGE_OPTIONS = [
   'Fidelizar y hacer que vuelvan (Retención)',
   'Optimizar el inventario o servicios',
 ];
+
+// Simulated promotional content per tip index
+const SIMULATED_OUTPUTS: Record<number, { headline: string; copy: string; cta: string; hashtags: string[] }> = {
+  0: {
+    headline: '¿Buscas [servicio] en tu ciudad? ¡Somos los mejor valorados!',
+    copy: 'Más de [X] clientes confían en nosotros cada mes. Visita nuestro perfil en Google Maps, mira las fotos reales de nuestro trabajo y reserva ahora con un solo clic. Respondemos en menos de 2 horas.',
+    cta: 'Ver opiniones y reservar →',
+    hashtags: ['#negociolocal', '#googlereviews', '#reservaahora', '#elmejorprecio'],
+  },
+  1: {
+    headline: '¡Vuelve y ahorra! Tu próxima visita tiene premio.',
+    copy: 'Cada vez que nos visitas, acumulas sellos en tu tarjeta digital. A la 6ª visita, disfruta de tu premio. Sin papel, sin complicaciones — solo abre el enlace y muestra tu tarjeta.',
+    cta: 'Activar mi tarjeta de fidelización →',
+    hashtags: ['#fidelización', '#clientevip', '#premiosporcomprar', '#tarjetadigital'],
+  },
+  2: {
+    headline: 'Pack Exclusivo: tu favorito + el complemento perfecto.',
+    copy: 'Hemos creado un bundle especial con nuestro producto estrella y dos complementos que lo hacen aún mejor. Disponible solo esta semana en edición limitada. No te quedes sin el tuyo.',
+    cta: 'Ver el pack exclusivo →',
+    hashtags: ['#edicionlimitada', '#packexclusivo', '#ofertespecial', '#ticketmedio'],
+  },
+};
 
 const PREVIEW_RESULT: AuditResult = {
   dafo: {
@@ -149,8 +175,10 @@ function DafoQuadrant({ type, items, visible }: { type: keyof typeof DAFO_CONFIG
         transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
     >
       <div className={`flex items-center gap-2 px-3.5 py-2 ${cfg.headerBg} ${cfg.headerBorder}`}>
-        <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${cfg.text} bg-current/10 border border-current/20`}
-          style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <span
+          className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black ${cfg.text} border border-current/20`}
+          style={{ background: 'rgba(255,255,255,0.04)' }}
+        >
           <span className={cfg.text}>{cfg.letter}</span>
         </span>
         <span className={`${cfg.text} font-bold text-xs uppercase tracking-wider`}>{cfg.label}</span>
@@ -158,11 +186,7 @@ function DafoQuadrant({ type, items, visible }: { type: keyof typeof DAFO_CONFIG
       </div>
       <ul className="p-3.5 space-y-2 flex-1">
         {items.map((item, i) => (
-          <li
-            key={i}
-            className="flex items-start gap-2 text-xs text-slate-300 leading-relaxed"
-            style={{ transitionDelay: `${i * 80}ms` }}
-          >
+          <li key={i} className="flex items-start gap-2 text-xs text-slate-300 leading-relaxed">
             <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} mt-[5px] shrink-0`} />
             {item}
           </li>
@@ -196,6 +220,178 @@ function RoiBar({ pct, visible }: { pct: number; visible: boolean }) {
   );
 }
 
+// ─── Agent Execution Panel ────────────────────────────────────────────────────
+
+type AgentState = 'idle' | 'loading' | 'done';
+
+const LOADING_STEPS = [
+  'El agente de IA está preparando tu contenido promocional...',
+  'Analizando el contexto del consejo y el sector...',
+  'Redactando copy persuasivo y llamadas a la acción...',
+  'Ajustando el tono para tu audiencia local...',
+];
+
+function CopyBtn({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      onClick={copy}
+      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-700/60 transition-all"
+    >
+      {copied ? <Check size={11} className="text-emerald-400" /> : <ClipboardCopy size={11} />}
+    </button>
+  );
+}
+
+function AgentPanel({ index, visible }: { index: number; visible: boolean }) {
+  const [state, setState] = useState<AgentState>('idle');
+  const [stepIdx, setStepIdx] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const output = SIMULATED_OUTPUTS[index] ?? SIMULATED_OUTPUTS[0];
+
+  const run = () => {
+    if (state === 'loading') return;
+    setState('loading');
+    setRevealed(false);
+    setStepIdx(0);
+
+    let step = 0;
+    intervalRef.current = setInterval(() => {
+      step += 1;
+      if (step < LOADING_STEPS.length) {
+        setStepIdx(step);
+      } else {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setState('done');
+        setTimeout(() => setRevealed(true), 120);
+      }
+    }, 900);
+  };
+
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
+
+  const isDone = state === 'done';
+
+  return (
+    <div className={`transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+      {/* Trigger button */}
+      {state === 'idle' && (
+        <button
+          onClick={run}
+          className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
+            border border-slate-700/60 bg-slate-800/50 hover:bg-slate-800 hover:border-emerald-500/40
+            text-slate-400 hover:text-emerald-300 text-xs font-semibold
+            transition-all duration-200 group"
+        >
+          <PlayCircle size={13} className="group-hover:scale-110 transition-transform text-emerald-400" />
+          Ejecutar Consejo con IA
+        </button>
+      )}
+
+      {/* Loading state */}
+      {state === 'loading' && (
+        <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="relative w-7 h-7 shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+                <Zap size={12} className="text-emerald-400" />
+              </div>
+              <div className="absolute -inset-1 rounded-full border border-emerald-400/30 border-t-emerald-400 animate-spin" />
+            </div>
+            <p className="text-xs text-emerald-300 font-medium transition-all duration-500 leading-snug">
+              {LOADING_STEPS[stepIdx]}
+            </p>
+          </div>
+          {/* Progress dots */}
+          <div className="flex gap-1 pl-10">
+            {LOADING_STEPS.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1 rounded-full transition-all duration-500 ${
+                  i <= stepIdx ? 'bg-emerald-400' : 'bg-slate-700'
+                } ${i === stepIdx ? 'w-5' : 'w-1.5'}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Result */}
+      {isDone && (
+        <div
+          className={`mt-3 rounded-xl border border-slate-700/60 bg-slate-900/80 overflow-hidden
+            transition-all duration-500 ${revealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
+        >
+          {/* Header */}
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/8 border-b border-slate-700/50">
+            <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
+            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">Contenido generado</span>
+            <button
+              onClick={() => { setState('idle'); setRevealed(false); }}
+              className="ml-auto text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
+            >
+              Regenerar
+            </button>
+          </div>
+
+          <div className="p-4 space-y-3.5">
+            {/* Headline */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Titular</span>
+                <CopyBtn text={output.headline} />
+              </div>
+              <p className="text-sm font-semibold text-white leading-snug">{output.headline}</p>
+            </div>
+
+            {/* Copy */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Copy promocional</span>
+                <CopyBtn text={output.copy} />
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">{output.copy}</p>
+            </div>
+
+            {/* CTA */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">CTA</span>
+                <CopyBtn text={output.cta} />
+              </div>
+              <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-bold rounded-lg px-3 py-1.5">
+                {output.cta}
+              </div>
+            </div>
+
+            {/* Hashtags */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Hashtags</span>
+              <div className="flex flex-wrap gap-1.5">
+                {output.hashtags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-[11px] font-mono font-medium bg-slate-800 border border-slate-700/60 text-slate-400 rounded-lg px-2 py-0.5"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Tip Card ─────────────────────────────────────────────────────────────────
 
 function TipCard({ tip, index, visible }: { tip: Tip; index: number; visible: boolean }) {
@@ -222,7 +418,11 @@ function TipCard({ tip, index, visible }: { tip: Tip; index: number; visible: bo
           <p className="text-xs text-slate-400 leading-relaxed">{tip.description}</p>
         </div>
       </div>
+
       <RoiBar pct={tip.impact_roi_percentage} visible={visible} />
+
+      {/* Agent execution panel */}
+      <AgentPanel index={index} visible={visible} />
     </div>
   );
 }
@@ -237,10 +437,10 @@ function AuditSpinner() {
   ];
   const [step, setStep] = useState(0);
 
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => setStep((s) => (s + 1) % steps.length), 1800);
     return () => clearInterval(interval);
-  });
+  }, []);
 
   return (
     <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 min-h-[420px] flex flex-col items-center justify-center gap-6 p-10">
@@ -468,7 +668,6 @@ export default function AIBusinessAdvisor({
             <p className="text-center text-xs text-slate-600">Análisis generado en 5-10 segundos con GPT-4o mini</p>
           )}
 
-          {/* Selected challenge badge */}
           {(result || loading) && (
             <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-800/50 rounded-xl px-3.5 py-2.5 border border-slate-700/50">
               <AlertCircle size={11} className="text-amber-400 shrink-0" />
