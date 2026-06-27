@@ -67,6 +67,40 @@ const CHALLENGE_OPTIONS = [
   'Optimizar el inventario o servicios',
 ];
 
+const PREVIEW_FORM = {
+  businessType: 'Peluquería',
+  avgTicket: '35',
+  starProduct: 'Corte + color',
+  mainChallenge: CHALLENGE_OPTIONS[0],
+};
+
+const PREVIEW_TIP_CONTENTS: TipContent[] = [
+  {
+    email: {
+      subject: '¡Mira cómo aparecer primero en Google Maps esta semana!',
+      body: `Hola,\n\nTe escribimos con una novedad que puede cambiar la visibilidad de tu peluquería en Google Maps.\n\nLos negocios que publican fotos y responden reseñas cada semana reciben hasta 7× más clics que los que no lo hacen. Y lo mejor: es completamente gratuito.\n\nEsta semana hemos puesto en marcha una estrategia sencilla que puedes copiar en 15 minutos.\n\n👉 Reserva ahora y cuéntanos tu experiencia →\n\nGracias por confiar en nosotros.\n\nUn abrazo,\nEl equipo`,
+    },
+    caption: `✨ ¿Sabes que tu peluquería puede aparecer primero en Google sin pagar publicidad?\n\nActualiza tu ficha de Google Business con fotos reales, responde cada opinión y publica una oferta semanal.\n\n📍 Encuéntranos en Google Maps\n📞 Reserva ahora — agenda en 1 clic\n\n#peluqueria #googlelocal #cortedepelo #belleza #hairstyle`,
+    sms: `[NOMBRE], ¡te esperamos! Esta semana tenemos hueco para tu corte + color favorito. Reserva ahora: enlace.com/reserva`,
+  },
+  {
+    email: {
+      subject: 'Tu 6ª visita tiene premio — estrena tu tarjeta VIP',
+      body: `Hola,\n\nComo cliente especial, quiero que seas el primero en estrenar nuestra nueva tarjeta de fidelización digital.\n\nCada visita sumas un sello. A la 6ª, tu próximo corte + color a mitad de precio — sin papel, sin caducidad.\n\nActívala en menos de 30 segundos con este enlace y empieza a sumar desde hoy.\n\n👉 Activar mi tarjeta VIP →\n\nHasta pronto,\nEl equipo`,
+    },
+    caption: `💳 ¡Ya tenemos tarjeta de fidelización digital!\n\nCada visita = 1 sello. A la 6ª visita, tu corte a mitad de precio.\n\nSin papel. Sin aplicación. Solo muestra el enlace.\n\n¿Ya eres cliente VIP? 👇 Actívala gratis en el enlace de nuestra bio.\n\n#fidelizacion #clientevip #peluqueriavip #oferta #premiosporcomprar`,
+    sms: `[NOMBRE], activa tu tarjeta VIP y tu 6ª visita es a mitad de precio. Actívala gratis: enlace.com/vip`,
+  },
+  {
+    email: {
+      subject: 'Pack Corte + Color Exclusivo — solo esta semana',
+      body: `Hola,\n\nEsta semana hemos preparado algo especial para ti.\n\nNuestro pack estrella Corte + Color Premium incluye ahora tratamiento de brillo + mascarilla nutritiva — por solo 15€ más que el precio habitual.\n\nEdición limitada. Solo 10 plazas disponibles esta semana.\n\n👉 Reserva tu plaza ahora →\n\nNo lo dejes para mañana.\n\nEl equipo`,
+    },
+    caption: `🌟 Pack Premium Corte + Color — Edición Limitada\n\nEsta semana puedes añadir tratamiento de brillo + mascarilla nutritiva a tu servicio favorito por solo 15€ más.\n\n⚡ Solo 10 plazas — se acaban rápido\n📅 Disponible hasta el domingo\n\n👇 Reserva en el enlace de la bio\n\n#packexclusivo #corteycolor #peluqueria #ofertasemana #edicionlimitada`,
+    sms: `[NOMBRE], pack Corte+Color Premium esta semana con mascarilla gratis. Solo 10 plazas. Reserva: enlace.com/pack`,
+  },
+];
+
 const PREVIEW_RESULT: AuditResult = {
   dafo: {
     f: [
@@ -259,10 +293,14 @@ function AgentPanel({
   visible,
   tip,
   ctx,
+  previewMode,
+  previewIndex,
 }: {
   visible: boolean;
   tip: Tip;
   ctx: BusinessContext;
+  previewMode?: boolean;
+  previewIndex?: number;
 }) {
   const [state, setState] = useState<AgentState>('idle');
   const [stepIdx, setStepIdx] = useState(0);
@@ -288,6 +326,15 @@ function AgentPanel({
     }, 1100);
 
     try {
+      if (previewMode) {
+        await new Promise((r) => setTimeout(r, 3600));
+        const idx = previewIndex ?? 0;
+        setContent(PREVIEW_TIP_CONTENTS[idx] ?? PREVIEW_TIP_CONTENTS[0]);
+        setState('done');
+        setTimeout(() => setRevealed(true), 100);
+        return;
+      }
+
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-tip-content`,
         {
@@ -499,7 +546,7 @@ function AgentPanel({
 
 // ─── Tip Card ─────────────────────────────────────────────────────────────────
 
-function TipCard({ tip, index, visible, ctx }: { tip: Tip; index: number; visible: boolean; ctx: BusinessContext }) {
+function TipCard({ tip, index, visible, ctx, previewMode }: { tip: Tip; index: number; visible: boolean; ctx: BusinessContext; previewMode?: boolean }) {
   const icons = [<Zap size={15} />, <Users size={15} />, <DollarSign size={15} />];
   const delays = ['delay-100', 'delay-200', 'delay-300'];
   return (
@@ -525,7 +572,7 @@ function TipCard({ tip, index, visible, ctx }: { tip: Tip; index: number; visibl
       </div>
 
       <RoiBar pct={tip.impact_roi_percentage} visible={visible} />
-      <AgentPanel visible={visible} tip={tip} ctx={ctx} />
+      <AgentPanel visible={visible} tip={tip} ctx={ctx} previewMode={previewMode} previewIndex={index} />
     </div>
   );
 }
@@ -580,14 +627,21 @@ export default function AIBusinessAdvisor({
   session: Session;
   previewMode?: boolean;
 }) {
-  const [businessType, setBusinessType] = useState('');
-  const [avgTicket, setAvgTicket] = useState('');
-  const [starProduct, setStarProduct] = useState('');
-  const [mainChallenge, setMainChallenge] = useState(CHALLENGE_OPTIONS[0]);
+  const [businessType, setBusinessType] = useState(() => previewMode ? PREVIEW_FORM.businessType : '');
+  const [avgTicket, setAvgTicket] = useState(() => previewMode ? PREVIEW_FORM.avgTicket : '');
+  const [starProduct, setStarProduct] = useState(() => previewMode ? PREVIEW_FORM.starProduct : '');
+  const [mainChallenge, setMainChallenge] = useState(() => previewMode ? PREVIEW_FORM.mainChallenge : CHALLENGE_OPTIONS[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<AuditResult | null>(null);
   const [resultsVisible, setResultsVisible] = useState(false);
+
+  // Auto-generate in dev preview so buttons are immediately visible
+  useEffect(() => {
+    if (!previewMode) return;
+    setResult(PREVIEW_RESULT);
+    setTimeout(() => setResultsVisible(true), 300);
+  }, [previewMode]);
 
   const canGenerate = businessType.trim().length > 0;
 
@@ -833,7 +887,7 @@ export default function AIBusinessAdvisor({
                   </h3>
                 </div>
                 {result.tips.map((tip, i) => (
-                  <TipCard key={i} tip={tip} index={i} visible={resultsVisible} ctx={ctx} />
+                  <TipCard key={i} tip={tip} index={i} visible={resultsVisible} ctx={ctx} previewMode={previewMode} />
                 ))}
               </div>
             </>
