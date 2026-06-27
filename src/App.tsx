@@ -4334,7 +4334,7 @@ function TrialBanner({ daysLeft, onDismiss }: { daysLeft: number; onDismiss: () 
 // v2.6
 
 // Set to true while building to skip auth and preview the dashboard directly
-const DEV_PREVIEW = true;
+const DEV_PREVIEW = false;
 
 
 export default function App() {
@@ -4475,15 +4475,16 @@ export default function App() {
           onPricingClick={handlePricingClick}
           onSignOut={signOut}
         />
-        {/* Landing oculta temporalmente */}
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <button
-            onClick={() => setShowLogin(true)}
-            className="px-8 py-4 rounded-full text-base font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-xl shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-200"
-          >
-            Ver Dashboard
-          </button>
-        </div>
+        <LandingPage
+          onLoginClick={() => { setLoginInitialMode('signup'); setShowLogin(true); }}
+          onSubscribeClick={() => {
+            try { sessionStorage.setItem('postAuthAction', 'checkout'); } catch { /* sandboxed */ }
+            setPendingCheckout(true);
+            setLoginInitialMode('signup');
+            setShowLogin(true);
+          }}
+          scrollToPricing={showPricing}
+        />
         {showLogin && <LoginModal onClose={() => setShowLogin(false)} initialMode={loginInitialMode} />}
       </div>
     );
