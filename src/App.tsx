@@ -1106,26 +1106,62 @@ function authorityLabel(score: number) {
   return { text: 'Baja', color: 'text-red-400' };
 }
 
-const PITCH_TEMPLATES: Record<CitationSource['type'], (src: CitationSource, businessName: string, sector: string, city: string) => string> = {
-  ranking: (src, biz, sector, city) =>
-    `Asunto: Candidatura para "${src.name}" — ${biz}\n\nHola equipo de ${src.domain},\n\nSomos ${biz}, un negocio de ${sector} en ${city} con más de [X] años de experiencia y más de [Y] reseñas verificadas con una valoración media de [Z]/5.\n\nHemos visto que ${src.name} es una referencia muy consultada en la zona y nos gustaría proponernos como candidatos para aparecer en vuestra próxima edición o actualización.\n\nPodemos ofreceros:\n• Acceso exclusivo para una visita o prueba del servicio\n• Fotos en alta resolución de nuestras instalaciones\n• Testimonios reales de clientes satisfechos\n\n¿Cuál es el proceso para que nos incluyáis en ${src.name}?\n\nQuedamos a vuestra disposición.\n\nUn saludo,\n${biz}`,
+// ─── Lightweight Markdown renderer (bold, blockquotes, paragraphs) ───────────
 
-  blog: (src, biz, sector, city) =>
-    `Asunto: Colaboración editorial — ${biz} para tu artículo sobre ${sector} en ${city}\n\nHola,\n\nSoy [tu nombre] de ${biz}, un negocio especializado en ${sector} ubicado en ${city}.\n\nHe leído con interés varios artículos de ${src.domain} y creo que podríamos ser una aportación de valor para tu audiencia.\n\nTe propongo:\n• Una entrevista o caso práctico sobre nuestra especialidad\n• Datos exclusivos de nuestro sector en ${city}\n• Un descuento especial para tus lectores\n\nA cambio, solo pedimos una mención o enlace en tu próximo artículo relacionado con ${sector} en ${city}.\n\n¿Te interesa explorar esta colaboración?\n\nUn saludo,\n${biz}`,
+function MarkdownPitch({ text }: { text: string }) {
+  const renderInline = (line: string, key: number) => {
+    const parts: React.ReactNode[] = [];
+    const regex = /\*\*(.+?)\*\*/g;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(line)) !== null) {
+      if (m.index > last) parts.push(line.slice(last, m.index));
+      parts.push(<strong key={`b${key}-${m.index}`} className="text-white font-semibold">{m[1]}</strong>);
+      last = m.index + m[0].length;
+    }
+    if (last < line.length) parts.push(line.slice(last));
+    return parts;
+  };
 
-  directory: (src, biz, sector, city) =>
-    `Asunto: Alta de negocio — ${biz} en ${src.domain}\n\nHola equipo de ${src.domain},\n\nMe pongo en contacto para solicitar el alta de nuestro negocio en vuestro directorio.\n\nDatos del negocio:\n• Nombre: ${biz}\n• Sector: ${sector}\n• Ubicación: ${city}\n• Descripción: [descripción de tu negocio en 2-3 frases]\n• Web: [tu web]\n• Teléfono: [tu teléfono]\n• Horario: [horario de apertura]\n\nSomos un negocio consolidado con excelentes valoraciones en Google y estaríamos encantados de aparecer en ${src.domain} para llegar a más clientes potenciales.\n\nAdjunto logo en alta resolución y fotografías si las necesitáis.\n\n¿Cuáles son los siguientes pasos?\n\nGracias,\n${biz}`,
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let i = 0;
 
-  news: (src, biz, sector, city) =>
-    `Asunto: Nota de prensa — ${biz}, referente en ${sector} en ${city}\n\nEstimada redacción de ${src.domain},\n\nOs enviamos esta nota de prensa sobre ${biz}, un negocio de ${sector} en ${city} que [logro reciente o novedad destacable].\n\n[Párrafo 1: qué es tu negocio, cuándo abrió, qué os diferencia]\n\n[Párrafo 2: la novedad que justifica la noticia — nueva apertura, premio, récord de clientes, servicio innovador]\n\n[Párrafo 3: cita del responsable del negocio sobre el hito]\n\nSi os interesa desarrollar este artículo, podemos facilitar imágenes exclusivas, acceso a instalaciones y entrevista con el equipo.\n\nContacto para medios:\n• Nombre: [tu nombre]\n• Email: [tu email]\n• Tel: [tu teléfono]\n\nGracias por su atención,\n${biz}`,
-};
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.startsWith('> ')) {
+      elements.push(
+        <blockquote key={i} className="border-l-2 border-amber-500/40 pl-3 text-slate-400 italic">
+          {renderInline(line.slice(2), i)}
+        </blockquote>
+      );
+    } else if (line.trim() === '') {
+      elements.push(<div key={i} className="h-2" />);
+    } else {
+      elements.push(
+        <p key={i} className="text-xs text-slate-300 leading-relaxed">
+          {renderInline(line, i)}
+        </p>
+      );
+    }
+    i++;
+  }
 
-function CitationConquestPanel({ sector, city, businessName }: { sector: string; city: string; businessName: string }) {
+  return <div className="space-y-1">{elements}</div>;
+}
+
+function CitationConquestPanel({ sector, city, businessName, starProduct }: {
+  sector: string;
+  city: string;
+  businessName: string;
+  starProduct?: string;
+}) {
   const key = getSectorKey(sector);
   const sources = SECTOR_SOURCES[key];
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [pitches, setPitches] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState<Record<string, boolean>>({});
   const [animate, setAnimate] = useState(false);
 
@@ -1134,18 +1170,35 @@ function CitationConquestPanel({ sector, city, businessName }: { sector: string;
   const generatePitch = async (src: CitationSource) => {
     if (pitches[src.id]) { setExpanded(e => ({ ...e, [src.id]: !e[src.id] })); return; }
     setLoading(l => ({ ...l, [src.id]: true }));
-    await new Promise(r => setTimeout(r, 1600));
-    const biz = businessName || 'Tu negocio';
-    const s = sector || 'negocio local';
-    const c = city || 'tu ciudad';
-    const pitch = PITCH_TEMPLATES[src.type](src, biz, s, c);
-    setPitches(p => ({ ...p, [src.id]: pitch }));
-    setExpanded(e => ({ ...e, [src.id]: true }));
-    setLoading(l => ({ ...l, [src.id]: false }));
+    setErrors(e => ({ ...e, [src.id]: '' }));
+    try {
+      const res = await supabase.functions.invoke('generate-pitch', {
+        body: {
+          portalName: src.name,
+          portalDomain: src.domain,
+          portalType: src.type,
+          businessName: businessName || 'Mi negocio',
+          sector: sector || 'negocio local',
+          city: city || 'tu ciudad',
+          starProduct: starProduct || '',
+        },
+      });
+      if (res.error) throw new Error(res.error.message);
+      const pitch: string = res.data?.pitch ?? '';
+      if (!pitch) throw new Error('Respuesta vacía de la IA');
+      setPitches(p => ({ ...p, [src.id]: pitch }));
+      setExpanded(e => ({ ...e, [src.id]: true }));
+    } catch (err) {
+      setErrors(e => ({ ...e, [src.id]: err instanceof Error ? err.message : 'Error desconocido' }));
+    } finally {
+      setLoading(l => ({ ...l, [src.id]: false }));
+    }
   };
 
   const copyPitch = (id: string, text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
+    // Strip markdown syntax for plain-text clipboard
+    const plain = text.replace(/\*\*/g, '').replace(/^> /gm, '');
+    navigator.clipboard.writeText(plain).then(() => {
       setCopied(c => ({ ...c, [id]: true }));
       setTimeout(() => setCopied(c => ({ ...c, [id]: false })), 2200);
     });
@@ -1197,6 +1250,7 @@ function CitationConquestPanel({ sector, city, businessName }: { sector: string;
             const isExpanded = expanded[src.id];
             const pitch = pitches[src.id];
             const isCopied = copied[src.id];
+            const pitchError = errors[src.id];
 
             return (
               <div
@@ -1248,7 +1302,7 @@ function CitationConquestPanel({ sector, city, businessName }: { sector: string;
                   </div>
 
                   {/* Action button */}
-                  <div className="pl-11">
+                  <div className="pl-11 space-y-2">
                     <button
                       onClick={() => generatePitch(src)}
                       disabled={isLoading}
@@ -1260,7 +1314,7 @@ function CitationConquestPanel({ sector, city, businessName }: { sector: string;
                         disabled:opacity-60 disabled:cursor-not-allowed`}
                     >
                       {isLoading ? (
-                        <><RefreshCw size={11} className="animate-spin" />Generando pitch...</>
+                        <><RefreshCw size={11} className="animate-spin" />Redactando con IA...</>
                       ) : pitch && isExpanded ? (
                         <><ChevronDown size={11} />Ocultar pitch</>
                       ) : pitch ? (
@@ -1269,6 +1323,11 @@ function CitationConquestPanel({ sector, city, businessName }: { sector: string;
                         <><Send size={11} />Generar Pitch de Infiltración</>
                       )}
                     </button>
+                    {pitchError && (
+                      <p className="flex items-center gap-1.5 text-[11px] text-red-400">
+                        <AlertCircle size={10} />{pitchError}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1278,7 +1337,7 @@ function CitationConquestPanel({ sector, city, businessName }: { sector: string;
                     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-amber-500/15 bg-amber-500/8">
                       <Send size={10} className="text-amber-400" />
                       <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest flex-1">
-                        Pitch de Infiltración — Listo para enviar
+                        Pitch de Infiltración — Generado por IA
                       </span>
                       <button
                         onClick={() => copyPitch(src.id, pitch)}
@@ -1289,12 +1348,12 @@ function CitationConquestPanel({ sector, city, businessName }: { sector: string;
                           }`}
                       >
                         {isCopied ? <Check size={9} /> : <Copy size={9} />}
-                        {isCopied ? 'Copiado' : 'Copiar'}
+                        {isCopied ? 'Copiado' : 'Copiar al portapapeles'}
                       </button>
                     </div>
-                    <pre className="px-4 py-3.5 text-[11px] text-slate-300 leading-relaxed whitespace-pre-wrap font-sans">
-                      {pitch}
-                    </pre>
+                    <div className="px-5 py-4">
+                      <MarkdownPitch text={pitch} />
+                    </div>
                   </div>
                 )}
               </div>
@@ -1548,6 +1607,7 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
           sector={sectorInput || product || 'negocio local'}
           city={cityInput || city || 'tu ciudad'}
           businessName={businessInput}
+          starProduct={descInput}
         />
       )}
 
