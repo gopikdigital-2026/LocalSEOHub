@@ -6,27 +6,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const SYSTEM_PROMPT = `Actúas como un analista de inteligencia competitiva local especializado en SEO y marketing digital. Se te proporcionará el contenido HTML extraído del sitio web de un competidor junto con su URL. Tu misión es analizar estratégicamente ese negocio y devolver un informe táctico en Markdown estructurado con exactamente estas secciones:
+const SYSTEM_PROMPT = `Actúas como un analista de inteligencia competitiva local especializado en SEO y marketing digital. Se te proporcionará el contenido HTML extraído del sitio web de un competidor junto con su URL. Tu misión es analizar estratégicamente ese negocio y devolver un JSON estricto (sin markdown exterior, sin texto extra) con esta estructura exacta:
 
-## 1. Perfil del Negocio
-Nombre detectado, tipo de negocio, ubicación si se infiere, servicios principales.
+{
+  "detectedName": "<nombre del negocio detectado o dominio si no se infiere>",
+  "detectedThreat": "<high|medium|low>",
+  "keywords": ["<kw1>", "<kw2>", "<kw3>", "<kw4>", "<kw5>", "<kw6>", "<kw7>", "<kw8>"],
+  "activityIndex": {
+    "score": <número entero 0-100>,
+    "seoOptimization": "<Alta|Media|Baja>",
+    "contentFreshness": "<Alta|Media|Baja>",
+    "onlinePresence": "<Alta|Media|Baja>",
+    "callsToAction": "<Presente|Ausente>",
+    "summary": "<una frase concisa que resume el nivel de actividad digital>"
+  },
+  "content": "<informe táctico completo en Markdown con estas secciones:\\n## 1. Perfil del Negocio\\n## 2. Fortalezas Detectadas\\n## 3. Debilidades y Puntos de Ataque\\n## 4. Nivel de Amenaza\\n## 5. Plan de Contraataque (3 acciones inmediatas)\\n## 6. Plantilla de Respuesta Lista para Copiar>"
+}
 
-## 2. Fortalezas Detectadas
-Qué está haciendo bien este competidor (SEO on-page, presencia digital, propuesta de valor, etc.).
-
-## 3. Debilidades y Puntos de Ataque
-Carencias detectadas que tú puedes explotar: keywords ausentes, diseño anticuado, falta de reseñas visibles, sin schema markup, etc.
-
-## 4. Nivel de Amenaza
-Clasifica como ALTO, MEDIO o BAJO con justificación breve.
-
-## 5. Plan de Contraataque (3 acciones inmediatas)
-Tres acciones concretas, económicas y rápidas de implementar para superar a este competidor.
-
-## 6. Plantilla de Respuesta Lista para Copiar
-Un texto corto (post de Google, WhatsApp o email) que el usuario puede copiar y usar hoy mismo para diferenciarse.
-
-Responde siempre en español. Sé directo, específico y accionable.`;
+Reglas para keywords: extrae entre 6 y 8 palabras clave SEO reales detectadas en la web del competidor (servicios, ubicación, palabras frecuentes). En español.
+Reglas para activityIndex.score: 0-30 = presencia digital muy débil, 31-55 = básica, 56-75 = moderada, 76-90 = fuerte, 91-100 = excelente.
+Reglas para detectedThreat: high = score>75 o muchas fortalezas, medium = score 40-75, low = score<40.
+Responde siempre en español. El campo "content" debe ser Markdown válido embebido como string JSON (escapa los saltos de línea con \\n).`;
 
 async function fetchPageContent(url: string): Promise<{ title: string; description: string; bodyText: string; h1s: string[]; h2s: string[] }> {
   const controller = new AbortController();
@@ -129,7 +129,7 @@ ${fetchError ? `**Nota:** No se pudo acceder al sitio (${fetchError}). Analiza b
 **Contenido de la página (fragmento):**
 ${pageData.bodyText || "No disponible"}
 
-Genera el informe completo de inteligencia competitiva según las instrucciones.`;
+Devuelve el JSON completo siguiendo exactamente la estructura del system prompt.`;
 
     const openAIRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -140,6 +140,7 @@ Genera el informe completo de inteligencia competitiva según las instrucciones.
       body: JSON.stringify({
         model: "gpt-4o-mini",
         temperature: 0.6,
+        response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userMessage },
@@ -153,18 +154,25 @@ Genera el informe completo de inteligencia competitiva según las instrucciones.
     }
 
     const data = await openAIRes.json();
-    const content = data.choices?.[0]?.message?.content ?? "";
+    const raw = data.choices?.[0]?.message?.content ?? "{}";
 
-    const threatMatch = content.match(/ALTO|MEDIO|BAJO/i);
-    const detectedThreat = threatMatch
-      ? (threatMatch[0].toUpperCase() === "ALTO" ? "high" : threatMatch[0].toUpperCase() === "MEDIO" ? "medium" : "low")
-      : "medium";
+    let result: Record<string, unknown> = {};
+    try {
+      result = JSON.parse(raw);
+    } catch {
+      result = {};
+    }
 
-    const nameMatch = pageData.title || url.replace(/https?:\/\/(www\.)?/, "").split("/")[0];
+    const content = (result.content as string) ?? "";
+    const detectedThreat = (result.detectedThreat as string) ?? "medium";
+    const detectedName = (result.detectedName as string) || pageData.title || url.replace(/https?:\/\/(www\.)?/, "").split("/")[0];
+    const keywords = Array.isArray(result.keywords) ? (result.keywords as string[]) : [];
+    const activityIndex = (result.activityIndex as Record<string, unknown>) ?? { score: 50 };
 
-    return new Response(JSON.stringify({ content, detectedThreat, detectedName: nameMatch }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ content, detectedThreat, detectedName, keywords, activityIndex }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Error desconocido";
     return new Response(JSON.stringify({ error: message }), {
