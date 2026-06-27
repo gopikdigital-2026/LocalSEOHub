@@ -4319,6 +4319,7 @@ function TrialBanner({ daysLeft, onDismiss }: { daysLeft: number; onDismiss: () 
 // Set to true while building to skip auth and preview the dashboard directly
 const DEV_PREVIEW = true;
 
+
 export default function App() {
   const { user, session, loading, signOut } = useAuth();
   const { isActive, status, trialDaysLeft, cancelAtPeriodEnd, currentPeriodEnd, loadingSubscription, refresh } = useSubscription(user);
