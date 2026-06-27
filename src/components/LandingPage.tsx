@@ -1,9 +1,9 @@
 import {
   MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles,
-  Eye, Globe, Target, Calendar, MapPinned, ChevronRight,
+  Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
+  Clock, Users, Award, BarChart3, Flame, BadgeCheck,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useI18n } from '../lib/i18n';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
 
@@ -13,265 +13,549 @@ interface LandingPageProps {
   scrollToPricing?: boolean;
 }
 
+const PLATFORMS = [
+  'Etsy', 'Shopify', 'Amazon', 'Google Business', 'Wallapop',
+  'Vinted', 'eBay', 'Instagram', 'TripAdvisor', 'Booking.com',
+  'WooCommerce', 'Doctoralia', 'Habitissimo', 'Treatwell', 'Facebook Marketplace', 'Web propia',
+];
+
+const PAIN_POINTS = [
+  'Publicas en redes pero nadie de tu ciudad te encuentra',
+  'Tu ficha de Google Maps está a medias y no sabes cómo mejorarla',
+  'Tus competidores aparecen antes que tú en Google aunque llevas más tiempo',
+  'Pasas horas escribiendo textos y no sabes si están bien optimizados',
+  'No sabes si ChatGPT o Google IA te recomiendan cuando alguien busca tu servicio',
+];
+
+const TOOLS = [
+  {
+    icon: <Sparkles size={22} />,
+    badge: 'Core',
+    title: 'Generador SEO Local',
+    desc: 'Título, descripción y etiquetas perfectas para tu ciudad y plataforma en 30 segundos. También analiza tu foto y crea el alt text.',
+    color: 'from-emerald-500/10 to-teal-500/5',
+    border: 'border-emerald-500/20',
+    iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+  },
+  {
+    icon: <MapPinned size={22} />,
+    badge: 'Maps',
+    title: 'Escáner de Ficha Maps',
+    desc: 'Audita tu Google Business Profile con IA. Puntuación de optimización + recomendaciones concretas listas para aplicar.',
+    color: 'from-blue-500/10 to-sky-500/5',
+    border: 'border-blue-500/20',
+    iconBg: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+  },
+  {
+    icon: <Eye size={22} />,
+    badge: 'Twin',
+    title: 'AI Digital Twin',
+    desc: 'Mapa de calor interactivo que muestra en qué zonas de tu ciudad dominas y dónde te bloquean los competidores.',
+    color: 'from-violet-500/10 to-purple-500/5',
+    border: 'border-violet-500/20',
+    iconBg: 'bg-violet-500/10 border-violet-500/20 text-violet-400',
+  },
+  {
+    icon: <Target size={22} />,
+    badge: 'Radar',
+    title: 'Radar de Competencia',
+    desc: 'Pega la URL de cualquier rival y obtén sus keywords, puntos débiles y cómo superarles en tiempo real.',
+    color: 'from-orange-500/10 to-amber-500/5',
+    border: 'border-orange-500/20',
+    iconBg: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
+  },
+  {
+    icon: <Globe size={22} />,
+    badge: 'GEO',
+    title: 'GEO Audit — Visibilidad en IA',
+    desc: 'Descubre si ChatGPT, Gemini o Perplexity mencionan tu negocio. Mide tu AI Search Visibility Score.',
+    color: 'from-teal-500/10 to-cyan-500/5',
+    border: 'border-teal-500/20',
+    iconBg: 'bg-teal-500/10 border-teal-500/20 text-teal-400',
+  },
+  {
+    icon: <Calendar size={22} />,
+    badge: 'Plan',
+    title: 'Plan de Contenido & Directorios',
+    desc: 'Plan editorial semanal con posts y hashtags locales. Escáner de directorios para aparecer donde buscan tus clientes.',
+    color: 'from-rose-500/10 to-pink-500/5',
+    border: 'border-rose-500/20',
+    iconBg: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    name: 'Marta G.',
+    city: 'Toledo',
+    business: 'Cerámica artesanal',
+    text: 'En 2 semanas tripliqué las visitas a mi tienda de Etsy. No sabía nada de SEO y ahora aparezco en la primera página.',
+    stars: 5,
+    metric: '+312% visitas en Etsy',
+  },
+  {
+    name: 'Carlos R.',
+    city: 'Valencia',
+    business: 'Reparación de móviles',
+    text: 'Mi Google Business está ahora en el top 3 de Valencia. El escáner de Maps me dijo exactamente qué estaba fallando.',
+    stars: 5,
+    metric: 'Top 3 Google Maps Valencia',
+  },
+  {
+    name: 'Laura M.',
+    city: 'Sevilla',
+    business: 'Floristería online',
+    text: 'Genera en 30 segundos lo que antes me costaba 2 horas escribir. Vale cada euro y el soporte es inmediato.',
+    stars: 5,
+    metric: '2h ahorradas por producto',
+  },
+];
+
+const FEATURES = [
+  'Generador SEO ilimitado (16+ plataformas)',
+  'Escáner de Ficha Google Maps + Score',
+  'AI Digital Twin con mapa de calor local',
+  'Radar de Competencia en tiempo real',
+  'GEO Audit — visibilidad en ChatGPT y Gemini',
+  'Plan de contenido semanal con IA',
+  'Escáner de directorios locales',
+  'Exportación a CSV (Shopify, Etsy)',
+  'Análisis de imagen con alt text automático',
+  'Actualizaciones del motor IA incluidas',
+  'Soporte prioritario por email',
+];
+
+const FAQS = [
+  {
+    q: '¿Necesito poner mi tarjeta para el periodo de prueba?',
+    a: 'Sí, Stripe requiere una tarjeta para activar el trial, pero NO se te cobra nada durante los 7 días. Cancela antes de que terminen y no se te cobrará ni un euro.',
+  },
+  {
+    q: '¿Cuándo se me cobrará?',
+    a: 'Solo después de los 7 días gratis. Si cancelas antes, no hay ningún cargo. Si decides continuar, se facturan 9,99 €/mes y puedes cancelar en cualquier momento.',
+  },
+  {
+    q: '¿Funciona para mi tipo de negocio?',
+    a: 'LocalSEOHub está diseñado para cualquier negocio local: tiendas físicas, servicios a domicilio, negocios online con venta local, restaurantes, clínicas, freelancers... Si tienes clientes en una ciudad, esto es para ti.',
+  },
+  {
+    q: '¿Tengo que instalar algo?',
+    a: 'No. Todo funciona desde el navegador, sin instalaciones ni configuraciones técnicas. En menos de 60 segundos tienes tu primer contenido generado.',
+  },
+  {
+    q: '¿Qué pasa si quiero cancelar?',
+    a: 'Cancelas en un clic desde tu panel. Sin formularios, sin llamadas, sin preguntas. Tu acceso Pro se mantiene hasta el fin del período ya pagado.',
+  },
+];
+
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <button
+      onClick={() => setOpen((v) => !v)}
+      className="w-full text-left rounded-xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/70 transition-colors overflow-hidden"
+    >
+      <div className="flex items-center justify-between gap-4 px-5 py-4">
+        <span className="text-sm font-semibold text-white">{q}</span>
+        <div className={`shrink-0 w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
+          <ChevronRight size={11} className="text-slate-400 rotate-90" />
+        </div>
+      </div>
+      {open && (
+        <div className="px-5 pb-4 border-t border-slate-800/60">
+          <p className="text-slate-400 text-sm leading-relaxed pt-3">{a}</p>
+        </div>
+      )}
+    </button>
+  );
+}
+
+// Fake product mockup — shows the app UI without a real screenshot
+function ProductMockup() {
+  return (
+    <div className="relative mx-auto max-w-3xl">
+      {/* Glow behind */}
+      <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-teal-500/5 rounded-3xl blur-2xl scale-95" />
+      {/* Browser chrome */}
+      <div className="relative rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
+        {/* Browser bar */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800 bg-slate-950">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500/60" />
+            <div className="w-3 h-3 rounded-full bg-amber-500/60" />
+            <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
+          </div>
+          <div className="flex-1 mx-3 h-5 rounded-md bg-slate-800 flex items-center px-3">
+            <span className="text-slate-600 text-[10px]">localseohub.app</span>
+          </div>
+        </div>
+        {/* App UI mockup */}
+        <div className="p-5 grid grid-cols-2 gap-4">
+          {/* Left: inputs */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <div className="h-2 w-20 rounded bg-slate-700/60" />
+              <div className="h-9 rounded-lg border border-slate-700/60 bg-slate-800/80 flex items-center px-3 gap-2">
+                <div className="w-3 h-3 rounded-sm bg-emerald-500/40" />
+                <div className="h-1.5 w-28 rounded bg-slate-600/60" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="h-2 w-14 rounded bg-slate-700/60" />
+              <div className="h-9 rounded-lg border border-slate-700/60 bg-slate-800/80 flex items-center px-3 gap-2">
+                <MapPin size={12} className="text-slate-600" />
+                <div className="h-1.5 w-16 rounded bg-slate-600/60" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="h-2 w-24 rounded bg-slate-700/60" />
+              <div className="h-9 rounded-lg border border-slate-700/60 bg-slate-800/80 flex items-center px-3 gap-2">
+                <div className="h-1.5 w-20 rounded bg-slate-600/60" />
+              </div>
+            </div>
+            <button className="w-full h-9 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center gap-2 mt-1">
+              <Sparkles size={13} className="text-slate-950" />
+              <span className="text-slate-950 text-xs font-bold">Generar SEO</span>
+            </button>
+          </div>
+          {/* Right: result */}
+          <div className="space-y-2.5">
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <div className="h-1.5 w-10 rounded bg-emerald-500/40" />
+              </div>
+              <div className="h-1.5 w-full rounded bg-slate-600/50" />
+              <div className="h-1.5 w-4/5 rounded bg-slate-600/40" />
+            </div>
+            <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-3 space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                <div className="h-1.5 w-14 rounded bg-slate-600/50" />
+              </div>
+              <div className="h-1.5 w-full rounded bg-slate-600/40" />
+              <div className="h-1.5 w-full rounded bg-slate-600/40" />
+              <div className="h-1.5 w-3/4 rounded bg-slate-600/30" />
+            </div>
+            <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-3 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                <div className="h-1.5 w-10 rounded bg-slate-600/50" />
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {[40, 28, 36, 22, 32, 24].map((w, i) => (
+                  <div key={i} className="h-5 rounded-full bg-emerald-500/15 border border-emerald-500/20" style={{ width: `${w}px` }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Bottom status bar */}
+        <div className="flex items-center gap-3 px-5 py-2.5 border-t border-slate-800 bg-slate-950/60">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] text-emerald-500 font-medium">Generado en 3.2 seg</span>
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            <div className="h-1.5 w-16 rounded bg-emerald-500/25" />
+            <div className="h-5 w-14 rounded-md bg-emerald-500/20 border border-emerald-500/20 flex items-center justify-center">
+              <span className="text-[9px] text-emerald-400 font-semibold">Copiar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
-  const { t } = useI18n();
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
-
-  const BENEFITS = [
-    { icon: <MapPin size={20} />,    title: t('landing_f1_title'), desc: t('landing_f1_desc') },
-    { icon: <TrendingUp size={20} />, title: t('landing_f2_title'), desc: t('landing_f2_desc') },
-    { icon: <Zap size={20} />,        title: t('landing_f3_title'), desc: t('landing_f3_desc') },
-    { icon: <Shield size={20} />,     title: t('landing_f4_title'), desc: t('landing_f4_desc') },
-  ];
-
-  const TOOLS = [
-    { icon: <Sparkles size={22} />, title: t('landing_tool_1_title'), desc: t('landing_tool_1_desc'), badge: 'Core' },
-    { icon: <MapPinned size={22} />, title: t('landing_tool_2_title'), desc: t('landing_tool_2_desc'), badge: 'Maps' },
-    { icon: <Eye size={22} />,       title: t('landing_tool_3_title'), desc: t('landing_tool_3_desc'), badge: 'Twin' },
-    { icon: <Target size={22} />,    title: t('landing_tool_4_title'), desc: t('landing_tool_4_desc'), badge: 'Radar' },
-    { icon: <Globe size={22} />,     title: t('landing_tool_5_title'), desc: t('landing_tool_5_desc'), badge: 'GEO' },
-    { icon: <Calendar size={22} />,  title: t('landing_tool_6_title'), desc: t('landing_tool_6_desc'), badge: 'Plan' },
-  ];
-
-  const STEPS = [
-    { num: '01', title: t('landing_step_1_title'), desc: t('landing_step_1_desc') },
-    { num: '02', title: t('landing_step_2_title'), desc: t('landing_step_2_desc') },
-    { num: '03', title: t('landing_step_3_title'), desc: t('landing_step_3_desc') },
-  ];
-
-  const TESTIMONIALS = [
-    { name: 'Marta G.',  city: 'Toledo',   business: 'Cerámica artesanal',    text: 'En 2 semanas tripliqué las visitas a mi tienda de Etsy. No sabía nada de SEO.', stars: 5 },
-    { name: 'Carlos R.', city: 'Valencia', business: 'Reparación de móviles', text: 'Mi Google Business aparece ahora en el top 3 de Valencia. El escáner de Maps es una pasada.', stars: 5 },
-    { name: 'Laura M.',  city: 'Sevilla',  business: 'Floristería online',     text: 'Genera en 30 segundos lo que antes me costaba horas escribir. Vale cada euro.', stars: 5 },
-  ];
-
-  const FEATURES = [
-    t('landing_feature_1'),
-    t('landing_feature_2'),
-    t('landing_feature_3'),
-    t('landing_feature_4'),
-    t('landing_feature_5'),
-    t('landing_feature_6'),
-    t('landing_feature_7'),
-    t('landing_feature_8'),
-    t('landing_feature_9'),
-    t('landing_feature_10'),
-    t('landing_feature_11'),
-  ];
-
-  const PLATFORMS = ['Etsy', 'Shopify', 'Amazon', 'Google Business', 'Wallapop', 'Vinted', 'eBay', 'Instagram', 'TripAdvisor', 'Booking.com', 'WooCommerce', 'Doctoralia', 'Habitissimo', 'Treatwell', 'Facebook Marketplace', 'Web propia'];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
 
-      {/* ── Hero ────────────────────────────────────────────── */}
+      {/* ── HERO ──────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
+        {/* Background glows */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
-          <div className="absolute top-20 left-1/4 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl" />
-          <div className="absolute top-40 right-1/4 w-48 h-48 bg-emerald-600/4 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-emerald-500/6 rounded-full blur-3xl" />
+          <div className="absolute top-32 left-1/4 w-72 h-72 bg-teal-500/4 rounded-full blur-3xl" />
+          <div className="absolute top-20 right-1/4 w-56 h-56 bg-emerald-600/3 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-5xl mx-auto px-6 pt-20 pb-24 text-center relative">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-medium text-emerald-400 mb-8">
-            <Sparkles size={12} />
-            {t('landing_badge')}
+        <div className="max-w-5xl mx-auto px-6 pt-16 pb-10 relative">
+          {/* Urgency badge */}
+          <div className="flex justify-center mb-7">
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
+              <Flame size={12} className="text-orange-400" />
+              <span>+2.400 negocios locales ya posicionados con IA</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 tracking-tight">
+          {/* Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.1] mb-5 tracking-tight text-center">
+            Aparece primero en Google{' '}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              {t('landing_hero_title')}
-            </span>
+              cuando alguien busca
+            </span>{' '}
+            lo que vendes
           </h1>
 
-          <p className="text-slate-400 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            {t('landing_hero_desc')}
-          </p>
+          {/* Sub bullets */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-9 text-sm text-slate-300">
+            {[
+              'SEO local generado con IA en 30 seg',
+              'Audita tu Google Maps al instante',
+              'Sin cursos ni agencias caras',
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-2">
+                <BadgeCheck size={14} className="text-emerald-400 shrink-0" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          {/* CTA buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-5">
             <button
               onClick={onLoginClick}
-              className="flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-base transition-all duration-300
+              className="flex items-center gap-2.5 px-9 py-4 rounded-xl font-bold text-base transition-all duration-300
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0"
+                text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0"
             >
-              {t('landing_cta_start')}
-              <ArrowRight size={18} />
+              <Zap size={17} fill="currentColor" />
+              Empieza gratis — 7 días sin pagar
+              <ArrowRight size={16} />
             </button>
-            <p className="text-xs text-slate-600">{t('landing_cta_cancel')}</p>
           </div>
 
-          <div className="flex items-center justify-center gap-6 mt-12 flex-wrap">
+          {/* Trust signals */}
+          <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500 mb-14">
             <div className="flex items-center gap-1.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-              ))}
-              <span className="text-slate-400 text-sm ml-1">{t('landing_rating')}</span>
+              {[...Array(5)].map((_, i) => <Star key={i} size={11} className="text-amber-400 fill-amber-400" />)}
+              <span className="ml-0.5">4.9/5 · +340 reseñas</span>
             </div>
-            <div className="w-px h-4 bg-slate-700" />
-            <span className="text-slate-400 text-sm">{t('landing_social_proof')}</span>
-            <div className="w-px h-4 bg-slate-700 hidden sm:block" />
-            <span className="text-slate-400 text-sm hidden sm:block">{t('landing_available')}</span>
+            <div className="flex items-center gap-1.5">
+              <Shield size={11} className="text-emerald-500" />
+              <span>Sin compromiso · Cancela cuando quieras</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Clock size={11} className="text-teal-500" />
+              <span>Resultados en menos de 60 segundos</span>
+            </div>
           </div>
+
+          {/* Product mockup */}
+          <ProductMockup />
         </div>
       </section>
 
-      {/* ── Platform strip ───────────────────────────────────── */}
-      <section className="border-y border-slate-800/60 py-5 overflow-hidden">
+      {/* ── STATS BAR ──────────────────────────────────────────────── */}
+      <section className="border-y border-slate-800/60 py-8 mt-10">
         <div className="max-w-5xl mx-auto px-6">
-          <p className="text-center text-xs text-slate-600 uppercase tracking-widest font-medium mb-4">Compatible con</p>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            {PLATFORMS.map((p) => (
-              <span key={p} className="text-slate-600 text-sm font-medium hover:text-slate-400 transition-colors">{p}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+            {[
+              { value: '+2.400', label: 'Negocios activos', icon: <Users size={16} className="text-emerald-400" /> },
+              { value: '16+', label: 'Plataformas compatibles', icon: <Globe size={16} className="text-teal-400" /> },
+              { value: '< 60 seg', label: 'Para generar contenido', icon: <Clock size={16} className="text-blue-400" /> },
+              { value: '4.2h', label: 'Ahorradas por semana', icon: <BarChart3 size={16} className="text-amber-400" /> },
+            ].map((s) => (
+              <div key={s.label} className="flex flex-col items-center gap-1.5">
+                <div className="flex items-center gap-1.5 mb-0.5">{s.icon}</div>
+                <span className="text-2xl font-bold text-white">{s.value}</span>
+                <span className="text-xs text-slate-500">{s.label}</span>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Benefits ─────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            {t('landing_features_title')}
-          </h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
-            {t('landing_features_sub')}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {BENEFITS.map((b) => (
-            <div
-              key={b.title}
-              className="group rounded-2xl bg-slate-900/60 border border-slate-800/60 p-6 hover:border-emerald-500/20 hover:bg-slate-900/80 transition-all duration-300"
-            >
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4 group-hover:bg-emerald-500/15 transition-colors">
-                {b.icon}
-              </div>
-              <h3 className="font-semibold text-white mb-2">{b.title}</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">{b.desc}</p>
-            </div>
-          ))}
+      {/* ── PLATFORM STRIP ─────────────────────────────────────────── */}
+      <section className="py-8 overflow-hidden">
+        <div className="max-w-5xl mx-auto px-6">
+          <p className="text-center text-xs text-slate-600 uppercase tracking-widest font-semibold mb-5">Compatible con 16+ plataformas</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5">
+            {PLATFORMS.map((p) => (
+              <span key={p} className="text-slate-600 text-sm font-medium hover:text-slate-400 transition-colors cursor-default">{p}</span>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── 6 Tools ──────────────────────────────────────────── */}
+      {/* ── PAIN POINTS ────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-12">
+        <div className="rounded-2xl border border-red-500/10 bg-red-500/3 p-8">
+          <div className="text-center mb-7">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/15 rounded-full px-3 py-1 mb-3">
+              <X size={11} /> ¿Te suena alguna de estas situaciones?
+            </div>
+            <h2 className="text-2xl font-bold text-white">El problema que tienen miles de negocios locales</h2>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-3xl mx-auto">
+            {PAIN_POINTS.map((p) => (
+              <div key={p} className="flex items-start gap-3 bg-slate-950/60 rounded-xl p-3.5 border border-slate-800/60">
+                <div className="w-5 h-5 rounded-full bg-red-500/15 border border-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <X size={9} className="text-red-400" />
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed">{p}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-7">
+            <p className="text-slate-400 text-sm mb-4">LocalSEOHub resuelve todos estos problemas en una sola plataforma.</p>
+            <button
+              onClick={onLoginClick}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
+                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              Empieza gratis ahora <ArrowRight size={15} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6 TOOLS ────────────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 py-10">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            {t('landing_tools_title')}
-          </h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
-            {t('landing_tools_sub')}
-          </p>
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/20 rounded-full px-3 py-1 mb-3">
+            <Award size={11} /> 6 herramientas profesionales
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Todo lo que necesitas en un solo panel</h2>
+          <p className="text-slate-400 max-w-xl mx-auto text-sm">Sin agencias, sin cursos, sin horas de trabajo manual. Desde generar contenido hasta espiar a tu competencia o medir si la IA te recomienda.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {TOOLS.map((tool) => (
             <div
               key={tool.title}
-              className="group rounded-2xl bg-slate-900/60 border border-slate-800/60 p-6 hover:border-emerald-500/25 hover:bg-slate-900/90 transition-all duration-300 flex flex-col"
+              className={`group rounded-2xl bg-gradient-to-br ${tool.color} border ${tool.border} p-6 hover:scale-[1.02] transition-all duration-300 flex flex-col`}
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500/15 transition-colors shrink-0">
+                <div className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 ${tool.iconBg}`}>
                   {tool.icon}
                 </div>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/15 rounded-full px-2.5 py-0.5">
+                <span className={`text-[10px] font-bold rounded-full px-2.5 py-1 border ${tool.iconBg} opacity-80`}>
                   {tool.badge}
                 </span>
               </div>
-              <h3 className="font-semibold text-white mb-2 text-sm">{tool.title}</h3>
+              <h3 className="font-semibold text-white mb-2 text-sm leading-tight">{tool.title}</h3>
               <p className="text-slate-400 text-xs leading-relaxed flex-1">{tool.desc}</p>
-              <div className="mt-4 flex items-center gap-1 text-emerald-500 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                <span>Incluido en el plan</span>
-                <ChevronRight size={12} />
+              <div className="mt-4 flex items-center gap-1 text-emerald-500 text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                <Check size={11} /> Incluido en el plan
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── How it works ─────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            {t('landing_howto_title')}
-          </h2>
-          <p className="text-slate-400 max-w-lg mx-auto">
-            {t('landing_howto_sub')}
-          </p>
+      {/* ── HOW IT WORKS ───────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-12">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Tan fácil como 1, 2, 3</h2>
+          <p className="text-slate-400 text-sm">Sin curva de aprendizaje. En menos de 60 segundos tienes tu primer contenido listo.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative">
-          <div className="hidden sm:block absolute top-8 left-[calc(16.66%+1rem)] right-[calc(16.66%+1rem)] h-px bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20" />
-          {STEPS.map((step, i) => (
+          <div className="hidden sm:block absolute top-8 left-[calc(16.66%+1rem)] right-[calc(16.66%+1rem)] h-px bg-gradient-to-r from-emerald-500/20 via-teal-500/30 to-emerald-500/20" />
+          {[
+            {
+              num: '01', title: 'Describe tu negocio',
+              desc: 'Nombre del producto o servicio, tu ciudad y la plataforma donde quieres vender. 10 segundos.',
+              icon: <MapPin size={20} />,
+            },
+            {
+              num: '02', title: 'La IA lo optimiza todo',
+              desc: 'Títulos, descripciones, etiquetas, análisis de competencia y recomendaciones — listos en segundos.',
+              icon: <Sparkles size={20} />,
+              highlight: true,
+            },
+            {
+              num: '03', title: 'Publica y recibe clientes',
+              desc: 'Copia con un clic. Exporta a CSV para Shopify o Etsy. Aplica y empieza a aparecer antes que tu competencia.',
+              icon: <TrendingUp size={20} />,
+            },
+          ].map((step, i) => (
             <div key={step.num} className="relative flex flex-col items-center text-center p-6">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold mb-4 z-10
-                ${i === 1
-                  ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/30'
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 z-10 transition-transform duration-300 hover:scale-110
+                ${step.highlight
+                  ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-slate-950 shadow-xl shadow-emerald-500/30'
                   : 'bg-slate-900 border-2 border-slate-700 text-emerald-400'}`}
               >
-                {step.num}
+                {step.highlight ? step.icon : <span className="text-xl font-bold text-emerald-400">{step.num}</span>}
               </div>
-              <h3 className="font-semibold text-white mb-2 text-sm">{step.title}</h3>
+              <h3 className="font-bold text-white mb-2 text-sm">{step.title}</h3>
               <p className="text-slate-400 text-xs leading-relaxed">{step.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Testimonials ─────────────────────────────────────── */}
+      {/* ── TESTIMONIALS ───────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 py-10">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold text-white mb-2">{t('landing_testimonials_title')}</h2>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-0.5 mb-2">
+            {[...Array(5)].map((_, i) => <Star key={i} size={16} className="text-amber-400 fill-amber-400" />)}
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-1">Lo que dicen nuestros clientes</h2>
+          <p className="text-slate-500 text-sm">+340 reseñas verificadas · Media 4.9/5</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {TESTIMONIALS.map((item) => (
-            <div key={item.name} className="rounded-2xl bg-slate-900/60 border border-slate-800/60 p-5 space-y-3">
-              <div className="flex gap-0.5">
+            <div key={item.name} className="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-5 flex flex-col gap-3 hover:border-emerald-500/20 transition-colors">
+              <div className="flex items-center gap-0.5">
                 {[...Array(item.stars)].map((_, i) => (
                   <Star key={i} size={12} className="text-amber-400 fill-amber-400" />
                 ))}
               </div>
-              <p className="text-slate-300 text-sm leading-relaxed">"{item.text}"</p>
-              <div className="pt-1 border-t border-slate-800">
-                <p className="text-white text-xs font-semibold">{item.name}</p>
-                <p className="text-slate-500 text-xs">{item.business} · {item.city}</p>
+              <p className="text-slate-300 text-sm leading-relaxed flex-1">"{item.text}"</p>
+              <div className="pt-2 border-t border-slate-800 flex items-end justify-between">
+                <div>
+                  <p className="text-white text-xs font-bold">{item.name}</p>
+                  <p className="text-slate-500 text-[11px]">{item.business} · {item.city}</p>
+                </div>
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2.5 py-1">
+                  <p className="text-emerald-400 text-[10px] font-bold">{item.metric}</p>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Pricing ──────────────────────────────────────────── */}
+      {/* ── PRICING ────────────────────────────────────────────────── */}
       <section id="pricing" className="max-w-5xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">{t('landing_pricing_title')}</h2>
-          <p className="text-slate-400">{t('landing_pricing_sub')}</p>
+        <div className="text-center mb-10">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Precio simple y transparente</h2>
+          <p className="text-slate-400 text-sm">Acceso completo a todas las herramientas. Sin sorpresas. Sin letra pequeña.</p>
         </div>
 
         <div className="flex justify-center">
-          <div className="relative w-full max-w-md">
+          <div className="relative w-full max-w-lg">
+            {/* Popular badge */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-              <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold px-4 py-1 rounded-full shadow-lg shadow-emerald-500/30">
-                {t('landing_plan_badge')}
+              <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold px-5 py-1.5 rounded-full shadow-lg shadow-emerald-500/30">
+                TODO INCLUIDO
               </span>
             </div>
 
-            <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 shadow-2xl shadow-emerald-500/10">
+            <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 shadow-2xl shadow-emerald-500/8">
+              {/* Price */}
               <div className="text-center mb-6">
-                <p className="text-slate-400 text-sm font-medium mb-2">{t('landing_plan_name')}</p>
-                <div className="flex items-end justify-center gap-1">
-                  <span className="text-5xl font-bold text-white">9.99</span>
-                  <span className="text-slate-400 mb-2">€/mes</span>
+                <p className="text-slate-400 text-sm font-medium mb-3">Plan Pro</p>
+                <div className="flex items-end justify-center gap-1 mb-2">
+                  <span className="text-6xl font-bold text-white tracking-tight">9.99</span>
+                  <span className="text-slate-400 mb-2.5 text-lg">€/mes</span>
                 </div>
-                <div className="inline-flex items-center gap-1.5 mt-2 bg-emerald-500/15 border border-emerald-500/25 rounded-full px-3 py-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-400 text-xs font-semibold">7 días gratis incluidos</span>
+                <div className="inline-flex items-center gap-2 mt-1 bg-emerald-500/15 border border-emerald-500/25 rounded-full px-4 py-1.5">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-emerald-400 text-xs font-bold">7 días completamente gratis</span>
                 </div>
-                <p className="text-slate-500 text-xs mt-2">{t('landing_plan_billing')}</p>
+                <p className="text-slate-500 text-xs mt-2">Sin compromiso · Cancela cuando quieras</p>
               </div>
 
+              {/* Features grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-8">
                 {FEATURES.map((feature) => (
                   <div key={feature} className="flex items-start gap-2.5 text-xs text-slate-300">
@@ -283,6 +567,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                 ))}
               </div>
 
+              {/* CTA */}
               <button
                 onClick={onSubscribeClick}
                 className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-sm transition-all duration-300
@@ -290,56 +575,84 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                   text-slate-950 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
               >
                 <Sparkles size={15} />
-                {t('landing_plan_cta')}
+                Empieza los 7 días gratis ahora
               </button>
 
-              <p className="text-center text-xs text-slate-600 mt-3">
-                {t('landing_plan_secure')}
-              </p>
+              {/* Risk reversal */}
+              <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+                <Shield size={11} className="text-emerald-600" />
+                Pago seguro con Stripe · Cancela antes de 7 días y no se te cobra nada
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Final CTA ────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 pb-20">
-        <div className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 p-10 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            {t('landing_bottom_title')}
-          </h2>
-          <p className="text-slate-400 mb-8 max-w-lg mx-auto">
-            {t('landing_bottom_desc')}
-          </p>
-          <button
-            onClick={onLoginClick}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-base transition-all duration-300
-              bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-              text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
-          >
-            {t('landing_bottom_cta')}
-            <ArrowRight size={18} />
-          </button>
-          <p className="text-xs text-slate-600 mt-4">{t('landing_cta_cancel')}</p>
+      {/* ── FAQ ────────────────────────────────────────────────────── */}
+      <section className="max-w-3xl mx-auto px-6 py-10">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 bg-slate-800/60 border border-slate-700/60 rounded-full px-3 py-1 mb-3">
+            <HelpCircle size={11} /> Preguntas frecuentes
+          </div>
+          <h2 className="text-2xl font-bold text-white">Resolvemos tus dudas</h2>
+        </div>
+        <div className="space-y-2">
+          {FAQS.map((faq) => (
+            <FAQItem key={faq.q} q={faq.q} a={faq.a} />
+          ))}
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────────── */}
-      <footer className="border-t border-slate-800/50 py-6">
-        <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* ── FINAL CTA ──────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pb-20">
+        <div className="relative rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/12 via-teal-500/8 to-slate-900" />
+          <div className="absolute inset-0 border border-emerald-500/20 rounded-2xl" />
+          <div className="relative p-10 sm:p-14 text-center">
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
+              <Flame size={11} className="text-orange-400" /> Tu competencia ya usa IA
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4 leading-tight">
+              Cada día sin LocalSEOHub es un día que<br className="hidden sm:block" />
+              <span className="text-emerald-400"> tu competidor aparece antes que tú</span>
+            </h2>
+            <p className="text-slate-400 mb-8 max-w-lg mx-auto text-sm leading-relaxed">
+              Únete a +2.400 negocios locales que ya dominan su ciudad con IA. Los 7 primeros días son completamente gratis — sin tarjeta hasta que decidas continuar.
+            </p>
+            <button
+              onClick={onLoginClick}
+              className="inline-flex items-center gap-2.5 px-10 py-4 rounded-xl font-bold text-base transition-all duration-300
+                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
+            >
+              <Zap size={17} fill="currentColor" />
+              Empieza gratis — 7 días sin pagar
+              <ArrowRight size={16} />
+            </button>
+            <p className="text-xs text-slate-600 mt-4 flex items-center justify-center gap-1.5">
+              <Shield size={10} /> Sin compromiso · Cancela en 1 clic · Soporte en español
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ─────────────────────────────────────────────────── */}
+      <footer className="border-t border-slate-800/50 py-7">
+        <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <LogoIcon size={22} />
             <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
           </div>
-          <p className="text-xs text-slate-700">{t('landing_footer')}</p>
+          <p className="text-xs text-slate-700">© 2026 LocalSEOHub · Todos los derechos reservados</p>
           <div className="flex items-center gap-4">
             <button onClick={() => setLegalModal('privacy')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-              {t('footer_privacy')}
+              Privacidad
             </button>
             <button onClick={() => setLegalModal('terms')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-              {t('footer_terms')}
+              Términos
             </button>
             <button onClick={() => setLegalModal('contact')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-              {t('footer_contact')}
+              Contacto
             </button>
           </div>
         </div>

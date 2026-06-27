@@ -4454,7 +4454,7 @@ export default function App() {
           onSignOut={signOut}
         />
         <LandingPage
-          onLoginClick={() => { setLoginInitialMode('login'); setShowLogin(true); }}
+          onLoginClick={() => { setLoginInitialMode('signup'); setShowLogin(true); }}
           onSubscribeClick={() => {
             try { sessionStorage.setItem('postAuthAction', 'checkout'); } catch { /* sandboxed */ }
             setPendingCheckout(true);
