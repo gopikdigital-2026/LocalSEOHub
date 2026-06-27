@@ -5,10 +5,10 @@ export type Lang = 'es' | 'en';
 const translations = {
   es: {
     // Navbar
-    nav_pricing: 'Precios',
+    nav_pricing: '🔥 7 días gratis',
     nav_login: 'Iniciar Sesión',
     nav_connected_as: 'Conectado como',
-    nav_view_pricing: 'Ver Precios',
+    nav_view_pricing: 'Ver Planes',
     nav_sign_out: 'Cerrar sesión',
 
     // Landing
@@ -285,10 +285,10 @@ const translations = {
 
   en: {
     // Navbar
-    nav_pricing: 'Pricing',
+    nav_pricing: '🔥 7 days free',
     nav_login: 'Sign In',
     nav_connected_as: 'Signed in as',
-    nav_view_pricing: 'View Pricing',
+    nav_view_pricing: 'View Plans',
     nav_sign_out: 'Sign out',
 
     // Landing

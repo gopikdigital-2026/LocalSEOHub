@@ -32,15 +32,19 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
           </span>
         </div>
 
-        {/* Center nav */}
-        <nav className="hidden sm:flex items-center gap-1">
-          <button
-            onClick={onPricingClick}
-            className="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200 font-medium"
-          >
-            {t('nav_pricing')}
-          </button>
-        </nav>
+        {/* Center nav — only shown to non-authenticated users */}
+        {!user && (
+          <nav className="hidden sm:flex items-center gap-1">
+            <button
+              onClick={onPricingClick}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-emerald-400 hover:text-emerald-300
+                hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20
+                transition-all duration-200"
+            >
+              {t('nav_pricing')}
+            </button>
+          </nav>
+        )}
 
         {/* Right side */}
         <div className="flex items-center gap-3">
@@ -142,7 +146,7 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
             <>
               <button
                 onClick={onPricingClick}
-                className="sm:hidden px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+                className="sm:hidden px-3 py-1.5 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
               >
                 {t('nav_pricing')}
               </button>
