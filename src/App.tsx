@@ -2850,6 +2850,275 @@ function AiDigitalTwin() {
 
       {/* Local heat map */}
       <LocalHeatMap visibilityIndex={visibilityIndex} reviewRate={reviewRate} />
+
+      {/* Campaign Sandbox */}
+      <AiCampaignSandbox />
+    </div>
+  );
+}
+
+// ─── AI Campaign Sandbox ──────────────────────────────────────────────────────
+
+type CanalOption = 'ads' | 'reviews' | 'seo';
+
+const CANAL_CONFIG: Record<CanalOption, {
+  label: string; lineColor: string; rgb: string; desc: string;
+  badge: string; icon: string;
+}> = {
+  ads:     { label: 'Ads Locales',        lineColor: '#3b82f6', rgb: '59,130,246',  desc: 'Retorno inmediato y constante durante la campaña — ideal para máxima visibilidad a corto plazo.',       badge: 'bg-blue-500/15 border-blue-500/30 text-blue-300',    icon: '⚡' },
+  reviews: { label: 'Campaña de Reseñas', lineColor: '#f59e0b', rgb: '245,158,11',  desc: 'Crecimiento compuesto — la reputación online se autoamplifica y sigue generando retorno sin coste adicional.', badge: 'bg-amber-500/15 border-amber-500/30 text-amber-300',  icon: '⭐' },
+  seo:     { label: 'SEO de Contenidos',  lineColor: '#10b981', rgb: '16,185,129',  desc: 'Efecto retardado pero curva de rentabilidad sostenida — el canal con mayor retorno a 12 meses.',          badge: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300', icon: '📈' },
+};
+
+const ROI_MULTIPLIERS: Record<CanalOption, number[]> = {
+  ads:     [0.10, 0.21, 0.33, 0.46, 0.59, 0.73, 0.87, 1.00, 1.12, 1.22, 1.31, 1.40],
+  reviews: [0.02, 0.05, 0.11, 0.21, 0.35, 0.54, 0.78, 1.07, 1.42, 1.84, 2.32, 2.85],
+  seo:     [0.00, 0.01, 0.04, 0.10, 0.21, 0.38, 0.62, 0.92, 1.28, 1.70, 2.18, 2.70],
+};
+
+function smoothLinePath(pts: [number, number][]): string {
+  if (pts.length < 2) return '';
+  let d = `M ${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(i - 1, 0)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(i + 2, pts.length - 1)];
+    const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  return d;
+}
+
+function CampaignChart({ investment, canal }: { investment: number; canal: CanalOption }) {
+  const cfg = CANAL_CONFIG[canal];
+  const data = ROI_MULTIPLIERS[canal].map(m => Math.round(investment * m));
+
+  const W = 400; const H = 170;
+  const mL = 46; const mR = 8; const mT = 12; const mB = 28;
+  const pW = W - mL - mR;
+  const pH = H - mT - mB;
+
+  const maxVal = Math.max(...data, investment > 0 ? investment * 1.15 : 100);
+  const ceiling = Math.ceil(maxVal / 100) * 100 || 200;
+
+  const toX = (i: number) => mL + (i / 11) * pW;
+  const toY = (v: number) => mT + pH - Math.min((v / ceiling) * pH, pH);
+
+  const pts: [number, number][] = data.map((v, i) => [toX(i), toY(v)]);
+  const linePath = smoothLinePath(pts);
+  const areaPath = `${linePath} L ${pts[pts.length - 1][0].toFixed(1)},${(mT + pH).toFixed(1)} L ${mL},${(mT + pH).toFixed(1)} Z`;
+  const investY = investment > 0 ? toY(investment) : mT + pH;
+  const breakeven = investment > 0 ? data.findIndex(v => v >= investment) : -1;
+  const gradId = `csg-${canal}`;
+
+  const yTicks = [0, 0.25, 0.5, 0.75, 1];
+  const xLabels = [0, 2, 5, 8, 11];
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: '170px', overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={`rgba(${cfg.rgb},0.35)`} />
+          <stop offset="100%" stopColor={`rgba(${cfg.rgb},0.02)`} />
+        </linearGradient>
+      </defs>
+
+      {/* Grid */}
+      {yTicks.map((f, i) => {
+        const y = mT + pH * (1 - f);
+        const label = Math.round(ceiling * f);
+        return (
+          <g key={i}>
+            <line x1={mL} y1={y} x2={W - mR} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+            <text x={mL - 4} y={y + 3.5} fontSize="9" fill="rgba(100,116,139,0.75)" textAnchor="end">{label}€</text>
+          </g>
+        );
+      })}
+
+      {/* X labels */}
+      {xLabels.map(i => (
+        <text key={i} x={toX(i)} y={H - 6} fontSize="9" fill="rgba(100,116,139,0.75)" textAnchor="middle">
+          {i === 11 ? 'M12' : `M${i + 1}`}
+        </text>
+      ))}
+
+      {/* Investment reference */}
+      {investment > 0 && (
+        <g>
+          <line x1={mL} y1={investY} x2={W - mR} y2={investY}
+            stroke="rgba(255,255,255,0.22)" strokeWidth="1" strokeDasharray="5,4" />
+          <text x={mL + 6} y={investY - 4} fontSize="8.5" fill="rgba(255,255,255,0.35)">{investment}€ invertido</text>
+        </g>
+      )}
+
+      {/* Area fill */}
+      <path d={areaPath} fill={`url(#${gradId})`} />
+
+      {/* Line */}
+      <path d={linePath} fill="none" stroke={cfg.lineColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Breakeven dot */}
+      {breakeven >= 0 && investment > 0 && (
+        <g>
+          <circle cx={toX(breakeven)} cy={toY(data[breakeven])} r="5"
+            fill={cfg.lineColor} stroke="rgb(15,23,42)" strokeWidth="2.5" />
+          <text x={toX(breakeven)} y={toY(data[breakeven]) - 9} fontSize="8.5" fill={cfg.lineColor} textAnchor="middle">
+            Break-even
+          </text>
+        </g>
+      )}
+
+      {/* Last point */}
+      <circle cx={toX(11)} cy={toY(data[11])} r="5"
+        fill={cfg.lineColor} stroke="rgb(15,23,42)" strokeWidth="2.5" />
+
+      {/* Last value label */}
+      {data[11] > 0 && (
+        <text x={toX(11) - 6} y={toY(data[11]) - 9} fontSize="9" fill={cfg.lineColor} textAnchor="end" fontWeight="700">
+          {data[11]}€
+        </text>
+      )}
+    </svg>
+  );
+}
+
+function AiCampaignSandbox() {
+  const [investment, setInvestment] = useState(300);
+  const [canal, setCanal] = useState<CanalOption>('ads');
+
+  const cfg = CANAL_CONFIG[canal];
+  const data = ROI_MULTIPLIERS[canal].map(m => Math.round(investment * m));
+  const roi6 = data[5];
+  const roi12 = data[11];
+  const mult = investment > 0 ? (roi12 / investment).toFixed(1) : '—';
+  const breakeven = investment > 0 ? data.findIndex(v => v >= investment) : -1;
+  const beLabel = breakeven >= 0 ? `Mes ${breakeven + 1}` : 'No alcanzado';
+
+  const sliderBg = `linear-gradient(to right, ${cfg.lineColor} ${(investment / 1000) * 100}%, #1e293b ${(investment / 1000) * 100}%)`;
+
+  return (
+    <div className="rounded-2xl border border-slate-700/50 bg-slate-900/60 overflow-hidden"
+      style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+
+      {/* Header */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800/60 bg-slate-950/30">
+        <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-base">
+          💰
+        </div>
+        <div>
+          <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest">AI Campaign Sandbox</h2>
+          <p className="text-[11px] text-slate-600 mt-0.5">Simulación predictiva de retorno por canal</p>
+        </div>
+        <span className="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/12 border border-amber-500/25 text-amber-400 uppercase tracking-wider">
+          IA · Predictivo
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-800/50">
+
+        {/* LEFT — Controls */}
+        <div className="lg:col-span-2 p-6 space-y-6">
+
+          {/* Investment slider */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Inversión Simulada
+              </label>
+              <span className="text-sm font-black text-white bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 tabular-nums min-w-[4.5rem] text-center">
+                {investment}€<span className="text-slate-500 font-normal text-xs">/mes</span>
+              </span>
+            </div>
+            <input
+              type="range" min={0} max={1000} step={10} value={investment}
+              onChange={e => setInvestment(Number(e.target.value))}
+              className="twin-slider w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{ background: sliderBg }}
+            />
+            <div className="flex justify-between text-[10px] text-slate-700 font-mono">
+              <span>0€</span>
+              <span>250€</span>
+              <span>500€</span>
+              <span>750€</span>
+              <span>1000€</span>
+            </div>
+          </div>
+
+          {/* Canal selector */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Canal</label>
+            <div className="flex flex-col gap-2">
+              {(Object.entries(CANAL_CONFIG) as [CanalOption, typeof CANAL_CONFIG[CanalOption]][]).map(([key, c]) => (
+                <button
+                  key={key}
+                  onClick={() => setCanal(key)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all duration-200 ${
+                    canal === key
+                      ? `${c.badge} ring-1 ring-inset`
+                      : 'border-slate-700/50 bg-slate-800/30 text-slate-400 hover:border-slate-600/60 hover:bg-slate-800/60'
+                  }`}
+                  style={canal === key ? { ringColor: c.lineColor } : {}}
+                >
+                  <span className="text-base shrink-0">{c.icon}</span>
+                  <span className="text-xs font-bold">{c.label}</span>
+                  {canal === key && (
+                    <span className="ml-auto w-2 h-2 rounded-full shrink-0" style={{ background: c.lineColor }} />
+                  )}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-600 leading-relaxed px-1">{cfg.desc}</p>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Retorno mes 6',  value: investment > 0 ? `${roi6}€` : '—', color: 'text-slate-200' },
+              { label: 'Retorno mes 12', value: investment > 0 ? `${roi12}€` : '—', color: `text-[${cfg.lineColor}]` },
+              { label: 'Multiplicador',  value: investment > 0 ? `${mult}×` : '—', color: 'text-slate-200' },
+              { label: 'Break-even',     value: beLabel, color: breakeven >= 0 ? 'text-emerald-400' : 'text-red-400' },
+            ].map((s, i) => (
+              <div key={i} className="rounded-xl bg-slate-800/50 border border-slate-700/40 px-3 py-2.5">
+                <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-1">{s.label}</p>
+                <p className="text-sm font-black text-slate-100 tabular-nums" style={i === 1 ? { color: cfg.lineColor } : {}}>{s.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT — Chart */}
+        <div className="lg:col-span-3 p-6 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Curva de Retorno Esperado (12 meses)</p>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cfg.badge}`}>{cfg.label}</span>
+          </div>
+
+          {investment === 0 ? (
+            <div className="flex flex-col items-center justify-center flex-1 gap-3 py-10 text-center">
+              <BarChart2 size={28} className="text-slate-700" />
+              <p className="text-xs text-slate-600">Mueve el slider para ver la proyección</p>
+            </div>
+          ) : (
+            <>
+              <div className="relative rounded-xl bg-slate-950/50 border border-slate-800/50 p-3 overflow-hidden">
+                <CampaignChart investment={investment} canal={canal} />
+              </div>
+
+              <div className="flex items-start gap-2 px-1">
+                <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: cfg.lineColor }} />
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Con <span className="text-slate-400 font-bold">{investment}€/mes</span> en {cfg.label.toLowerCase()}, el modelo predice un retorno acumulado de <span style={{ color: cfg.lineColor }} className="font-bold">{roi12}€</span> al mes 12 ({mult}× la inversión mensual).
+                  {breakeven >= 0 && ` Break-even estimado en el mes ${breakeven + 1}.`}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
