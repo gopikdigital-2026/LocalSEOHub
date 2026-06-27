@@ -3424,6 +3424,12 @@ interface ReviewAuditResult {
   competitiveAlert?: string;
 }
 
+interface GbpDescriptionResult {
+  description?: string;
+  correctedConcepts?: { criticism: string; corrector: string; phrase: string }[];
+  seoKeywords?: string[];
+}
+
 interface ReviewAuditTabProps {
   reviewUrl: string;
   setReviewUrl: (v: string) => void;
@@ -3431,11 +3437,24 @@ interface ReviewAuditTabProps {
   reviewResult: ReviewAuditResult | null;
   reviewError: string;
   onScan: () => void;
+  gbpStatus: 'idle' | 'generating' | 'done';
+  gbpResult: GbpDescriptionResult | null;
+  gbpError: string;
+  onGenerateGbp: () => void;
 }
 
-function ReviewAuditTab({ reviewUrl, setReviewUrl, reviewStatus, reviewResult, reviewError, onScan }: ReviewAuditTabProps) {
+function ReviewAuditTab({ reviewUrl, setReviewUrl, reviewStatus, reviewResult, reviewError, onScan, gbpStatus, gbpResult, gbpError, onGenerateGbp }: ReviewAuditTabProps) {
+  const [gbpCopied, setGbpCopied] = useState(false);
   const positivePct = reviewResult?.sentiment?.positive ?? 0;
   const negativePct = reviewResult?.sentiment?.negative ?? 0;
+
+  const copyGbp = () => {
+    if (!gbpResult?.description) return;
+    navigator.clipboard.writeText(gbpResult.description).then(() => {
+      setGbpCopied(true);
+      setTimeout(() => setGbpCopied(false), 2000);
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -3628,6 +3647,106 @@ function ReviewAuditTab({ reviewUrl, setReviewUrl, reviewStatus, reviewResult, r
               </div>
             </div>
           )}
+
+          {/* ── GBP Description Generator ──────────────────────────────────── */}
+          <div className="rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-900/40 border border-emerald-500/20 p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+                  <Sparkles size={13} className="text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-100">Descripción GBP Optimizada</p>
+                  <p className="text-xs text-slate-500">Texto listo para copiar en Google Business Profile</p>
+                </div>
+              </div>
+              <button
+                onClick={onGenerateGbp}
+                disabled={gbpStatus === 'generating'}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400
+                  text-slate-950 text-xs font-bold transition-all duration-200 shadow-md shadow-emerald-500/20
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {gbpStatus === 'generating' ? (
+                  <><Loader2 size={12} className="animate-spin" /> Generando...</>
+                ) : gbpStatus === 'done' ? (
+                  <><RefreshCw size={12} /> Regenerar</>
+                ) : (
+                  <><Zap size={12} /> Generar descripción</>
+                )}
+              </button>
+            </div>
+
+            {gbpError && (
+              <div className="flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                <AlertCircle size={13} className="shrink-0" />
+                {gbpError}
+              </div>
+            )}
+
+            {gbpStatus === 'generating' && (
+              <div className="space-y-2 animate-pulse">
+                <div className="h-4 bg-slate-800 rounded w-full" />
+                <div className="h-4 bg-slate-800 rounded w-5/6" />
+                <div className="h-4 bg-slate-800 rounded w-4/5" />
+                <div className="h-4 bg-slate-800 rounded w-full" />
+                <div className="h-4 bg-slate-800 rounded w-3/4" />
+              </div>
+            )}
+
+            {gbpStatus === 'done' && gbpResult?.description && (
+              <div className="space-y-4">
+                {/* Description text with copy button */}
+                <div className="relative rounded-xl bg-slate-800/60 border border-slate-700/50 p-4">
+                  <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap pr-10">{gbpResult.description}</p>
+                  <button
+                    onClick={copyGbp}
+                    className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-600/80
+                      text-slate-400 hover:text-white transition-all duration-200"
+                    title="Copiar descripción"
+                  >
+                    {gbpCopied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                  </button>
+                </div>
+
+                {/* Corrected concepts */}
+                {gbpResult.correctedConcepts && gbpResult.correctedConcepts.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Correcciones aplicadas</p>
+                    <div className="space-y-1.5">
+                      {gbpResult.correctedConcepts.map((c, i) => (
+                        <div key={i} className="flex items-start gap-2 text-xs">
+                          <span className="text-red-400/70 line-through shrink-0 mt-0.5">{c.criticism}</span>
+                          <ChevronRight size={11} className="text-slate-600 shrink-0 mt-0.5" />
+                          <span className="text-emerald-400 font-semibold shrink-0">{c.corrector}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* SEO Keywords */}
+                {gbpResult.seoKeywords && gbpResult.seoKeywords.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Keywords SEO incluidas</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {gbpResult.seoKeywords.map((kw, i) => (
+                        <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300 font-medium">
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {gbpStatus === 'idle' && !gbpError && (
+              <p className="text-xs text-slate-600 text-center py-2">
+                La IA creará un texto que convierte tus críticas en fortalezas
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -3818,6 +3937,11 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
   const [reviewResult, setReviewResult] = useState<ReviewAuditResult | null>(null);
   const [reviewError, setReviewError] = useState('');
 
+  // ── GBP Description generator state ───────────────────────────────────────
+  const [gbpStatus, setGbpStatus] = useState<'idle' | 'generating' | 'done'>('idle');
+  const [gbpResult, setGbpResult] = useState<GbpDescriptionResult | null>(null);
+  const [gbpError, setGbpError] = useState('');
+
   const PREVIEW_RECS: AuditRec[] = [
     { id: 'r1', priority: 'high', title: 'Optimizar descripción con palabras clave', optimized_text: 'Peluquería López es tu salón de confianza en el corazón de Barcelona. Especializados en cortes modernos, coloración y tratamientos capilares para hombre y mujer. Más de 15 años cuidando el cabello de los barceloneses. Reserva tu cita hoy y descubre por qué somos la peluquería mejor valorada del Eixample. ¡Te esperamos en C/ Provença, 142!' },
     { id: 'r2', priority: 'high', title: 'Completar categorías secundarias', optimized_text: 'Categorías sugeridas: Peluquería, Salón de belleza, Barbería, Tratamiento capilar' },
@@ -3881,6 +4005,9 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
     setReviewStatus('scanning');
     setReviewResult(null);
     setReviewError('');
+    setGbpStatus('idle');
+    setGbpResult(null);
+    setGbpError('');
     try {
       const res = await supabase.functions.invoke('audit-reviews', {
         body: { mapsUrl: reviewUrl.trim() },
@@ -3892,6 +4019,30 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
     } catch (err) {
       setReviewError(err instanceof Error ? err.message : 'Error al escanear reseñas');
       setReviewStatus('idle');
+    }
+  };
+
+  const handleGenerateGbp = async () => {
+    if (!reviewResult) return;
+    setGbpStatus('generating');
+    setGbpResult(null);
+    setGbpError('');
+    try {
+      const res = await supabase.functions.invoke('generate-gbp-description', {
+        body: {
+          businessName: reviewResult.businessName,
+          avgRating: reviewResult.avgRating,
+          praised: reviewResult.praised,
+          criticized: reviewResult.criticized,
+        },
+      });
+      if (res.error) throw new Error(res.error.message);
+      if (res.data?.error) throw new Error(res.data.error);
+      setGbpResult(res.data as GbpDescriptionResult);
+      setGbpStatus('done');
+    } catch (err) {
+      setGbpError(err instanceof Error ? err.message : 'Error al generar la descripción');
+      setGbpStatus('idle');
     }
   };
 
@@ -4129,6 +4280,10 @@ function MapsScanner({ previewMode }: { previewMode: boolean }) {
           reviewResult={reviewResult}
           reviewError={reviewError}
           onScan={handleReviewScan}
+          gbpStatus={gbpStatus}
+          gbpResult={gbpResult}
+          gbpError={gbpError}
+          onGenerateGbp={handleGenerateGbp}
         />
       )}
     </div>
