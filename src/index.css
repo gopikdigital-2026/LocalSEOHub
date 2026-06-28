@@ -66,6 +66,11 @@
   ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.55); }
 }
 
+@keyframes voiceWave {
+  0%, 100% { transform: scaleY(0.12); }
+  50%       { transform: scaleY(1); }
+}
+
 /* ── AI Digital Twin sliders ──────────────────────────────── */
 .twin-slider::-webkit-slider-thumb {
   -webkit-appearance: none;

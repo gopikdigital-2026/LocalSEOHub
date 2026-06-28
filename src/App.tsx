@@ -59,6 +59,7 @@ import {
   Newspaper,
   Award,
   RefreshCw,
+  Mic,
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
@@ -75,6 +76,7 @@ import AdminDashboard from './components/AdminDashboard';
 import AIBusinessAdvisor from './components/AIBusinessAdvisor';
 import AiCampaignSandbox from './components/AiCampaignSandbox';
 import SchemaCodePanel from './components/SchemaCodePanel';
+import AiVoiceSimulator from './components/AiVoiceSimulator';
 import MapsScanner from './components/MapsScanner';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -2868,7 +2870,7 @@ function Dashboard({
 }) {
   const { session } = useAuth();
   const { t } = useI18n();
-  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit' | 'ai-advisor'>('ai-advisor');
+  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit' | 'ai-advisor' | 'voice-sim'>('ai-advisor');
   const [product, setProduct] = useState('');
   const [city, setCity] = useState('');
   const [platform, setPlatform] = useState<Platform>('');
@@ -3277,6 +3279,21 @@ function Dashboard({
           <span className={tab === 'ai-advisor' ? 'text-white' : 'text-slate-500'}><BarChart2 size={14} /></span>
           AI Advisor
         </button>
+        {/* AI Voice Simulator */}
+        <button
+          onClick={() => setTab('voice-sim')}
+          className={`col-span-2 sm:col-span-1 flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200
+            ${tab === 'voice-sim'
+              ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+          style={tab === 'voice-sim' ? { boxShadow: '0 4px 14px rgba(59,130,246,0.35)' } : {
+            background: 'rgba(15,28,44,0.6)',
+            border: '1px solid rgba(255,255,255,0.05)',
+          }}
+        >
+          <span className={tab === 'voice-sim' ? 'text-white' : 'text-blue-500'}><Mic size={14} /></span>
+          Voice Sim
+        </button>
       </div>
 
       {tab === 'saved' ? (
@@ -3293,6 +3310,8 @@ function Dashboard({
         <GeoAuditPanel product={product} city={city} />
       ) : tab === 'ai-advisor' ? (
         <AIBusinessAdvisor session={session!} previewMode={previewMode} />
+      ) : tab === 'voice-sim' ? (
+        <AiVoiceSimulator previewMode={previewMode} />
       ) : (
       <>
       {/* Page header */}
