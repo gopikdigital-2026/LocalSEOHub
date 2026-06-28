@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, ReactNode, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, ReactNode, lazy, Suspense } from 'react';
 import {
   Search,
   MapPin,
@@ -2871,7 +2871,9 @@ function AiDigitalTwin() {
       <LocalHeatMap visibilityIndex={visibilityIndex} reviewRate={reviewRate} />
 
       {/* Campaign Sandbox */}
-      <AiCampaignSandbox />
+      <Suspense fallback={<div className="flex items-center justify-center py-16"><Loader2 size={22} className="animate-spin text-slate-600" /></div>}>
+        <AiCampaignSandbox />
+      </Suspense>
     </div>
   );
 }
