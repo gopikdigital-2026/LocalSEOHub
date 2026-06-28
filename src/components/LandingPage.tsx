@@ -127,12 +127,12 @@ const FEATURES = [
 
 const FAQS = [
   {
-    q: '¿Tengo que poner mi tarjeta para el periodo de prueba?',
-    a: 'Introduces tus datos de pago de forma segura a través de Stripe — el mismo sistema que usa Amazon o Airbnb. No se realiza ningún cargo hasta el día 8. Cancela antes con un solo clic y no pagas absolutamente nada. Sin sorpresas, sin letra pequeña.',
+    q: '¿Necesito poner mi tarjeta para empezar?',
+    a: 'No. Para los 7 días de prueba solo necesitas un email y una contraseña — sin tarjeta, sin datos bancarios, sin compromisos. Solo si decides continuar al finalizar el trial, se te pedirán los datos de pago para activar el plan mensual.',
   },
   {
-    q: '¿Cuándo se me cobrará?',
-    a: 'Solo a partir del día 8, si decides continuar. Recibirás un recordatorio por email antes de que termine el periodo de prueba. Si cancelas antes, no hay ningún cargo. Si decides quedarte, se facturan 9,99 €/mes y puedes cancelar en cualquier momento.',
+    q: '¿Cuándo tendré que poner mi tarjeta?',
+    a: 'Únicamente a partir del día 8, si quieres seguir usando LocalSEOHub. Recibirás un email de aviso antes de que termine la prueba. Si no haces nada o decides no continuar, tu cuenta simplemente queda en modo gratuito y no se te cobra absolutamente nada.',
   },
   {
     q: '¿Funciona para mi tipo de negocio?',
@@ -143,7 +143,7 @@ const FAQS = [
     a: 'No. Todo funciona desde el navegador, sin instalaciones ni configuraciones técnicas. En menos de 60 segundos tienes tu primer contenido generado.',
   },
   {
-    q: '¿Qué pasa si quiero cancelar?',
+    q: '¿Qué pasa si quiero cancelar después de suscribirme?',
     a: 'Cancelas en un clic desde tu panel. Sin formularios, sin llamadas, sin preguntas. Tu acceso Pro se mantiene hasta el fin del período ya pagado.',
   },
 ];
@@ -319,13 +319,13 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-3">
             <button
-              onClick={onSubscribeClick}
+              onClick={onLoginClick}
               className="flex items-center gap-2.5 px-9 py-4 rounded-xl font-bold text-base transition-all duration-300
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                 text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0"
             >
               <Zap size={17} fill="currentColor" />
-              Empieza gratis — 7 días sin pagar
+              Empieza gratis — sin tarjeta
               <ArrowRight size={16} />
             </button>
           </div>
@@ -342,7 +342,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500 mb-14">
             <div className="flex items-center gap-1.5">
               <Shield size={11} className="text-emerald-500" />
-              <span>Pago seguro con Stripe · Cancela cuando quieras</span>
+              <span>Sin tarjeta · Sin compromiso</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock size={11} className="text-teal-500" />
@@ -413,7 +413,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="text-center mt-7">
             <p className="text-slate-400 text-sm mb-4">LocalSEOHub resuelve todos estos problemas en una sola plataforma.</p>
             <button
-              onClick={onSubscribeClick}
+              onClick={onLoginClick}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                 text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transition-all duration-300"
@@ -558,9 +558,9 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                 </div>
                 <div className="inline-flex items-center gap-2 mt-1 bg-emerald-500/15 border border-emerald-500/25 rounded-full px-4 py-1.5">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-400 text-xs font-bold">7 días completamente gratis</span>
+                  <span className="text-emerald-400 text-xs font-bold">7 días gratis · sin tarjeta</span>
                 </div>
-                <p className="text-slate-500 text-xs mt-2">Sin compromiso · Cancela cuando quieras</p>
+                <p className="text-slate-500 text-xs mt-2">Tarjeta solo si decides continuar al día 8</p>
               </div>
 
               {/* Features grid */}
@@ -577,19 +577,19 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
 
               {/* CTA */}
               <button
-                onClick={onSubscribeClick}
+                onClick={onLoginClick}
                 className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-sm transition-all duration-300
                   bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                   text-slate-950 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
               >
                 <Sparkles size={15} />
-                Empieza los 7 días gratis ahora
+                Crear cuenta gratis — sin tarjeta
               </button>
 
               {/* Risk reversal */}
               <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-500">
                 <Shield size={11} className="text-emerald-600" />
-                Pago seguro con Stripe · Cancela antes de 7 días y no se te cobra nada
+                Solo email y contraseña · Tarjeta solo si decides continuar
               </div>
             </div>
           </div>
@@ -627,17 +627,17 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
               Los primeros negocios que adoptan IA en su ciudad ganan una ventaja que es muy difícil de recuperar. Los 7 primeros días son completamente gratis — si no ves resultados, cancelas y no pagas nada.
             </p>
             <button
-              onClick={onSubscribeClick}
+              onClick={onLoginClick}
               className="inline-flex items-center gap-2.5 px-10 py-4 rounded-xl font-bold text-base transition-all duration-300
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                 text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
             >
               <Zap size={17} fill="currentColor" />
-              Empieza gratis — 7 días sin pagar
+              Empieza gratis — sin tarjeta
               <ArrowRight size={16} />
             </button>
             <p className="text-xs text-slate-600 mt-4 flex items-center justify-center gap-1.5">
-              <Shield size={10} /> Sin compromiso · Cancela en 1 clic · Soporte en español
+              <Shield size={10} /> Sin tarjeta · Sin compromiso · Cancela en 1 clic · Soporte en español
             </p>
           </div>
         </div>
