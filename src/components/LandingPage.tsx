@@ -288,7 +288,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="flex justify-center mb-7">
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
               <Flame size={12} className="text-orange-400" />
-              <span>Acceso anticipado — plazas limitadas para beta</span>
+              <span>Acceso anticipado — plazas limitadas</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
           </div>
@@ -507,7 +507,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             {[...Array(5)].map((_, i) => <Star key={i} size={16} className="text-amber-400 fill-amber-400" />)}
           </div>
           <h2 className="text-2xl font-bold text-white mb-1">Lo que dicen nuestros primeros usuarios</h2>
-          <p className="text-slate-500 text-sm">Resultados reales de la beta · Primeros accesos</p>
+          <p className="text-slate-500 text-sm">Resultados reales · Primeros accesos</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {TESTIMONIALS.map((item) => (
