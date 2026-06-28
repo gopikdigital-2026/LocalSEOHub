@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { useState, useEffect, useCallback, ReactNode, lazy, Suspense } from 'react';
 import {
   Search,
   MapPin,
@@ -63,6 +63,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSubscription } from './hooks/useSubscription';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { getAICache, setAICache } from './lib/aiCache';
 import { supabase } from './lib/supabase';
 import { useI18n } from './lib/i18n';
 import { trackPageView, trackViewContent } from './lib/pixel';
@@ -73,11 +75,11 @@ import LoginModal from './components/LoginModal';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './components/LegalModals';
 import { LogoIcon } from './components/Logo';
 import AdminDashboard from './components/AdminDashboard';
-import AIBusinessAdvisor from './components/AIBusinessAdvisor';
-import AiCampaignSandbox from './components/AiCampaignSandbox';
-import SchemaCodePanel from './components/SchemaCodePanel';
-import AiVoiceSimulator from './components/AiVoiceSimulator';
-import MapsScanner from './components/MapsScanner';
+const AIBusinessAdvisor = lazy(() => import('./components/AIBusinessAdvisor'));
+const AiCampaignSandbox = lazy(() => import('./components/AiCampaignSandbox'));
+const SchemaCodePanel   = lazy(() => import('./components/SchemaCodePanel'));
+const AiVoiceSimulator  = lazy(() => import('./components/AiVoiceSimulator'));
+const MapsScanner       = lazy(() => import('./components/MapsScanner'));
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -262,6 +264,13 @@ async function callGenerateSEO(
   tipo: Tipo,
   imageFile?: File | null,
 ): Promise<SEOResult> {
+  // Cache hit (skip for image-upload calls — each image is unique)
+  if (!imageFile) {
+    const cacheInputs = { product, city, platform, keywords, tipo };
+    const cached = getAICache<SEOResult>('seo', cacheInputs);
+    if (cached) return cached;
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
 
@@ -306,7 +315,9 @@ async function callGenerateSEO(
     if (!res.ok) {
       throw new Error(data?.error ?? 'Error desconocido del servidor');
     }
-    return data as SEOResult;
+    const result = data as SEOResult;
+    if (!imageFile) setAICache('seo', { product, city, platform, keywords, tipo }, result);
+    return result;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
       throw new Error('La solicitud tardó demasiado. Por favor, inténtalo de nuevo.');
@@ -324,6 +335,10 @@ async function callGenerateContentPlan(
   description: string,
   accessToken: string
 ): Promise<DayPlan[]> {
+  const cacheInputs = { product, city, platform, description };
+  const cached = getAICache<DayPlan[]>('content-plan', cacheInputs);
+  if (cached) return cached;
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
   try {
@@ -336,7 +351,9 @@ async function callGenerateContentPlan(
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error ?? 'Error desconocido del servidor');
-    return data.days as DayPlan[];
+    const days = data.days as DayPlan[];
+    setAICache('content-plan', cacheInputs, days);
+    return days;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError')
       throw new Error('La solicitud tardó demasiado. Inténtalo de nuevo.');
@@ -354,6 +371,10 @@ async function callScanDirectories(
   phone: string,
   accessToken: string
 ): Promise<Directorio[]> {
+  const cacheInputs = { product, city, businessName, address, phone };
+  const cached = getAICache<Directorio[]>('directories', cacheInputs);
+  if (cached) return cached;
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
   try {
@@ -366,7 +387,9 @@ async function callScanDirectories(
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error ?? 'Error desconocido del servidor');
-    return (data.directorios as Directorio[]).map((d) => ({ ...d, estado: 'Pendiente' as DirecEstado }));
+    const dirs = (data.directorios as Directorio[]).map((d) => ({ ...d, estado: 'Pendiente' as DirecEstado }));
+    setAICache('directories', cacheInputs, dirs);
+    return dirs;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError')
       throw new Error('La solicitud tardó demasiado. Inténtalo de nuevo.');
@@ -1162,7 +1185,7 @@ function CitationConquestPanel({ sector, city, businessName, starProduct }: {
   const [copied, setCopied] = useState<Record<string, boolean>>({});
   const [animate, setAnimate] = useState(false);
 
-  useEffect(() => { setTimeout(() => setAnimate(true), 80); }, []);
+  useEffect(() => { const t = setTimeout(() => setAnimate(true), 80); return () => clearTimeout(t); }, []);
 
   const generatePitch = async (src: CitationSource) => {
     if (pitches[src.id]) { setExpanded(e => ({ ...e, [src.id]: !e[src.id] })); return; }
@@ -2871,12 +2894,12 @@ function Dashboard({
   const { session } = useAuth();
   const { t } = useI18n();
   const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit' | 'ai-advisor' | 'voice-sim'>('ai-advisor');
-  const [product, setProduct] = useState('');
-  const [city, setCity] = useState('');
-  const [platform, setPlatform] = useState<Platform>('');
-  const [tipo, setTipo] = useState<Tipo>('producto');
-  const [keywords, setKeywords] = useState('');
-  const [competitor, setCompetitor] = useState('');
+  const [product, setProduct]     = useLocalStorage<string>('lsh_product', '');
+  const [city, setCity]           = useLocalStorage<string>('lsh_city', '');
+  const [platform, setPlatform]   = useLocalStorage<Platform>('lsh_platform', '');
+  const [tipo, setTipo]           = useLocalStorage<Tipo>('lsh_tipo', 'producto');
+  const [keywords, setKeywords]   = useLocalStorage<string>('lsh_keywords', '');
+  const [competitor, setCompetitor] = useLocalStorage<string>('lsh_competitor', '');
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -2893,9 +2916,9 @@ function Dashboard({
   const [planError, setPlanError] = useState('');
   const [directorios, setDirectorios] = useState<Directorio[] | null>(null);
   const [isScanningDirs, setIsScanningDirs] = useState(false);
-  const [napBusinessName, setNapBusinessName] = useState('');
-  const [napAddress, setNapAddress] = useState('');
-  const [napPhone, setNapPhone] = useState('');
+  const [napBusinessName, setNapBusinessName] = useLocalStorage<string>('lsh_nap_name', '');
+  const [napAddress, setNapAddress]           = useLocalStorage<string>('lsh_nap_address', '');
+  const [napPhone, setNapPhone]               = useLocalStorage<string>('lsh_nap_phone', '');
   const [expandedDirId, setExpandedDirId] = useState<string | null>(null);
   const [dirError, setDirError] = useState('');
 
@@ -3301,7 +3324,9 @@ function Dashboard({
           <SavedTexts previewMode={previewMode} />
         </div>
       ) : tab === 'maps-scanner' ? (
-        <MapsScanner previewMode={previewMode} />
+        <Suspense fallback={<div className="flex items-center justify-center py-24"><Loader2 size={22} className="animate-spin text-slate-600" /></div>}>
+          <MapsScanner previewMode={previewMode} />
+        </Suspense>
       ) : tab === 'ai-twin' ? (
         <AiDigitalTwin />
       ) : tab === 'radar' ? (
@@ -3309,9 +3334,13 @@ function Dashboard({
       ) : tab === 'geo-audit' ? (
         <GeoAuditPanel product={product} city={city} />
       ) : tab === 'ai-advisor' ? (
-        <AIBusinessAdvisor session={session!} previewMode={previewMode} />
+        <Suspense fallback={<div className="flex items-center justify-center py-24"><Loader2 size={22} className="animate-spin text-slate-600" /></div>}>
+          <AIBusinessAdvisor session={session!} previewMode={previewMode} />
+        </Suspense>
       ) : tab === 'voice-sim' ? (
-        <AiVoiceSimulator previewMode={previewMode} />
+        <Suspense fallback={<div className="flex items-center justify-center py-24"><Loader2 size={22} className="animate-spin text-slate-600" /></div>}>
+          <AiVoiceSimulator previewMode={previewMode} />
+        </Suspense>
       ) : (
       <>
       {/* Page header */}
@@ -3353,6 +3382,7 @@ function Dashboard({
                 <img
                   src={imagePreview}
                   alt="Vista previa"
+                  loading="lazy"
                   className="w-full h-40 object-cover"
                 />
                 <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
