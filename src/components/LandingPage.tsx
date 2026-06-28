@@ -127,12 +127,12 @@ const FEATURES = [
 
 const FAQS = [
   {
-    q: '¿Necesito poner mi tarjeta para el periodo de prueba?',
-    a: 'Sí, Stripe requiere una tarjeta para activar el trial, pero NO se te cobra nada durante los 7 días. Cancela antes de que terminen y no se te cobrará ni un euro.',
+    q: '¿Tengo que poner mi tarjeta para el periodo de prueba?',
+    a: 'Introduces tus datos de pago de forma segura a través de Stripe — el mismo sistema que usa Amazon o Airbnb. No se realiza ningún cargo hasta el día 8. Cancela antes con un solo clic y no pagas absolutamente nada. Sin sorpresas, sin letra pequeña.',
   },
   {
     q: '¿Cuándo se me cobrará?',
-    a: 'Solo después de los 7 días gratis. Si cancelas antes, no hay ningún cargo. Si decides continuar, se facturan 9,99 €/mes y puedes cancelar en cualquier momento.',
+    a: 'Solo a partir del día 8, si decides continuar. Recibirás un recordatorio por email antes de que termine el periodo de prueba. Si cancelas antes, no hay ningún cargo. Si decides quedarte, se facturan 9,99 €/mes y puedes cancelar en cualquier momento.',
   },
   {
     q: '¿Funciona para mi tipo de negocio?',
@@ -288,7 +288,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="flex justify-center mb-7">
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
               <Flame size={12} className="text-orange-400" />
-              <span>+2.400 negocios locales ya posicionados con IA</span>
+              <span>Acceso anticipado — plazas limitadas para beta</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
           </div>
@@ -317,9 +317,9 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           </div>
 
           {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-5">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-3">
             <button
-              onClick={onLoginClick}
+              onClick={onSubscribeClick}
               className="flex items-center gap-2.5 px-9 py-4 rounded-xl font-bold text-base transition-all duration-300
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                 text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0"
@@ -330,19 +330,27 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             </button>
           </div>
 
+          {/* Returning user link */}
+          <p className="text-center text-xs text-slate-600 mb-8">
+            ¿Ya tienes cuenta?{' '}
+            <button onClick={onLoginClick} className="text-emerald-500 hover:text-emerald-400 transition-colors font-medium">
+              Inicia sesión
+            </button>
+          </p>
+
           {/* Trust signals */}
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500 mb-14">
             <div className="flex items-center gap-1.5">
-              {[...Array(5)].map((_, i) => <Star key={i} size={11} className="text-amber-400 fill-amber-400" />)}
-              <span className="ml-0.5">4.9/5 · +340 reseñas</span>
-            </div>
-            <div className="flex items-center gap-1.5">
               <Shield size={11} className="text-emerald-500" />
-              <span>Sin compromiso · Cancela cuando quieras</span>
+              <span>Pago seguro con Stripe · Cancela cuando quieras</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock size={11} className="text-teal-500" />
               <span>Resultados en menos de 60 segundos</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Users size={11} className="text-emerald-400" />
+              <span>Acceso anticipado · Plazas limitadas</span>
             </div>
           </div>
 
@@ -356,9 +364,9 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
             {[
-              { value: '+2.400', label: 'Negocios activos', icon: <Users size={16} className="text-emerald-400" /> },
               { value: '16+', label: 'Plataformas compatibles', icon: <Globe size={16} className="text-teal-400" /> },
               { value: '< 60 seg', label: 'Para generar contenido', icon: <Clock size={16} className="text-blue-400" /> },
+              { value: '6', label: 'Herramientas de IA incluidas', icon: <Sparkles size={16} className="text-emerald-400" /> },
               { value: '4.2h', label: 'Ahorradas por semana', icon: <BarChart3 size={16} className="text-amber-400" /> },
             ].map((s) => (
               <div key={s.label} className="flex flex-col items-center gap-1.5">
@@ -405,7 +413,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="text-center mt-7">
             <p className="text-slate-400 text-sm mb-4">LocalSEOHub resuelve todos estos problemas en una sola plataforma.</p>
             <button
-              onClick={onLoginClick}
+              onClick={onSubscribeClick}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                 text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transition-all duration-300"
@@ -498,8 +506,8 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="flex items-center justify-center gap-0.5 mb-2">
             {[...Array(5)].map((_, i) => <Star key={i} size={16} className="text-amber-400 fill-amber-400" />)}
           </div>
-          <h2 className="text-2xl font-bold text-white mb-1">Lo que dicen nuestros clientes</h2>
-          <p className="text-slate-500 text-sm">+340 reseñas verificadas · Media 4.9/5</p>
+          <h2 className="text-2xl font-bold text-white mb-1">Lo que dicen nuestros primeros usuarios</h2>
+          <p className="text-slate-500 text-sm">Resultados reales de la beta · Primeros accesos</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {TESTIMONIALS.map((item) => (
@@ -610,17 +618,16 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="absolute inset-0 border border-emerald-500/20 rounded-2xl" />
           <div className="relative p-10 sm:p-14 text-center">
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
-              <Flame size={11} className="text-orange-400" /> Tu competencia ya usa IA
-            </div>
+              <Flame size={11} className="text-orange-400" /> Acceso anticipado · Precio de lanzamiento</div>
             <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4 leading-tight">
               Cada día sin LocalSEOHub es un día que<br className="hidden sm:block" />
               <span className="text-emerald-400"> tu competidor aparece antes que tú</span>
             </h2>
             <p className="text-slate-400 mb-8 max-w-lg mx-auto text-sm leading-relaxed">
-              Únete a +2.400 negocios locales que ya dominan su ciudad con IA. Los 7 primeros días son completamente gratis — sin tarjeta hasta que decidas continuar.
+              Los primeros negocios que adoptan IA en su ciudad ganan una ventaja que es muy difícil de recuperar. Los 7 primeros días son completamente gratis — si no ves resultados, cancelas y no pagas nada.
             </p>
             <button
-              onClick={onLoginClick}
+              onClick={onSubscribeClick}
               className="inline-flex items-center gap-2.5 px-10 py-4 rounded-xl font-bold text-base transition-all duration-300
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                 text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
