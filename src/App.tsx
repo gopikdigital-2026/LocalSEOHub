@@ -491,7 +491,7 @@ function ResultSection({
   return (
     <div
       className="rounded-2xl p-6 space-y-3 transition-all duration-200"
-      style={{ background: 'rgba(10,13,24,0.65)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'rgba(10,20,32,0.80)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
       <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-widest">
         <span className="text-emerald-400">{icon}</span>
@@ -508,7 +508,7 @@ function SubscriptionGate({ onSubscribe, isLoading }: { onSubscribe: () => void;
   return (
     <div
       className="rounded-2xl p-10 flex flex-col items-center text-center gap-6 min-h-[440px] justify-center relative overflow-hidden"
-      style={{ background: 'rgba(10,13,24,0.65)', border: '1px solid rgba(16,185,129,0.18)' }}
+      style={{ background: 'rgba(10,20,32,0.82)', border: '1px solid rgba(16,185,129,0.18)' }}
     >
       {/* Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-emerald-500/8 rounded-full blur-3xl pointer-events-none" />
@@ -3237,90 +3237,51 @@ function Dashboard({
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       {/* Tabs */}
       <div
-        className="flex gap-1.5 mb-8 rounded-2xl p-1.5 w-full overflow-x-auto"
+        className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-8 rounded-2xl p-2.5"
         style={{
-          background: 'rgba(15,18,30,0.7)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
+          background: 'rgba(10,18,28,0.82)',
+          backdropFilter: 'blur(20px) saturate(140%)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 4px 32px rgba(0,0,0,0.4)',
         }}
       >
-        <button
-          onClick={() => setTab('generator')}
-          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
-            ${tab === 'generator'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
-              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-          style={tab === 'generator' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
-        >
-          <Sparkles size={14} />
-          {t('tab_generator')}
-        </button>
-        <button
-          onClick={() => setTab('saved')}
-          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
-            ${tab === 'saved'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
-              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-          style={tab === 'saved' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
-        >
-          <History size={14} />
-          {t('tab_saved')}
-        </button>
-        <button
-          onClick={() => setTab('maps-scanner')}
-          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
-            ${tab === 'maps-scanner'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
-              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-          style={tab === 'maps-scanner' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
-        >
-          <MapPinned size={14} />
-          {t('tab_maps')}
-        </button>
-        <button
-          onClick={() => setTab('ai-twin')}
-          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
-            ${tab === 'ai-twin'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
-              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-          style={tab === 'ai-twin' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
-        >
-          <BrainCircuit size={14} />
-          {t('tab_twin')}
-        </button>
-        <button
-          onClick={() => setTab('radar')}
-          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
-            ${tab === 'radar'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
-              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-          style={tab === 'radar' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
-        >
-          <Radar size={14} />
-          {t('tab_radar')}
-        </button>
-        <button
-          onClick={() => setTab('geo-audit')}
-          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
-            ${tab === 'geo-audit'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
-              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-          style={tab === 'geo-audit' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
-        >
-          <ScanSearch size={14} />
-          {t('tab_geo')}
-        </button>
+        {[
+          { id: 'generator',    icon: <Sparkles size={14} />,    label: t('tab_generator') },
+          { id: 'saved',        icon: <History size={14} />,      label: t('tab_saved') },
+          { id: 'maps-scanner', icon: <MapPinned size={14} />,   label: t('tab_maps') },
+          { id: 'ai-twin',      icon: <BrainCircuit size={14} />, label: t('tab_twin') },
+          { id: 'radar',        icon: <Radar size={14} />,        label: t('tab_radar') },
+          { id: 'geo-audit',    icon: <ScanSearch size={14} />,   label: t('tab_geo') },
+        ].map(({ id, icon, label }) => (
+          <button
+            key={id}
+            onClick={() => setTab(id as typeof tab)}
+            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200
+              ${tab === id
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+            style={tab === id ? { boxShadow: '0 4px 14px rgba(16,185,129,0.35)' } : {
+              background: 'rgba(15,28,44,0.6)',
+              border: '1px solid rgba(255,255,255,0.05)',
+            }}
+          >
+            <span className={tab === id ? 'text-white' : 'text-slate-500'}>{icon}</span>
+            {label}
+          </button>
+        ))}
+        {/* AI Advisor — full-width on mobile (col-span-2) to match the hero tab look */}
         <button
           onClick={() => setTab('ai-advisor')}
-          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
+          className={`col-span-2 sm:col-span-1 flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200
             ${tab === 'ai-advisor'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
-              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
-          style={tab === 'ai-advisor' ? { boxShadow: '0 4px 16px rgba(16,185,129,0.3)' } : {}}
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+          style={tab === 'ai-advisor' ? { boxShadow: '0 4px 14px rgba(16,185,129,0.35)' } : {
+            background: 'rgba(15,28,44,0.6)',
+            border: '1px solid rgba(255,255,255,0.05)',
+          }}
         >
-          <BarChart2 size={14} />
+          <span className={tab === 'ai-advisor' ? 'text-white' : 'text-slate-500'}><BarChart2 size={14} /></span>
           AI Advisor
         </button>
       </div>
@@ -3361,8 +3322,8 @@ function Dashboard({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
         {/* LEFT — Form */}
         <div
-          className="rounded-2xl p-6 shadow-2xl shadow-black/40 space-y-5"
-          style={{ background: 'rgba(10,13,24,0.7)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.07)' }}
+          className="rounded-2xl p-6 shadow-2xl shadow-black/50 space-y-5"
+          style={{ background: 'rgba(10,20,32,0.82)', backdropFilter: 'blur(20px) saturate(140%)', border: '1px solid rgba(255,255,255,0.08)' }}
         >
           <div className="flex items-center gap-2 mb-1">
             <Search size={16} className="text-emerald-400" />
@@ -3642,7 +3603,7 @@ function Dashboard({
           ) : !hasGenerated ? (
             <div
               className="rounded-2xl border-dashed border border-white/8 p-12 flex flex-col items-center justify-center text-center gap-4 min-h-[400px]"
-              style={{ background: 'rgba(10,13,24,0.4)' }}
+              style={{ background: 'rgba(10,20,32,0.55)' }}
             >
               <div className="w-14 h-14 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center">
                 <Sparkles size={24} className="text-slate-600" />
@@ -4485,7 +4446,7 @@ export default function App() {
 
   if (!DEV_PREVIEW && (loading || (user && loadingSubscription))) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <svg className="animate-spin w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -4536,7 +4497,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen text-slate-100">
       {showSuccessBanner && <SuccessBanner onDismiss={() => setShowSuccessBanner(false)} />}
       {showAdminDenied && <AdminDeniedToast onDismiss={() => setShowAdminDenied(false)} />}
       {status === 'trialing' && trialDaysLeft !== null && showTrialBanner && (

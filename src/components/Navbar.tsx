@@ -24,7 +24,7 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
   return (
     <header
       className="sticky top-0 z-40 border-b border-white/5"
-      style={{ background: 'rgba(7,8,15,0.88)', backdropFilter: 'blur(20px) saturate(160%)' }}
+      style={{ background: 'rgba(5,10,18,0.90)', backdropFilter: 'blur(24px) saturate(160%)' }}
     >
       <div className="max-w-7xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
