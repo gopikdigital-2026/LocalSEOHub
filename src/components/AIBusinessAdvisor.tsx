@@ -551,7 +551,7 @@ function TipCard({ tip, index, visible, ctx, previewMode }: { tip: Tip; index: n
   const delays = ['delay-100', 'delay-200', 'delay-300'];
   return (
     <div
-      className={`rounded-2xl bg-slate-900/60 border border-slate-800/60 p-5 hover:border-slate-700/80
+      className={`glass-card rounded-2xl p-5 hover:border-slate-700/80
         transition-all duration-500 ${delays[index]} group
         ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
     >
@@ -716,7 +716,7 @@ export default function AIBusinessAdvisor({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
 
         {/* ── LEFT — Form ── */}
-        <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 shadow-xl space-y-5">
+        <div className="glass-card rounded-2xl p-6 shadow-xl space-y-5">
           <div className="flex items-center gap-2 mb-1">
             <Target size={15} className="text-emerald-400" />
             <h2 className="font-semibold text-slate-200 text-sm">Diagnóstico de Salud Comercial</h2>
@@ -863,7 +863,7 @@ export default function AIBusinessAdvisor({
           {result && !loading && (
             <>
               {/* DAFO Matrix */}
-              <div className={`rounded-2xl bg-slate-900/50 border border-slate-800/60 p-5 shadow-xl transition-all duration-500 ${resultsVisible ? 'opacity-100' : 'opacity-0'}`}>
+              <div className={`glass-card rounded-2xl p-5 shadow-xl transition-all duration-500 ${resultsVisible ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700/60 flex items-center justify-center">
                     <BarChart2 size={12} className="text-slate-400" />

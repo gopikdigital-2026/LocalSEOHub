@@ -293,7 +293,7 @@ function ReviewAuditTab({ reviewUrl, setReviewUrl, reviewStatus, reviewResult, r
   return (
     <div className="space-y-6">
       {/* URL Input */}
-      <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 shadow-xl space-y-4 max-w-3xl">
+      <div className="glass-card rounded-2xl p-6 shadow-xl space-y-4 max-w-3xl">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-base leading-none">💬</span>
           <h2 className="font-semibold text-slate-200 text-sm">AI Review Audit</h2>
@@ -338,10 +338,10 @@ function ReviewAuditTab({ reviewUrl, setReviewUrl, reviewStatus, reviewResult, r
       {/* Loading skeleton */}
       {reviewStatus === 'scanning' && (
         <div className="space-y-4 animate-pulse">
-          <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 h-32" />
+          <div className="glass-card rounded-2xl p-6 h-32" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 h-48" />
-            <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 h-48" />
+            <div className="glass-card rounded-2xl p-6 h-48" />
+            <div className="glass-card rounded-2xl p-6 h-48" />
           </div>
         </div>
       )}
@@ -350,7 +350,7 @@ function ReviewAuditTab({ reviewUrl, setReviewUrl, reviewStatus, reviewResult, r
       {reviewStatus === 'done' && reviewResult && (
         <div className="space-y-5">
           {/* Header row */}
-          <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-5 flex flex-wrap items-center gap-4">
+          <div className="glass-card rounded-2xl p-5 flex flex-wrap items-center gap-4">
             <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-0.5">Negocio analizado</p>
               <p className="text-white font-bold text-lg truncate">{reviewResult.businessName ?? 'Negocio'}</p>
@@ -371,7 +371,7 @@ function ReviewAuditTab({ reviewUrl, setReviewUrl, reviewStatus, reviewResult, r
 
           {/* Sentiment gauge */}
           {reviewResult.sentiment && (
-            <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-5 space-y-4">
+            <div className="rounded-2xl glass-card p-5 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm">😊</span>
                 <h3 className="text-sm font-semibold text-slate-200">Sentimiento General</h3>
@@ -402,7 +402,7 @@ function ReviewAuditTab({ reviewUrl, setReviewUrl, reviewStatus, reviewResult, r
           {/* Praised + Criticized grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {reviewResult.praised && reviewResult.praised.length > 0 && (
-              <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 overflow-hidden">
+              <div className="rounded-2xl glass-card overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-slate-800/60 flex items-center gap-2">
                   <ThumbsUp size={14} className="text-emerald-400" />
                   <h3 className="text-sm font-semibold text-slate-200">Lo más elogiado</h3>
@@ -430,7 +430,7 @@ function ReviewAuditTab({ reviewUrl, setReviewUrl, reviewStatus, reviewResult, r
             )}
 
             {reviewResult.criticized && reviewResult.criticized.length > 0 && (
-              <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 overflow-hidden">
+              <div className="rounded-2xl glass-card overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-slate-800/60 flex items-center gap-2">
                   <ThumbsDown size={14} className="text-red-400" />
                   <h3 className="text-sm font-semibold text-slate-200">Lo más criticado</h3>
@@ -761,7 +761,7 @@ export default function MapsScanner({ previewMode }: { previewMode: boolean }) {
       {/* Tab 1: Auditoría de Ficha */}
       {activeTab === 'audit' && (
         <>
-          <div className="rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 shadow-xl space-y-5 max-w-3xl">
+          <div className="rounded-2xl glass-card p-6 shadow-xl space-y-5 max-w-3xl">
             <div className="flex items-center gap-2 mb-1">
               <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#ea4335"/>
@@ -861,7 +861,7 @@ export default function MapsScanner({ previewMode }: { previewMode: boolean }) {
 
           {status !== 'idle' && (
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              <div className="lg:col-span-2 rounded-2xl bg-slate-900/70 border border-slate-800/60 p-6 flex flex-col items-center justify-center gap-4 shadow-xl">
+              <div className="lg:col-span-2 rounded-2xl glass-card p-6 flex flex-col items-center justify-center gap-4 shadow-xl">
                 {status === 'searching' ? (
                   <div className="flex flex-col items-center gap-4 py-8">
                     <svg className="animate-spin w-10 h-10 text-emerald-400" fill="none" viewBox="0 0 24 24">
@@ -893,7 +893,7 @@ export default function MapsScanner({ previewMode }: { previewMode: boolean }) {
                 )}
               </div>
 
-              <div className="lg:col-span-3 rounded-2xl bg-slate-900/70 border border-slate-800/60 shadow-xl overflow-hidden">
+              <div className="lg:col-span-3 rounded-2xl glass-card shadow-xl overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-800/60 flex items-center gap-2">
                   <CheckSquare size={15} className="text-emerald-400" />
                   <h3 className="text-sm font-semibold text-slate-200">Recomendaciones con texto optimizado</h3>

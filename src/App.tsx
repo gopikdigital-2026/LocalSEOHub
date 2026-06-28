@@ -490,8 +490,7 @@ function ResultSection({
 }) {
   return (
     <div
-      className="rounded-2xl p-6 space-y-3 transition-all duration-200"
-      style={{ background: 'rgba(10,20,32,0.80)', border: '1px solid rgba(255,255,255,0.08)' }}
+      className="glass-card rounded-2xl p-6 space-y-3 transition-all duration-200"
     >
       <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-widest">
         <span className="text-emerald-400">{icon}</span>
@@ -507,8 +506,8 @@ function ResultSection({
 function SubscriptionGate({ onSubscribe, isLoading }: { onSubscribe: () => void; isLoading: boolean }) {
   return (
     <div
-      className="rounded-2xl p-10 flex flex-col items-center text-center gap-6 min-h-[440px] justify-center relative overflow-hidden"
-      style={{ background: 'rgba(10,20,32,0.82)', border: '1px solid rgba(16,185,129,0.18)' }}
+      className="glass-card rounded-2xl p-10 flex flex-col items-center text-center gap-6 min-h-[440px] justify-center relative overflow-hidden"
+      style={{ borderColor: 'rgba(16,185,129,0.20)' }}
     >
       {/* Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-emerald-500/8 rounded-full blur-3xl pointer-events-none" />
@@ -649,7 +648,7 @@ function SavedTexts({ previewMode }: { previewMode: boolean }) {
           </svg>
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl bg-slate-900/40 border border-slate-800/40 border-dashed p-16 flex flex-col items-center justify-center text-center gap-4">
+        <div className="glass-card rounded-2xl border-dashed border border-white/8 p-16 flex flex-col items-center justify-center text-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center">
             <Bookmark size={24} className="text-slate-600" />
           </div>
@@ -3237,13 +3236,7 @@ function Dashboard({
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       {/* Tabs */}
       <div
-        className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-8 rounded-2xl p-2.5"
-        style={{
-          background: 'rgba(10,18,28,0.82)',
-          backdropFilter: 'blur(20px) saturate(140%)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          boxShadow: '0 4px 32px rgba(0,0,0,0.4)',
-        }}
+        className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-8 rounded-2xl p-2.5 glass-card"
       >
         {[
           { id: 'generator',    icon: <Sparkles size={14} />,    label: t('tab_generator') },
@@ -3322,8 +3315,7 @@ function Dashboard({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
         {/* LEFT — Form */}
         <div
-          className="rounded-2xl p-6 shadow-2xl shadow-black/50 space-y-5"
-          style={{ background: 'rgba(10,20,32,0.82)', backdropFilter: 'blur(20px) saturate(140%)', border: '1px solid rgba(255,255,255,0.08)' }}
+          className="glass-card rounded-2xl p-6 shadow-2xl space-y-5"
         >
           <div className="flex items-center gap-2 mb-1">
             <Search size={16} className="text-emerald-400" />
@@ -3602,8 +3594,7 @@ function Dashboard({
             <SubscriptionGate onSubscribe={onSubscribe} isLoading={checkoutLoading} />
           ) : !hasGenerated ? (
             <div
-              className="rounded-2xl border-dashed border border-white/8 p-12 flex flex-col items-center justify-center text-center gap-4 min-h-[400px]"
-              style={{ background: 'rgba(10,20,32,0.55)' }}
+              className="glass-card rounded-2xl border-dashed border border-white/8 p-12 flex flex-col items-center justify-center text-center gap-4 min-h-[400px]"
             >
               <div className="w-14 h-14 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center">
                 <Sparkles size={24} className="text-slate-600" />
@@ -4202,7 +4193,7 @@ function Dashboard({
 
 function PricingCard({ onSubscribe, isLoading }: { onSubscribe: () => void; isLoading: boolean }) {
   return (
-    <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 shadow-2xl shadow-emerald-500/10 relative overflow-hidden">
+    <div className="glass-card rounded-2xl border-2 border-emerald-500/40 p-8 shadow-2xl shadow-emerald-500/10 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 bg-emerald-500/8 rounded-full blur-3xl pointer-events-none" />
       <div className="relative text-center mb-6">
         <span className="inline-block bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold px-4 py-1 rounded-full mb-4">
@@ -4518,7 +4509,7 @@ export default function App() {
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => !cancelLoading && setShowCancelModal(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700/60 p-6 shadow-2xl">
+          <div className="relative w-full max-w-sm glass-card rounded-2xl p-6 shadow-2xl">
             {cancelDone ? (
               <div className="text-center py-4">
                 <div className="w-12 h-12 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
@@ -4591,7 +4582,7 @@ export default function App() {
               Cerrar
             </button>
             {isActive ? (
-              <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 text-center shadow-2xl">
+              <div className="glass-card rounded-2xl border-2 border-emerald-500/40 p-8 text-center shadow-2xl">
                 <div className="w-14 h-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
                   <Check size={24} className="text-emerald-400" />
                 </div>

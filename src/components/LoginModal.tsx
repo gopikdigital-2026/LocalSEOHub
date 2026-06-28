@@ -62,10 +62,10 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
       <div
         className="relative w-full max-w-md rounded-2xl overflow-hidden"
         style={{
-          background: 'rgba(10,13,24,0.92)',
-          backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)',
+          background: 'rgba(12,24,38,0.88)',
+          backdropFilter: 'blur(28px) saturate(160%)',
+          border: '1px solid rgba(255,255,255,0.10)',
+          boxShadow: '0 40px 80px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.09)',
         }}
       >
         {/* Top accent bar */}
