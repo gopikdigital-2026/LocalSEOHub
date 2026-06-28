@@ -1198,7 +1198,7 @@ function CitationConquestPanel({ sector, city, businessName, starProduct }: {
     navigator.clipboard.writeText(plain).then(() => {
       setCopied(c => ({ ...c, [id]: true }));
       setTimeout(() => setCopied(c => ({ ...c, [id]: false })), 2200);
-    });
+    }).catch(() => { /* clipboard unavailable or permission denied */ });
   };
 
   return (
@@ -1809,7 +1809,7 @@ function CompetitorRadar({ city }: { city: string }) {
   const { t } = useI18n();
   const [radarTab, setRadarTab] = useState<'local' | 'url'>('local');
   const [visibleAlerts, setVisibleAlerts] = useState(LIVE_ALERTS.slice(0, 3));
-  const [alertIdx, setAlertIdx] = useState(3);
+  const alertIdxRef = useRef(3);
   const [scanAngle, setScanAngle] = useState(0);
   const [selectedRival, setSelectedRival] = useState<Rival | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -1828,17 +1828,17 @@ function CompetitorRadar({ city }: { city: string }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Rolling alert feed
+  // Rolling alert feed — use ref for index to avoid recreating the interval every tick
   useEffect(() => {
     const timer = setInterval(() => {
       setVisibleAlerts((prev) => {
-        const next = LIVE_ALERTS[alertIdx % LIVE_ALERTS.length];
+        const next = LIVE_ALERTS[alertIdxRef.current % LIVE_ALERTS.length];
         return [next, ...prev].slice(0, 5);
       });
-      setAlertIdx((i) => i + 1);
+      alertIdxRef.current += 1;
     }, 4000);
     return () => clearInterval(timer);
-  }, [alertIdx]);
+  }, []);
 
   const openDrawer = async (rival: Rival) => {
     setSelectedRival(rival);
@@ -4373,8 +4373,8 @@ export default function App() {
       setShowSuccessBanner(true);
       window.history.replaceState({}, '', '/');
       // Poll until subscription is active (webhook may take a few seconds)
-      const interval = setInterval(async () => {
-        await refresh();
+      const interval = setInterval(() => {
+        refresh().catch(() => { /* silent retry — polling for webhook */ });
       }, 2500);
       setTimeout(() => clearInterval(interval), 20000);
     } else if (params.get('payment') === 'canceled') {
