@@ -2,33 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Mic, Play, Pause, Volume2, CheckCircle2, XCircle, AlertTriangle,
   Wifi, Smartphone, MapPin, Radio, Sparkles, Bot, Car, Signal,
-  BatteryFull, ChevronDown,
+  BatteryFull, ChevronDown, Loader2, Lock, Building2, Tag, AlertCircle,
 } from 'lucide-react';
-import { Lock } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
-// ── Data ────────────────────────────────────────────────────────────────────
+// ── Static data ───────────────────────────────────────────────────────────────
 
 const ASSISTANTS = [
-  {
-    id: 'siri', label: 'Siri',  sublabel: 'Apple',
-    neon: '#3b82f6', gradFrom: '#1d4ed8', gradTo: '#3b82f6',
-    icon: <Mic size={14} />,
-  },
-  {
-    id: 'gemini', label: 'Gemini Live', sublabel: 'Google',
-    neon: '#10b981', gradFrom: '#065f46', gradTo: '#10b981',
-    icon: <Sparkles size={14} />,
-  },
-  {
-    id: 'copilot', label: 'Copilot Car', sublabel: 'Microsoft',
-    neon: '#38bdf8', gradFrom: '#0369a1', gradTo: '#38bdf8',
-    icon: <Bot size={14} />,
-  },
-  {
-    id: 'alexa', label: 'Alexa', sublabel: 'Amazon',
-    neon: '#22d3ee', gradFrom: '#155e75', gradTo: '#22d3ee',
-    icon: <Radio size={14} />,
-  },
+  { id: 'siri',    label: 'Siri',         sublabel: 'Apple',     neon: '#3b82f6', gradFrom: '#1d4ed8', gradTo: '#3b82f6', icon: <Mic size={14} /> },
+  { id: 'gemini',  label: 'Gemini Live',  sublabel: 'Google',    neon: '#10b981', gradFrom: '#065f46', gradTo: '#10b981', icon: <Sparkles size={14} /> },
+  { id: 'copilot', label: 'Copilot Car',  sublabel: 'Microsoft', neon: '#38bdf8', gradFrom: '#0369a1', gradTo: '#38bdf8', icon: <Bot size={14} /> },
+  { id: 'alexa',   label: 'Alexa',        sublabel: 'Amazon',    neon: '#22d3ee', gradFrom: '#155e75', gradTo: '#22d3ee', icon: <Radio size={14} /> },
 ] as const;
 
 const SCENARIOS = [
@@ -39,25 +23,8 @@ const SCENARIOS = [
   '¿Dónde puedo desayunar algo saludable cerca de [Ciudad] antes de las 8?',
 ];
 
-const TRANSCRIPTIONS: Record<string, string> = {
-  siri:
-    'He encontrado varios restaurantes con terraza en tu zona. El mejor valorado es «El Jardín de los Sentidos», con 4.8 estrellas. Tiene terraza tranquila, ideal para reuniones de negocios y menú ejecutivo disponible. ¿Quieres que te lleve allí o prefieres ver más opciones?',
-  gemini:
-    'Basándome en las reseñas de Google Maps y tu ubicación actual, te recomiendo «Terraza Mediterránea» — puntuación 4.9, ambiente tranquilo confirmado por 312 usuarios, menú ejecutivo disponible a mediodía y por la tarde. ¿Quieres que reserve una mesa para esta noche?',
-  copilot:
-    'He encontrado tres opciones destacadas con terraza para cenas de negocios cerca de ti. La más valorada tiene parking propio, WiFi de alta velocidad y sala privada disponible. Puedo añadirlo a tu agenda de Outlook directamente. ¿Procedo con la reserva?',
-  alexa:
-    'Aquí tienes los mejores restaurantes con terraza para negocios cerca de tu ubicación. El número uno en Yelp y TripAdvisor es «La Pérgola». Aceptan reservas por voz, tienen acceso adaptado y su terraza es considerada la más tranquila de la zona. ¿Hago la reserva?',
-};
-
 type Status = 'pass' | 'warn' | 'fail';
-
-interface CheckItem {
-  label: string;
-  detail: string;
-  status: Status;
-  icon: React.ReactNode;
-}
+interface CheckItem { label: string; detail: string; status: Status; icon: React.ReactNode; }
 
 const CHECKLIST: Record<string, CheckItem[]> = {
   siri: [
@@ -75,7 +42,7 @@ const CHECKLIST: Record<string, CheckItem[]> = {
     { label: 'Reseñas recientes (30 días)',   detail: '7 reseñas en el último mes — señal suficiente para el algoritmo',         status: 'pass', icon: <CheckCircle2 size={12} /> },
   ],
   copilot: [
-    { label: 'Integración con Bing Places',  detail: 'Ficha no reclamada en Bing — Copilot Car no te encuentra en ruta',         status: 'fail', icon: <MapPin size={12} /> },
+    { label: 'Integración con Bing Places',   detail: 'Ficha no reclamada en Bing — Copilot Car no te encuentra en ruta',        status: 'fail', icon: <MapPin size={12} /> },
     { label: 'Atributos específicos activos', detail: 'WiFi y parking confirmados; falta sala privada para negocios',             status: 'warn', icon: <Wifi size={12} /> },
     { label: 'Velocidad móvil < 2 s',         detail: 'TTI en 2.8 s — demasiado lento para respuestas de Copilot en ruta',       status: 'warn', icon: <Smartphone size={12} /> },
     { label: 'Reservas / calendario online',  detail: 'Sin sistema de reservas — Copilot no puede gestionar la agenda del usuario', status: 'fail', icon: <CheckCircle2 size={12} /> },
@@ -90,61 +57,115 @@ const CHECKLIST: Record<string, CheckItem[]> = {
   ],
 };
 
-// ── Component ────────────────────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolean }) {
   const [assistantId, setAssistantId] = useState<'siri' | 'gemini' | 'copilot' | 'alexa'>('gemini');
-  const [scenarioIdx, setScenarioIdx] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [done, setDone] = useState(false);
-  const charRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [scenarioIdx, setScenarioIdx]   = useState(0);
+  const [businessName, setBusinessName] = useState('');
+  const [specialty, setSpecialty]       = useState('');
+  const [city, setCity]                 = useState('');
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isPlaying, setIsPlaying]       = useState(false);
+  const [done, setDone]                 = useState(false);
+  const [displayedText, setDisplayedText] = useState('');
+  const [voiceScript, setVoiceScript]   = useState<string | null>(null);
+  const [genError, setGenError]         = useState('');
+
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const assistant = ASSISTANTS.find(a => a.id === assistantId)!;
-  const fullText = TRANSCRIPTIONS[assistantId];
-  const checklist = CHECKLIST[assistantId];
-
-  // Reset when assistant changes
-  useEffect(() => {
-    setIsPlaying(false);
-    setTranscript('');
-    setDone(false);
-    charRef.current = 0;
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }, [assistantId]);
-
-  // Typing loop
-  useEffect(() => {
-    if (!isPlaying) return;
-    const run = () => {
-      if (charRef.current >= fullText.length) {
-        setDone(true);
-        setIsPlaying(false);
-        return;
-      }
-      charRef.current += 1;
-      setTranscript(fullText.slice(0, charRef.current));
-      timerRef.current = setTimeout(run, 16 + Math.random() * 14);
-    };
-    timerRef.current = setTimeout(run, 20);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [isPlaying, fullText]);
-
-  const togglePlay = () => {
-    if (previewMode) return;
-    if (isPlaying) { setIsPlaying(false); return; }
-    setTranscript('');
-    setDone(false);
-    charRef.current = 0;
-    setIsPlaying(true);
-  };
-
+  const checklist  = CHECKLIST[assistantId];
   const passCount  = checklist.filter(c => c.status === 'pass').length;
-  const totalCount = checklist.length;
   const scoreColor = passCount >= 4 ? '#10b981' : passCount >= 2 ? '#f59e0b' : '#ef4444';
 
-  // ── Wave bars ──────────────────────────────────────────────────────────────
+  // Stop speech when assistant changes or on unmount
+  useEffect(() => {
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+    setDone(false);
+    setDisplayedText('');
+    setVoiceScript(null);
+    setGenError('');
+  }, [assistantId]);
+
+  useEffect(() => () => { window.speechSynthesis.cancel(); }, []);
+
+  // ── Play / pause handler ────────────────────────────────────────────────────
+  const handlePlay = async () => {
+    if (previewMode || isGenerating) return;
+
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      return;
+    }
+
+    setGenError('');
+    setDisplayedText('');
+    setVoiceScript(null);
+    setDone(false);
+    setIsGenerating(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-voice-script', {
+        body: {
+          businessName: businessName.trim() || 'Mi negocio',
+          specialty:    specialty.trim()    || 'establecimiento local',
+          city:         city.trim()         || 'mi ciudad',
+          scenario:     SCENARIOS[scenarioIdx],
+          assistant:    assistant.label,
+        },
+      });
+
+      if (error) throw new Error(error.message);
+      const script: string = data?.voice_script ?? '';
+      if (!script) throw new Error('Respuesta vacía del servidor');
+
+      setVoiceScript(script);
+      setIsGenerating(false);
+
+      // ── Speech synthesis ──────────────────────────────────────────────────
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(script);
+      utt.lang  = 'es-ES';
+      utt.rate  = 0.92;
+      utt.pitch = 1.0;
+
+      // Pick best Spanish voice (prefer local service, non-compact)
+      const voices  = window.speechSynthesis.getVoices();
+      const esVoice = voices.find(v => v.lang.startsWith('es') && v.localService && !v.name.toLowerCase().includes('compact'))
+                   ?? voices.find(v => v.lang.startsWith('es'));
+      if (esVoice) utt.voice = esVoice;
+
+      // Progressive subtitle via word-boundary events
+      utt.addEventListener('boundary', (e) => {
+        if (e.name !== 'word') return;
+        const nextSpace = script.indexOf(' ', e.charIndex + 1);
+        setDisplayedText(script.slice(0, nextSpace === -1 ? script.length : nextSpace));
+      });
+
+      utt.addEventListener('end', () => {
+        setDisplayedText(script);
+        setIsPlaying(false);
+        setDone(true);
+      });
+
+      utt.addEventListener('error', () => setIsPlaying(false));
+
+      utteranceRef.current = utt;
+      setIsPlaying(true);
+      window.speechSynthesis.speak(utt);
+
+    } catch (err) {
+      setGenError(err instanceof Error ? err.message : 'Error desconocido');
+      setIsGenerating(false);
+      setIsPlaying(false);
+    }
+  };
+
+  // ── Wave bars ───────────────────────────────────────────────────────────────
   const WaveBars = () => (
     <div className="flex items-end justify-center gap-[3px]" style={{ height: 40 }}>
       {Array.from({ length: 26 }, (_, i) => {
@@ -155,16 +176,12 @@ export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolea
           <div
             key={i}
             style={{
-              width: 3,
-              height: base,
-              borderRadius: 2,
+              width: 3, height: base, borderRadius: 2,
               background: `linear-gradient(to top, ${assistant.neon}, rgba(16,185,129,0.5))`,
               boxShadow: isPlaying ? `0 0 6px ${assistant.neon}80` : 'none',
               transformOrigin: 'bottom',
               transition: 'box-shadow 0.3s',
-              animation: isPlaying
-                ? `voiceWave ${dur}s ${del}s ease-in-out infinite`
-                : 'none',
+              animation: isPlaying ? `voiceWave ${dur}s ${del}s ease-in-out infinite` : 'none',
             }}
           />
         );
@@ -172,24 +189,17 @@ export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolea
     </div>
   );
 
-  // ── Status helpers ─────────────────────────────────────────────────────────
   const StatusIcon = ({ s }: { s: Status }) =>
-    s === 'pass' ? <CheckCircle2 size={14} className="text-emerald-400 shrink-0" /> :
-    s === 'warn' ? <AlertTriangle size={14} className="text-amber-400 shrink-0" /> :
-                   <XCircle size={14} className="text-red-400 shrink-0" />;
+    s === 'pass' ? <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+  : s === 'warn' ? <AlertTriangle size={14} className="text-amber-400 shrink-0" />
+  :               <XCircle size={14} className="text-red-400 shrink-0" />;
 
-  const statusBg: Record<Status, string> = {
-    pass: 'rgba(16,185,129,0.10)',
-    warn: 'rgba(245,158,11,0.10)',
-    fail: 'rgba(239,68,68,0.10)',
-  };
-  const statusBorder: Record<Status, string> = {
-    pass: 'rgba(16,185,129,0.22)',
-    warn: 'rgba(245,158,11,0.22)',
-    fail: 'rgba(239,68,68,0.22)',
-  };
+  const statusBg:     Record<Status, string> = { pass: 'rgba(16,185,129,0.10)', warn: 'rgba(245,158,11,0.10)', fail: 'rgba(239,68,68,0.10)' };
+  const statusBorder: Record<Status, string> = { pass: 'rgba(16,185,129,0.22)', warn: 'rgba(245,158,11,0.22)', fail: 'rgba(239,68,68,0.22)' };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const btnLabel = isGenerating ? 'Generando script...' : isPlaying ? 'Detener' : done ? 'Repetir simulación' : 'Escuchar simulación de voz';
+
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -202,22 +212,43 @@ export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolea
         </div>
         <div>
           <h2 className="text-lg font-bold text-white leading-tight">AI Voice Simulator</h2>
-          <p className="text-slate-500 text-xs">Simula cómo los asistentes de voz recomiendan tu negocio</p>
+          <p className="text-slate-500 text-xs">Escucha en voz real cómo los asistentes recomiendan tu negocio</p>
         </div>
         {previewMode && (
           <div className="ml-auto flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1.5">
-            <Lock size={11} />
-            Plan Pro
+            <Lock size={11} /> Plan Pro
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
         {/* ── Left: Scenario Selector ──────────────────────────────────────── */}
         <div className="glass-card rounded-2xl p-5 space-y-5">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-widest">
-            <Mic size={12} className="text-slate-500" />
-            Configurar escenario
+          <p className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <Mic size={11} className="text-slate-600" /> Configurar escenario
+          </p>
+
+          {/* Business data */}
+          <div className="space-y-3">
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Datos de tu negocio</p>
+            {[
+              { icon: <Building2 size={11}/>, ph: 'Nombre del negocio (ej. Cafetería Sol)', val: businessName, set: setBusinessName },
+              { icon: <Tag size={11}/>,       ph: 'Especialidad (ej. Cafetería, Fontanero)', val: specialty,    set: setSpecialty },
+              { icon: <MapPin size={11}/>,    ph: 'Ciudad (ej. Toledo, Madrid)', val: city, set: setCity },
+            ].map(({ icon, ph, val, set }, i) => (
+              <div key={i} className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">{icon}</span>
+                <input
+                  type="text"
+                  placeholder={ph}
+                  value={val}
+                  onChange={e => set(e.target.value)}
+                  className="w-full rounded-xl pl-7 pr-3 py-2.5 text-xs text-slate-200 outline-none placeholder-slate-600 transition-colors focus:border-emerald-500/40"
+                  style={{ background: 'rgba(3,8,16,0.85)', border: '1px solid rgba(255,255,255,0.08)' }}
+                />
+              </div>
+            ))}
           </div>
 
           {/* Assistant picker */}
@@ -245,7 +276,7 @@ export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolea
             </div>
           </div>
 
-          {/* Scenario dropdown */}
+          {/* Scenario */}
           <div>
             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Escenario de búsqueda</p>
             <div className="relative">
@@ -261,27 +292,17 @@ export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolea
               </select>
               <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
             </div>
-          </div>
-
-          {/* Query preview */}
-          <div>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Consulta conversacional</p>
             <div
-              className="rounded-xl px-3.5 py-3 text-xs text-slate-300 leading-relaxed italic"
-              style={{ background: 'rgba(3,8,16,0.85)', border: '1px solid rgba(255,255,255,0.07)' }}
+              className="mt-2 rounded-xl px-3.5 py-2.5 text-xs text-slate-400 leading-relaxed italic"
+              style={{ background: 'rgba(3,8,16,0.70)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               "{SCENARIOS[scenarioIdx]}"
             </div>
           </div>
-
-          <p className="text-[10px] text-slate-600 leading-relaxed">
-            El simulador genera una respuesta realista de cada asistente basada en los atributos de tu ficha de negocio.
-          </p>
         </div>
 
         {/* ── Center: CarPlay Mockup ────────────────────────────────────────── */}
         <div className="flex flex-col items-center justify-center">
-          {/* Car dashboard frame */}
           <div
             className="w-full max-w-sm rounded-3xl p-3 relative"
             style={{
@@ -290,66 +311,45 @@ export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolea
               boxShadow: '0 32px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08)',
             }}
           >
-            {/* Side vents decoration */}
-            <div className="absolute -left-1 top-1/2 -translate-y-1/2 flex flex-col gap-1">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="w-1 h-3 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
-              ))}
-            </div>
-            <div className="absolute -right-1 top-1/2 -translate-y-1/2 flex flex-col gap-1">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="w-1 h-3 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
-              ))}
-            </div>
+            {/* Side vent decorations */}
+            {['-left-1', '-right-1'].map(side => (
+              <div key={side} className={`absolute ${side} top-1/2 -translate-y-1/2 flex flex-col gap-1`}>
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="w-1 h-3 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                ))}
+              </div>
+            ))}
 
             {/* Screen */}
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{
-                background: 'linear-gradient(180deg, #060810 0%, #04060c 100%)',
-                border: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(180deg,#060810 0%,#04060c 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
               {/* Status bar */}
               <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <span className="text-[10px] font-semibold text-slate-400">9:41</span>
-                <div className="flex items-center gap-1.5">
-                  <Car size={10} className="text-slate-600" />
-                  <span className="text-[9px] text-slate-600 font-medium">CarPlay</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Signal size={10} className="text-slate-400" />
-                  <BatteryFull size={10} className="text-slate-400" />
-                </div>
+                <div className="flex items-center gap-1"><Car size={10} className="text-slate-600" /><span className="text-[9px] text-slate-600 font-medium">CarPlay</span></div>
+                <div className="flex items-center gap-1.5"><Signal size={10} className="text-slate-400" /><BatteryFull size={10} className="text-slate-400" /></div>
               </div>
 
-              {/* Main display */}
-              <div className="px-5 py-5 space-y-5">
+              <div className="px-5 py-5 space-y-4">
                 {/* Assistant badge */}
                 <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: `linear-gradient(135deg, ${assistant.gradFrom}, ${assistant.gradTo})`, boxShadow: `0 4px 14px ${assistant.neon}40` }}
-                  >
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg,${assistant.gradFrom},${assistant.gradTo})`, boxShadow: `0 4px 14px ${assistant.neon}40` }}>
                     <span className="text-white">{assistant.icon}</span>
                   </div>
                   <div>
                     <p className="text-[11px] font-bold text-white leading-tight">{assistant.label}</p>
                     <p className="text-[9px]" style={{ color: assistant.neon }}>
-                      {isPlaying ? '● Escuchando...' : done ? '✓ Listo' : 'En espera'}
+                      {isGenerating ? '● Generando...' : isPlaying ? '● Hablando...' : done ? '✓ Listo' : 'En espera'}
                     </p>
                   </div>
-                  {isPlaying && (
-                    <div className="ml-auto">
-                      <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: assistant.neon, boxShadow: `0 0 8px ${assistant.neon}` }} />
-                    </div>
+                  {(isPlaying || isGenerating) && (
+                    <div className="ml-auto w-2 h-2 rounded-full animate-pulse" style={{ background: assistant.neon, boxShadow: `0 0 8px ${assistant.neon}` }} />
                   )}
                 </div>
 
-                {/* Wave visualization */}
+                {/* Wave */}
                 <div
-                  className="rounded-xl py-4 px-3 flex items-center justify-center"
-                  style={{ background: 'rgba(3,8,16,0.70)', border: `1px solid ${isPlaying ? assistant.neon + '30' : 'rgba(255,255,255,0.05)'}`, transition: 'border-color 0.4s' }}
+                  className="rounded-xl py-4 px-3 flex items-center justify-center transition-all duration-300"
+                  style={{ background: 'rgba(3,8,16,0.70)', border: `1px solid ${isPlaying ? assistant.neon + '35' : 'rgba(255,255,255,0.05)'}` }}
                 >
                   <WaveBars />
                 </div>
@@ -357,47 +357,54 @@ export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolea
                 {/* Play button */}
                 <div className="flex justify-center">
                   <button
-                    onClick={togglePlay}
-                    disabled={previewMode}
-                    className="flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 disabled:opacity-40"
+                    onClick={handlePlay}
+                    disabled={previewMode || isGenerating}
+                    className="flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 disabled:opacity-50"
                     style={{
                       background: isPlaying
                         ? 'rgba(3,8,16,0.85)'
-                        : `linear-gradient(135deg, ${assistant.gradFrom}, ${assistant.gradTo})`,
+                        : `linear-gradient(135deg,${assistant.gradFrom},${assistant.gradTo})`,
                       border: isPlaying ? `1.5px solid ${assistant.neon}60` : 'none',
                       color: '#fff',
                       boxShadow: isPlaying ? `0 0 20px ${assistant.neon}20` : `0 6px 22px ${assistant.neon}45`,
                     }}
                   >
-                    {isPlaying ? <Pause size={15} /> : <Play size={15} fill="currentColor" />}
-                    {isPlaying ? 'Detener' : done ? 'Repetir simulación' : 'Escuchar simulación'}
+                    {isGenerating ? <Loader2 size={15} className="animate-spin" /> : isPlaying ? <Pause size={15} /> : <Play size={15} fill="currentColor" />}
+                    {btnLabel}
                   </button>
                 </div>
 
+                {/* Error */}
+                {genError && (
+                  <div className="flex items-start gap-2 rounded-xl px-3 py-2.5 text-[11px] text-red-300" style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)' }}>
+                    <AlertCircle size={12} className="mt-0.5 shrink-0 text-red-400" />
+                    {genError}
+                  </div>
+                )}
+
                 {/* Transcript */}
-                <div
-                  className="rounded-xl p-3.5 min-h-[72px]"
-                  style={{ background: 'rgba(3,8,16,0.85)', border: '1px solid rgba(255,255,255,0.07)' }}
-                >
+                <div className="rounded-xl p-3.5 min-h-[80px]" style={{ background: 'rgba(3,8,16,0.85)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <p className="text-[9px] font-semibold uppercase tracking-widest mb-2" style={{ color: assistant.neon }}>
                     Transcripción en tiempo real
                   </p>
-                  {transcript ? (
+                  {displayedText ? (
                     <p className="text-[11px] text-slate-300 leading-relaxed">
-                      {transcript}
+                      {displayedText}
                       {isPlaying && <span className="inline-block w-0.5 h-3 ml-0.5 align-middle animate-pulse" style={{ background: assistant.neon }} />}
                     </p>
                   ) : (
-                    <p className="text-[11px] text-slate-600 italic">Pulsa reproducir para iniciar la simulación...</p>
+                    <p className="text-[11px] text-slate-600 italic">
+                      {isGenerating ? 'Generando respuesta de IA...' : 'Completa los datos y pulsa reproducir para escuchar la simulación.'}
+                    </p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Dashboard bottom bar */}
+            {/* Bottom bar */}
             <div className="flex justify-center gap-2 pt-2.5 pb-1">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-1 rounded-full" style={{ width: i === 1 ? 24 : 8, background: i === 1 ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.07)' }} />
+              {[8, 24, 8].map((w, i) => (
+                <div key={i} className="h-1 rounded-full" style={{ width: w, background: i === 1 ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.07)' }} />
               ))}
             </div>
           </div>
@@ -406,32 +413,21 @@ export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolea
         {/* ── Right: Voice SEO Checklist ───────────────────────────────────── */}
         <div className="glass-card rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-widest">
-              <CheckCircle2 size={12} className="text-slate-500" />
-              Voice SEO Checklist
-            </div>
-            <div
-              className="text-xs font-bold px-2.5 py-1 rounded-full"
-              style={{ background: `${scoreColor}18`, color: scoreColor, border: `1px solid ${scoreColor}30` }}
-            >
-              {passCount}/{totalCount}
-            </div>
+            <p className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <CheckCircle2 size={11} className="text-slate-600" /> Voice SEO Checklist
+            </p>
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: `${scoreColor}18`, color: scoreColor, border: `1px solid ${scoreColor}30` }}>
+              {passCount}/{checklist.length}
+            </span>
           </div>
 
-          <div
-            className="rounded-xl px-3 py-2 text-[10px] text-slate-400 leading-relaxed"
-            style={{ background: 'rgba(3,8,16,0.70)', border: '1px solid rgba(255,255,255,0.06)' }}
-          >
+          <div className="rounded-xl px-3 py-2 text-[10px] text-slate-400 leading-relaxed" style={{ background: 'rgba(3,8,16,0.70)', border: '1px solid rgba(255,255,255,0.06)' }}>
             Optimización para <span className="font-semibold" style={{ color: assistant.neon }}>{assistant.label}</span> — factores que determinan si te recomienda
           </div>
 
           <div className="space-y-2.5">
             {checklist.map((item, i) => (
-              <div
-                key={i}
-                className="rounded-xl p-3 flex gap-3 items-start transition-all duration-200"
-                style={{ background: statusBg[item.status], border: `1px solid ${statusBorder[item.status]}` }}
-              >
+              <div key={i} className="rounded-xl p-3 flex gap-3 items-start" style={{ background: statusBg[item.status], border: `1px solid ${statusBorder[item.status]}` }}>
                 <StatusIcon s={item.status} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-slate-200 leading-tight mb-0.5">{item.label}</p>
@@ -442,20 +438,17 @@ export default function AiVoiceSimulator({ previewMode }: { previewMode?: boolea
             ))}
           </div>
 
-          {/* Score bar */}
           <div>
             <div className="flex justify-between text-[10px] text-slate-500 mb-1.5">
               <span>Compatibilidad con voz</span>
-              <span style={{ color: scoreColor }} className="font-semibold">{Math.round((passCount / totalCount) * 100)}%</span>
+              <span className="font-semibold" style={{ color: scoreColor }}>{Math.round((passCount / checklist.length) * 100)}%</span>
             </div>
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(3,8,16,0.80)' }}>
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${(passCount / totalCount) * 100}%`, background: `linear-gradient(to right, ${scoreColor}80, ${scoreColor})` }}
-              />
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${(passCount / checklist.length) * 100}%`, background: `linear-gradient(to right,${scoreColor}80,${scoreColor})` }} />
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
