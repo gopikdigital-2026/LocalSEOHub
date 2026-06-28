@@ -490,8 +490,8 @@ function ResultSection({
 }) {
   return (
     <div
-      className="rounded-xl p-5 space-y-3"
-      style={{ background: 'rgba(10,13,24,0.6)', border: '1px solid rgba(255,255,255,0.07)' }}
+      className="rounded-2xl p-6 space-y-3 transition-all duration-200"
+      style={{ background: 'rgba(10,13,24,0.65)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
       <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-widest">
         <span className="text-emerald-400">{icon}</span>
@@ -507,28 +507,44 @@ function ResultSection({
 function SubscriptionGate({ onSubscribe, isLoading }: { onSubscribe: () => void; isLoading: boolean }) {
   return (
     <div
-      className="rounded-2xl border border-emerald-500/20 p-8 flex flex-col items-center text-center gap-5 min-h-[400px] justify-center"
-      style={{ background: 'rgba(10,13,24,0.6)' }}
+      className="rounded-2xl p-10 flex flex-col items-center text-center gap-6 min-h-[440px] justify-center relative overflow-hidden"
+      style={{ background: 'rgba(10,13,24,0.65)', border: '1px solid rgba(16,185,129,0.18)' }}
     >
-      <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-        <Lock size={22} className="text-emerald-400" />
+      {/* Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-emerald-500/8 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/25 flex items-center justify-center shadow-xl shadow-emerald-500/10">
+        <Sparkles size={26} className="text-emerald-400" />
       </div>
-      <div>
-        <p className="text-white font-semibold text-base mb-1">Activa tu suscripción para generar</p>
-        <p className="text-slate-400 text-sm max-w-xs mx-auto">
-          Accede a generaciones ilimitadas de contenido SEO local por solo 9.99€/mes.
+
+      <div className="relative">
+        <p className="text-white font-extrabold text-lg mb-2 tracking-tight">Activa el Plan Pro para generar</p>
+        <p className="text-slate-400 text-sm max-w-xs mx-auto leading-relaxed">
+          Acceso completo a las 6 herramientas de IA por solo <span className="text-white font-semibold">9.99€/mes</span>. Cancela cuando quieras.
         </p>
       </div>
+
+      <div className="relative grid grid-cols-2 gap-2 w-full max-w-xs">
+        {['SEO Local ilimitado', 'Escáner Google Maps', 'Radar de competencia', 'GEO Audit IA'].map((f) => (
+          <div key={f} className="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2">
+            <Check size={10} className="text-emerald-400 shrink-0" />
+            {f}
+          </div>
+        ))}
+      </div>
+
       <button
         onClick={onSubscribe}
         disabled={isLoading}
-        className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300
+        className="relative flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-sm transition-all duration-300
           bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-          text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
+          text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0
+          disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
       >
-        {isLoading ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-        {isLoading ? 'Redirigiendo a pago...' : 'Suscribirse al Plan Pro — 9.99€/mes'}
+        {isLoading ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} fill="currentColor" />}
+        {isLoading ? 'Redirigiendo...' : 'Activar Plan Pro — 9.99€/mes'}
       </button>
+      <p className="relative text-xs text-slate-600">7 días gratis · Sin tarjeta hasta decidir</p>
     </div>
   );
 }
@@ -3221,12 +3237,18 @@ function Dashboard({
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       {/* Tabs */}
       <div
-        className="grid grid-cols-2 sm:flex gap-1.5 mb-8 rounded-2xl p-1.5 w-full sm:w-fit overflow-x-auto"
-        style={{ background: 'rgba(15,18,30,0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.06)' }}
+        className="flex gap-1.5 mb-8 rounded-2xl p-1.5 w-full overflow-x-auto"
+        style={{
+          background: 'rgba(15,18,30,0.7)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
       >
         <button
           onClick={() => setTab('generator')}
-          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
             ${tab === 'generator'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
@@ -3237,7 +3259,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('saved')}
-          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
             ${tab === 'saved'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
@@ -3248,7 +3270,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('maps-scanner')}
-          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
             ${tab === 'maps-scanner'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
@@ -3259,7 +3281,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('ai-twin')}
-          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
             ${tab === 'ai-twin'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
@@ -3270,7 +3292,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('radar')}
-          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
             ${tab === 'radar'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
@@ -3281,7 +3303,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('geo-audit')}
-          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
             ${tab === 'geo-audit'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
@@ -3292,7 +3314,7 @@ function Dashboard({
         </button>
         <button
           onClick={() => setTab('ai-advisor')}
-          className={`flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200
+          className={`flex items-center justify-start gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0
             ${tab === 'ai-advisor'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
@@ -3421,9 +3443,9 @@ function Dashboard({
               value={product}
               onChange={(e) => setProduct(e.target.value)}
               placeholder="ej. Camisetas personalizadas, Reparación de móviles..."
-              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
+              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3.5 text-sm text-slate-100
                 placeholder-slate-600 outline-none transition-all duration-200
-                focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 focus:bg-slate-950/80"
+                focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 focus:bg-slate-950/80"
             />
           </div>
 
@@ -3438,9 +3460,9 @@ function Dashboard({
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="ej. Toledo, Madrid, Barcelona..."
-              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
+              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3.5 text-sm text-slate-100
                 placeholder-slate-600 outline-none transition-all duration-200
-                focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 focus:bg-slate-950/80"
+                focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 focus:bg-slate-950/80"
             />
           </div>
 
@@ -3478,9 +3500,9 @@ function Dashboard({
               <select
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value as Platform)}
-                className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
-                  outline-none appearance-none cursor-pointer transition-all duration-200
-                  focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 focus:bg-slate-950/80"
+              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3.5 text-sm text-slate-100
+                placeholder-slate-600 outline-none appearance-none cursor-pointer transition-all duration-200
+                focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 focus:bg-slate-950/80"
               >
                 {tipo === 'producto' ? (
                   <>
@@ -3536,9 +3558,9 @@ function Dashboard({
               onChange={(e) => setKeywords(e.target.value)}
               placeholder="ej. hecho a mano, envío 24h, regalo, económico, alta calidad..."
               rows={3}
-              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
+              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3.5 text-sm text-slate-100
                 placeholder-slate-600 outline-none resize-none transition-all duration-200
-                focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 focus:bg-slate-950/80"
+                focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 focus:bg-slate-950/80"
             />
           </div>
 
@@ -3554,9 +3576,9 @@ function Dashboard({
               value={competitor}
               onChange={(e) => setCompetitor(e.target.value)}
               placeholder="ej. TiendaRopaBarcelona, https://etsy.com/shop/micompetidor..."
-              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-100
+              className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-4 py-3.5 text-sm text-slate-100
                 placeholder-slate-600 outline-none transition-all duration-200
-                focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/15 focus:bg-slate-950/80"
+                focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15 focus:bg-slate-950/80"
             />
             <p className="text-xs text-slate-600">
               La IA detectara oportunidades de posicionamiento frente a ese competidor.
@@ -3567,7 +3589,7 @@ function Dashboard({
           <button
             onClick={handleGenerate}
             disabled={(!canGenerate && isActive) || (isActive && isLoading)}
-            className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-xl font-semibold text-sm
+            className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-full font-semibold text-sm
               transition-all duration-300 shadow-lg
               ${!isActive
                 ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/25 hover:shadow-amber-500/40 hover:-translate-y-0.5 active:translate-y-0'
@@ -4219,28 +4241,36 @@ function Dashboard({
 
 function PricingCard({ onSubscribe, isLoading }: { onSubscribe: () => void; isLoading: boolean }) {
   return (
-    <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 shadow-2xl shadow-emerald-500/10">
-      <div className="text-center mb-6">
+    <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 shadow-2xl shadow-emerald-500/10 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 bg-emerald-500/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative text-center mb-6">
         <span className="inline-block bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold px-4 py-1 rounded-full mb-4">
-          MAS POPULAR
+          TODO INCLUIDO
         </span>
         <p className="text-slate-400 text-sm font-medium mb-2">Plan Pro</p>
         <div className="flex items-end justify-center gap-1">
-          <span className="text-5xl font-bold text-white">9.99</span>
+          <span className="text-5xl font-bold text-white tracking-tight">9.99</span>
           <span className="text-slate-400 mb-2">€/mes</span>
         </div>
-        <p className="text-slate-500 text-xs mt-1">Cancela cuando quieras</p>
+        <p className="text-slate-500 text-xs mt-1">7 días gratis · Cancela cuando quieras</p>
       </div>
-      <ul className="space-y-3 mb-8">
+      <ul className="space-y-2.5 mb-8 relative">
         {[
-          'Generaciones ilimitadas',
-          'Optimización para 4 plataformas',
-          'SEO localizado en toda España',
-          'Títulos, descripciones y tags',
-          'Soporte prioritario por email',
+          'Generador SEO ilimitado (16+ plataformas)',
+          'Escáner de Ficha Google Maps + Score',
+          'AI Digital Twin — mapa de calor local',
+          'Radar de Competencia en tiempo real',
+          'GEO Audit — visibilidad en ChatGPT y Gemini',
+          'Plan de contenido semanal con IA',
+          'Escáner de directorios locales',
+          'Exportación a CSV (Shopify, Etsy)',
+          'Análisis de imagen con alt text automático',
+          'Actualizaciones del motor IA incluidas',
         ].map((f) => (
-          <li key={f} className="flex items-center gap-3 text-sm text-slate-300">
-            <Check size={13} className="text-emerald-400 shrink-0" />
+          <li key={f} className="flex items-center gap-3 text-xs text-slate-300">
+            <div className="w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <Check size={9} className="text-emerald-400" />
+            </div>
             {f}
           </li>
         ))}
@@ -4248,13 +4278,13 @@ function PricingCard({ onSubscribe, isLoading }: { onSubscribe: () => void; isLo
       <button
         onClick={onSubscribe}
         disabled={isLoading}
-        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm
+        className="relative w-full flex items-center justify-center gap-2 py-3.5 rounded-full font-bold text-sm
           bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-          text-slate-950 shadow-lg shadow-emerald-500/20 transition-all duration-300 hover:-translate-y-0.5
+          text-slate-950 shadow-lg shadow-emerald-500/25 transition-all duration-300 hover:-translate-y-0.5
           disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
       >
-        {isLoading ? <Loader2 size={15} className="animate-spin" /> : null}
-        {isLoading ? 'Redirigiendo a pago...' : 'Suscribirse al Plan Pro'}
+        {isLoading ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} fill="currentColor" />}
+        {isLoading ? 'Redirigiendo a pago...' : 'Activar Plan Pro'}
       </button>
     </div>
   );
@@ -4308,22 +4338,28 @@ function AdminDeniedToast({ onDismiss }: { onDismiss: () => void }) {
 // ─── Trial banner ─────────────────────────────────────────────────────────────
 
 function TrialBanner({ daysLeft, onDismiss }: { daysLeft: number; onDismiss: () => void }) {
+  const urgent = daysLeft <= 1;
   return (
-    <div className="bg-slate-900 border-b border-emerald-500/20">
+    <div className={`border-b ${urgent ? 'border-amber-500/25 bg-amber-500/8' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
       <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-wide">Prueba gratuita</span>
+          <div className={`flex items-center gap-1.5 shrink-0`}>
+            <div className={`w-2 h-2 rounded-full animate-pulse ${urgent ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+            <span className={`text-xs font-bold uppercase tracking-wider ${urgent ? 'text-amber-400' : 'text-emerald-400'}`}>
+              {urgent ? 'Prueba terminando' : 'Prueba gratuita'}
+            </span>
           </div>
           <span className="text-slate-300 text-xs">
-            {daysLeft <= 1
+            {urgent
               ? 'Tu prueba termina hoy — activa el plan para no perder el acceso'
-              : `Te quedan ${daysLeft} días de prueba gratuita`}
+              : `Te quedan ${daysLeft} días de prueba gratuita · Activa el plan cuando quieras`}
           </span>
         </div>
-        <button onClick={onDismiss} className="text-slate-600 hover:text-slate-400 text-xs shrink-0">
-          Cerrar
+        <button
+          onClick={onDismiss}
+          className="text-slate-600 hover:text-slate-400 text-xs transition-colors shrink-0"
+        >
+          ✕
         </button>
       </div>
     </div>
