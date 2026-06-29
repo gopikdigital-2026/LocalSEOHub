@@ -16,10 +16,25 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const clearMessages = () => { setError(''); setSuccess(''); };
+
+  const handleGoogleAuth = async () => {
+    setGoogleLoading(true);
+    clearMessages();
+    const { error: authError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (authError) {
+      setError(translateError(authError.message));
+      setGoogleLoading(false);
+    }
+    // On success the browser redirects to Google — no further action needed here
+  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,6 +110,35 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
             </button>
           </div>
 
+          {/* Google OAuth button */}
+          <button
+            type="button"
+            onClick={handleGoogleAuth}
+            disabled={googleLoading || loading}
+            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-sm font-semibold
+              bg-white/5 border border-white/10 text-slate-200
+              hover:bg-white/10 hover:border-white/20 hover:text-white
+              transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+              active:scale-[0.99] mb-5"
+          >
+            {googleLoading ? (
+              <svg className="animate-spin w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <GoogleIcon />
+            )}
+            {googleLoading ? 'Redirigiendo...' : 'Continuar con Google'}
+          </button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-px bg-slate-800/80" />
+            <span className="text-xs text-slate-600 font-medium">o con email</span>
+            <div className="flex-1 h-px bg-slate-800/80" />
+          </div>
+
           {/* Email form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             <div className="space-y-1.5">
@@ -154,7 +198,7 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || googleLoading}
               className="w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all duration-300
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                 text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40
@@ -183,6 +227,17 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
         </div>
       </div>
     </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    </svg>
   );
 }
 
