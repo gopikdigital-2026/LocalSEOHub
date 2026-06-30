@@ -2897,7 +2897,7 @@ function Dashboard({
 }) {
   const { session } = useAuth();
   const { t } = useI18n();
-  const [tab, setTab] = useState<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit' | 'ai-advisor' | 'voice-sim'>('ai-advisor');
+  const [tab, setTab] = useLocalStorage<'generator' | 'saved' | 'maps-scanner' | 'ai-twin' | 'radar' | 'geo-audit' | 'ai-advisor' | 'voice-sim'>('lsh_active_tab', 'generator');
   const [product, setProduct]     = useLocalStorage<string>('lsh_product', '');
   const [city, setCity]           = useLocalStorage<string>('lsh_city', '');
   const [platform, setPlatform]   = useLocalStorage<Platform>('lsh_platform', '');
