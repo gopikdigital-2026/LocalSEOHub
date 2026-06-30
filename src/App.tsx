@@ -3806,7 +3806,9 @@ function Dashboard({
                     </span>
                     <div className="flex-1 h-px bg-slate-800/60" />
                   </div>
-                  <SchemaCodePanel schema={result.schema} />
+                  <Suspense fallback={<div className="h-24 rounded-xl bg-slate-800/40 animate-pulse" />}>
+                    <SchemaCodePanel schema={result.schema} />
+                  </Suspense>
                 </div>
               )}
 
