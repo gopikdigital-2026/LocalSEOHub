@@ -7,16 +7,30 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const SYSTEM_PROMPT = `Eres un Community Manager experto en viralidad local. Crea un plan de contenidos de 7 días para redes sociales. Cada día debe ser una idea de post o vídeo corto enfocada en atraer clientes de la ciudad especificada hacia el producto. Devuelve un formato JSON limpio con un array de 7 objetos, cada uno con las claves: day, platform, hook, content_idea y local_hashtags.
+const SYSTEM_PROMPT = `Eres un Community Manager experto en viralidad local. Crea un plan de contenidos de 7 días para redes sociales. Cada día debe ser una idea de post o vídeo corto enfocada en atraer clientes de la ciudad especificada hacia el producto.
 
-Importante: para cada día genera EXACTAMENTE:
-- "day": número del día (1-7)
-- "platform": "Instagram" o "TikTok", alternando entre ambas empezando por Instagram
-- "hooks": array de 3 ganchos distintos (primera frase del post/vídeo, directa y con urgencia o curiosidad)
-- "content_ideas": array de 3 ideas de contenido distintas (2-3 frases cada una, específicas para el producto y la ciudad)
-- "local_hashtags": array de 3-5 hashtags locales relevantes (sin espacios, combinando ciudad y producto)
+Devuelve SIEMPRE un JSON con esta estructura exacta (la clave raíz DEBE llamarse "days"):
+{
+  "days": [
+    {
+      "day": 1,
+      "platform": "Instagram",
+      "hooks": ["gancho 1", "gancho 2", "gancho 3"],
+      "content_ideas": ["idea 1", "idea 2", "idea 3"],
+      "local_hashtags": ["#hashtag1", "#hashtag2", "#hashtag3"]
+    },
+    ... (7 objetos en total)
+  ]
+}
 
-Usa el nombre de la ciudad de forma natural. Basa las ideas en la descripción SEO del producto si se proporciona. Sé creativo, variado y accionable.`;
+Reglas:
+- "day": número del 1 al 7
+- "platform": alterna "Instagram" y "TikTok" empezando por Instagram
+- "hooks": array de exactamente 3 ganchos (primera frase del post/vídeo, directa y con urgencia o curiosidad)
+- "content_ideas": array de exactamente 3 ideas de contenido (2-3 frases, específicas para el producto y la ciudad)
+- "local_hashtags": array de 3-5 hashtags locales (sin espacios, combinando ciudad y producto)
+
+Usa el nombre de la ciudad de forma natural. Sé creativo, variado y accionable.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -145,10 +159,17 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!Array.isArray(parsed.days) || parsed.days.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "La IA no devolvió el calendario esperado", raw }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      // Fallback: look for any array property in the response
+      const anyArray = Object.values(parsed).find(
+        (v): v is unknown[] => Array.isArray(v) && v.length > 0
       );
+      if (!anyArray) {
+        return new Response(
+          JSON.stringify({ error: "La IA no devolvió el calendario esperado", raw }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      parsed.days = anyArray;
     }
 
     const toArray = (val: unknown): string[] => {
