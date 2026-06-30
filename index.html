@@ -4,8 +4,9 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="google" content="notranslate" />
     <title>LocalSEOHub — SEO Local con IA para tu negocio</title>
-    <meta name="google" content="notranslate" /> content="Genera títulos, descripciones y etiquetas SEO optimizados para tu ciudad en segundos. Posiciona tu negocio local en Etsy, Shopify, Amazon o Google Business." />
+    <meta name="description" content="Genera títulos, descripciones y etiquetas SEO optimizados para tu ciudad en segundos. Posiciona tu negocio local en Etsy, Shopify, Amazon o Google Business." />
     <meta property="og:title" content="LocalSEOHub — SEO Local con IA" />
     <meta property="og:description" content="Genera contenido SEO local optimizado con inteligencia artificial. Atrae más clientes en tu ciudad." />
     <meta property="og:image" content="https://bolt.new/static/og_default.png" />
@@ -16,6 +17,36 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+      html, body { margin: 0; padding: 0; background: #020617; }
+      #app-loading {
+        position: fixed; inset: 0; background: #020617;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        font-family: Inter, system-ui, sans-serif; gap: 16px; z-index: 9999;
+      }
+      #app-loading .logo {
+        display: flex; align-items: center; gap: 10px;
+      }
+      #app-loading .logo-icon {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: linear-gradient(135deg, #10b981, #14b8a6);
+        display: flex; align-items: center; justify-content: center;
+      }
+      #app-loading .logo-icon svg { width: 20px; height: 20px; fill: #020617; }
+      #app-loading .logo-text {
+        font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.3px;
+      }
+      #app-loading .logo-text span { color: #10b981; }
+      #app-loading .spinner {
+        width: 24px; height: 24px; border: 2px solid #1e293b;
+        border-top-color: #10b981; border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      #app-loading .tagline {
+        font-size: 13px; color: #475569; font-weight: 500;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
     <!-- Meta Pixel -->
     <script>
       !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -34,7 +65,20 @@
       <img height="1" width="1" style="display:none"
         src="https://www.facebook.com/tr?id=7692881320839391&ev=PageView&noscript=1" />
     </noscript>
-    <div id="root"></div>
+    <div id="root">
+      <div id="app-loading">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <span class="logo-text">LocalSEO<span>Hub</span></span>
+        </div>
+        <div class="spinner"></div>
+        <span class="tagline">SEO local con IA</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
