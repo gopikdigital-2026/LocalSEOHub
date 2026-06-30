@@ -1,7 +1,7 @@
 import {
   MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles,
   Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
-  Clock, Users, Award, BarChart3, Flame, BadgeCheck,
+  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown,
 } from 'lucide-react';
 import { useState } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
@@ -51,9 +51,9 @@ const TOOLS = [
     badge: 'Twin',
     title: 'AI Digital Twin',
     desc: 'Mapa de calor interactivo que muestra en qué zonas de tu ciudad dominas y dónde te bloquean los competidores.',
-    color: 'from-violet-500/10 to-purple-500/5',
-    border: 'border-violet-500/20',
-    iconBg: 'bg-violet-500/10 border-violet-500/20 text-violet-400',
+    color: 'from-cyan-500/10 to-sky-500/5',
+    border: 'border-cyan-500/20',
+    iconBg: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
   },
   {
     icon: <Target size={22} />,
@@ -92,6 +92,8 @@ const TESTIMONIALS = [
     text: 'En 2 semanas tripliqué las visitas a mi tienda de Etsy. No sabía nada de SEO y ahora aparezco en la primera página.',
     stars: 5,
     metric: '+312% visitas en Etsy',
+    initials: 'MG',
+    color: 'from-emerald-500 to-teal-600',
   },
   {
     name: 'Carlos R.',
@@ -100,6 +102,8 @@ const TESTIMONIALS = [
     text: 'Mi Google Business está ahora en el top 3 de Valencia. El escáner de Maps me dijo exactamente qué estaba fallando.',
     stars: 5,
     metric: 'Top 3 Google Maps Valencia',
+    initials: 'CR',
+    color: 'from-blue-500 to-cyan-600',
   },
   {
     name: 'Laura M.',
@@ -108,21 +112,9 @@ const TESTIMONIALS = [
     text: 'Genera en 30 segundos lo que antes me costaba 2 horas escribir. Vale cada euro y el soporte es inmediato.',
     stars: 5,
     metric: '2h ahorradas por producto',
+    initials: 'LM',
+    color: 'from-rose-500 to-pink-600',
   },
-];
-
-const FEATURES = [
-  'Generador SEO ilimitado (16+ plataformas)',
-  'Escáner de Ficha Google Maps + Score',
-  'AI Digital Twin con mapa de calor local',
-  'Radar de Competencia en tiempo real',
-  'GEO Audit — visibilidad en ChatGPT y Gemini',
-  'Plan de contenido semanal con IA',
-  'Escáner de directorios locales',
-  'Exportación a CSV (Shopify, Etsy)',
-  'Análisis de imagen con alt text automático',
-  'Actualizaciones del motor IA incluidas',
-  'Soporte prioritario por email',
 ];
 
 const FAQS = [
@@ -148,6 +140,15 @@ const FAQS = [
   },
 ];
 
+const COMPARISON_ROWS = [
+  { label: 'Coste mensual', bad: '800–2.000€/mes', good: '9,99€/mes' },
+  { label: 'Tiempo en resultados', bad: '3–6 meses', good: 'Desde el primer día' },
+  { label: 'Conocimiento técnico', bad: 'Necesitas aprender SEO', good: 'Cero conocimientos' },
+  { label: 'Visibilidad en IA (ChatGPT)', bad: 'Sin seguimiento', good: 'GEO Audit incluido' },
+  { label: 'Radar de competencia', bad: 'Herramientas de pago aparte', good: 'Incluido en el plan' },
+  { label: 'Exportación a Etsy / Shopify', bad: 'Manual y lento', good: 'CSV en 1 clic' },
+];
+
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -158,7 +159,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
       <div className="flex items-center justify-between gap-4 px-5 py-4">
         <span className="text-sm font-semibold text-white">{q}</span>
         <div className={`shrink-0 w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
-          <ChevronRight size={11} className="text-slate-400 rotate-90" />
+          <ChevronDown size={11} className="text-slate-400" />
         </div>
       </div>
       {open && (
@@ -170,15 +171,11 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-// Fake product mockup — shows the app UI without a real screenshot
 function ProductMockup() {
   return (
     <div className="relative mx-auto max-w-3xl">
-      {/* Glow behind */}
       <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-teal-500/5 rounded-3xl blur-2xl scale-95" />
-      {/* Browser chrome */}
       <div className="relative rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
-        {/* Browser bar */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800 bg-slate-950">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/60" />
@@ -186,12 +183,10 @@ function ProductMockup() {
             <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
           </div>
           <div className="flex-1 mx-3 h-5 rounded-md bg-slate-800 flex items-center px-3">
-            <span className="text-slate-600 text-[10px]">localseohub.app</span>
+            <span className="text-slate-600 text-[10px]">localseohub.io</span>
           </div>
         </div>
-        {/* App UI mockup */}
         <div className="p-5 grid grid-cols-2 gap-4">
-          {/* Left: inputs */}
           <div className="space-y-3">
             <div className="space-y-1.5">
               <div className="h-2 w-20 rounded bg-slate-700/60" />
@@ -218,7 +213,6 @@ function ProductMockup() {
               <span className="text-slate-950 text-xs font-bold">Generar SEO</span>
             </button>
           </div>
-          {/* Right: result */}
           <div className="space-y-2.5">
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1.5">
               <div className="flex items-center gap-1.5">
@@ -250,7 +244,6 @@ function ProductMockup() {
             </div>
           </div>
         </div>
-        {/* Bottom status bar */}
         <div className="flex items-center gap-3 px-5 py-2.5 border-t border-slate-800 bg-slate-950/60">
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -268,7 +261,7 @@ function ProductMockup() {
   );
 }
 
-export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
+export default function LandingPage({ onLoginClick }: LandingPageProps) {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
 
   return (
@@ -276,7 +269,6 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        {/* Background glows */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-emerald-500/6 rounded-full blur-3xl" />
           <div className="absolute top-32 left-1/4 w-72 h-72 bg-teal-500/4 rounded-full blur-3xl" />
@@ -288,7 +280,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="flex justify-center mb-7">
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
               <Flame size={12} className="text-orange-400" />
-              <span>Acceso anticipado — plazas limitadas</span>
+              <span>Acceso anticipado — 7 días gratis, sin tarjeta</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
           </div>
@@ -301,6 +293,11 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             </span>{' '}
             lo que vendes
           </h1>
+
+          <p className="text-center text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-7 leading-relaxed">
+            LocalSEOHub genera en 30 segundos el SEO que una agencia te cobraría 500€.
+            Sin conocimientos técnicos. Sin tarjeta de crédito. Con resultados desde el primer día.
+          </p>
 
           {/* Sub bullets */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-9 text-sm text-slate-300">
@@ -316,7 +313,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             ))}
           </div>
 
-          {/* CTA buttons */}
+          {/* CTA */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-3">
             <button
               onClick={onLoginClick}
@@ -330,7 +327,6 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             </button>
           </div>
 
-          {/* Returning user link */}
           <p className="text-center text-xs text-slate-600 mb-8">
             ¿Ya tienes cuenta?{' '}
             <button onClick={onLoginClick} className="text-emerald-500 hover:text-emerald-400 transition-colors font-medium">
@@ -354,7 +350,6 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             </div>
           </div>
 
-          {/* Product mockup */}
           <ProductMockup />
         </div>
       </section>
@@ -484,7 +479,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
               desc: 'Copia con un clic. Exporta a CSV para Shopify o Etsy. Aplica y empieza a aparecer antes que tu competencia.',
               icon: <TrendingUp size={20} />,
             },
-          ].map((step, i) => (
+          ].map((step) => (
             <div key={step.num} className="relative flex flex-col items-center text-center p-6">
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 z-10 transition-transform duration-300 hover:scale-110
                 ${step.highlight
@@ -500,6 +495,52 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
+      {/* ── COMPARISON TABLE ───────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-12">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1 mb-3">
+            <BarChart3 size={11} /> Comparativa real
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Por qué no necesitas una agencia SEO</h2>
+          <p className="text-slate-400 text-sm max-w-lg mx-auto">Obtén los mismos resultados — o mejores — por menos del 1% de lo que te cobraría una agencia.</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-800/80 overflow-hidden">
+          {/* Header */}
+          <div className="grid grid-cols-3 text-xs font-bold uppercase tracking-wider">
+            <div className="px-5 py-3.5 text-slate-500 bg-slate-900/80 border-b border-slate-800" />
+            <div className="px-5 py-3.5 text-slate-500 bg-slate-900/80 border-b border-slate-800 border-l border-slate-800 text-center">Agencia / Hacerlo solo</div>
+            <div className="px-5 py-3.5 text-emerald-400 bg-emerald-500/8 border-b border-emerald-500/20 border-l border-emerald-500/20 text-center">LocalSEOHub</div>
+          </div>
+          {COMPARISON_ROWS.map((row, i) => (
+            <div key={row.label} className={`grid grid-cols-3 text-sm ${i < COMPARISON_ROWS.length - 1 ? 'border-b border-slate-800/60' : ''}`}>
+              <div className="px-5 py-4 text-slate-300 font-medium bg-slate-900/40">{row.label}</div>
+              <div className="px-5 py-4 text-slate-500 bg-slate-900/20 border-l border-slate-800 flex items-center gap-2">
+                <X size={13} className="text-red-500/70 shrink-0" />
+                {row.bad}
+              </div>
+              <div className="px-5 py-4 text-emerald-400 bg-emerald-500/5 border-l border-emerald-500/15 flex items-center gap-2 font-medium">
+                <Check size={13} className="text-emerald-500 shrink-0" />
+                {row.good}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <button
+            onClick={onLoginClick}
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm transition-all duration-300
+              bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+              text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5"
+          >
+            <Zap size={15} fill="currentColor" />
+            Pruébalo gratis 7 días — sin tarjeta
+            <ArrowRight size={15} />
+          </button>
+        </div>
+      </section>
+
       {/* ── TESTIMONIALS ───────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 py-10">
         <div className="text-center mb-8">
@@ -512,87 +553,28 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {TESTIMONIALS.map((item) => (
             <div key={item.name} className="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-5 flex flex-col gap-3 hover:border-emerald-500/20 transition-colors">
-              <div className="flex items-center gap-0.5">
-                {[...Array(item.stars)].map((_, i) => (
-                  <Star key={i} size={12} className="text-amber-400 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-slate-300 text-sm leading-relaxed flex-1">"{item.text}"</p>
-              <div className="pt-2 border-t border-slate-800 flex items-end justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${item.color} flex items-center justify-center shrink-0`}>
+                  <span className="text-white text-xs font-bold">{item.initials}</span>
+                </div>
                 <div>
                   <p className="text-white text-xs font-bold">{item.name}</p>
                   <p className="text-slate-500 text-[11px]">{item.business} · {item.city}</p>
                 </div>
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2.5 py-1">
+                <div className="ml-auto flex items-center gap-0.5">
+                  {[...Array(item.stars)].map((_, i) => (
+                    <Star key={i} size={10} className="text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed flex-1">"{item.text}"</p>
+              <div className="pt-2 border-t border-slate-800">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-1.5 inline-flex">
                   <p className="text-emerald-400 text-[10px] font-bold">{item.metric}</p>
                 </div>
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ── PRICING ────────────────────────────────────────────────── */}
-      <section id="pricing" className="max-w-5xl mx-auto px-6 py-16">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Precio simple y transparente</h2>
-          <p className="text-slate-400 text-sm">Acceso completo a todas las herramientas. Sin sorpresas. Sin letra pequeña.</p>
-        </div>
-
-        <div className="flex justify-center">
-          <div className="relative w-full max-w-lg">
-            {/* Popular badge */}
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-              <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 text-xs font-bold px-5 py-1.5 rounded-full shadow-lg shadow-emerald-500/30">
-                TODO INCLUIDO
-              </span>
-            </div>
-
-            <div className="rounded-2xl bg-slate-900 border-2 border-emerald-500/40 p-8 shadow-2xl shadow-emerald-500/8">
-              {/* Price */}
-              <div className="text-center mb-6">
-                <p className="text-slate-400 text-sm font-medium mb-3">Plan Pro</p>
-                <div className="flex items-end justify-center gap-1 mb-2">
-                  <span className="text-6xl font-bold text-white tracking-tight">9.99</span>
-                  <span className="text-slate-400 mb-2.5 text-lg">€/mes</span>
-                </div>
-                <div className="inline-flex items-center gap-2 mt-1 bg-emerald-500/15 border border-emerald-500/25 rounded-full px-4 py-1.5">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-400 text-xs font-bold">7 días gratis · sin tarjeta</span>
-                </div>
-                <p className="text-slate-500 text-xs mt-2">Tarjeta solo si decides continuar al día 8</p>
-              </div>
-
-              {/* Features grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-8">
-                {FEATURES.map((feature) => (
-                  <div key={feature} className="flex items-start gap-2.5 text-xs text-slate-300">
-                    <div className="w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                      <Check size={9} className="text-emerald-400" />
-                    </div>
-                    {feature}
-                  </div>
-                ))}
-              </div>
-
-              {/* CTA */}
-              <button
-                onClick={onLoginClick}
-                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-sm transition-all duration-300
-                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                  text-slate-950 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
-              >
-                <Sparkles size={15} />
-                Crear cuenta gratis — sin tarjeta
-              </button>
-
-              {/* Risk reversal */}
-              <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-500">
-                <Shield size={11} className="text-emerald-600" />
-                Solo email y contraseña · Tarjeta solo si decides continuar
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -618,24 +600,45 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="absolute inset-0 border border-emerald-500/20 rounded-2xl" />
           <div className="relative p-10 sm:p-14 text-center">
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
-              <Flame size={11} className="text-orange-400" /> Acceso anticipado · Precio de lanzamiento</div>
+              <Flame size={11} className="text-orange-400" /> Acceso anticipado · Precio de lanzamiento
+            </div>
             <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4 leading-tight">
               Cada día sin LocalSEOHub es un día que<br className="hidden sm:block" />
               <span className="text-emerald-400"> tu competidor aparece antes que tú</span>
             </h2>
-            <p className="text-slate-400 mb-8 max-w-lg mx-auto text-sm leading-relaxed">
-              Los primeros negocios que adoptan IA en su ciudad ganan una ventaja que es muy difícil de recuperar. Los 7 primeros días son completamente gratis — si no ves resultados, cancelas y no pagas nada.
+            <p className="text-slate-400 mb-6 max-w-lg mx-auto text-sm leading-relaxed">
+              Los primeros negocios que adoptan IA en su ciudad ganan una ventaja que es muy difícil de recuperar.
+              Los 7 primeros días son completamente gratis — si no ves resultados, cancelas y no pagas nada.
             </p>
-            <button
-              onClick={onLoginClick}
-              className="inline-flex items-center gap-2.5 px-10 py-4 rounded-xl font-bold text-base transition-all duration-300
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
-            >
-              <Zap size={17} fill="currentColor" />
-              Empieza gratis — sin tarjeta
-              <ArrowRight size={16} />
-            </button>
+
+            {/* Price anchor */}
+            <div className="inline-flex items-center gap-3 bg-slate-900/60 border border-slate-700/60 rounded-2xl px-6 py-3 mb-7">
+              <div className="text-left">
+                <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wide">Plan Pro</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-white">9,99€</span>
+                  <span className="text-slate-400 text-sm">/mes</span>
+                </div>
+              </div>
+              <div className="w-px h-10 bg-slate-700" />
+              <div className="text-left">
+                <p className="text-emerald-400 text-xs font-bold">7 días gratis</p>
+                <p className="text-slate-500 text-[11px]">Sin tarjeta hasta el día 8</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={onLoginClick}
+                className="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-xl font-bold text-base transition-all duration-300
+                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                  text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
+              >
+                <Zap size={17} fill="currentColor" />
+                Empieza gratis — sin tarjeta
+                <ArrowRight size={16} />
+              </button>
+            </div>
             <p className="text-xs text-slate-600 mt-4 flex items-center justify-center gap-1.5">
               <Shield size={10} /> Sin tarjeta · Sin compromiso · Cancela en 1 clic · Soporte en español
             </p>
