@@ -68,13 +68,13 @@ import { getAICache, setAICache } from './lib/aiCache';
 import { supabase } from './lib/supabase';
 import { useI18n } from './lib/i18n';
 import { trackPageView, trackViewContent } from './lib/pixel';
-import UrlAnalysisPanel from './components/UrlAnalysisPanel';
-import Navbar from './components/Navbar';
-import LandingPage from './components/LandingPage';
-import LoginModal from './components/LoginModal';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './components/LegalModals';
 import { LogoIcon } from './components/Logo';
-import AdminDashboard from './components/AdminDashboard';
+const UrlAnalysisPanel  = lazy(() => import('./components/UrlAnalysisPanel'));
+const Navbar            = lazy(() => import('./components/Navbar'));
+const LandingPage       = lazy(() => import('./components/LandingPage'));
+const LoginModal        = lazy(() => import('./components/LoginModal'));
+const AdminDashboard    = lazy(() => import('./components/AdminDashboard'));
 const AIBusinessAdvisor = lazy(() => import('./components/AIBusinessAdvisor'));
 const AiCampaignSandbox = lazy(() => import('./components/AiCampaignSandbox'));
 const SchemaCodePanel   = lazy(() => import('./components/SchemaCodePanel'));
@@ -1946,7 +1946,9 @@ function CompetitorRadar({ city }: { city: string }) {
       </div>
 
       {radarTab === 'url' ? (
-        <UrlAnalysisPanel city={city} />
+        <Suspense fallback={<div className="flex items-center justify-center py-24"><Loader2 size={22} className="animate-spin text-slate-600" /></div>}>
+          <UrlAnalysisPanel city={city} />
+        </Suspense>
       ) : (
         <>
           {/* Top row: Mini-radar + Alert feed */}
@@ -4502,30 +4504,34 @@ export default function App() {
     if (window.location.pathname === '/admin') {
       return (
         <div className="min-h-screen bg-slate-950">
-          <LoginModal onClose={() => window.history.back()} initialMode="login" />
+          <Suspense fallback={null}>
+            <LoginModal onClose={() => window.history.back()} initialMode="login" />
+          </Suspense>
         </div>
       );
     }
     return (
-      <div className="min-h-screen bg-slate-950">
-        <Navbar
-          user={null}
-          onLoginClick={() => setShowLogin(true)}
-          onPricingClick={handlePricingClick}
-          onSignOut={signOut}
-        />
-        <LandingPage
-          onLoginClick={() => { setLoginInitialMode('signup'); setShowLogin(true); }}
-          onSubscribeClick={() => {
-            try { sessionStorage.setItem('postAuthAction', 'checkout'); } catch { /* sandboxed */ }
-            setPendingCheckout(true);
-            setLoginInitialMode('signup');
-            setShowLogin(true);
-          }}
-          scrollToPricing={showPricing}
-        />
-        {showLogin && <LoginModal onClose={() => setShowLogin(false)} initialMode={loginInitialMode} />}
-      </div>
+      <Suspense fallback={null}>
+        <div className="min-h-screen bg-slate-950">
+          <Navbar
+            user={null}
+            onLoginClick={() => setShowLogin(true)}
+            onPricingClick={handlePricingClick}
+            onSignOut={signOut}
+          />
+          <LandingPage
+            onLoginClick={() => { setLoginInitialMode('signup'); setShowLogin(true); }}
+            onSubscribeClick={() => {
+              try { sessionStorage.setItem('postAuthAction', 'checkout'); } catch { /* sandboxed */ }
+              setPendingCheckout(true);
+              setLoginInitialMode('signup');
+              setShowLogin(true);
+            }}
+            scrollToPricing={showPricing}
+          />
+          {showLogin && <LoginModal onClose={() => setShowLogin(false)} initialMode={loginInitialMode} />}
+        </div>
+      </Suspense>
     );
   }
 
@@ -4535,7 +4541,7 @@ export default function App() {
       window.location.replace('/?admin_denied=1');
       return null;
     }
-    return <AdminDashboard session={session} />;
+    return <Suspense fallback={null}><AdminDashboard session={session} /></Suspense>;
   }
 
   return (
