@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Mail, Lock, Zap, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { X, Mail, Lock, Zap, Eye, EyeOff, AlertCircle, ExternalLink, Copy, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { trackCompleteRegistration } from '../lib/pixel';
 
@@ -10,6 +10,15 @@ interface LoginModalProps {
 
 type Mode = 'login' | 'signup';
 
+function isInAppBrowser(): boolean {
+  const ua = navigator.userAgent || '';
+  return /Instagram|FBAN|FBAV|FB_IAB|FB4A|FBIOS|Twitter|Snapchat|LinkedIn|TikTok|BytedanceWebview/i.test(ua);
+}
+
+function isAndroid(): boolean {
+  return /Android/i.test(navigator.userAgent);
+}
+
 export default function LoginModal({ onClose, initialMode = 'login' }: LoginModalProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState('');
@@ -19,21 +28,43 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
 
+  const inApp = isInAppBrowser();
   const clearMessages = () => { setError(''); setSuccess(''); };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch {
+      // fallback for older browsers
+      const ta = document.createElement('textarea');
+      ta.value = window.location.href;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    }
+  };
 
   const handleGoogleAuth = async () => {
     setGoogleLoading(true);
     clearMessages();
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: {
+        redirectTo: `${window.location.origin}/`,
+        queryParams: { prompt: 'select_account' },
+      },
     });
     if (authError) {
       setError(translateError(authError.message));
       setGoogleLoading(false);
     }
-    // On success the browser redirects to Google — no further action needed here
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -53,11 +84,9 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
       if (authError) {
         setError(translateError(authError.message));
       } else if (data.session) {
-        // Email confirmation disabled — user is immediately logged in
         trackCompleteRegistration();
         onClose();
       } else {
-        // Email confirmation enabled — ask user to check inbox
         setSuccess('¡Cuenta creada! Revisa tu email para confirmar y luego inicia sesión.');
       }
     }
@@ -70,10 +99,8 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-[#05060b]/85 backdrop-blur-md" />
 
-      {/* Modal */}
       <div
         className="relative w-full max-w-md rounded-2xl overflow-hidden"
         style={{
@@ -83,7 +110,6 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
           boxShadow: '0 40px 80px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.09)',
         }}
       >
-        {/* Top accent bar */}
         <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-blue-500" />
 
         <div className="p-7">
@@ -110,34 +136,61 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
             </button>
           </div>
 
-          {/* Google OAuth button */}
-          <button
-            type="button"
-            onClick={handleGoogleAuth}
-            disabled={googleLoading || loading}
-            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-sm font-semibold
-              bg-white/5 border border-white/10 text-slate-200
-              hover:bg-white/10 hover:border-white/20 hover:text-white
-              transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
-              active:scale-[0.99] mb-5"
-          >
-            {googleLoading ? (
-              <svg className="animate-spin w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <GoogleIcon />
-            )}
-            {googleLoading ? 'Redirigiendo...' : 'Continuar con Google'}
-          </button>
+          {/* In-app browser warning */}
+          {inApp ? (
+            <div className="mb-5 rounded-xl border border-amber-500/25 bg-amber-500/8 p-4">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                  <ExternalLink size={15} className="text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-amber-300 text-xs font-bold mb-1">Abre en tu navegador para usar Google</p>
+                  <p className="text-amber-200/60 text-[11px] leading-relaxed">
+                    {isAndroid()
+                      ? 'Toca los tres puntos (⋮) arriba y selecciona "Abrir en Chrome" o tu navegador.'
+                      : 'Toca el icono de compartir y selecciona "Abrir en Safari" para continuar con Google.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleCopyLink}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-amber-500/25 bg-amber-500/10 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-colors"
+              >
+                {linkCopied ? <Check size={13} /> : <Copy size={13} />}
+                {linkCopied ? '¡Enlace copiado!' : 'Copiar enlace para abrir en otro navegador'}
+              </button>
+            </div>
+          ) : (
+            /* Google OAuth button — only shown outside in-app browsers */
+            <>
+              <button
+                type="button"
+                onClick={handleGoogleAuth}
+                disabled={googleLoading || loading}
+                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-sm font-semibold
+                  bg-white/5 border border-white/10 text-slate-200
+                  hover:bg-white/10 hover:border-white/20 hover:text-white
+                  transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+                  active:scale-[0.99] mb-5"
+              >
+                {googleLoading ? (
+                  <svg className="animate-spin w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                ) : (
+                  <GoogleIcon />
+                )}
+                {googleLoading ? 'Redirigiendo...' : 'Continuar con Google'}
+              </button>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex-1 h-px bg-slate-800/80" />
-            <span className="text-xs text-slate-600 font-medium">o con email</span>
-            <div className="flex-1 h-px bg-slate-800/80" />
-          </div>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex-1 h-px bg-slate-800/80" />
+                <span className="text-xs text-slate-600 font-medium">o con email</span>
+                <div className="flex-1 h-px bg-slate-800/80" />
+              </div>
+            </>
+          )}
 
           {/* Email form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
@@ -183,7 +236,6 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
               </div>
             </div>
 
-            {/* Error / Success */}
             {error && (
               <div className="flex items-start gap-2.5 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
                 <AlertCircle size={14} className="text-red-400 mt-0.5 shrink-0" />
@@ -214,7 +266,6 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
             </button>
           </form>
 
-          {/* Mode toggle */}
           <p className="text-center text-xs text-slate-500 mt-5">
             {mode === 'login' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}{' '}
             <button
@@ -246,5 +297,6 @@ function translateError(msg: string): string {
   if (msg.includes('Email not confirmed')) return 'Confirma tu email antes de iniciar sesión.';
   if (msg.includes('User already registered')) return 'Este email ya está registrado. Inicia sesión.';
   if (msg.includes('Password should be')) return 'La contraseña debe tener al menos 6 caracteres.';
+  if (msg.includes('provider')) return 'Google no está disponible ahora. Regístrate con email.';
   return msg;
 }
