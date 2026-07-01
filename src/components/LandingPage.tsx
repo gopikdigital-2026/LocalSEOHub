@@ -3,11 +3,12 @@ import {
   Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
   Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
 import { supabase } from '../lib/supabase';
 import { useI18n } from '../lib/i18n';
+import { track } from '../lib/analytics';
 
 interface LandingPageProps {
   onLoginClick: () => void;
@@ -67,14 +68,17 @@ function GateOverlay({
   onGoogle,
   onEmail,
   loading,
+  context,
 }: {
   title: string;
   subtitle: string;
   onGoogle: () => void;
   onEmail: () => void;
   loading: boolean;
+  context: string;
 }) {
   const { t } = useI18n();
+  useEffect(() => { track('gate_shown', { context }); }, [context]);
   return (
     <div
       className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 rounded-xl"
@@ -88,7 +92,7 @@ function GateOverlay({
         <p className="text-slate-400 text-xs leading-relaxed max-w-xs">{subtitle}</p>
       </div>
       <button
-        onClick={onGoogle}
+        onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
         disabled={loading}
         className="flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200
           bg-white text-slate-900 hover:bg-slate-50 shadow-xl hover:-translate-y-0.5 active:translate-y-0
@@ -102,7 +106,10 @@ function GateOverlay({
         ) : <GoogleIconSm />}
         {loading ? t('widget_redirecting') : t('widget_gate_google')}
       </button>
-      <button onClick={onEmail} className="text-slate-500 hover:text-slate-300 text-xs transition-colors">
+      <button
+        onClick={() => { track('gate_register_click', { context, method: 'email' }); onEmail(); }}
+        className="text-slate-500 hover:text-slate-300 text-xs transition-colors"
+      >
         {t('widget_gate_email_btn')}
       </button>
     </div>
@@ -133,13 +140,21 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     setPlatform(tipo_new === 'producto' ? SEO_PLATFORMS_PRODUCTO[0] : SEO_PLATFORMS_SERVICIO[0]);
   };
 
-  const switchTab = (tab_new: WidgetTab) => { setTab(tab_new); setPhase('idle'); };
+  const switchTab = (tab_new: WidgetTab) => {
+    track('widget_tab_switch', { tab: tab_new });
+    setTab(tab_new);
+    setPhase('idle');
+  };
 
   const handleScan = () => {
     const trigger = tab === 'maps' ? business : product;
     if (!trigger.trim()) return;
+    track('widget_scan_start', { tab, query: trigger, ...(tab === 'seo' ? { tipo, platform } : { city }) });
     setPhase('scanning');
-    setTimeout(() => setPhase('result'), 3000);
+    setTimeout(() => {
+      setPhase('result');
+      track('widget_scan_result', { tab, ...(tab === 'seo' ? { tipo, platform } : {}) });
+    }, 3000);
   };
 
   const handleGoogleAuth = async () => {
@@ -372,6 +387,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       onGoogle={handleGoogleAuth}
                       onEmail={onLoginClick}
                       loading={googleLoading}
+                      context="maps"
                     />
                   </div>
                 </div>
@@ -538,6 +554,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       onGoogle={handleGoogleAuth}
                       onEmail={onLoginClick}
                       loading={googleLoading}
+                      context="seo"
                     />
                   </div>
                 </div>
@@ -666,6 +683,8 @@ function ProductMockup() {
 export default function LandingPage({ onLoginClick }: LandingPageProps) {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
   const { t } = useI18n();
+
+  useEffect(() => { track('page_view', { page: 'landing' }); }, []);
 
   const PAIN_POINTS = [t('landing_pain_1'), t('landing_pain_2'), t('landing_pain_3'), t('landing_pain_4'), t('landing_pain_5')];
 

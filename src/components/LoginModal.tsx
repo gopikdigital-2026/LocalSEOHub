@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Mail, Lock, Zap, Eye, EyeOff, AlertCircle, ExternalLink, Copy, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { trackCompleteRegistration } from '../lib/pixel';
+import { track } from '../lib/analytics';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -77,6 +78,7 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
       if (authError) {
         setError(translateError(authError.message));
       } else {
+        track('login_success', { method: 'email' });
         onClose();
       }
     } else {
@@ -85,6 +87,7 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
         setError(translateError(authError.message));
       } else if (data.session) {
         trackCompleteRegistration();
+        track('register_success', { method: 'email' });
         onClose();
       } else {
         setSuccess('¡Cuenta creada! Revisa tu email para confirmar y luego inicia sesión.');

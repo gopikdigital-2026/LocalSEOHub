@@ -68,6 +68,7 @@ import { getAICache, setAICache } from './lib/aiCache';
 import { supabase } from './lib/supabase';
 import { useI18n } from './lib/i18n';
 import { trackPageView, trackViewContent } from './lib/pixel';
+import { track } from './lib/analytics';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './components/LegalModals';
 import { LogoIcon } from './components/Logo';
 const UrlAnalysisPanel  = lazy(() => import('./components/UrlAnalysisPanel'));
@@ -273,7 +274,7 @@ async function callGenerateSEO(
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
-
+  track('tool_generate', { tool: 'generate-seo', tipo, platform });
   try {
     const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-seo`;
 
@@ -341,12 +342,9 @@ async function callGenerateContentPlan(
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
+  track('tool_generate', { tool: 'generate-content-plan' });
   try {
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-content-plan`;
     const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-      body: JSON.stringify({ product, city, platform, description }),
       signal: controller.signal,
     });
     const data = await res.json();
@@ -1192,6 +1190,7 @@ function CitationConquestPanel({ sector, city, businessName, starProduct }: {
     setLoading(l => ({ ...l, [src.id]: true }));
     setErrors(e => ({ ...e, [src.id]: '' }));
     try {
+      track('tool_generate', { tool: 'generate-pitch' });
       const res = await supabase.functions.invoke('generate-pitch', {
         body: {
           portalName: src.name,
@@ -1407,6 +1406,7 @@ function GeoAuditPanel({ product, city }: { product: string; city: string }) {
     setResult(null);
     setScoreAnimate(false);
     try {
+      track('tool_generate', { tool: 'generate-geo-audit' });
       const res = await supabase.functions.invoke('generate-geo-audit', {
         body: {
           businessName: businessInput.trim(),
@@ -1870,6 +1870,7 @@ function CompetitorRadar({ city }: { city: string }) {
     setAiError('');
     setAiLoading(true);
     try {
+      track('tool_generate', { tool: 'generate-countermeasure' });
       const res = await supabase.functions.invoke('generate-countermeasure', {
         body: {
           city: city || 'tu ciudad',
@@ -3277,7 +3278,7 @@ function Dashboard({
         ].map(({ id, icon, label }) => (
           <button
             key={id}
-            onClick={() => setTab(id as typeof tab)}
+            onClick={() => { track('tool_open', { tool: id }); setTab(id as typeof tab); }}
             className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200
               ${tab === id
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'

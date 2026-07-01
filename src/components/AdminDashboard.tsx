@@ -18,6 +18,10 @@ import {
   Loader2,
   Clock,
   Crown,
+  Eye,
+  MousePointerClick,
+  Zap,
+  BarChart3,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -45,6 +49,21 @@ interface AdminKPIs {
   trialUsers: number;
   estimatedMRR: number;
   conversionRate: number;
+}
+
+interface AdminFunnel {
+  unique_sessions: number;
+  page_views: number;
+  widget_scans: number;
+  scan_results: number;
+  gates_shown: number;
+  register_clicks: number;
+  registrations: number;
+  logins: number;
+  tool_opens: number;
+  tool_generates: number;
+  by_tool: Record<string, number> | null;
+  daily: { fecha: string; events: number; sessions: number }[] | null;
 }
 
 type FilterKey = 'all' | 'active' | 'trial' | 'free';
@@ -78,6 +97,103 @@ function downloadCSV(rows: string[][], filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ─── Funnel Panel ─────────────────────────────────────────────────────────────
+
+function FunnelStep({
+  label, value, prev, icon, color,
+}: { label: string; value: number; prev?: number; icon: React.ReactNode; color: string }) {
+  const pct = prev && prev > 0 ? Math.round((value / prev) * 100) : null;
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs text-slate-400 font-medium truncate">{label}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            {pct !== null && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${pct >= 50 ? 'bg-emerald-500/15 text-emerald-400' : pct >= 20 ? 'bg-amber-500/15 text-amber-400' : 'bg-red-500/15 text-red-400'}`}>
+                {pct}%
+              </span>
+            )}
+            <span className="text-sm font-bold text-white tabular-nums">{value.toLocaleString('es-ES')}</span>
+          </div>
+        </div>
+        <div className="h-1.5 bg-slate-800/80 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-700 ${color.split(' ')[0].replace('/10', '')}`}
+            style={{ width: prev && prev > 0 ? `${Math.min(100, (value / prev) * 100)}%` : '100%' }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FunnelPanel({ funnel }: { funnel: AdminFunnel }) {
+  const steps: { label: string; value: number; prev?: number; icon: React.ReactNode; color: string }[] = [
+    { label: 'Sesiones únicas',       value: funnel.unique_sessions,  prev: undefined,                 icon: <Eye size={15} className="text-slate-300" />,              color: 'bg-slate-500/10 text-slate-300' },
+    { label: 'Vistas de landing',     value: funnel.page_views,       prev: funnel.unique_sessions,    icon: <BarChart3 size={15} className="text-blue-400" />,          color: 'bg-blue-500/10 text-blue-400' },
+    { label: 'Análisis iniciados',    value: funnel.widget_scans,     prev: funnel.page_views,         icon: <ScanSearch size={15} className="text-cyan-400" />,         color: 'bg-cyan-500/10 text-cyan-400' },
+    { label: 'Resultados vistos',     value: funnel.scan_results,     prev: funnel.widget_scans,       icon: <Activity size={15} className="text-teal-400" />,           color: 'bg-teal-500/10 text-teal-400' },
+    { label: 'Gate mostrado',         value: funnel.gates_shown,      prev: funnel.scan_results,       icon: <Clock size={15} className="text-amber-400" />,             color: 'bg-amber-500/10 text-amber-400' },
+    { label: 'Clic en Registrarse',   value: funnel.register_clicks,  prev: funnel.gates_shown,        icon: <MousePointerClick size={15} className="text-orange-400" />, color: 'bg-orange-500/10 text-orange-400' },
+    { label: 'Registros completados', value: funnel.registrations,    prev: funnel.register_clicks,    icon: <Users size={15} className="text-emerald-400" />,           color: 'bg-emerald-500/10 text-emerald-400' },
+    { label: 'Herramienta abierta',   value: funnel.tool_opens,       prev: funnel.registrations,      icon: <Sparkles size={15} className="text-violet-400" />,         color: 'bg-violet-500/10 text-violet-400' },
+    { label: 'Generación ejecutada',  value: funnel.tool_generates,   prev: funnel.tool_opens,         icon: <Zap size={15} className="text-pink-400" />,               color: 'bg-pink-500/10 text-pink-400' },
+  ];
+
+  return (
+    <section>
+      <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">
+        Embudo de conversión
+      </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 rounded-2xl border border-slate-800/80 p-5 space-y-4"
+          style={{ background: 'rgba(10,13,24,0.7)', backdropFilter: 'blur(12px)' }}>
+          {steps.map((s) => (
+            <FunnelStep key={s.label} {...s} />
+          ))}
+        </div>
+
+        <div className="rounded-2xl border border-slate-800/80 p-5"
+          style={{ background: 'rgba(10,13,24,0.7)', backdropFilter: 'blur(12px)' }}>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">Generaciones por herramienta</p>
+          {funnel.by_tool && Object.keys(funnel.by_tool).length > 0 ? (
+            <div className="space-y-3">
+              {Object.entries(funnel.by_tool)
+                .sort(([, a], [, b]) => Number(b) - Number(a))
+                .map(([tool, cnt]) => {
+                  const max = Math.max(...Object.values(funnel.by_tool ?? {}).map(Number));
+                  const pct = max > 0 ? Math.round((Number(cnt) / max) * 100) : 0;
+                  const name = tool.replace('generate-', '').replace(/-/g, ' ');
+                  return (
+                    <div key={tool}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-slate-400 capitalize">{name}</span>
+                        <span className="text-xs font-bold text-white tabular-nums">{String(cnt)}</span>
+                      </div>
+                      <div className="h-1.5 bg-slate-800/80 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-700"
+                          style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-32 text-center">
+              <Zap size={20} className="text-slate-700 mb-2" />
+              <p className="text-slate-600 text-xs">Aún no hay generaciones registradas</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -133,6 +249,7 @@ function StatusBadge({ status }: { status: AdminUser['stripe_status'] }) {
 
 export default function AdminDashboard({ session }: { session: Session | null }) {
   const [kpis, setKpis] = useState<AdminKPIs | null>(null);
+  const [funnel, setFunnel] = useState<AdminFunnel | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -154,6 +271,7 @@ export default function AdminDashboard({ session }: { session: Session | null })
       if (!res.ok) throw new Error(`Error ${res.status}`);
       const data = await res.json();
       setKpis(data.kpis);
+      setFunnel(data.funnel ?? null);
       setUsers(data.users ?? []);
       setLastRefresh(new Date());
     } catch (e: unknown) {
@@ -320,6 +438,9 @@ export default function AdminDashboard({ session }: { session: Session | null })
             </div>
           </section>
         )}
+
+        {/* ── Funnel */}
+        {funnel && <FunnelPanel funnel={funnel} />}
 
         {/* ── User Table */}
         <section>

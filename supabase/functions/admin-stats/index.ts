@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
     );
 
     // Fetch all data in parallel
-    const [profilesRes, customersRes, subscriptionsRes] = await Promise.all([
+    const [profilesRes, customersRes, subscriptionsRes, funnelRes] = await Promise.all([
       serviceSupabase
         .from("profiles")
         .select("id, email, full_name, created_at, user_usage(total_seo_generations, total_images_optimized, total_leads_scanned, last_active)")
@@ -63,11 +63,13 @@ Deno.serve(async (req: Request) => {
       serviceSupabase
         .from("stripe_subscriptions")
         .select("customer_id, status"),
+      serviceSupabase.rpc("get_funnel_stats"),
     ]);
 
     const profiles = profilesRes.data ?? [];
     const customers = customersRes.data ?? [];
     const subscriptions = subscriptionsRes.data ?? [];
+    const funnel = funnelRes.data ?? {};
 
     const customerMap = new Map<string, string>(
       customers.map((c: { user_id: string; customer_id: string }) => [c.user_id, c.customer_id])
@@ -126,6 +128,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({
         kpis: { totalUsers, activeSubscriptions, trialUsers, estimatedMRR, conversionRate },
         users: enriched,
+        funnel,
       }),
       {
         status: 200,
