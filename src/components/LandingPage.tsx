@@ -326,7 +326,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
 
                   <button
-                    onClick={handleScan}
+                    onClick={() => handleScan()}
                     disabled={scanDisabled}
                     className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
                       bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
@@ -503,7 +503,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
 
                   <button
-                    onClick={handleScan}
+                    onClick={() => handleScan()}
                     disabled={scanDisabled}
                     className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
                       bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400
