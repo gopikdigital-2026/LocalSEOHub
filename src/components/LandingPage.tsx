@@ -77,25 +77,27 @@ function GateOverlay({
   loading: boolean;
   context: string;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   useEffect(() => { track('gate_shown', { context }); }, [context]);
   return (
     <div
-      className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 rounded-xl"
-      style={{ background: 'linear-gradient(to bottom, rgba(12,20,38,0.55), rgba(12,20,38,0.97))' }}
+      className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-5 rounded-xl"
+      style={{ background: 'linear-gradient(to bottom, rgba(12,20,38,0.3), rgba(8,14,28,0.97))' }}
     >
-      <div className="text-center">
-        <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-2.5">
+      <div className="text-center mb-1">
+        <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto mb-2">
           <Lock size={14} className="text-emerald-400" />
         </div>
-        <p className="text-white text-sm font-bold mb-1">{title}</p>
-        <p className="text-slate-400 text-xs leading-relaxed max-w-xs">{subtitle}</p>
+        <p className="text-white text-sm font-extrabold mb-1">{title}</p>
+        <p className="text-slate-400 text-[11px] leading-relaxed max-w-[220px]">{subtitle}</p>
       </div>
+
+      {/* Google — primary CTA */}
       <button
         onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
         disabled={loading}
-        className="flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200
-          bg-white text-slate-900 hover:bg-slate-50 shadow-xl hover:-translate-y-0.5 active:translate-y-0
+        className="w-full max-w-[240px] flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200
+          bg-white text-slate-900 hover:bg-slate-50 shadow-xl shadow-black/40 hover:-translate-y-0.5 active:translate-y-0
           disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {loading ? (
@@ -104,14 +106,21 @@ function GateOverlay({
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
         ) : <GoogleIconSm />}
-        {loading ? t('widget_redirecting') : t('widget_gate_google')}
+        {loading ? t('widget_redirecting') : (lang === 'en' ? 'Register free with Google' : 'Registrarme gratis con Google')}
       </button>
+
+      {/* Email — secondary, still visible */}
       <button
         onClick={() => { track('gate_register_click', { context, method: 'email' }); onEmail(); }}
-        className="text-slate-500 hover:text-slate-300 text-xs transition-colors"
+        className="w-full max-w-[240px] flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold
+          border border-slate-700/60 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white transition-all duration-200"
       >
-        {t('widget_gate_email_btn')}
+        {lang === 'en' ? 'Register with email' : 'Registrarme con email'}
       </button>
+
+      <p className="text-[10px] text-slate-600 text-center mt-0.5">
+        {lang === 'en' ? '7 days free · no credit card' : '7 días gratis · sin tarjeta'}
+      </p>
     </div>
   );
 }
@@ -146,16 +155,28 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     setPhase('idle');
   };
 
-  const handleScan = () => {
+  // Track whether the user has manually interacted (to avoid double-trigger)
+  const userActed = React.useRef(false);
+
+  const handleScan = (auto = false) => {
     const trigger = tab === 'maps' ? business : product;
     if (!trigger.trim()) return;
-    track('widget_scan_start', { tab, query: trigger, ...(tab === 'seo' ? { tipo, platform } : { city }) });
+    if (!auto) userActed.current = true;
+    track('widget_scan_start', { tab, auto, query: trigger, ...(tab === 'seo' ? { tipo, platform } : { city }) });
     setPhase('scanning');
     setTimeout(() => {
       setPhase('result');
-      track('widget_scan_result', { tab, ...(tab === 'seo' ? { tipo, platform } : {}) });
-    }, 3000);
+      track('widget_scan_result', { tab, auto, ...(tab === 'seo' ? { tipo, platform } : {}) });
+    }, 2800);
   };
+
+  // Auto-run demo after 2s so users see the product working without having to click
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!userActed.current) handleScan(true);
+    }, 2000);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGoogleAuth = async () => {
     setGoogleLoading(true);
@@ -353,7 +374,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
               )}
 
               {phase === 'result' && (
-                <div className="space-y-4">
+                <div className="space-y-3">
+                  {/* Score — always visible, creates urgency */}
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">{t('widget_result_analysis')}</p>
@@ -366,27 +388,31 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
                   <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-1000"
-                      style={{ width: `${score}%`, background: score < 55 ? 'linear-gradient(to right, #f59e0b, #fbbf24)' : 'linear-gradient(to right, #10b981, #14b8a6)' }} />
+                      style={{ width: `${score}%`, background: 'linear-gradient(to right, #f59e0b, #fbbf24)' }} />
                   </div>
                   <p className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
                     <span>⚠️</span>
-                    <span>{lang === 'es' ? `Tu ficha tiene margen de mejora. Los competidores mejor optimizados capturan ${100 - score}% más llamadas.` : `Your profile has room for improvement. Better optimized competitors capture ${100 - score}% more calls.`}</span>
+                    <span>{lang === 'es' ? `Tu ficha está infraoptimizada. Los competidores capturan ${100 - score}% más llamadas y visitas.` : `Your profile is under-optimized. Competitors capture ${100 - score}% more calls and visits.`}</span>
                   </p>
-                  <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
-                    <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_seo_title_lbl')}</p>
-                    <p className="text-white text-sm font-medium leading-snug">{mapsTitle}</p>
-                  </div>
-                  <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
-                    <p className="text-slate-300 text-xs leading-relaxed">{mapsDesc}</p>
-                  </div>
+
+                  {/* Title + Description + Keywords — all gated */}
                   <div className="relative rounded-xl overflow-hidden">
-                    <div className="blur-sm select-none pointer-events-none p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {mapsKeywords.map((kw, i) => (
-                          <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{kw}</span>
-                        ))}
+                    <div className="blur-sm select-none pointer-events-none space-y-3 pb-1">
+                      <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
+                        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_seo_title_lbl')}</p>
+                        <p className="text-white text-sm font-medium leading-snug">{mapsTitle}</p>
+                      </div>
+                      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
+                        <p className="text-slate-300 text-xs leading-relaxed">{mapsDesc}</p>
+                      </div>
+                      <div className="p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mapsKeywords.map((kw, i) => (
+                            <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{kw}</span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <GateOverlay
@@ -519,7 +545,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
               )}
 
               {phase === 'result' && (
-                <div className="space-y-4">
+                <div className="space-y-3">
+                  {/* Header — always visible */}
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
                       <Sparkles size={12} className="text-teal-400" />
@@ -529,39 +556,31 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       <p className="text-white font-bold text-sm leading-tight">{displayProduct}{displaySeoCity ? ` · ${displaySeoCity}` : ''} · {platform}</p>
                     </div>
                   </div>
+                  <p className="text-[11px] text-teal-400/80 flex items-center gap-1.5">
+                    <span>✅</span>
+                    <span>{lang === 'es' ? 'Análisis completado. Desbloquea el contenido completo para aplicarlo.' : 'Analysis complete. Unlock the full content to apply it.'}</span>
+                  </p>
 
-                  <div className="rounded-xl bg-teal-500/5 border border-teal-500/15 p-3.5">
-                    <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider mb-1.5">{t('widget_seo_opt_title')}</p>
-                    <p className="text-white text-sm font-medium leading-snug">{seoTitle}</p>
-                  </div>
-
-                  <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
-                    <p className="text-slate-300 text-xs leading-relaxed">{seoDesc}</p>
-                  </div>
-
-                  {/* Visible tags */}
-                  <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">{t('widget_seo_main_tags')}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {seoTagsVisible.map((tag, i) => (
-                        <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Blurred extra tags + gate */}
+                  {/* All SEO content gated */}
                   <div className="relative rounded-xl overflow-hidden">
-                    <div className="blur-sm select-none pointer-events-none p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
-                        {lang === 'es'
-                          ? `+${seoTagsBlurred.length} etiquetas long-tail · Alt text de imagen · Plan de contenido`
-                          : `+${seoTagsBlurred.length} long-tail tags · Image alt text · Content plan`}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {seoTagsBlurred.map((tag, i) => (
-                          <span key={i} className="text-[11px] bg-cyan-500/15 border border-cyan-500/20 text-cyan-300 rounded-full px-3 py-1">{tag}</span>
-                        ))}
+                    <div className="blur-sm select-none pointer-events-none space-y-3 pb-1">
+                      <div className="rounded-xl bg-teal-500/5 border border-teal-500/15 p-3.5">
+                        <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider mb-1.5">{t('widget_seo_opt_title')}</p>
+                        <p className="text-white text-sm font-medium leading-snug">{seoTitle}</p>
+                      </div>
+                      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
+                        <p className="text-slate-300 text-xs leading-relaxed">{seoDesc}</p>
+                      </div>
+                      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
+                          {lang === 'es' ? `Etiquetas · Alt text · Plan de contenido` : `Tags · Alt text · Content plan`}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[...seoTagsVisible, ...seoTagsBlurred].map((tag, i) => (
+                            <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <GateOverlay
