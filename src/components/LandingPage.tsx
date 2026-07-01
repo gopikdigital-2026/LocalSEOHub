@@ -287,24 +287,22 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.1] mb-5 tracking-tight text-center">
-            Aparece primero en Google{' '}
+            Consigue que los clientes de tu zona{' '}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              cuando alguien busca
-            </span>{' '}
-            lo que vendes
+              te llamen a ti, no a tu competencia
+            </span>
           </h1>
 
           <p className="text-center text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-7 leading-relaxed">
-            LocalSEOHub genera en 30 segundos el SEO que una agencia te cobraría 500€.
-            Sin conocimientos técnicos. Sin tarjeta de crédito. Con resultados desde el primer día.
+            La primera IA que audita tu ficha de Google Maps y te genera los textos optimizados para multiplicar tus llamadas y visitas. Gratis, en 10 segundos y sin conocimientos técnicos.
           </p>
 
           {/* Sub bullets */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-9 text-sm text-slate-300">
             {[
-              'SEO local generado con IA en 30 seg',
-              'Audita tu Google Maps al instante',
-              'Sin cursos ni agencias caras',
+              '📈 Multiplica tus llamadas de clientes locales',
+              '🔍 Descubre qué fallos te ocultan en Google Maps',
+              '⚡ Genera textos optimizados listos para copiar y pegar',
             ].map((item) => (
               <div key={item} className="flex items-center gap-2">
                 <BadgeCheck size={14} className="text-emerald-400 shrink-0" />
