@@ -3,7 +3,7 @@ import {
   Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
   Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
 import { supabase } from '../lib/supabase';
@@ -156,7 +156,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   };
 
   // Track whether the user has manually interacted (to avoid double-trigger)
-  const userActed = React.useRef(false);
+  const userActed = useRef(false);
 
   const handleScan = (auto = false) => {
     const trigger = tab === 'maps' ? business : product;
