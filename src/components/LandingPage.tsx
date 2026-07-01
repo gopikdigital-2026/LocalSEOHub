@@ -164,10 +164,16 @@ function GoogleIconSm() {
 type ScanPhase = 'idle' | 'scanning' | 'result';
 type WidgetTab = 'maps' | 'seo';
 
-const SEO_PLATFORMS = [
-  'Google Business', 'Etsy', 'Amazon', 'Shopify', 'Instagram Shop',
-  'WooCommerce', 'Wallapop', 'Web propia',
+const SEO_PLATFORMS_PRODUCTO = [
+  'Etsy', 'Shopify', 'WooCommerce', 'Amazon', 'eBay', 'Wallapop', 'Vinted', 'Facebook Marketplace',
 ];
+
+const SEO_PLATFORMS_SERVICIO = [
+  'Google Business', 'Web propia / Blog SEO', 'Instagram / Facebook',
+  'Booking.com', 'Doctoralia', 'TripAdvisor', 'Habitissimo', 'Treatwell',
+];
+
+type SeoTipo = 'producto' | 'servicio';
 
 function GateOverlay({
   title,
@@ -229,7 +235,15 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   // SEO tab
   const [product, setProduct] = useState('');
   const [seoCity, setSeoCity] = useState('');
-  const [platform, setPlatform] = useState('Google Business');
+  const [tipo, setTipo] = useState<SeoTipo>('producto');
+  const [platform, setPlatform] = useState('Etsy');
+
+  const platformOptions = tipo === 'producto' ? SEO_PLATFORMS_PRODUCTO : SEO_PLATFORMS_SERVICIO;
+
+  const handleTipoChange = (t: SeoTipo) => {
+    setTipo(t);
+    setPlatform(t === 'producto' ? SEO_PLATFORMS_PRODUCTO[0] : SEO_PLATFORMS_SERVICIO[0]);
+  };
 
   const switchTab = (t: WidgetTab) => { setTab(t); setPhase('idle'); };
 
@@ -264,22 +278,41 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   ];
 
   // SEO derived content
-  const displayProduct = product.trim() || 'tu producto';
+  const displayProduct = product.trim() || (tipo === 'producto' ? 'tu producto' : 'tu servicio');
   const displaySeoCity = seoCity.trim();
-  const seoTitle = `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Mejor precio · Envío rápido`;
-  const seoDesc = `Descubre ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''} al mejor precio. Calidad garantizada, valoraciones reales y entrega rápida. Encuentra tu ${displayProduct.toLowerCase()} ideal con las mejores especificaciones del mercado.`;
-  const seoTagsVisible = [
-    `${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`,
-    `comprar ${displayProduct.toLowerCase()} online`,
-    `${displayProduct.toLowerCase()} precio`,
-  ];
-  const seoTagsBlurred = [
-    `${displayProduct.toLowerCase()} barato`,
-    `mejor ${displayProduct.toLowerCase()}`,
-    `${displayProduct.toLowerCase()} oferta`,
-    `${displayProduct.toLowerCase()} ${platform.toLowerCase()}`,
-    `${displayProduct.toLowerCase()} envío gratis`,
-  ];
+  const isServicio = tipo === 'servicio';
+  const seoTitle = isServicio
+    ? `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Expertos locales · Reserva online`
+    : `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Mejor precio · Envío rápido`;
+  const seoDesc = isServicio
+    ? `¿Necesitas ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''}? Somos especialistas con años de experiencia. Atención personalizada, presupuesto sin compromiso y resultados garantizados. Llámanos o reserva online ahora.`
+    : `Descubre ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''} al mejor precio. Calidad garantizada, valoraciones reales y entrega rápida. Encuentra tu ${displayProduct.toLowerCase()} ideal con las mejores especificaciones del mercado.`;
+  const seoTagsVisible = isServicio
+    ? [
+        `${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`,
+        `${displayProduct.toLowerCase()} profesional`,
+        `${displayProduct.toLowerCase()} precio`,
+      ]
+    : [
+        `${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`,
+        `comprar ${displayProduct.toLowerCase()} online`,
+        `${displayProduct.toLowerCase()} precio`,
+      ];
+  const seoTagsBlurred = isServicio
+    ? [
+        `mejor ${displayProduct.toLowerCase()} ${displaySeoCity || 'cerca de mí'}`,
+        `${displayProduct.toLowerCase()} barato`,
+        `${displayProduct.toLowerCase()} opiniones`,
+        `contratar ${displayProduct.toLowerCase()}`,
+        `${displayProduct.toLowerCase()} urgente`,
+      ]
+    : [
+        `${displayProduct.toLowerCase()} barato`,
+        `mejor ${displayProduct.toLowerCase()}`,
+        `${displayProduct.toLowerCase()} oferta`,
+        `${displayProduct.toLowerCase()} ${platform.toLowerCase()}`,
+        `${displayProduct.toLowerCase()} envío gratis`,
+      ];
 
   const INPUT_CLS = 'w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all duration-200 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20';
   const scanDisabled = tab === 'maps' ? !business.trim() : !product.trim();
@@ -458,13 +491,36 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     </div>
                   </div>
 
+                  {/* Tipo de negocio toggle */}
+                  <div className="mb-4">
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-2">Tipo de negocio</p>
+                    <div className="flex items-center gap-1.5 bg-slate-950/60 border border-slate-800/80 rounded-xl p-1 w-fit">
+                      {(['producto', 'servicio'] as SeoTipo[]).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => handleTipoChange(t)}
+                          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 capitalize ${
+                            tipo === t
+                              ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {t === 'producto' ? 'Producto' : 'Servicio'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="space-y-3 mb-4">
                     <input
                       type="text"
                       value={product}
                       onChange={(e) => setProduct(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                      placeholder="Producto o servicio (ej: Corte de pelo mujer, Taza de cerámica...)"
+                      placeholder={tipo === 'producto'
+                        ? 'Producto (ej: Taza de cerámica artesanal, Collar de plata...)'
+                        : 'Servicio (ej: Corte de pelo mujer, Reparación de móviles...)'}
                       className={INPUT_CLS}
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -483,7 +539,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         onChange={(e) => setPlatform(e.target.value)}
                         className="w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 outline-none transition-all duration-200 focus:border-teal-500/60 focus:ring-1 focus:ring-teal-500/20 appearance-none cursor-pointer"
                       >
-                        {SEO_PLATFORMS.map((p) => (
+                        {platformOptions.map((p) => (
                           <option key={p} value={p} className="bg-slate-900">{p}</option>
                         ))}
                       </select>
@@ -520,7 +576,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
                   <div className="text-center space-y-1">
                     <p className="text-white font-bold text-sm">Generando tu contenido SEO...</p>
-                    <p className="text-slate-500 text-xs">Optimizando "{displayProduct}" para {platform}{displaySeoCity ? ` en ${displaySeoCity}` : ''}</p>
+                    <p className="text-slate-500 text-xs">Optimizando "{displayProduct}" ({tipo}) para {platform}{displaySeoCity ? ` en ${displaySeoCity}` : ''}</p>
                   </div>
                   <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full"
