@@ -1,11 +1,12 @@
 import {
   MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles,
   Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
-  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown,
+  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock,
 } from 'lucide-react';
 import { useState } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
+import { supabase } from '../lib/supabase';
 
 interface LandingPageProps {
   onLoginClick: () => void;
@@ -148,6 +149,289 @@ const COMPARISON_ROWS = [
   { label: 'Radar de competencia', bad: 'Herramientas de pago aparte', good: 'Incluido en el plan' },
   { label: 'Exportación a Etsy / Shopify', bad: 'Manual y lento', good: 'CSV en 1 clic' },
 ];
+
+function GoogleIconSm() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+      <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    </svg>
+  );
+}
+
+type ScanPhase = 'idle' | 'scanning' | 'result';
+
+function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
+  const [phase, setPhase] = useState<ScanPhase>('idle');
+  const [business, setBusiness] = useState('');
+  const [city, setCity] = useState('');
+  const [score] = useState(() => Math.floor(38 + Math.random() * 22));
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleScan = () => {
+    if (!business.trim()) return;
+    setPhase('scanning');
+    setTimeout(() => setPhase('result'), 3000);
+  };
+
+  const handleGoogleAuth = async () => {
+    setGoogleLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+        queryParams: { prompt: 'select_account' },
+      },
+    });
+    if (error) setGoogleLoading(false);
+  };
+
+  const displayName = business.trim() || 'Tu negocio';
+  const displayCity = city.trim();
+
+  const fakeTitle = `${displayName}${displayCity ? ` en ${displayCity}` : ''} — Abierto hoy | Atención personalizada`;
+  const fakeDesc = `¿Buscas ${displayName.toLowerCase()}${displayCity ? ` en ${displayCity}` : ''}? Somos especialistas con más de 10 años de experiencia. Ofrecemos atención personalizada, resultados garantizados y el mejor servicio${displayCity ? ` en ${displayCity}` : ' de la zona'}.`;
+
+  const fakeKeywords = [
+    `${displayName.toLowerCase()} ${displayCity || 'cerca de mí'}`,
+    `mejor ${displayName.toLowerCase()} ${displayCity || 'local'}`,
+    `${displayName.toLowerCase()} barato${displayCity ? ` ${displayCity}` : ''}`,
+    `${displayName.toLowerCase()} opiniones`,
+    `${displayName.toLowerCase()} reserva online`,
+    `${displayName.toLowerCase()} precio`,
+  ];
+
+  return (
+    <div className="max-w-2xl mx-auto mb-3">
+      <div
+        className="rounded-2xl shadow-2xl"
+        style={{
+          background: 'rgba(12, 20, 38, 0.85)',
+          backdropFilter: 'blur(24px) saturate(160%)',
+          border: '1px solid rgba(255,255,255,0.09)',
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 64px rgba(0,0,0,0.50)',
+        }}
+      >
+        {/* Accent top line */}
+        <div className="h-[2px] rounded-t-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+
+        <div className="p-6">
+          {/* ── PHASE: idle ── */}
+          {phase === 'idle' && (
+            <>
+              <div className="flex items-center gap-2.5 mb-5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                  <Zap size={14} className="text-emerald-400" fill="currentColor" />
+                </div>
+                <div>
+                  <p className="text-white text-sm font-bold leading-tight">Analiza tu negocio gratis</p>
+                  <p className="text-slate-500 text-[11px]">Descubre tu puntuación de visibilidad local en 10 segundos</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <input
+                  type="text"
+                  value={business}
+                  onChange={(e) => setBusiness(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+                  placeholder="Nombre de tu negocio (ej: Peluquería Toledo)"
+                  className="w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all duration-200 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+                />
+                <div className="relative">
+                  <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+                    placeholder="Introduce tu ciudad"
+                    className="w-full bg-slate-950/70 border border-slate-700/50 rounded-xl pl-9 pr-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all duration-200 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleScan}
+                disabled={!business.trim()}
+                className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
+                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
+              >
+                <Zap size={16} fill="currentColor" />
+                Analizar mi negocio gratis ⚡
+              </button>
+
+              <p className="text-center text-[11px] text-slate-600 mt-3">
+                Sin tarjeta · Sin registro previo · Resultado inmediato
+              </p>
+            </>
+          )}
+
+          {/* ── PHASE: scanning ── */}
+          {phase === 'scanning' && (
+            <div className="py-8 flex flex-col items-center gap-6">
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                {/* Rotating sweep */}
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: 'conic-gradient(from 0deg, rgba(16,185,129,0.20), transparent 55%)',
+                    animation: 'radarSweep 1.8s linear infinite',
+                  }}
+                />
+                {/* Concentric rings */}
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="absolute rounded-full border border-emerald-400/40"
+                    style={{
+                      width: `${44 + i * 22}px`,
+                      height: `${44 + i * 22}px`,
+                      animation: `radarRing 2s ease-out infinite`,
+                      animationDelay: `${i * 0.55}s`,
+                    }}
+                  />
+                ))}
+                {/* Center icon */}
+                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/40 z-10">
+                  <MapPinned size={17} className="text-slate-950" />
+                </div>
+              </div>
+
+              <div className="text-center space-y-1">
+                <p className="text-white font-bold text-sm">Analizando competencia local...</p>
+                <p className="text-slate-500 text-xs">
+                  Escaneando "{displayName}"{displayCity ? ` en ${displayCity}` : ''} · Comparando con competidores
+                </p>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full max-w-xs">
+                <div className="w-full bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                    style={{ animation: 'scanProgress 3s ease-out forwards' }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── PHASE: result ── */}
+          {phase === 'result' && (
+            <div className="space-y-4">
+              {/* Score header */}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">Resultado del análisis</p>
+                  <p className="text-white font-bold text-sm leading-tight">
+                    {displayName}{displayCity ? ` · ${displayCity}` : ''}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-2xl font-extrabold text-amber-400 leading-none">{score}%</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">Ficha optimizada</div>
+                </div>
+              </div>
+
+              {/* Score bar */}
+              <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{
+                    width: `${score}%`,
+                    background: score < 55
+                      ? 'linear-gradient(to right, #f59e0b, #fbbf24)'
+                      : 'linear-gradient(to right, #10b981, #14b8a6)',
+                  }}
+                />
+              </div>
+
+              <p className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
+                <span>⚠️</span>
+                <span>Tu ficha tiene margen de mejora. Los competidores mejor optimizados capturan {100 - score}% más llamadas.</span>
+              </p>
+
+              {/* Generated title */}
+              <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
+                <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">Título SEO optimizado</p>
+                <p className="text-white text-sm font-medium leading-snug">{fakeTitle}</p>
+              </div>
+
+              {/* Generated description */}
+              <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Descripción optimizada</p>
+                <p className="text-slate-300 text-xs leading-relaxed">{fakeDesc}</p>
+              </div>
+
+              {/* Blurred keywords + gate */}
+              <div className="relative rounded-xl overflow-hidden">
+                {/* Blurred content */}
+                <div className="blur-sm select-none pointer-events-none p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">
+                    GEO Keywords y Etiquetas recomendadas
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {fakeKeywords.map((kw, i) => (
+                      <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Gate overlay */}
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 rounded-xl"
+                  style={{ background: 'linear-gradient(to bottom, rgba(12,20,38,0.6), rgba(12,20,38,0.97))' }}
+                >
+                  <div className="text-center">
+                    <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-2.5">
+                      <Lock size={14} className="text-emerald-400" />
+                    </div>
+                    <p className="text-white text-sm font-bold mb-1">
+                      Desbloquea tus etiquetas SEO
+                    </p>
+                    <p className="text-slate-400 text-xs leading-relaxed max-w-xs">
+                      Regístrate gratis con Google para desbloquear tus etiquetas SEO y copiar el informe completo en un clic.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleGoogleAuth}
+                    disabled={googleLoading}
+                    className="flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200
+                      bg-white text-slate-900 hover:bg-slate-50 shadow-xl hover:-translate-y-0.5 active:translate-y-0
+                      disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {googleLoading ? (
+                      <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    ) : <GoogleIconSm />}
+                    {googleLoading ? 'Redirigiendo...' : 'Continuar con Google — Gratis'}
+                  </button>
+
+                  <button
+                    onClick={onLoginClick}
+                    className="text-slate-500 hover:text-slate-300 text-xs transition-colors"
+                  >
+                    O regístrate con email
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
@@ -311,19 +595,8 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
             ))}
           </div>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-3">
-            <button
-              onClick={onLoginClick}
-              className="flex items-center gap-2.5 px-9 py-4 rounded-xl font-bold text-base transition-all duration-300
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0"
-            >
-              <Zap size={17} fill="currentColor" />
-              Empieza gratis — sin tarjeta
-              <ArrowRight size={16} />
-            </button>
-          </div>
+          {/* Scanner widget */}
+          <ScannerWidget onLoginClick={onLoginClick} />
 
           <p className="text-center text-xs text-slate-600 mb-8">
             ¿Ya tienes cuenta?{' '}
