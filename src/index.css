@@ -117,3 +117,13 @@
   from { width: 4%; }
   to   { width: 95%; }
 }
+
+@keyframes pulseOnce {
+  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); }
+  50%  { box-shadow: 0 0 0 14px rgba(16,185,129,0); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+
+.animate-pulse-once {
+  animation: pulseOnce 1.6s ease-out 0.8s 2;
+}

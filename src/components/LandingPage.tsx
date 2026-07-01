@@ -122,16 +122,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   const [phase, setPhase] = useState<ScanPhase>('idle');
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Maps tab
-  const [business, setBusiness] = useState('');
-  const [city, setCity] = useState('');
+  // Maps tab — pre-filled so the CTA is active from the first second
+  const [business, setBusiness] = useState(lang === 'en' ? 'Smith Dental Clinic' : 'Clínica Dental Pérez');
+  const [city, setCity] = useState(lang === 'en' ? 'London' : 'Madrid');
   const [score] = useState(() => Math.floor(38 + Math.random() * 22));
 
-  // SEO tab
-  const [product, setProduct] = useState('');
-  const [seoCity, setSeoCity] = useState('');
-  const [tipo, setTipo] = useState<SeoTipo>('producto');
-  const [platform, setPlatform] = useState('Etsy');
+  // SEO tab — pre-filled with a realistic example
+  const [product, setProduct] = useState(lang === 'en' ? 'teeth whitening' : 'blanqueamiento dental');
+  const [seoCity, setSeoCity] = useState(lang === 'en' ? 'London' : 'Madrid');
+  const [tipo, setTipo] = useState<SeoTipo>('servicio');
+  const [platform, setPlatform] = useState('Google Business');
 
   const platformOptions = tipo === 'producto' ? SEO_PLATFORMS_PRODUCTO : SEO_PLATFORMS_SERVICIO;
 
@@ -267,14 +267,19 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
             <>
               {phase === 'idle' && (
                 <>
-                  <div className="flex items-center gap-2.5 mb-5">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                      <MapPinned size={14} className="text-emerald-400" />
+                  <div className="flex items-center justify-between gap-2.5 mb-5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                        <MapPinned size={14} className="text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-white text-sm font-bold leading-tight">{t('widget_maps_heading')}</p>
+                        <p className="text-slate-500 text-[11px]">{t('widget_maps_subheading')}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-white text-sm font-bold leading-tight">{t('widget_maps_heading')}</p>
-                      <p className="text-slate-500 text-[11px]">{t('widget_maps_subheading')}</p>
-                    </div>
+                    <span className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/25 text-amber-400">
+                      {lang === 'en' ? 'EXAMPLE' : 'EJEMPLO'}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
@@ -305,13 +310,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
                       bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                       text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0
-                      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
+                      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none
+                      animate-pulse-once"
                   >
                     <Zap size={16} fill="currentColor" />
                     {t('widget_maps_btn')}
                   </button>
-                  <p className="text-center text-[11px] text-slate-600 mt-3">
-                    {t('widget_maps_trust')}
+                  <p className="text-center text-[11px] text-slate-500 mt-3">
+                    {lang === 'en'
+                      ? 'Click to see the result — then use your own data'
+                      : 'Haz clic para ver el resultado — luego usa tus datos'}
                   </p>
                 </>
               )}
@@ -400,14 +408,19 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
             <>
               {phase === 'idle' && (
                 <>
-                  <div className="flex items-center gap-2.5 mb-5">
-                    <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
-                      <Sparkles size={14} className="text-teal-400" />
-                    </div>
+                  <div className="flex items-center justify-between gap-2.5 mb-5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
+                        <Sparkles size={14} className="text-teal-400" />
+                      </div>
                     <div>
                       <p className="text-white text-sm font-bold leading-tight">{t('widget_seo_heading')}</p>
                       <p className="text-slate-500 text-[11px]">{t('widget_seo_subheading')}</p>
                     </div>
+                    </div>
+                    <span className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/25 text-amber-400">
+                      {lang === 'en' ? 'EXAMPLE' : 'EJEMPLO'}
+                    </span>
                   </div>
 
                   {/* Tipo de negocio toggle */}
@@ -469,13 +482,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
                       bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400
                       text-slate-950 shadow-xl shadow-teal-500/30 hover:shadow-teal-500/45 hover:-translate-y-0.5 active:translate-y-0
-                      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
+                      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none
+                      animate-pulse-once"
                   >
                     <Sparkles size={16} />
                     {t('widget_seo_btn')}
                   </button>
-                  <p className="text-center text-[11px] text-slate-600 mt-3">
-                    {t('widget_seo_trust')}
+                  <p className="text-center text-[11px] text-slate-500 mt-3">
+                    {lang === 'en'
+                      ? 'Click to see the result — then use your own data'
+                      : 'Haz clic para ver el resultado — luego usa tus datos'}
                   </p>
                 </>
               )}
@@ -682,7 +698,7 @@ function ProductMockup() {
 
 export default function LandingPage({ onLoginClick }: LandingPageProps) {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
 
   useEffect(() => { track('page_view', { page: 'landing' }); }, []);
 
@@ -761,7 +777,16 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           </div>
 
           {/* Scanner widget */}
-          <ScannerWidget onLoginClick={onLoginClick} />
+          <div className="relative">
+            <div className="flex justify-center mb-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+                <ChevronDown size={14} className="animate-bounce" />
+                <span>{lang === 'en' ? 'Try it now — no account needed' : 'Pruébalo ahora — sin registro'}</span>
+                <ChevronDown size={14} className="animate-bounce" />
+              </div>
+            </div>
+            <ScannerWidget onLoginClick={onLoginClick} />
+          </div>
 
           <p className="text-center text-xs text-slate-600 mb-8">
             {t('landing_have_account')}{' '}

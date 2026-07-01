@@ -15,11 +15,12 @@ function getSessionId(): string {
 export function track(eventName: string, properties: Record<string, unknown> = {}) {
   const sessionId = getSessionId();
   supabase.auth.getSession().then(({ data: { session } }) => {
+    // Must call .then() to actually execute the lazy Supabase query
     supabase.from('analytics_events').insert({
       session_id: sessionId,
       user_id: session?.user?.id ?? null,
       event_name: eventName,
       properties,
-    });
+    }).then(() => {});
   }).catch(() => {});
 }
