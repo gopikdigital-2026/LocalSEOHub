@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
 import { supabase } from '../lib/supabase';
+import { useI18n } from '../lib/i18n';
 
 interface LandingPageProps {
   onLoginClick: () => void;
@@ -20,135 +21,20 @@ const PLATFORMS = [
   'WooCommerce', 'Doctoralia', 'Habitissimo', 'Treatwell', 'Facebook Marketplace', 'Web propia',
 ];
 
-const PAIN_POINTS = [
-  'Publicas en redes pero nadie de tu ciudad te encuentra',
-  'Tu ficha de Google Maps está a medias y no sabes cómo mejorarla',
-  'Tus competidores aparecen antes que tú en Google aunque llevas más tiempo',
-  'Pasas horas escribiendo textos y no sabes si están bien optimizados',
-  'No sabes si ChatGPT o Google IA te recomiendan cuando alguien busca tu servicio',
-];
+const TOOL_META = [
+  { icon: <Sparkles size={22} />, badge: 'Core', color: 'from-emerald-500/10 to-teal-500/5', border: 'border-emerald-500/20', iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' },
+  { icon: <MapPinned size={22} />, badge: 'Maps', color: 'from-blue-500/10 to-sky-500/5', border: 'border-blue-500/20', iconBg: 'bg-blue-500/10 border-blue-500/20 text-blue-400' },
+  { icon: <Eye size={22} />, badge: 'Twin', color: 'from-cyan-500/10 to-sky-500/5', border: 'border-cyan-500/20', iconBg: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400' },
+  { icon: <Target size={22} />, badge: 'Radar', color: 'from-orange-500/10 to-amber-500/5', border: 'border-orange-500/20', iconBg: 'bg-orange-500/10 border-orange-500/20 text-orange-400' },
+  { icon: <Globe size={22} />, badge: 'GEO', color: 'from-teal-500/10 to-cyan-500/5', border: 'border-teal-500/20', iconBg: 'bg-teal-500/10 border-teal-500/20 text-teal-400' },
+  { icon: <Calendar size={22} />, badge: 'Plan', color: 'from-rose-500/10 to-pink-500/5', border: 'border-rose-500/20', iconBg: 'bg-rose-500/10 border-rose-500/20 text-rose-400' },
+] as const;
 
-const TOOLS = [
-  {
-    icon: <Sparkles size={22} />,
-    badge: 'Core',
-    title: 'Generador SEO Local',
-    desc: 'Título, descripción y etiquetas perfectas para tu ciudad y plataforma en 30 segundos. También analiza tu foto y crea el alt text.',
-    color: 'from-emerald-500/10 to-teal-500/5',
-    border: 'border-emerald-500/20',
-    iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-  },
-  {
-    icon: <MapPinned size={22} />,
-    badge: 'Maps',
-    title: 'Escáner de Ficha Maps',
-    desc: 'Audita tu Google Business Profile con IA. Puntuación de optimización + recomendaciones concretas listas para aplicar.',
-    color: 'from-blue-500/10 to-sky-500/5',
-    border: 'border-blue-500/20',
-    iconBg: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
-  },
-  {
-    icon: <Eye size={22} />,
-    badge: 'Twin',
-    title: 'AI Digital Twin',
-    desc: 'Mapa de calor interactivo que muestra en qué zonas de tu ciudad dominas y dónde te bloquean los competidores.',
-    color: 'from-cyan-500/10 to-sky-500/5',
-    border: 'border-cyan-500/20',
-    iconBg: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
-  },
-  {
-    icon: <Target size={22} />,
-    badge: 'Radar',
-    title: 'Radar de Competencia',
-    desc: 'Pega la URL de cualquier rival y obtén sus keywords, puntos débiles y cómo superarles en tiempo real.',
-    color: 'from-orange-500/10 to-amber-500/5',
-    border: 'border-orange-500/20',
-    iconBg: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
-  },
-  {
-    icon: <Globe size={22} />,
-    badge: 'GEO',
-    title: 'GEO Audit — Visibilidad en IA',
-    desc: 'Descubre si ChatGPT, Gemini o Perplexity mencionan tu negocio. Mide tu AI Search Visibility Score.',
-    color: 'from-teal-500/10 to-cyan-500/5',
-    border: 'border-teal-500/20',
-    iconBg: 'bg-teal-500/10 border-teal-500/20 text-teal-400',
-  },
-  {
-    icon: <Calendar size={22} />,
-    badge: 'Plan',
-    title: 'Plan de Contenido & Directorios',
-    desc: 'Plan editorial semanal con posts y hashtags locales. Escáner de directorios para aparecer donde buscan tus clientes.',
-    color: 'from-rose-500/10 to-pink-500/5',
-    border: 'border-rose-500/20',
-    iconBg: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    name: 'Marta G.',
-    city: 'Toledo',
-    business: 'Cerámica artesanal',
-    text: 'En 2 semanas tripliqué las visitas a mi tienda de Etsy. No sabía nada de SEO y ahora aparezco en la primera página.',
-    stars: 5,
-    metric: '+312% visitas en Etsy',
-    initials: 'MG',
-    color: 'from-emerald-500 to-teal-600',
-  },
-  {
-    name: 'Carlos R.',
-    city: 'Valencia',
-    business: 'Reparación de móviles',
-    text: 'Mi Google Business está ahora en el top 3 de Valencia. El escáner de Maps me dijo exactamente qué estaba fallando.',
-    stars: 5,
-    metric: 'Top 3 Google Maps Valencia',
-    initials: 'CR',
-    color: 'from-blue-500 to-cyan-600',
-  },
-  {
-    name: 'Laura M.',
-    city: 'Sevilla',
-    business: 'Floristería online',
-    text: 'Genera en 30 segundos lo que antes me costaba 2 horas escribir. Vale cada euro y el soporte es inmediato.',
-    stars: 5,
-    metric: '2h ahorradas por producto',
-    initials: 'LM',
-    color: 'from-rose-500 to-pink-600',
-  },
-];
-
-const FAQS = [
-  {
-    q: '¿Necesito poner mi tarjeta para empezar?',
-    a: 'No. Para los 7 días de prueba solo necesitas un email y una contraseña — sin tarjeta, sin datos bancarios, sin compromisos. Solo si decides continuar al finalizar el trial, se te pedirán los datos de pago para activar el plan mensual.',
-  },
-  {
-    q: '¿Cuándo tendré que poner mi tarjeta?',
-    a: 'Únicamente a partir del día 8, si quieres seguir usando LocalSEOHub. Recibirás un email de aviso antes de que termine la prueba. Si no haces nada o decides no continuar, tu cuenta simplemente queda en modo gratuito y no se te cobra absolutamente nada.',
-  },
-  {
-    q: '¿Funciona para mi tipo de negocio?',
-    a: 'LocalSEOHub está diseñado para cualquier negocio local: tiendas físicas, servicios a domicilio, negocios online con venta local, restaurantes, clínicas, freelancers... Si tienes clientes en una ciudad, esto es para ti.',
-  },
-  {
-    q: '¿Tengo que instalar algo?',
-    a: 'No. Todo funciona desde el navegador, sin instalaciones ni configuraciones técnicas. En menos de 60 segundos tienes tu primer contenido generado.',
-  },
-  {
-    q: '¿Qué pasa si quiero cancelar después de suscribirme?',
-    a: 'Cancelas en un clic desde tu panel. Sin formularios, sin llamadas, sin preguntas. Tu acceso Pro se mantiene hasta el fin del período ya pagado.',
-  },
-];
-
-const COMPARISON_ROWS = [
-  { label: 'Coste mensual', bad: '800–2.000€/mes', good: '9,99€/mes' },
-  { label: 'Tiempo en resultados', bad: '3–6 meses', good: 'Desde el primer día' },
-  { label: 'Conocimiento técnico', bad: 'Necesitas aprender SEO', good: 'Cero conocimientos' },
-  { label: 'Visibilidad en IA (ChatGPT)', bad: 'Sin seguimiento', good: 'GEO Audit incluido' },
-  { label: 'Radar de competencia', bad: 'Herramientas de pago aparte', good: 'Incluido en el plan' },
-  { label: 'Exportación a Etsy / Shopify', bad: 'Manual y lento', good: 'CSV en 1 clic' },
-];
+const TESTIMONIAL_META = [
+  { name: 'Marta G.', city: 'Toledo', business: 'Cerámica artesanal', stars: 5, initials: 'MG', color: 'from-emerald-500 to-teal-600' },
+  { name: 'Carlos R.', city: 'Valencia', business: 'Reparación de móviles', stars: 5, initials: 'CR', color: 'from-blue-500 to-cyan-600' },
+  { name: 'Laura M.', city: 'Sevilla', business: 'Floristería online', stars: 5, initials: 'LM', color: 'from-rose-500 to-pink-600' },
+] as const;
 
 function GoogleIconSm() {
   return (
@@ -188,6 +74,7 @@ function GateOverlay({
   onEmail: () => void;
   loading: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <div
       className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 rounded-xl"
@@ -213,16 +100,17 @@ function GateOverlay({
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
         ) : <GoogleIconSm />}
-        {loading ? 'Redirigiendo...' : 'Continuar con Google — Gratis'}
+        {loading ? t('widget_redirecting') : t('widget_gate_google')}
       </button>
       <button onClick={onEmail} className="text-slate-500 hover:text-slate-300 text-xs transition-colors">
-        O regístrate con email
+        {t('widget_gate_email_btn')}
       </button>
     </div>
   );
 }
 
 function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
+  const { t, lang } = useI18n();
   const [tab, setTab] = useState<WidgetTab>('maps');
   const [phase, setPhase] = useState<ScanPhase>('idle');
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -240,12 +128,12 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
 
   const platformOptions = tipo === 'producto' ? SEO_PLATFORMS_PRODUCTO : SEO_PLATFORMS_SERVICIO;
 
-  const handleTipoChange = (t: SeoTipo) => {
-    setTipo(t);
-    setPlatform(t === 'producto' ? SEO_PLATFORMS_PRODUCTO[0] : SEO_PLATFORMS_SERVICIO[0]);
+  const handleTipoChange = (tipo_new: SeoTipo) => {
+    setTipo(tipo_new);
+    setPlatform(tipo_new === 'producto' ? SEO_PLATFORMS_PRODUCTO[0] : SEO_PLATFORMS_SERVICIO[0]);
   };
 
-  const switchTab = (t: WidgetTab) => { setTab(t); setPhase('idle'); };
+  const switchTab = (tab_new: WidgetTab) => { setTab(tab_new); setPhase('idle'); };
 
   const handleScan = () => {
     const trigger = tab === 'maps' ? business : product;
@@ -264,55 +152,66 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   };
 
   // Maps derived content
-  const displayName = business.trim() || 'Tu negocio';
+  const displayName = business.trim() || (lang === 'es' ? 'Tu negocio' : 'Your business');
   const displayCity = city.trim();
-  const mapsTitle = `${displayName}${displayCity ? ` en ${displayCity}` : ''} — Abierto hoy | Atención personalizada`;
-  const mapsDesc = `¿Buscas ${displayName.toLowerCase()}${displayCity ? ` en ${displayCity}` : ''}? Somos especialistas con más de 10 años de experiencia. Ofrecemos atención personalizada, resultados garantizados y el mejor servicio${displayCity ? ` en ${displayCity}` : ' de la zona'}.`;
-  const mapsKeywords = [
-    `${displayName.toLowerCase()} ${displayCity || 'cerca de mí'}`,
-    `mejor ${displayName.toLowerCase()} ${displayCity || 'local'}`,
-    `${displayName.toLowerCase()} barato${displayCity ? ` ${displayCity}` : ''}`,
-    `${displayName.toLowerCase()} opiniones`,
-    `${displayName.toLowerCase()} reserva online`,
-    `${displayName.toLowerCase()} precio`,
-  ];
+  const locPrep = lang === 'es' ? 'en' : 'in';
+  const mapsTitle = lang === 'es'
+    ? `${displayName}${displayCity ? ` en ${displayCity}` : ''} — Abierto hoy | Atención personalizada`
+    : `${displayName}${displayCity ? ` in ${displayCity}` : ''} — Open today | Personalized service`;
+  const mapsDesc = lang === 'es'
+    ? `¿Buscas ${displayName.toLowerCase()}${displayCity ? ` en ${displayCity}` : ''}? Somos especialistas con más de 10 años de experiencia. Ofrecemos atención personalizada, resultados garantizados y el mejor servicio${displayCity ? ` en ${displayCity}` : ' de la zona'}.`
+    : `Looking for ${displayName.toLowerCase()}${displayCity ? ` in ${displayCity}` : ''}? We are specialists with over 10 years of experience. We offer personalized service, guaranteed results and the best service${displayCity ? ` in ${displayCity}` : ' in the area'}.`;
+  const nearMeStr = lang === 'es' ? 'cerca de mí' : 'near me';
+  const mapsKeywords = lang === 'es'
+    ? [
+        `${displayName.toLowerCase()} ${displayCity || 'cerca de mí'}`,
+        `mejor ${displayName.toLowerCase()} ${displayCity || 'local'}`,
+        `${displayName.toLowerCase()} barato${displayCity ? ` ${displayCity}` : ''}`,
+        `${displayName.toLowerCase()} opiniones`,
+        `${displayName.toLowerCase()} reserva online`,
+        `${displayName.toLowerCase()} precio`,
+      ]
+    : [
+        `${displayName.toLowerCase()} ${displayCity || 'near me'}`,
+        `best ${displayName.toLowerCase()} ${displayCity || 'local'}`,
+        `cheap ${displayName.toLowerCase()}${displayCity ? ` ${displayCity}` : ''}`,
+        `${displayName.toLowerCase()} reviews`,
+        `${displayName.toLowerCase()} book online`,
+        `${displayName.toLowerCase()} price`,
+      ];
 
   // SEO derived content
-  const displayProduct = product.trim() || (tipo === 'producto' ? 'tu producto' : 'tu servicio');
+  const displayProduct = product.trim() || (tipo === 'producto' ? (lang === 'es' ? 'tu producto' : 'your product') : (lang === 'es' ? 'tu servicio' : 'your service'));
   const displaySeoCity = seoCity.trim();
   const isServicio = tipo === 'servicio';
-  const seoTitle = isServicio
-    ? `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Expertos locales · Reserva online`
-    : `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Mejor precio · Envío rápido`;
-  const seoDesc = isServicio
-    ? `¿Necesitas ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''}? Somos especialistas con años de experiencia. Atención personalizada, presupuesto sin compromiso y resultados garantizados. Llámanos o reserva online ahora.`
-    : `Descubre ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''} al mejor precio. Calidad garantizada, valoraciones reales y entrega rápida. Encuentra tu ${displayProduct.toLowerCase()} ideal con las mejores especificaciones del mercado.`;
-  const seoTagsVisible = isServicio
-    ? [
-        `${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`,
-        `${displayProduct.toLowerCase()} profesional`,
-        `${displayProduct.toLowerCase()} precio`,
-      ]
-    : [
-        `${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`,
-        `comprar ${displayProduct.toLowerCase()} online`,
-        `${displayProduct.toLowerCase()} precio`,
-      ];
-  const seoTagsBlurred = isServicio
-    ? [
-        `mejor ${displayProduct.toLowerCase()} ${displaySeoCity || 'cerca de mí'}`,
-        `${displayProduct.toLowerCase()} barato`,
-        `${displayProduct.toLowerCase()} opiniones`,
-        `contratar ${displayProduct.toLowerCase()}`,
-        `${displayProduct.toLowerCase()} urgente`,
-      ]
-    : [
-        `${displayProduct.toLowerCase()} barato`,
-        `mejor ${displayProduct.toLowerCase()}`,
-        `${displayProduct.toLowerCase()} oferta`,
-        `${displayProduct.toLowerCase()} ${platform.toLowerCase()}`,
-        `${displayProduct.toLowerCase()} envío gratis`,
-      ];
+  const seoTitle = lang === 'es'
+    ? (isServicio
+        ? `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Expertos locales · Reserva online`
+        : `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Mejor precio · Envío rápido`)
+    : (isServicio
+        ? `${displayProduct}${displaySeoCity ? ` in ${displaySeoCity}` : ''} | ${platform} — Local experts · Book online`
+        : `${displayProduct}${displaySeoCity ? ` in ${displaySeoCity}` : ''} | ${platform} — Best price · Fast delivery`);
+  const seoDesc = lang === 'es'
+    ? (isServicio
+        ? `¿Necesitas ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''}? Somos especialistas con años de experiencia. Atención personalizada, presupuesto sin compromiso y resultados garantizados. Llámanos o reserva online ahora.`
+        : `Descubre ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''} al mejor precio. Calidad garantizada, valoraciones reales y entrega rápida. Encuentra tu ${displayProduct.toLowerCase()} ideal con las mejores especificaciones del mercado.`)
+    : (isServicio
+        ? `Do you need ${displayProduct.toLowerCase()}${displaySeoCity ? ` in ${displaySeoCity}` : ''}? We are specialists with years of experience. Personalized service, free quote and guaranteed results. Call us or book online now.`
+        : `Discover ${displayProduct.toLowerCase()}${displaySeoCity ? ` in ${displaySeoCity}` : ''} at the best price. Guaranteed quality, real ratings and fast delivery. Find your ideal ${displayProduct.toLowerCase()} with the best specifications on the market.`);
+  const seoTagsVisible = lang === 'es'
+    ? (isServicio
+        ? [`${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`, `${displayProduct.toLowerCase()} profesional`, `${displayProduct.toLowerCase()} precio`]
+        : [`${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`, `comprar ${displayProduct.toLowerCase()} online`, `${displayProduct.toLowerCase()} precio`])
+    : (isServicio
+        ? [`${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`, `professional ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} price`]
+        : [`${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`, `buy ${displayProduct.toLowerCase()} online`, `${displayProduct.toLowerCase()} price`]);
+  const seoTagsBlurred = lang === 'es'
+    ? (isServicio
+        ? [`mejor ${displayProduct.toLowerCase()} ${displaySeoCity || 'cerca de mí'}`, `${displayProduct.toLowerCase()} barato`, `${displayProduct.toLowerCase()} opiniones`, `contratar ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} urgente`]
+        : [`${displayProduct.toLowerCase()} barato`, `mejor ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} oferta`, `${displayProduct.toLowerCase()} ${platform.toLowerCase()}`, `${displayProduct.toLowerCase()} envío gratis`])
+    : (isServicio
+        ? [`best ${displayProduct.toLowerCase()} ${displaySeoCity || 'near me'}`, `cheap ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} reviews`, `hire ${displayProduct.toLowerCase()}`, `urgent ${displayProduct.toLowerCase()}`]
+        : [`cheap ${displayProduct.toLowerCase()}`, `best ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} deals`, `${displayProduct.toLowerCase()} on ${platform}`, `free shipping ${displayProduct.toLowerCase()}`]);
 
   const INPUT_CLS = 'w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all duration-200 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20';
   const scanDisabled = tab === 'maps' ? !business.trim() : !product.trim();
@@ -328,21 +227,21 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
           {/* ── Tab switcher (only in idle) ── */}
           {phase === 'idle' && (
             <div className="flex items-center gap-1 bg-slate-950/50 rounded-xl p-1 mb-5 border border-white/5">
-              {(['maps', 'seo'] as WidgetTab[]).map((t) => (
+              {(['maps', 'seo'] as WidgetTab[]).map((tab_id) => (
                 <button
-                  key={t}
-                  onClick={() => switchTab(t)}
+                  key={tab_id}
+                  onClick={() => switchTab(tab_id)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                    tab === t
+                    tab === tab_id
                       ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20'
                       : 'text-slate-500 hover:text-slate-300'
                   }`}
                 >
-                  {t === 'maps' ? <MapPinned size={12} /> : <Sparkles size={12} />}
+                  {tab_id === 'maps' ? <MapPinned size={12} /> : <Sparkles size={12} />}
                   <span className="hidden sm:inline">
-                    {t === 'maps' ? 'Auditoría de ficha Maps' : 'Generar SEO de producto'}
+                    {tab_id === 'maps' ? t('widget_tab_maps') : t('widget_tab_seo')}
                   </span>
-                  <span className="sm:hidden">{t === 'maps' ? 'Maps' : 'SEO'}</span>
+                  <span className="sm:hidden">{tab_id === 'maps' ? 'Maps' : 'SEO'}</span>
                 </button>
               ))}
             </div>
@@ -358,8 +257,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       <MapPinned size={14} className="text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-white text-sm font-bold leading-tight">Audita tu ficha de Google Maps</p>
-                      <p className="text-slate-500 text-[11px]">Descubre tu puntuación de visibilidad local en 10 segundos</p>
+                      <p className="text-white text-sm font-bold leading-tight">{t('widget_maps_heading')}</p>
+                      <p className="text-slate-500 text-[11px]">{t('widget_maps_subheading')}</p>
                     </div>
                   </div>
 
@@ -369,7 +268,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       value={business}
                       onChange={(e) => setBusiness(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                      placeholder="Nombre de tu negocio (ej: Peluquería Toledo)"
+                      placeholder={t('widget_maps_ph_biz')}
                       className={INPUT_CLS}
                     />
                     <div className="relative">
@@ -379,7 +278,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                        placeholder="Introduce tu ciudad"
+                        placeholder={t('widget_maps_ph_city')}
                         className={`${INPUT_CLS} pl-9`}
                       />
                     </div>
@@ -394,10 +293,10 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
                   >
                     <Zap size={16} fill="currentColor" />
-                    Analizar mi negocio gratis ⚡
+                    {t('widget_maps_btn')}
                   </button>
                   <p className="text-center text-[11px] text-slate-600 mt-3">
-                    Sin tarjeta · Sin registro previo · Resultado inmediato
+                    {t('widget_maps_trust')}
                   </p>
                 </>
               )}
@@ -416,8 +315,12 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     </div>
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="text-white font-bold text-sm">Analizando competencia local...</p>
-                    <p className="text-slate-500 text-xs">Escaneando "{displayName}"{displayCity ? ` en ${displayCity}` : ''} · Comparando con competidores</p>
+                    <p className="text-white font-bold text-sm">{t('widget_scanning_title')}</p>
+                    <p className="text-slate-500 text-xs">
+                      {lang === 'es'
+                        ? `Escaneando "${displayName}"${displayCity ? ` en ${displayCity}` : ''} · Comparando con competidores`
+                        : `Scanning "${displayName}"${displayCity ? ` in ${displayCity}` : ''} · Comparing with competitors`}
+                    </p>
                   </div>
                   <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
@@ -430,12 +333,12 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">Resultado del análisis</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">{t('widget_result_analysis')}</p>
                       <p className="text-white font-bold text-sm leading-tight">{displayName}{displayCity ? ` · ${displayCity}` : ''}</p>
                     </div>
                     <div className="text-right shrink-0">
                       <div className="text-2xl font-extrabold text-amber-400 leading-none">{score}%</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">Ficha optimizada</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">{t('widget_result_optimized')}</div>
                     </div>
                   </div>
                   <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
@@ -444,19 +347,19 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
                   <p className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
                     <span>⚠️</span>
-                    <span>Tu ficha tiene margen de mejora. Los competidores mejor optimizados capturan {100 - score}% más llamadas.</span>
+                    <span>{lang === 'es' ? `Tu ficha tiene margen de mejora. Los competidores mejor optimizados capturan ${100 - score}% más llamadas.` : `Your profile has room for improvement. Better optimized competitors capture ${100 - score}% more calls.`}</span>
                   </p>
                   <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
-                    <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">Título SEO optimizado</p>
+                    <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_seo_title_lbl')}</p>
                     <p className="text-white text-sm font-medium leading-snug">{mapsTitle}</p>
                   </div>
                   <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Descripción optimizada</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
                     <p className="text-slate-300 text-xs leading-relaxed">{mapsDesc}</p>
                   </div>
                   <div className="relative rounded-xl overflow-hidden">
                     <div className="blur-sm select-none pointer-events-none p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">GEO Keywords y Etiquetas recomendadas</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
                       <div className="flex flex-wrap gap-2">
                         {mapsKeywords.map((kw, i) => (
                           <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{kw}</span>
@@ -464,8 +367,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       </div>
                     </div>
                     <GateOverlay
-                      title="Desbloquea tus etiquetas SEO"
-                      subtitle="Regístrate gratis con Google para desbloquear tus etiquetas SEO y copiar el informe completo en un clic."
+                      title={t('widget_gate_maps_title')}
+                      subtitle={t('widget_gate_maps_sub')}
                       onGoogle={handleGoogleAuth}
                       onEmail={onLoginClick}
                       loading={googleLoading}
@@ -486,27 +389,27 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       <Sparkles size={14} className="text-teal-400" />
                     </div>
                     <div>
-                      <p className="text-white text-sm font-bold leading-tight">Genera SEO para tu producto o servicio</p>
-                      <p className="text-slate-500 text-[11px]">Título, descripción y etiquetas optimizadas listas para copiar</p>
+                      <p className="text-white text-sm font-bold leading-tight">{t('widget_seo_heading')}</p>
+                      <p className="text-slate-500 text-[11px]">{t('widget_seo_subheading')}</p>
                     </div>
                   </div>
 
                   {/* Tipo de negocio toggle */}
                   <div className="mb-4">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-2">Tipo de negocio</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-2">{t('widget_tipo_lbl')}</p>
                     <div className="flex items-center gap-1.5 bg-slate-950/60 border border-slate-800/80 rounded-xl p-1 w-fit">
-                      {(['producto', 'servicio'] as SeoTipo[]).map((t) => (
+                      {(['producto', 'servicio'] as SeoTipo[]).map((tipoOpt) => (
                         <button
-                          key={t}
+                          key={tipoOpt}
                           type="button"
-                          onClick={() => handleTipoChange(t)}
+                          onClick={() => handleTipoChange(tipoOpt)}
                           className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 capitalize ${
-                            tipo === t
+                            tipo === tipoOpt
                               ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30'
                               : 'text-slate-400 hover:text-white'
                           }`}
                         >
-                          {t === 'producto' ? 'Producto' : 'Servicio'}
+                          {tipoOpt === 'producto' ? t('dash_tipo_producto') : t('dash_tipo_servicio')}
                         </button>
                       ))}
                     </div>
@@ -518,9 +421,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       value={product}
                       onChange={(e) => setProduct(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                      placeholder={tipo === 'producto'
-                        ? 'Producto (ej: Taza de cerámica artesanal, Collar de plata...)'
-                        : 'Servicio (ej: Corte de pelo mujer, Reparación de móviles...)'}
+                      placeholder={tipo === 'producto' ? t('widget_seo_ph_prod') : t('widget_seo_ph_serv')}
                       className={INPUT_CLS}
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -530,7 +431,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                           type="text"
                           value={seoCity}
                           onChange={(e) => setSeoCity(e.target.value)}
-                          placeholder="Tu ciudad (opcional)"
+                          placeholder={t('widget_seo_ph_city')}
                           className={`${INPUT_CLS} pl-9`}
                         />
                       </div>
@@ -555,10 +456,10 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
                   >
                     <Sparkles size={16} />
-                    Analizar y Generar SEO ⚡
+                    {t('widget_seo_btn')}
                   </button>
                   <p className="text-center text-[11px] text-slate-600 mt-3">
-                    Sin tarjeta · Sin registro previo · Listo en 10 segundos
+                    {t('widget_seo_trust')}
                   </p>
                 </>
               )}
@@ -575,8 +476,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     </div>
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="text-white font-bold text-sm">Generando tu contenido SEO...</p>
-                    <p className="text-slate-500 text-xs">Optimizando "{displayProduct}" ({tipo}) para {platform}{displaySeoCity ? ` en ${displaySeoCity}` : ''}</p>
+                    <p className="text-white font-bold text-sm">{t('widget_seo_scanning')}</p>
+                    <p className="text-slate-500 text-xs">{lang === 'es' ? `Optimizando "${displayProduct}" (${tipo}) para ${platform}${displaySeoCity ? ` en ${displaySeoCity}` : ''}` : `Optimizing "${displayProduct}" (${tipo}) for ${platform}${displaySeoCity ? ` in ${displaySeoCity}` : ''}`}</p>
                   </div>
                   <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full"
@@ -592,24 +493,24 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       <Sparkles size={12} className="text-teal-400" />
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Contenido SEO generado</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{t('widget_seo_result_lbl')}</p>
                       <p className="text-white font-bold text-sm leading-tight">{displayProduct}{displaySeoCity ? ` · ${displaySeoCity}` : ''} · {platform}</p>
                     </div>
                   </div>
 
                   <div className="rounded-xl bg-teal-500/5 border border-teal-500/15 p-3.5">
-                    <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider mb-1.5">Título optimizado</p>
+                    <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider mb-1.5">{t('widget_seo_opt_title')}</p>
                     <p className="text-white text-sm font-medium leading-snug">{seoTitle}</p>
                   </div>
 
                   <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Descripción optimizada</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
                     <p className="text-slate-300 text-xs leading-relaxed">{seoDesc}</p>
                   </div>
 
                   {/* Visible tags */}
                   <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Etiquetas principales</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">{t('widget_seo_main_tags')}</p>
                     <div className="flex flex-wrap gap-2">
                       {seoTagsVisible.map((tag, i) => (
                         <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
@@ -620,7 +521,11 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   {/* Blurred extra tags + gate */}
                   <div className="relative rounded-xl overflow-hidden">
                     <div className="blur-sm select-none pointer-events-none p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">+{seoTagsBlurred.length} etiquetas long-tail · Alt text de imagen · Plan de contenido</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
+                        {lang === 'es'
+                          ? `+${seoTagsBlurred.length} etiquetas long-tail · Alt text de imagen · Plan de contenido`
+                          : `+${seoTagsBlurred.length} long-tail tags · Image alt text · Content plan`}
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {seoTagsBlurred.map((tag, i) => (
                           <span key={i} className="text-[11px] bg-cyan-500/15 border border-cyan-500/20 text-cyan-300 rounded-full px-3 py-1">{tag}</span>
@@ -628,8 +533,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       </div>
                     </div>
                     <GateOverlay
-                      title="Copia el informe SEO completo"
-                      subtitle="Regístrate gratis para desbloquear todas las etiquetas, el alt text y generar más contenidos sin límite."
+                      title={t('widget_gate_seo_title')}
+                      subtitle={t('widget_gate_seo_sub')}
                       onGoogle={handleGoogleAuth}
                       onEmail={onLoginClick}
                       loading={googleLoading}
@@ -760,6 +665,38 @@ function ProductMockup() {
 
 export default function LandingPage({ onLoginClick }: LandingPageProps) {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
+  const { t } = useI18n();
+
+  const PAIN_POINTS = [t('landing_pain_1'), t('landing_pain_2'), t('landing_pain_3'), t('landing_pain_4'), t('landing_pain_5')];
+
+  const TOOLS = TOOL_META.map((m, i) => ({
+    ...m,
+    title: t(`landing_tool_${i + 1}_title` as Parameters<typeof t>[0]),
+    desc: t(`landing_tool_${i + 1}_desc` as Parameters<typeof t>[0]),
+  }));
+
+  const TESTIMONIALS = TESTIMONIAL_META.map((m, i) => ({
+    ...m,
+    text: t(`landing_t${i + 1}_text` as Parameters<typeof t>[0]),
+    metric: t(`landing_t${i + 1}_metric` as Parameters<typeof t>[0]),
+  }));
+
+  const FAQS = [
+    { q: t('landing_faq1_q'), a: t('landing_faq1_a') },
+    { q: t('landing_faq2_q'), a: t('landing_faq2_a') },
+    { q: t('landing_faq3_q'), a: t('landing_faq3_a') },
+    { q: t('landing_faq4_q'), a: t('landing_faq4_a') },
+    { q: t('landing_faq5_q'), a: t('landing_faq5_a') },
+  ];
+
+  const COMPARISON_ROWS = [
+    { label: t('landing_comp_row1_label'), bad: t('landing_comp_row1_bad'), good: t('landing_comp_row1_good') },
+    { label: t('landing_comp_row2_label'), bad: t('landing_comp_row2_bad'), good: t('landing_comp_row2_good') },
+    { label: t('landing_comp_row3_label'), bad: t('landing_comp_row3_bad'), good: t('landing_comp_row3_good') },
+    { label: t('landing_comp_row4_label'), bad: t('landing_comp_row4_bad'), good: t('landing_comp_row4_good') },
+    { label: t('landing_comp_row5_label'), bad: t('landing_comp_row5_bad'), good: t('landing_comp_row5_good') },
+    { label: t('landing_comp_row6_label'), bad: t('landing_comp_row6_bad'), good: t('landing_comp_row6_good') },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -777,30 +714,26 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           <div className="flex justify-center mb-7">
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
               <Flame size={12} className="text-orange-400" />
-              <span>Acceso anticipado — 7 días gratis, sin tarjeta</span>
+              <span>{t('landing_urgency')}</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
           </div>
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.1] mb-5 tracking-tight text-center">
-            Consigue que los clientes de tu zona{' '}
+            {t('landing_hero_title1')}{' '}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              te llamen a ti, no a tu competencia
+              {t('landing_hero_title2')}
             </span>
           </h1>
 
           <p className="text-center text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-7 leading-relaxed">
-            La primera IA que audita tu ficha de Google Maps y te genera los textos optimizados para multiplicar tus llamadas y visitas. Gratis, en 10 segundos y sin conocimientos técnicos.
+            {t('landing_hero_desc2')}
           </p>
 
           {/* Sub bullets */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-9 text-sm text-slate-300">
-            {[
-              '📈 Multiplica tus llamadas de clientes locales',
-              '🔍 Descubre qué fallos te ocultan en Google Maps',
-              '⚡ Genera textos optimizados listos para copiar y pegar',
-            ].map((item) => (
+            {[t('landing_bullet_1'), t('landing_bullet_2'), t('landing_bullet_3')].map((item) => (
               <div key={item} className="flex items-center gap-2">
                 <BadgeCheck size={14} className="text-emerald-400 shrink-0" />
                 <span>{item}</span>
@@ -812,9 +745,9 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           <ScannerWidget onLoginClick={onLoginClick} />
 
           <p className="text-center text-xs text-slate-600 mb-8">
-            ¿Ya tienes cuenta?{' '}
+            {t('landing_have_account')}{' '}
             <button onClick={onLoginClick} className="text-emerald-500 hover:text-emerald-400 transition-colors font-medium">
-              Inicia sesión
+              {t('landing_sign_in_link')}
             </button>
           </p>
 
@@ -822,15 +755,15 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500 mb-14">
             <div className="flex items-center gap-1.5">
               <Shield size={11} className="text-emerald-500" />
-              <span>Sin tarjeta · Sin compromiso</span>
+              <span>{t('landing_trust_1')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock size={11} className="text-teal-500" />
-              <span>Resultados en menos de 60 segundos</span>
+              <span>{t('landing_trust_2')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Users size={11} className="text-emerald-400" />
-              <span>Acceso anticipado · Plazas limitadas</span>
+              <span>{t('landing_trust_3')}</span>
             </div>
           </div>
 
@@ -843,10 +776,10 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
             {[
-              { value: '16+', label: 'Plataformas compatibles', icon: <Globe size={16} className="text-teal-400" /> },
-              { value: '< 60 seg', label: 'Para generar contenido', icon: <Clock size={16} className="text-blue-400" /> },
-              { value: '6', label: 'Herramientas de IA incluidas', icon: <Sparkles size={16} className="text-emerald-400" /> },
-              { value: '4.2h', label: 'Ahorradas por semana', icon: <BarChart3 size={16} className="text-amber-400" /> },
+              { value: '16+', label: t('landing_stat_1'), icon: <Globe size={16} className="text-teal-400" /> },
+              { value: '< 60 seg', label: t('landing_stat_2'), icon: <Clock size={16} className="text-blue-400" /> },
+              { value: '6', label: t('landing_stat_3'), icon: <Sparkles size={16} className="text-emerald-400" /> },
+              { value: '4.2h', label: t('landing_stat_4'), icon: <BarChart3 size={16} className="text-amber-400" /> },
             ].map((s) => (
               <div key={s.label} className="flex flex-col items-center gap-1.5">
                 <div className="flex items-center gap-1.5 mb-0.5">{s.icon}</div>
@@ -861,7 +794,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
       {/* ── PLATFORM STRIP ─────────────────────────────────────────── */}
       <section className="py-8 overflow-hidden">
         <div className="max-w-5xl mx-auto px-6">
-          <p className="text-center text-xs text-slate-600 uppercase tracking-widest font-semibold mb-5">Compatible con 16+ plataformas</p>
+          <p className="text-center text-xs text-slate-600 uppercase tracking-widest font-semibold mb-5">{t('landing_compat')}</p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5">
             {PLATFORMS.map((p) => (
               <span key={p} className="text-slate-600 text-sm font-medium hover:text-slate-400 transition-colors cursor-default">{p}</span>
@@ -875,9 +808,9 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         <div className="rounded-2xl border border-red-500/10 bg-red-500/3 p-8">
           <div className="text-center mb-7">
             <div className="inline-flex items-center gap-2 text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/15 rounded-full px-3 py-1 mb-3">
-              <X size={11} /> ¿Te suena alguna de estas situaciones?
+              <X size={11} /> {t('landing_pain_badge')}
             </div>
-            <h2 className="text-2xl font-bold text-white">El problema que tienen miles de negocios locales</h2>
+            <h2 className="text-2xl font-bold text-white">{t('landing_pain_title')}</h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-3xl mx-auto">
             {PAIN_POINTS.map((p) => (
@@ -890,14 +823,14 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
             ))}
           </div>
           <div className="text-center mt-7">
-            <p className="text-slate-400 text-sm mb-4">LocalSEOHub resuelve todos estos problemas en una sola plataforma.</p>
+            <p className="text-slate-400 text-sm mb-4">{t('landing_pain_resolved')}</p>
             <button
               onClick={onLoginClick}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
                 text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transition-all duration-300"
             >
-              Empieza gratis ahora <ArrowRight size={15} />
+              {t('landing_start_free')} <ArrowRight size={15} />
             </button>
           </div>
         </div>
@@ -907,10 +840,10 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
       <section className="max-w-5xl mx-auto px-6 py-10">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/20 rounded-full px-3 py-1 mb-3">
-            <Award size={11} /> 6 herramientas profesionales
+            <Award size={11} /> {t('landing_tools_badge')}
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Todo lo que necesitas en un solo panel</h2>
-          <p className="text-slate-400 max-w-xl mx-auto text-sm">Sin agencias, sin cursos, sin horas de trabajo manual. Desde generar contenido hasta espiar a tu competencia o medir si la IA te recomienda.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">{t('landing_tools_title2')}</h2>
+          <p className="text-slate-400 max-w-xl mx-auto text-sm">{t('landing_tools_sub2')}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -930,7 +863,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
               <h3 className="font-semibold text-white mb-2 text-sm leading-tight">{tool.title}</h3>
               <p className="text-slate-400 text-xs leading-relaxed flex-1">{tool.desc}</p>
               <div className="mt-4 flex items-center gap-1 text-emerald-500 text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                <Check size={11} /> Incluido en el plan
+                <Check size={11} /> {t('landing_included')}
               </div>
             </div>
           ))}
@@ -940,27 +873,27 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
       {/* ── HOW IT WORKS ───────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 py-12">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Tan fácil como 1, 2, 3</h2>
-          <p className="text-slate-400 text-sm">Sin curva de aprendizaje. En menos de 60 segundos tienes tu primer contenido listo.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">{t('landing_howto_title')}</h2>
+          <p className="text-slate-400 text-sm">{t('landing_howto_sub')}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative">
           <div className="hidden sm:block absolute top-8 left-[calc(16.66%+1rem)] right-[calc(16.66%+1rem)] h-px bg-gradient-to-r from-emerald-500/20 via-teal-500/30 to-emerald-500/20" />
           {[
             {
-              num: '01', title: 'Describe tu negocio',
-              desc: 'Nombre del producto o servicio, tu ciudad y la plataforma donde quieres vender. 10 segundos.',
+              num: '01', title: t('landing_howto_s1_title'),
+              desc: t('landing_howto_s1_desc'),
               icon: <MapPin size={20} />,
             },
             {
-              num: '02', title: 'La IA lo optimiza todo',
-              desc: 'Títulos, descripciones, etiquetas, análisis de competencia y recomendaciones — listos en segundos.',
+              num: '02', title: t('landing_howto_s2_title'),
+              desc: t('landing_howto_s2_desc'),
               icon: <Sparkles size={20} />,
               highlight: true,
             },
             {
-              num: '03', title: 'Publica y recibe clientes',
-              desc: 'Copia con un clic. Exporta a CSV para Shopify o Etsy. Aplica y empieza a aparecer antes que tu competencia.',
+              num: '03', title: t('landing_howto_s3_title'),
+              desc: t('landing_howto_s3_desc'),
               icon: <TrendingUp size={20} />,
             },
           ].map((step) => (
@@ -983,17 +916,17 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
       <section className="max-w-5xl mx-auto px-6 py-12">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1 mb-3">
-            <BarChart3 size={11} /> Comparativa real
+            <BarChart3 size={11} /> {t('landing_comp_badge')}
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Por qué no necesitas una agencia SEO</h2>
-          <p className="text-slate-400 text-sm max-w-lg mx-auto">Obtén los mismos resultados — o mejores — por menos del 1% de lo que te cobraría una agencia.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">{t('landing_comp_title')}</h2>
+          <p className="text-slate-400 text-sm max-w-lg mx-auto">{t('landing_comp_sub')}</p>
         </div>
 
         <div className="rounded-2xl border border-slate-800/80 overflow-hidden">
           {/* Header */}
           <div className="grid grid-cols-3 text-xs font-bold uppercase tracking-wider">
             <div className="px-5 py-3.5 text-slate-500 bg-slate-900/80 border-b border-slate-800" />
-            <div className="px-5 py-3.5 text-slate-500 bg-slate-900/80 border-b border-slate-800 border-l border-slate-800 text-center">Agencia / Hacerlo solo</div>
+            <div className="px-5 py-3.5 text-slate-500 bg-slate-900/80 border-b border-slate-800 border-l border-slate-800 text-center">{t('landing_comp_col_bad')}</div>
             <div className="px-5 py-3.5 text-emerald-400 bg-emerald-500/8 border-b border-emerald-500/20 border-l border-emerald-500/20 text-center">LocalSEOHub</div>
           </div>
           {COMPARISON_ROWS.map((row, i) => (
@@ -1019,7 +952,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
               text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5"
           >
             <Zap size={15} fill="currentColor" />
-            Pruébalo gratis 7 días — sin tarjeta
+            {t('landing_comp_try')}
             <ArrowRight size={15} />
           </button>
         </div>
@@ -1031,8 +964,8 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           <div className="flex items-center justify-center gap-0.5 mb-2">
             {[...Array(5)].map((_, i) => <Star key={i} size={16} className="text-amber-400 fill-amber-400" />)}
           </div>
-          <h2 className="text-2xl font-bold text-white mb-1">Lo que dicen nuestros primeros usuarios</h2>
-          <p className="text-slate-500 text-sm">Resultados reales · Primeros accesos</p>
+          <h2 className="text-2xl font-bold text-white mb-1">{t('landing_testimonials_title')}</h2>
+          <p className="text-slate-500 text-sm">{t('landing_testimonials_sub')}</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {TESTIMONIALS.map((item) => (
@@ -1066,9 +999,9 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
       <section className="max-w-3xl mx-auto px-6 py-10">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 bg-slate-800/60 border border-slate-700/60 rounded-full px-3 py-1 mb-3">
-            <HelpCircle size={11} /> Preguntas frecuentes
+            <HelpCircle size={11} /> {t('landing_faq_badge')}
           </div>
-          <h2 className="text-2xl font-bold text-white">Resolvemos tus dudas</h2>
+          <h2 className="text-2xl font-bold text-white">{t('landing_faq_title')}</h2>
         </div>
         <div className="space-y-2">
           {FAQS.map((faq) => (
@@ -1084,30 +1017,29 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           <div className="absolute inset-0 border border-emerald-500/20 rounded-2xl" />
           <div className="relative p-10 sm:p-14 text-center">
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
-              <Flame size={11} className="text-orange-400" /> Acceso anticipado · Precio de lanzamiento
+              <Flame size={11} className="text-orange-400" /> {t('landing_final_badge')}
             </div>
             <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4 leading-tight">
-              Cada día sin LocalSEOHub es un día que<br className="hidden sm:block" />
-              <span className="text-emerald-400"> tu competidor aparece antes que tú</span>
+              {t('landing_final_title1')}<br className="hidden sm:block" />
+              <span className="text-emerald-400"> {t('landing_final_title2')}</span>
             </h2>
             <p className="text-slate-400 mb-6 max-w-lg mx-auto text-sm leading-relaxed">
-              Los primeros negocios que adoptan IA en su ciudad ganan una ventaja que es muy difícil de recuperar.
-              Los 7 primeros días son completamente gratis — si no ves resultados, cancelas y no pagas nada.
+              {t('landing_final_desc')}
             </p>
 
             {/* Price anchor */}
             <div className="inline-flex items-center gap-3 bg-slate-900/60 border border-slate-700/60 rounded-2xl px-6 py-3 mb-7">
               <div className="text-left">
-                <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wide">Plan Pro</p>
+                <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wide">{t('landing_final_plan')}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">9,99€</span>
-                  <span className="text-slate-400 text-sm">/mes</span>
+                  <span className="text-2xl font-bold text-white">{t('landing_final_price')}</span>
+                  <span className="text-slate-400 text-sm">{t('landing_final_per_mo')}</span>
                 </div>
               </div>
               <div className="w-px h-10 bg-slate-700" />
               <div className="text-left">
-                <p className="text-emerald-400 text-xs font-bold">7 días gratis</p>
-                <p className="text-slate-500 text-[11px]">Sin tarjeta hasta el día 8</p>
+                <p className="text-emerald-400 text-xs font-bold">{t('landing_final_free')}</p>
+                <p className="text-slate-500 text-[11px]">{t('landing_final_no_card')}</p>
               </div>
             </div>
 
@@ -1119,12 +1051,12 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
                   text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
               >
                 <Zap size={17} fill="currentColor" />
-                Empieza gratis — sin tarjeta
+                {t('landing_final_cta')}
                 <ArrowRight size={16} />
               </button>
             </div>
             <p className="text-xs text-slate-600 mt-4 flex items-center justify-center gap-1.5">
-              <Shield size={10} /> Sin tarjeta · Sin compromiso · Cancela en 1 clic · Soporte en español
+              <Shield size={10} /> {t('landing_final_trust')}
             </p>
           </div>
         </div>
@@ -1137,16 +1069,16 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
             <LogoIcon size={22} />
             <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
           </div>
-          <p className="text-xs text-slate-700">© 2026 LocalSEOHub · Todos los derechos reservados</p>
+          <p className="text-xs text-slate-700">{t('landing_footer_cr')}</p>
           <div className="flex items-center gap-4">
             <button onClick={() => setLegalModal('privacy')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-              Privacidad
+              {t('landing_footer_priv')}
             </button>
             <button onClick={() => setLegalModal('terms')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-              Términos
+              {t('landing_footer_terms2')}
             </button>
             <button onClick={() => setLegalModal('contact')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-              Contacto
+              {t('footer_contact')}
             </button>
           </div>
         </div>
