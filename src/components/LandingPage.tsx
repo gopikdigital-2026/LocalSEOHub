@@ -162,16 +162,80 @@ function GoogleIconSm() {
 }
 
 type ScanPhase = 'idle' | 'scanning' | 'result';
+type WidgetTab = 'maps' | 'seo';
+
+const SEO_PLATFORMS = [
+  'Google Business', 'Etsy', 'Amazon', 'Shopify', 'Instagram Shop',
+  'WooCommerce', 'Wallapop', 'Web propia',
+];
+
+function GateOverlay({
+  title,
+  subtitle,
+  onGoogle,
+  onEmail,
+  loading,
+}: {
+  title: string;
+  subtitle: string;
+  onGoogle: () => void;
+  onEmail: () => void;
+  loading: boolean;
+}) {
+  return (
+    <div
+      className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 rounded-xl"
+      style={{ background: 'linear-gradient(to bottom, rgba(12,20,38,0.55), rgba(12,20,38,0.97))' }}
+    >
+      <div className="text-center">
+        <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-2.5">
+          <Lock size={14} className="text-emerald-400" />
+        </div>
+        <p className="text-white text-sm font-bold mb-1">{title}</p>
+        <p className="text-slate-400 text-xs leading-relaxed max-w-xs">{subtitle}</p>
+      </div>
+      <button
+        onClick={onGoogle}
+        disabled={loading}
+        className="flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200
+          bg-white text-slate-900 hover:bg-slate-50 shadow-xl hover:-translate-y-0.5 active:translate-y-0
+          disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {loading ? (
+          <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        ) : <GoogleIconSm />}
+        {loading ? 'Redirigiendo...' : 'Continuar con Google — Gratis'}
+      </button>
+      <button onClick={onEmail} className="text-slate-500 hover:text-slate-300 text-xs transition-colors">
+        O regístrate con email
+      </button>
+    </div>
+  );
+}
 
 function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
+  const [tab, setTab] = useState<WidgetTab>('maps');
   const [phase, setPhase] = useState<ScanPhase>('idle');
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Maps tab
   const [business, setBusiness] = useState('');
   const [city, setCity] = useState('');
   const [score] = useState(() => Math.floor(38 + Math.random() * 22));
-  const [googleLoading, setGoogleLoading] = useState(false);
+
+  // SEO tab
+  const [product, setProduct] = useState('');
+  const [seoCity, setSeoCity] = useState('');
+  const [platform, setPlatform] = useState('Google Business');
+
+  const switchTab = (t: WidgetTab) => { setTab(t); setPhase('idle'); };
 
   const handleScan = () => {
-    if (!business.trim()) return;
+    const trigger = tab === 'maps' ? business : product;
+    if (!trigger.trim()) return;
     setPhase('scanning');
     setTimeout(() => setPhase('result'), 3000);
   };
@@ -180,21 +244,17 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     setGoogleLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-        queryParams: { prompt: 'select_account' },
-      },
+      options: { redirectTo: `${window.location.origin}/`, queryParams: { prompt: 'select_account' } },
     });
     if (error) setGoogleLoading(false);
   };
 
+  // Maps derived content
   const displayName = business.trim() || 'Tu negocio';
   const displayCity = city.trim();
-
-  const fakeTitle = `${displayName}${displayCity ? ` en ${displayCity}` : ''} — Abierto hoy | Atención personalizada`;
-  const fakeDesc = `¿Buscas ${displayName.toLowerCase()}${displayCity ? ` en ${displayCity}` : ''}? Somos especialistas con más de 10 años de experiencia. Ofrecemos atención personalizada, resultados garantizados y el mejor servicio${displayCity ? ` en ${displayCity}` : ' de la zona'}.`;
-
-  const fakeKeywords = [
+  const mapsTitle = `${displayName}${displayCity ? ` en ${displayCity}` : ''} — Abierto hoy | Atención personalizada`;
+  const mapsDesc = `¿Buscas ${displayName.toLowerCase()}${displayCity ? ` en ${displayCity}` : ''}? Somos especialistas con más de 10 años de experiencia. Ofrecemos atención personalizada, resultados garantizados y el mejor servicio${displayCity ? ` en ${displayCity}` : ' de la zona'}.`;
+  const mapsKeywords = [
     `${displayName.toLowerCase()} ${displayCity || 'cerca de mí'}`,
     `mejor ${displayName.toLowerCase()} ${displayCity || 'local'}`,
     `${displayName.toLowerCase()} barato${displayCity ? ` ${displayCity}` : ''}`,
@@ -203,230 +263,327 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     `${displayName.toLowerCase()} precio`,
   ];
 
+  // SEO derived content
+  const displayProduct = product.trim() || 'tu producto';
+  const displaySeoCity = seoCity.trim();
+  const seoTitle = `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Mejor precio · Envío rápido`;
+  const seoDesc = `Descubre ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''} al mejor precio. Calidad garantizada, valoraciones reales y entrega rápida. Encuentra tu ${displayProduct.toLowerCase()} ideal con las mejores especificaciones del mercado.`;
+  const seoTagsVisible = [
+    `${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`,
+    `comprar ${displayProduct.toLowerCase()} online`,
+    `${displayProduct.toLowerCase()} precio`,
+  ];
+  const seoTagsBlurred = [
+    `${displayProduct.toLowerCase()} barato`,
+    `mejor ${displayProduct.toLowerCase()}`,
+    `${displayProduct.toLowerCase()} oferta`,
+    `${displayProduct.toLowerCase()} ${platform.toLowerCase()}`,
+    `${displayProduct.toLowerCase()} envío gratis`,
+  ];
+
+  const INPUT_CLS = 'w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all duration-200 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20';
+  const scanDisabled = tab === 'maps' ? !business.trim() : !product.trim();
+
   return (
     <div className="max-w-2xl mx-auto mb-3">
-      <div
-        className="rounded-2xl shadow-2xl"
-        style={{
-          background: 'rgba(12, 20, 38, 0.85)',
-          backdropFilter: 'blur(24px) saturate(160%)',
-          border: '1px solid rgba(255,255,255,0.09)',
-          boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 64px rgba(0,0,0,0.50)',
-        }}
-      >
-        {/* Accent top line */}
+      {/* glass-card gives the same 3D panel look as the app interface */}
+      <div className="glass-card rounded-2xl">
         <div className="h-[2px] rounded-t-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
 
         <div className="p-6">
-          {/* ── PHASE: idle ── */}
+
+          {/* ── Tab switcher (only in idle) ── */}
           {phase === 'idle' && (
+            <div className="flex items-center gap-1 bg-slate-950/50 rounded-xl p-1 mb-5 border border-white/5">
+              {(['maps', 'seo'] as WidgetTab[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => switchTab(t)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                    tab === t
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {t === 'maps' ? <MapPinned size={12} /> : <Sparkles size={12} />}
+                  <span className="hidden sm:inline">
+                    {t === 'maps' ? 'Auditoría de ficha Maps' : 'Generar SEO de producto'}
+                  </span>
+                  <span className="sm:hidden">{t === 'maps' ? 'Maps' : 'SEO'}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ══ MAPS TAB ══ */}
+          {tab === 'maps' && (
             <>
-              <div className="flex items-center gap-2.5 mb-5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                  <Zap size={14} className="text-emerald-400" fill="currentColor" />
-                </div>
-                <div>
-                  <p className="text-white text-sm font-bold leading-tight">Analiza tu negocio gratis</p>
-                  <p className="text-slate-500 text-[11px]">Descubre tu puntuación de visibilidad local en 10 segundos</p>
-                </div>
-              </div>
+              {phase === 'idle' && (
+                <>
+                  <div className="flex items-center gap-2.5 mb-5">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                      <MapPinned size={14} className="text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-white text-sm font-bold leading-tight">Audita tu ficha de Google Maps</p>
+                      <p className="text-slate-500 text-[11px]">Descubre tu puntuación de visibilidad local en 10 segundos</p>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                <input
-                  type="text"
-                  value={business}
-                  onChange={(e) => setBusiness(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                  placeholder="Nombre de tu negocio (ej: Peluquería Toledo)"
-                  className="w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all duration-200 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
-                />
-                <div className="relative">
-                  <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                    placeholder="Introduce tu ciudad"
-                    className="w-full bg-slate-950/70 border border-slate-700/50 rounded-xl pl-9 pr-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all duration-200 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    <input
+                      type="text"
+                      value={business}
+                      onChange={(e) => setBusiness(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+                      placeholder="Nombre de tu negocio (ej: Peluquería Toledo)"
+                      className={INPUT_CLS}
+                    />
+                    <div className="relative">
+                      <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+                        placeholder="Introduce tu ciudad"
+                        className={`${INPUT_CLS} pl-9`}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleScan}
+                    disabled={scanDisabled}
+                    className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
+                      bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                      text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0
+                      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
+                  >
+                    <Zap size={16} fill="currentColor" />
+                    Analizar mi negocio gratis ⚡
+                  </button>
+                  <p className="text-center text-[11px] text-slate-600 mt-3">
+                    Sin tarjeta · Sin registro previo · Resultado inmediato
+                  </p>
+                </>
+              )}
+
+              {phase === 'scanning' && (
+                <div className="py-8 flex flex-col items-center gap-6">
+                  <div className="relative w-28 h-28 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full"
+                      style={{ background: 'conic-gradient(from 0deg, rgba(16,185,129,0.20), transparent 55%)', animation: 'radarSweep 1.8s linear infinite' }} />
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="absolute rounded-full border border-emerald-400/40"
+                        style={{ width: `${44 + i * 22}px`, height: `${44 + i * 22}px`, animation: 'radarRing 2s ease-out infinite', animationDelay: `${i * 0.55}s` }} />
+                    ))}
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/40 z-10">
+                      <MapPinned size={17} className="text-slate-950" />
+                    </div>
+                  </div>
+                  <div className="text-center space-y-1">
+                    <p className="text-white font-bold text-sm">Analizando competencia local...</p>
+                    <p className="text-slate-500 text-xs">Escaneando "{displayName}"{displayCity ? ` en ${displayCity}` : ''} · Comparando con competidores</p>
+                  </div>
+                  <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                      style={{ animation: 'scanProgress 3s ease-out forwards' }} />
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <button
-                onClick={handleScan}
-                disabled={!business.trim()}
-                className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
-                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0
-                  disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
-              >
-                <Zap size={16} fill="currentColor" />
-                Analizar mi negocio gratis ⚡
-              </button>
-
-              <p className="text-center text-[11px] text-slate-600 mt-3">
-                Sin tarjeta · Sin registro previo · Resultado inmediato
-              </p>
+              {phase === 'result' && (
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">Resultado del análisis</p>
+                      <p className="text-white font-bold text-sm leading-tight">{displayName}{displayCity ? ` · ${displayCity}` : ''}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-2xl font-extrabold text-amber-400 leading-none">{score}%</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">Ficha optimizada</div>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-1000"
+                      style={{ width: `${score}%`, background: score < 55 ? 'linear-gradient(to right, #f59e0b, #fbbf24)' : 'linear-gradient(to right, #10b981, #14b8a6)' }} />
+                  </div>
+                  <p className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span>Tu ficha tiene margen de mejora. Los competidores mejor optimizados capturan {100 - score}% más llamadas.</span>
+                  </p>
+                  <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
+                    <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">Título SEO optimizado</p>
+                    <p className="text-white text-sm font-medium leading-snug">{mapsTitle}</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Descripción optimizada</p>
+                    <p className="text-slate-300 text-xs leading-relaxed">{mapsDesc}</p>
+                  </div>
+                  <div className="relative rounded-xl overflow-hidden">
+                    <div className="blur-sm select-none pointer-events-none p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">GEO Keywords y Etiquetas recomendadas</p>
+                      <div className="flex flex-wrap gap-2">
+                        {mapsKeywords.map((kw, i) => (
+                          <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{kw}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <GateOverlay
+                      title="Desbloquea tus etiquetas SEO"
+                      subtitle="Regístrate gratis con Google para desbloquear tus etiquetas SEO y copiar el informe completo en un clic."
+                      onGoogle={handleGoogleAuth}
+                      onEmail={onLoginClick}
+                      loading={googleLoading}
+                    />
+                  </div>
+                </div>
+              )}
             </>
           )}
 
-          {/* ── PHASE: scanning ── */}
-          {phase === 'scanning' && (
-            <div className="py-8 flex flex-col items-center gap-6">
-              <div className="relative w-28 h-28 flex items-center justify-center">
-                {/* Rotating sweep */}
-                <div
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: 'conic-gradient(from 0deg, rgba(16,185,129,0.20), transparent 55%)',
-                    animation: 'radarSweep 1.8s linear infinite',
-                  }}
-                />
-                {/* Concentric rings */}
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="absolute rounded-full border border-emerald-400/40"
-                    style={{
-                      width: `${44 + i * 22}px`,
-                      height: `${44 + i * 22}px`,
-                      animation: `radarRing 2s ease-out infinite`,
-                      animationDelay: `${i * 0.55}s`,
-                    }}
-                  />
-                ))}
-                {/* Center icon */}
-                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/40 z-10">
-                  <MapPinned size={17} className="text-slate-950" />
-                </div>
-              </div>
-
-              <div className="text-center space-y-1">
-                <p className="text-white font-bold text-sm">Analizando competencia local...</p>
-                <p className="text-slate-500 text-xs">
-                  Escaneando "{displayName}"{displayCity ? ` en ${displayCity}` : ''} · Comparando con competidores
-                </p>
-              </div>
-
-              {/* Progress bar */}
-              <div className="w-full max-w-xs">
-                <div className="w-full bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                    style={{ animation: 'scanProgress 3s ease-out forwards' }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── PHASE: result ── */}
-          {phase === 'result' && (
-            <div className="space-y-4">
-              {/* Score header */}
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">Resultado del análisis</p>
-                  <p className="text-white font-bold text-sm leading-tight">
-                    {displayName}{displayCity ? ` · ${displayCity}` : ''}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="text-2xl font-extrabold text-amber-400 leading-none">{score}%</div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">Ficha optimizada</div>
-                </div>
-              </div>
-
-              {/* Score bar */}
-              <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-1000"
-                  style={{
-                    width: `${score}%`,
-                    background: score < 55
-                      ? 'linear-gradient(to right, #f59e0b, #fbbf24)'
-                      : 'linear-gradient(to right, #10b981, #14b8a6)',
-                  }}
-                />
-              </div>
-
-              <p className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
-                <span>⚠️</span>
-                <span>Tu ficha tiene margen de mejora. Los competidores mejor optimizados capturan {100 - score}% más llamadas.</span>
-              </p>
-
-              {/* Generated title */}
-              <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
-                <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">Título SEO optimizado</p>
-                <p className="text-white text-sm font-medium leading-snug">{fakeTitle}</p>
-              </div>
-
-              {/* Generated description */}
-              <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Descripción optimizada</p>
-                <p className="text-slate-300 text-xs leading-relaxed">{fakeDesc}</p>
-              </div>
-
-              {/* Blurred keywords + gate */}
-              <div className="relative rounded-xl overflow-hidden">
-                {/* Blurred content */}
-                <div className="blur-sm select-none pointer-events-none p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">
-                    GEO Keywords y Etiquetas recomendadas
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {fakeKeywords.map((kw, i) => (
-                      <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Gate overlay */}
-                <div
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 rounded-xl"
-                  style={{ background: 'linear-gradient(to bottom, rgba(12,20,38,0.6), rgba(12,20,38,0.97))' }}
-                >
-                  <div className="text-center">
-                    <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-2.5">
-                      <Lock size={14} className="text-emerald-400" />
+          {/* ══ SEO TAB ══ */}
+          {tab === 'seo' && (
+            <>
+              {phase === 'idle' && (
+                <>
+                  <div className="flex items-center gap-2.5 mb-5">
+                    <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
+                      <Sparkles size={14} className="text-teal-400" />
                     </div>
-                    <p className="text-white text-sm font-bold mb-1">
-                      Desbloquea tus etiquetas SEO
-                    </p>
-                    <p className="text-slate-400 text-xs leading-relaxed max-w-xs">
-                      Regístrate gratis con Google para desbloquear tus etiquetas SEO y copiar el informe completo en un clic.
-                    </p>
+                    <div>
+                      <p className="text-white text-sm font-bold leading-tight">Genera SEO para tu producto o servicio</p>
+                      <p className="text-slate-500 text-[11px]">Título, descripción y etiquetas optimizadas listas para copiar</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 mb-4">
+                    <input
+                      type="text"
+                      value={product}
+                      onChange={(e) => setProduct(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+                      placeholder="Producto o servicio (ej: Corte de pelo mujer, Taza de cerámica...)"
+                      className={INPUT_CLS}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="relative">
+                        <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={seoCity}
+                          onChange={(e) => setSeoCity(e.target.value)}
+                          placeholder="Tu ciudad (opcional)"
+                          className={`${INPUT_CLS} pl-9`}
+                        />
+                      </div>
+                      <select
+                        value={platform}
+                        onChange={(e) => setPlatform(e.target.value)}
+                        className="w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 outline-none transition-all duration-200 focus:border-teal-500/60 focus:ring-1 focus:ring-teal-500/20 appearance-none cursor-pointer"
+                      >
+                        {SEO_PLATFORMS.map((p) => (
+                          <option key={p} value={p} className="bg-slate-900">{p}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   <button
-                    onClick={handleGoogleAuth}
-                    disabled={googleLoading}
-                    className="flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200
-                      bg-white text-slate-900 hover:bg-slate-50 shadow-xl hover:-translate-y-0.5 active:translate-y-0
-                      disabled:opacity-60 disabled:cursor-not-allowed"
+                    onClick={handleScan}
+                    disabled={scanDisabled}
+                    className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
+                      bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400
+                      text-slate-950 shadow-xl shadow-teal-500/30 hover:shadow-teal-500/45 hover:-translate-y-0.5 active:translate-y-0
+                      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
                   >
-                    {googleLoading ? (
-                      <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                    ) : <GoogleIconSm />}
-                    {googleLoading ? 'Redirigiendo...' : 'Continuar con Google — Gratis'}
+                    <Sparkles size={16} />
+                    Analizar y Generar SEO ⚡
                   </button>
+                  <p className="text-center text-[11px] text-slate-600 mt-3">
+                    Sin tarjeta · Sin registro previo · Listo en 10 segundos
+                  </p>
+                </>
+              )}
 
-                  <button
-                    onClick={onLoginClick}
-                    className="text-slate-500 hover:text-slate-300 text-xs transition-colors"
-                  >
-                    O regístrate con email
-                  </button>
+              {phase === 'scanning' && (
+                <div className="py-8 flex flex-col items-center gap-6">
+                  <div className="relative w-24 h-24 flex items-center justify-center">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div key={i} className="absolute rounded-full border border-teal-400/30"
+                        style={{ width: `${28 + i * 18}px`, height: `${28 + i * 18}px`, animation: 'radarRing 2.2s ease-out infinite', animationDelay: `${i * 0.45}s` }} />
+                    ))}
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center shadow-xl shadow-teal-500/40 z-10">
+                      <Sparkles size={20} className="text-slate-950" />
+                    </div>
+                  </div>
+                  <div className="text-center space-y-1">
+                    <p className="text-white font-bold text-sm">Generando tu contenido SEO...</p>
+                    <p className="text-slate-500 text-xs">Optimizando "{displayProduct}" para {platform}{displaySeoCity ? ` en ${displaySeoCity}` : ''}</p>
+                  </div>
+                  <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full"
+                      style={{ animation: 'scanProgress 3s ease-out forwards' }} />
+                  </div>
                 </div>
-              </div>
-            </div>
+              )}
+
+              {phase === 'result' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
+                      <Sparkles size={12} className="text-teal-400" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Contenido SEO generado</p>
+                      <p className="text-white font-bold text-sm leading-tight">{displayProduct}{displaySeoCity ? ` · ${displaySeoCity}` : ''} · {platform}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl bg-teal-500/5 border border-teal-500/15 p-3.5">
+                    <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider mb-1.5">Título optimizado</p>
+                    <p className="text-white text-sm font-medium leading-snug">{seoTitle}</p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Descripción optimizada</p>
+                    <p className="text-slate-300 text-xs leading-relaxed">{seoDesc}</p>
+                  </div>
+
+                  {/* Visible tags */}
+                  <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Etiquetas principales</p>
+                    <div className="flex flex-wrap gap-2">
+                      {seoTagsVisible.map((tag, i) => (
+                        <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Blurred extra tags + gate */}
+                  <div className="relative rounded-xl overflow-hidden">
+                    <div className="blur-sm select-none pointer-events-none p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">+{seoTagsBlurred.length} etiquetas long-tail · Alt text de imagen · Plan de contenido</p>
+                      <div className="flex flex-wrap gap-2">
+                        {seoTagsBlurred.map((tag, i) => (
+                          <span key={i} className="text-[11px] bg-cyan-500/15 border border-cyan-500/20 text-cyan-300 rounded-full px-3 py-1">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <GateOverlay
+                      title="Copia el informe SEO completo"
+                      subtitle="Regístrate gratis para desbloquear todas las etiquetas, el alt text y generar más contenidos sin límite."
+                      onGoogle={handleGoogleAuth}
+                      onEmail={onLoginClick}
+                      loading={googleLoading}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
+
         </div>
       </div>
     </div>
