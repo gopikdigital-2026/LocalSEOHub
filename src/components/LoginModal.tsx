@@ -7,6 +7,7 @@ import { track } from '../lib/analytics';
 interface LoginModalProps {
   onClose: () => void;
   initialMode?: Mode;
+  initialError?: string;
 }
 
 type Mode = 'login' | 'signup';
@@ -20,14 +21,14 @@ function isAndroid(): boolean {
   return /Android/i.test(navigator.userAgent);
 }
 
-export default function LoginModal({ onClose, initialMode = 'login' }: LoginModalProps) {
+export default function LoginModal({ onClose, initialMode = 'login', initialError = '' }: LoginModalProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError);
   const [success, setSuccess] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
 

@@ -4385,7 +4385,8 @@ export default function App() {
   const { user, session, loading, signOut } = useAuth();
   const { isActive, status, trialDaysLeft, cancelAtPeriodEnd, currentPeriodEnd, loadingSubscription, refresh } = useSubscription(user);
   const [showLogin, setShowLogin] = useState(false);
-  const [loginInitialMode, setLoginInitialMode] = useState<'login' | 'signup'>('login');
+  const [loginInitialMode, setLoginInitialMode] = useState<'login' | 'signup'>('signup');
+  const [oauthErrorMsg, setOauthErrorMsg] = useState('');
   // Initialized from sessionStorage so Google OAuth redirect restores the intent
   const [pendingCheckout, setPendingCheckout] = useState(() => {
     try { return sessionStorage.getItem('postAuthAction') === 'checkout'; } catch { return false; }
@@ -4403,9 +4404,12 @@ export default function App() {
 
   const isAdminEmail = !!(import.meta.env.VITE_ADMIN_EMAIL && user?.email === import.meta.env.VITE_ADMIN_EMAIL);
 
-  // Handle Stripe redirect params
+  // Handle redirect params (Stripe + OAuth errors)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+    const oauthError = params.get('error') || hashParams.get('error');
+
     if (params.get('payment') === 'success') {
       setShowSuccessBanner(true);
       window.history.replaceState({}, '', '/');
@@ -4421,6 +4425,18 @@ export default function App() {
       setShowAdminDenied(true);
       window.history.replaceState({}, '', '/');
       setTimeout(() => setShowAdminDenied(false), 4000);
+    } else if (oauthError) {
+      // Google OAuth returned an error (access_denied, cancelled, etc.)
+      track('auth_error', { method: 'google_redirect', error: oauthError });
+      const desc = params.get('error_description') || hashParams.get('error_description') || '';
+      const isCancel = oauthError === 'access_denied' || desc.toLowerCase().includes('cancel');
+      setOauthErrorMsg(isCancel
+        ? 'Cancelaste el acceso con Google. Puedes registrarte con email.'
+        : 'Google no pudo completar el registro. Prueba con email.'
+      );
+      setLoginInitialMode('signup');
+      setShowLogin(true);
+      window.history.replaceState({}, '', '/');
     }
   }, []);
 
@@ -4532,7 +4548,7 @@ export default function App() {
             }}
             scrollToPricing={showPricing}
           />
-          {showLogin && <LoginModal onClose={() => setShowLogin(false)} initialMode={loginInitialMode} />}
+          {showLogin && <LoginModal onClose={() => { setShowLogin(false); setOauthErrorMsg(''); }} initialMode={loginInitialMode} initialError={oauthErrorMsg} />}
         </div>
       </Suspense>
     );
