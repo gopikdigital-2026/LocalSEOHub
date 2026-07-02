@@ -1,7 +1,7 @@
 import {
   MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles,
   Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
-  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock,
+  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock, AlertCircle,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
@@ -48,6 +48,11 @@ function GoogleIconSm() {
   );
 }
 
+function isInAppBrowser(): boolean {
+  const ua = navigator.userAgent || '';
+  return /Instagram|FBAN|FBAV|FB_IAB|FB4A|FBIOS|Twitter|Snapchat|LinkedIn|TikTok|BytedanceWebview/i.test(ua);
+}
+
 type ScanPhase = 'idle' | 'scanning' | 'result';
 type WidgetTab = 'maps' | 'seo';
 
@@ -69,6 +74,9 @@ function GateOverlay({
   onEmail,
   loading,
   context,
+  error,
+  businessName,
+  score,
 }: {
   title: string;
   subtitle: string;
@@ -76,51 +84,145 @@ function GateOverlay({
   onEmail: () => void;
   loading: boolean;
   context: string;
+  error?: string;
+  businessName?: string;
+  score?: number;
 }) {
   const { t, lang } = useI18n();
+  const [timeLeft, setTimeLeft] = useState(10 * 60);
+
   useEffect(() => { track('gate_shown', { context }); }, [context]);
+
+  useEffect(() => {
+    const interval = setInterval(() => setTimeLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  const countdown = `${mins}:${secs.toString().padStart(2, '0')}`;
+  const urgent = timeLeft < 120;
+
+  const displayTitle = businessName
+    ? (lang === 'en' ? `Report ready for ${businessName}` : `Informe listo para ${businessName}`)
+    : title;
+
+  const perks = lang === 'en'
+    ? ['Optimized title & description', 'Keyword list to rank #1', 'Competitor comparison']
+    : ['Título y descripción optimizados', 'Lista de keywords para rankear #1', 'Comparativa con competidores'];
+
   return (
     <div
-      className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-5 rounded-xl"
-      style={{ background: 'linear-gradient(to bottom, rgba(12,20,38,0.3), rgba(8,14,28,0.97))' }}
+      className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-4 sm:p-6"
+      style={{ background: 'rgba(5,6,11,0.82)', backdropFilter: 'blur(10px)' }}
     >
-      <div className="text-center mb-1">
-        <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto mb-2">
-          <Lock size={14} className="text-emerald-400" />
+      <div
+        className="w-full max-w-sm rounded-2xl overflow-hidden"
+        style={{
+          background: 'rgba(12,24,38,0.96)',
+          backdropFilter: 'blur(28px)',
+          border: '1px solid rgba(255,255,255,0.10)',
+          boxShadow: '0 40px 80px rgba(0,0,0,0.70), inset 0 1px 0 rgba(255,255,255,0.08)',
+        }}
+      >
+        <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+        <div className="p-6">
+
+          {/* Header */}
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <Sparkles size={16} className="text-emerald-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-white font-extrabold text-base leading-tight truncate">{displayTitle}</p>
+                <p className="text-slate-400 text-[11px] mt-0.5">{subtitle}</p>
+              </div>
+            </div>
+            {/* Countdown */}
+            <div className="shrink-0 text-right ml-2">
+              <p className="text-[9px] text-slate-600 uppercase tracking-wide leading-none mb-0.5">
+                {lang === 'en' ? 'expires in' : 'expira en'}
+              </p>
+              <p className={`text-sm font-mono font-bold leading-none ${urgent ? 'text-red-400' : 'text-amber-400'}`}>
+                {countdown}
+              </p>
+            </div>
+          </div>
+
+          {/* Score bar (maps) */}
+          {score !== undefined && (
+            <div className="mb-4 p-3 rounded-xl bg-amber-500/8 border border-amber-500/20">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] text-amber-400 font-semibold uppercase tracking-wide">
+                  {lang === 'en' ? 'Profile optimization' : 'Optimización de ficha'}
+                </span>
+                <span className="text-amber-400 font-bold text-sm">{score}%</span>
+              </div>
+              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400"
+                  style={{ width: `${score}%` }} />
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1.5">
+                {lang === 'en'
+                  ? `Competitors capture ${100 - score}% more calls. Fix it now.`
+                  : `Los competidores te roban el ${100 - score}% de llamadas. Corrígelo ahora.`}
+              </p>
+            </div>
+          )}
+
+          {/* Perks */}
+          <div className="space-y-2 mb-5">
+            {perks.map((perk, i) => (
+              <div key={i} className="flex items-center gap-2.5 text-xs text-slate-300">
+                <div className="w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                  <Check size={9} className="text-emerald-400" />
+                </div>
+                {perk}
+              </div>
+            ))}
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5 mb-3">
+              <AlertCircle size={13} className="text-red-400 mt-0.5 shrink-0" />
+              <p className="text-red-400 text-xs leading-relaxed">{error}</p>
+            </div>
+          )}
+
+          {/* Google — primary CTA */}
+          <button
+            onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-bold text-sm transition-all duration-200
+              bg-white text-slate-900 hover:bg-slate-50 shadow-xl shadow-black/40 hover:-translate-y-0.5 active:translate-y-0
+              disabled:opacity-60 disabled:cursor-not-allowed mb-2.5"
+          >
+            {loading ? (
+              <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : <GoogleIconSm />}
+            {loading ? t('widget_redirecting') : (lang === 'en' ? 'See my full report →' : 'Ver mi informe completo →')}
+          </button>
+
+          {/* Email — secondary (visible) */}
+          <button
+            onClick={() => { track('gate_register_click', { context, method: 'email' }); onEmail(); }}
+            className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold
+              border border-slate-600/80 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white hover:border-slate-500 transition-all duration-200"
+          >
+            {lang === 'en' ? 'Continue with email instead' : 'Continuar con email'}
+          </button>
+
+          <p className="text-[10px] text-slate-600 text-center mt-3 flex items-center justify-center gap-1">
+            <Shield size={9} />
+            {lang === 'en' ? '7 days free · no card required · cancel anytime' : '7 días gratis · sin tarjeta · cancela cuando quieras'}
+          </p>
         </div>
-        <p className="text-white text-sm font-extrabold mb-1">{title}</p>
-        <p className="text-slate-400 text-[11px] leading-relaxed max-w-[220px]">{subtitle}</p>
       </div>
-
-      {/* Google — primary CTA */}
-      <button
-        onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
-        disabled={loading}
-        className="w-full max-w-[240px] flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200
-          bg-white text-slate-900 hover:bg-slate-50 shadow-xl shadow-black/40 hover:-translate-y-0.5 active:translate-y-0
-          disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {loading ? (
-          <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-        ) : <GoogleIconSm />}
-        {loading ? t('widget_redirecting') : (lang === 'en' ? 'Register free with Google' : 'Registrarme gratis con Google')}
-      </button>
-
-      {/* Email — secondary, still visible */}
-      <button
-        onClick={() => { track('gate_register_click', { context, method: 'email' }); onEmail(); }}
-        className="w-full max-w-[240px] flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold
-          border border-slate-700/60 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white transition-all duration-200"
-      >
-        {lang === 'en' ? 'Register with email' : 'Registrarme con email'}
-      </button>
-
-      <p className="text-[10px] text-slate-600 text-center mt-0.5">
-        {lang === 'en' ? '7 days free · no credit card' : '7 días gratis · sin tarjeta'}
-      </p>
     </div>
   );
 }
@@ -129,7 +231,9 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   const { t, lang } = useI18n();
   const [tab, setTab] = useState<WidgetTab>('maps');
   const [phase, setPhase] = useState<ScanPhase>('idle');
+  const [showGate, setShowGate] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState('');
 
   // Maps tab — pre-filled so the CTA is active from the first second
   const [business, setBusiness] = useState(lang === 'en' ? 'Smith Dental Clinic' : 'Clínica Dental Pérez');
@@ -153,6 +257,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     track('widget_tab_switch', { tab: tab_new });
     setTab(tab_new);
     setPhase('idle');
+    setShowGate(false);
   };
 
   // Track whether the user has manually interacted (to avoid double-trigger)
@@ -164,9 +269,12 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     if (!auto) userActed.current = true;
     track('widget_scan_start', { tab, auto, query: trigger, ...(tab === 'seo' ? { tipo, platform } : { city }) });
     setPhase('scanning');
+    setShowGate(false);
     setTimeout(() => {
       setPhase('result');
       track('widget_scan_result', { tab, auto, ...(tab === 'seo' ? { tipo, platform } : {}) });
+      // Delay gate 1.5 s so user sees their personalized title first
+      setTimeout(() => setShowGate(true), 1500);
     }, 2800);
   };
 
@@ -179,12 +287,21 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGoogleAuth = async () => {
+    if (isInAppBrowser()) {
+      onLoginClick();
+      return;
+    }
     setGoogleLoading(true);
+    setGoogleError('');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/`, queryParams: { prompt: 'select_account' } },
     });
-    if (error) setGoogleLoading(false);
+    if (error) {
+      track('auth_error', { method: 'google', error: error.message });
+      setGoogleLoading(false);
+      setGoogleError(lang === 'en' ? 'Google not available right now. Try registering with email.' : 'Google no está disponible ahora. Regístrate con email.');
+    }
   };
 
   // Maps derived content
@@ -375,7 +492,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
 
               {phase === 'result' && (
                 <div className="space-y-3">
-                  {/* Score — always visible, creates urgency */}
+                  {/* Score — always visible */}
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">{t('widget_result_analysis')}</p>
@@ -395,13 +512,20 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     <span>{lang === 'es' ? `Tu ficha está infraoptimizada. Los competidores capturan ${100 - score}% más llamadas y visitas.` : `Your profile is under-optimized. Competitors capture ${100 - score}% more calls and visits.`}</span>
                   </p>
 
-                  {/* Title + Description + Keywords — all gated */}
+                  {/* Optimized title — always visible (proves value before gate) */}
+                  <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">{t('widget_seo_title_lbl')}</p>
+                      <span className="text-[9px] bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-full px-2 py-0.5 font-semibold uppercase tracking-wide">
+                        {lang === 'en' ? 'Free' : 'Gratis'}
+                      </span>
+                    </div>
+                    <p className="text-white text-sm font-medium leading-snug">{mapsTitle}</p>
+                  </div>
+
+                  {/* Description + Keywords — gated */}
                   <div className="relative rounded-xl overflow-hidden">
-                    <div className="blur-sm select-none pointer-events-none space-y-3 pb-1">
-                      <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
-                        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_seo_title_lbl')}</p>
-                        <p className="text-white text-sm font-medium leading-snug">{mapsTitle}</p>
-                      </div>
+                    <div className={`space-y-3 pb-1 transition-all duration-300 ${showGate ? 'blur-sm select-none pointer-events-none' : ''}`}>
                       <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
                         <p className="text-slate-300 text-xs leading-relaxed">{mapsDesc}</p>
@@ -415,14 +539,19 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         </div>
                       </div>
                     </div>
-                    <GateOverlay
-                      title={t('widget_gate_maps_title')}
-                      subtitle={t('widget_gate_maps_sub')}
-                      onGoogle={handleGoogleAuth}
-                      onEmail={onLoginClick}
-                      loading={googleLoading}
-                      context="maps"
-                    />
+                    {showGate && (
+                      <GateOverlay
+                        title={t('widget_gate_maps_title')}
+                        subtitle={t('widget_gate_maps_sub')}
+                        onGoogle={handleGoogleAuth}
+                        onEmail={onLoginClick}
+                        loading={googleLoading}
+                        context="maps"
+                        error={googleError}
+                        businessName={displayName}
+                        score={score}
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -561,13 +690,20 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     <span>{lang === 'es' ? 'Análisis completado. Desbloquea el contenido completo para aplicarlo.' : 'Analysis complete. Unlock the full content to apply it.'}</span>
                   </p>
 
-                  {/* All SEO content gated */}
+                  {/* SEO title — always visible (proves value before gate) */}
+                  <div className="rounded-xl bg-teal-500/5 border border-teal-500/15 p-3.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider">{t('widget_seo_opt_title')}</p>
+                      <span className="text-[9px] bg-teal-500/15 border border-teal-500/25 text-teal-400 rounded-full px-2 py-0.5 font-semibold uppercase tracking-wide">
+                        {lang === 'en' ? 'Free' : 'Gratis'}
+                      </span>
+                    </div>
+                    <p className="text-white text-sm font-medium leading-snug">{seoTitle}</p>
+                  </div>
+
+                  {/* Description + Tags — gated */}
                   <div className="relative rounded-xl overflow-hidden">
-                    <div className="blur-sm select-none pointer-events-none space-y-3 pb-1">
-                      <div className="rounded-xl bg-teal-500/5 border border-teal-500/15 p-3.5">
-                        <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider mb-1.5">{t('widget_seo_opt_title')}</p>
-                        <p className="text-white text-sm font-medium leading-snug">{seoTitle}</p>
-                      </div>
+                    <div className={`space-y-3 pb-1 transition-all duration-300 ${showGate ? 'blur-sm select-none pointer-events-none' : ''}`}>
                       <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
                         <p className="text-slate-300 text-xs leading-relaxed">{seoDesc}</p>
@@ -583,14 +719,18 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         </div>
                       </div>
                     </div>
-                    <GateOverlay
-                      title={t('widget_gate_seo_title')}
-                      subtitle={t('widget_gate_seo_sub')}
-                      onGoogle={handleGoogleAuth}
-                      onEmail={onLoginClick}
-                      loading={googleLoading}
-                      context="seo"
-                    />
+                    {showGate && (
+                      <GateOverlay
+                        title={t('widget_gate_seo_title')}
+                        subtitle={t('widget_gate_seo_sub')}
+                        onGoogle={handleGoogleAuth}
+                        onEmail={onLoginClick}
+                        loading={googleLoading}
+                        context="seo"
+                        error={googleError}
+                        businessName={`${displayProduct}${displaySeoCity ? ` · ${displaySeoCity}` : ''}`}
+                      />
+                    )}
                   </div>
                 </div>
               )}

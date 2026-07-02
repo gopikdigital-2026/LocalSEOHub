@@ -90,7 +90,15 @@ export default function LoginModal({ onClose, initialMode = 'login' }: LoginModa
         track('register_success', { method: 'email' });
         onClose();
       } else {
-        setSuccess('¡Cuenta creada! Revisa tu email para confirmar y luego inicia sesión.');
+        // Email confirmation enabled — try auto-login so the user isn't stranded
+        const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (!loginErr) {
+          trackCompleteRegistration();
+          track('register_success', { method: 'email' });
+          onClose();
+        } else {
+          setSuccess('¡Cuenta creada! Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar el email, luego inicia sesión.');
+        }
       }
     }
 
