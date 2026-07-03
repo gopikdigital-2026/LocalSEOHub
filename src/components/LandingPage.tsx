@@ -3,7 +3,7 @@ import {
   Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
   Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock, AlertCircle,
 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
 import { supabase } from '../lib/supabase';
@@ -1111,6 +1111,489 @@ function ProductMockup() {
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// FEATURE SHOWROOM
+// ─────────────────────────────────────────────────────────────
+
+type ShowroomTab = 'radar' | 'twin' | 'keywords';
+
+function FeatureShowroom({ onLoginClick }: { onLoginClick: () => void }) {
+  const [active, setActive] = useState<ShowroomTab>('radar');
+
+  const tabs: { id: ShowroomTab; label: string; icon: React.ReactNode; accent: string }[] = [
+    { id: 'radar', label: 'Radar de Competencia GEO', icon: <Target size={14} />, accent: 'orange' },
+    { id: 'twin',  label: 'AI Digital Twin',          icon: <Eye size={14} />,    accent: 'emerald' },
+    { id: 'keywords', label: 'Optimizador de Keywords', icon: <Sparkles size={14} />, accent: 'teal' },
+  ];
+
+  const accentMap: Record<string, { tab: string; active: string; badge: string; bar: string }> = {
+    orange:  { tab: 'hover:text-orange-300', active: 'text-orange-400 border-orange-400 bg-orange-500/10', badge: 'bg-orange-500/15 text-orange-400 border-orange-500/25', bar: 'from-orange-500 to-amber-400' },
+    emerald: { tab: 'hover:text-emerald-300', active: 'text-emerald-400 border-emerald-400 bg-emerald-500/10', badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25', bar: 'from-emerald-500 to-teal-400' },
+    teal:    { tab: 'hover:text-teal-300', active: 'text-teal-400 border-teal-400 bg-teal-500/10', badge: 'bg-teal-500/15 text-teal-400 border-teal-500/25', bar: 'from-teal-500 to-cyan-400' },
+  };
+
+  return (
+    <section className="max-w-5xl mx-auto px-6 py-14">
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
+          <Zap size={11} fill="currentColor" /> Herramientas en acción
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Todo lo que necesitas para dominar tu zona local</h2>
+        <p className="text-slate-400 text-sm max-w-xl mx-auto">Explora las tres herramientas principales de LocalSEOHub. Sin demos pregrabadas — así es como funciona de verdad.</p>
+      </div>
+
+      {/* Tab selector */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-8 justify-center">
+        {tabs.map((tab) => {
+          const c = accentMap[tab.accent];
+          const isActive = active === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActive(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200
+                ${isActive ? c.active + ' border-current' : 'text-slate-500 border-slate-800 bg-slate-900/40 ' + c.tab}
+              `}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Panel */}
+      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 overflow-hidden shadow-2xl shadow-black/40">
+
+        {/* ── RADAR PANEL ── */}
+        {active === 'radar' && (
+          <div className="p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-9 h-9 rounded-xl bg-orange-500/15 border border-orange-500/25 flex items-center justify-center shrink-0">
+                <Target size={17} className="text-orange-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-sm">Radar de Competencia GEO</h3>
+                <p className="text-slate-500 text-xs">Posición real vs. competidores en tu código postal</p>
+              </div>
+              <span className="ml-auto text-[10px] font-bold bg-orange-500/15 text-orange-400 border border-orange-500/25 rounded-full px-3 py-1">Madrid · 28004</span>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-5">
+              {/* Bar chart */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-4">Puntuación de visibilidad local</p>
+                {[
+                  { name: 'Peluquería Centro Madrid', score: 89, highlight: false, color: 'from-red-500 to-orange-400' },
+                  { name: 'Estilo Urbano BCN',         score: 74, highlight: false, color: 'from-amber-500 to-yellow-400' },
+                  { name: 'TU NEGOCIO',                score: 51, highlight: true,  color: 'from-emerald-500 to-teal-400' },
+                  { name: 'Beauty & Co.',              score: 38, highlight: false, color: 'from-slate-600 to-slate-500' },
+                  { name: 'Salón Miriam',              score: 22, highlight: false, color: 'from-slate-700 to-slate-600' },
+                ].map((c) => (
+                  <div key={c.name} className={`flex items-center gap-3 rounded-lg px-3 py-2 ${c.highlight ? 'bg-emerald-500/10 border border-emerald-500/20' : ''}`}>
+                    <span className={`text-[10px] font-semibold w-32 shrink-0 truncate ${c.highlight ? 'text-emerald-400' : 'text-slate-500'}`}>
+                      {c.highlight ? '→ ' : ''}{c.name}
+                    </span>
+                    <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full bg-gradient-to-r ${c.color} transition-all duration-700`} style={{ width: `${c.score}%` }} />
+                    </div>
+                    <span className={`text-[10px] font-bold w-6 text-right ${c.highlight ? 'text-emerald-400' : 'text-slate-600'}`}>{c.score}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Insight cards */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-4">Brechas detectadas · 3 oportunidades</p>
+                {[
+                  { icon: <MapPin size={13} />, label: 'Cobertura geográfica', detail: 'Solo apareces en 2 de 8 zonas de búsqueda cercanas', color: 'text-orange-400', bg: 'bg-orange-500/8 border-orange-500/20' },
+                  { icon: <Star size={13} />,   label: 'Reseñas recientes',     detail: 'Llevas 47 días sin recibir una reseña nueva', color: 'text-amber-400', bg: 'bg-amber-500/8 border-amber-500/20' },
+                  { icon: <Globe size={13} />,  label: 'Palabras clave GEO',    detail: '4 keywords de alta intención sin posición en Maps', color: 'text-red-400', bg: 'bg-red-500/8 border-red-500/20' },
+                ].map((item) => (
+                  <div key={item.label} className={`rounded-xl border p-3.5 ${item.bg}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={item.color}>{item.icon}</span>
+                      <span className={`text-[11px] font-bold ${item.color}`}>{item.label}</span>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-snug pl-5">{item.detail}</p>
+                  </div>
+                ))}
+                <button onClick={onLoginClick} className="w-full mt-2 py-2.5 rounded-xl bg-gradient-to-r from-orange-500/80 to-amber-500/80 hover:from-orange-500 hover:to-amber-500 text-white text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2">
+                  <Zap size={12} fill="currentColor" /> Ver mi Radar completo
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── TWIN PANEL ── */}
+        {active === 'twin' && (
+          <div className="p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                <Eye size={17} className="text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-sm">AI Digital Twin</h3>
+                <p className="text-slate-500 text-xs">Mapa de calor de visibilidad por zonas + presencia en IAs</p>
+              </div>
+              <div className="ml-auto flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] text-emerald-500 font-medium">Gemelo activo</span>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-5">
+              {/* Heat map */}
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Mapa de calor · Visibilidad local (5×5 km)</p>
+                <div className="grid grid-cols-5 gap-1 mb-3">
+                  {[90,65,80,45,70,85,35,75,60,90,55,80,40,70,85,25,60,75,50,85,70,45,80,65,90].map((v, i) => (
+                    <div key={i} title={`Zona ${i+1}: ${v}%`} className="h-8 rounded-sm cursor-default transition-transform hover:scale-110" style={{
+                      backgroundColor: v > 75 ? 'rgba(16,185,129,0.55)' : v > 50 ? 'rgba(251,191,36,0.45)' : 'rgba(239,68,68,0.35)',
+                    }} />
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 text-[9px] text-slate-500">
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block bg-emerald-500/55" />Dominante</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block bg-amber-400/45" />Medio</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block bg-red-500/35" />Invisible</span>
+                </div>
+              </div>
+              {/* AI presence */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Presencia en IAs generativas</p>
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-4">
+                  <p className="text-emerald-400 text-xs font-bold">Entidad destacada en ChatGPT</p>
+                  <p className="text-slate-400 text-[10px] mt-0.5">Tu negocio aparece activamente en resultados de búsqueda conversacional</p>
+                </div>
+                {[{ name: 'ChatGPT', score: 87, color: 'from-emerald-500 to-teal-500' }, { name: 'Google Gemini', score: 74, color: 'from-blue-500 to-cyan-500' }, { name: 'Perplexity', score: 61, color: 'from-purple-500 to-violet-500' }, { name: 'Bing Copilot', score: 43, color: 'from-slate-500 to-slate-400' }].map((ai) => (
+                  <div key={ai.name} className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 w-20 shrink-0">{ai.name}</span>
+                    <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full bg-gradient-to-r ${ai.color}`} style={{ width: `${ai.score}%` }} />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 w-8 text-right">{ai.score}%</span>
+                  </div>
+                ))}
+                <button onClick={onLoginClick} className="w-full mt-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/80 to-teal-500/80 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2">
+                  <Zap size={12} fill="currentColor" /> Activar mi Gemelo Digital
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── KEYWORDS PANEL ── */}
+        {active === 'keywords' && (
+          <div className="p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-9 h-9 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
+                <Sparkles size={17} className="text-teal-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-sm">Optimizador de Palabras Clave</h3>
+                <p className="text-slate-500 text-xs">Keywords de alta intención ordenadas por oportunidad real</p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-5">
+              {/* Keyword table */}
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Top keywords · Tu sector · Madrid</p>
+                <div className="space-y-2">
+                  {[
+                    { kw: 'peluquería cerca de mí',       vol: '8.1K', pos: null,  opp: 'Alta', oppColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+                    { kw: 'corte de pelo Madrid centro',  vol: '3.4K', pos: 12,    opp: 'Media', oppColor: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+                    { kw: 'mechas balayage Madrid',       vol: '2.9K', pos: null,  opp: 'Alta', oppColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+                    { kw: 'peluquería económica Madrid',  vol: '1.8K', pos: 7,     opp: 'Baja', oppColor: 'text-slate-500 bg-slate-800/60 border-slate-700' },
+                    { kw: 'tratamiento keratina Madrid',  vol: '1.2K', pos: null,  opp: 'Alta', oppColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+                  ].map((row) => (
+                    <div key={row.kw} className="flex items-center gap-2 bg-slate-800/40 rounded-lg px-3 py-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-200 text-[11px] font-medium truncate">{row.kw}</p>
+                        <p className="text-slate-600 text-[9px]">{row.vol}/mes · Pos. actual: {row.pos ?? 'sin posición'}</p>
+                      </div>
+                      <span className={`text-[9px] font-bold border rounded-full px-2 py-0.5 shrink-0 ${row.oppColor}`}>{row.opp}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Action recommendations */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Plan de acción generado por IA</p>
+                {[
+                  { step: '1', title: 'Añadir keyword a descripción GBP', impact: '+23% clics estimados', color: 'text-emerald-400', bg: 'bg-emerald-500/8 border-emerald-500/20' },
+                  { step: '2', title: 'Crear post GBP con keyword local', impact: '+15% visibilidad Maps', color: 'text-teal-400', bg: 'bg-teal-500/8 border-teal-500/20' },
+                  { step: '3', title: 'Solicitar reseñas con término clave', impact: '+31% posición orgánica', color: 'text-blue-400', bg: 'bg-blue-500/8 border-blue-500/20' },
+                ].map((action) => (
+                  <div key={action.step} className={`rounded-xl border p-3.5 ${action.bg}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${action.color} bg-current/10`} style={{ background: 'rgba(255,255,255,0.07)' }}>
+                        <span className={action.color}>{action.step}</span>
+                      </div>
+                      <span className={`text-[11px] font-bold ${action.color}`}>{action.title}</span>
+                    </div>
+                    <p className="text-slate-400 text-[10px] pl-7">{action.impact}</p>
+                  </div>
+                ))}
+                <button onClick={onLoginClick} className="w-full mt-2 py-2.5 rounded-xl bg-gradient-to-r from-teal-500/80 to-cyan-500/80 hover:from-teal-500 hover:to-cyan-500 text-white text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2">
+                  <Zap size={12} fill="currentColor" /> Ver mis keywords reales
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// CASE STUDY PLAYGROUND
+// ─────────────────────────────────────────────────────────────
+
+type PlaygroundTab = 'overview' | 'radar' | 'keywords' | 'plan';
+
+function CaseStudyPlayground({ onLoginClick }: { onLoginClick: () => void }) {
+  const [loaded, setLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState<PlaygroundTab>('overview');
+
+  const playgroundTabs: { id: PlaygroundTab; label: string; icon: React.ReactNode }[] = [
+    { id: 'overview',  label: 'Resumen',       icon: <BarChart3 size={12} /> },
+    { id: 'radar',     label: 'Competidores',  icon: <Target size={12} /> },
+    { id: 'keywords',  label: 'Keywords',      icon: <Sparkles size={12} /> },
+    { id: 'plan',      label: 'Plan IA',        icon: <TrendingUp size={12} /> },
+  ];
+
+  return (
+    <section className="max-w-5xl mx-auto px-6 py-14">
+      {/* Header */}
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1 mb-3">
+          <Eye size={11} /> Caso de estudio real
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Mira cómo funciona la IA en un negocio real</h2>
+        <p className="text-slate-400 text-sm max-w-xl mx-auto">Hemos analizado <strong className="text-slate-200">Peluquería Éclat</strong> en Madrid. Explora el informe completo tal y como lo vería el dueño del negocio.</p>
+      </div>
+
+      {/* Load trigger */}
+      {!loaded ? (
+        <div className="flex flex-col items-center gap-5">
+          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-8 max-w-lg w-full text-center">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center mx-auto mb-4">
+              <Eye size={24} className="text-amber-400" />
+            </div>
+            <h3 className="text-white font-bold text-base mb-2">Ver análisis de Peluquería Éclat · Madrid</h3>
+            <p className="text-slate-500 text-xs mb-5 leading-relaxed">Informe real generado por LocalSEOHub: Radar GEO, Digital Twin, keywords de alta intención y plan de acción con IA.</p>
+            <button
+              onClick={() => setLoaded(true)}
+              className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm
+                bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400
+                text-slate-950 shadow-lg shadow-amber-500/20 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <Zap size={15} fill="currentColor" /> Cargar informe de ejemplo
+            </button>
+          </div>
+          {/* Preview teaser grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl opacity-60 pointer-events-none select-none blur-[1px]">
+            {[
+              { label: 'Puntuación GEO', value: '51/100', sub: '3 competidores por delante', color: 'text-amber-400' },
+              { label: 'Keywords sin posición', value: '4', sub: 'alta intención · sin ranquear', color: 'text-red-400' },
+              { label: 'Presencia ChatGPT', value: '87%', sub: 'entidad destacada', color: 'text-emerald-400' },
+              { label: 'Acciones IA', value: '9', sub: 'priorizadas por impacto', color: 'text-teal-400' },
+            ].map((m) => (
+              <div key={m.label} className="rounded-xl bg-slate-900/60 border border-slate-800 p-3 text-center">
+                <p className={`text-xl font-black ${m.color}`}>{m.value}</p>
+                <p className="text-white text-[10px] font-bold mt-0.5">{m.label}</p>
+                <p className="text-slate-600 text-[9px] mt-0.5">{m.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 shadow-2xl shadow-black/40 overflow-hidden">
+          {/* Report header */}
+          <div className="bg-slate-950/80 border-b border-slate-800 px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
+                <span className="text-white text-sm font-black">PE</span>
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm">Peluquería Éclat</p>
+                <p className="text-slate-500 text-xs">Calle Fuencarral 18, Madrid · Peluquería y estética</p>
+              </div>
+            </div>
+            <div className="sm:ml-auto flex items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-emerald-400 text-[10px] font-semibold">Informe activo</span>
+              </div>
+              <span className="text-slate-600 text-[10px]">Generado hace 2 días</span>
+            </div>
+          </div>
+
+          {/* Tab navigation */}
+          <div className="flex border-b border-slate-800 bg-slate-950/40 overflow-x-auto">
+            {playgroundTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 px-4 py-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5'
+                    : 'border-transparent text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <div className="p-5 sm:p-6">
+
+            {activeTab === 'overview' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: 'Puntuación GEO', value: '51', max: '/100', color: 'text-amber-400', bg: 'bg-amber-500/8 border-amber-500/20' },
+                    { label: 'Keywords sin pos.', value: '4', max: ' oportunidades', color: 'text-red-400', bg: 'bg-red-500/8 border-red-500/20' },
+                    { label: 'Presencia ChatGPT', value: '87', max: '%', color: 'text-emerald-400', bg: 'bg-emerald-500/8 border-emerald-500/20' },
+                    { label: 'Acciones IA', value: '9', max: ' priorizadas', color: 'text-teal-400', bg: 'bg-teal-500/8 border-teal-500/20' },
+                  ].map((m) => (
+                    <div key={m.label} className={`rounded-xl border p-4 text-center ${m.bg}`}>
+                      <p className={`text-2xl font-black ${m.color}`}>{m.value}<span className="text-xs font-normal text-slate-500">{m.max}</span></p>
+                      <p className="text-slate-400 text-[10px] mt-1">{m.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle size={13} className="text-amber-400 shrink-0" />
+                    <span className="text-amber-400 text-xs font-bold">3 fallos críticos detectados</span>
+                  </div>
+                  <ul className="space-y-1.5 pl-5">
+                    {[
+                      'Sin horarios especiales configurados para festivos — inconsistencia semántica detectada',
+                      'Descripción de ficha no contiene ninguna keyword de alta intención',
+                      'Ratio de respuesta a reseñas: 23% (recomendado &gt;80%)',
+                    ].map((issue) => (
+                      <li key={issue} className="text-amber-300/80 text-[11px] flex items-start gap-2">
+                        <span className="text-amber-500 shrink-0 mt-0.5">·</span>
+                        <span dangerouslySetInnerHTML={{ __html: issue }} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'radar' && (
+              <div className="space-y-4">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Posición vs. competidores · Fuencarral · Madrid</p>
+                {[
+                  { name: 'Peluquería Centro Madrid', score: 89, color: 'from-red-500 to-orange-400' },
+                  { name: 'Estilo Urbano BCN',         score: 74, color: 'from-amber-500 to-yellow-400' },
+                  { name: 'Peluquería Éclat ← Tú',    score: 51, color: 'from-emerald-500 to-teal-400', you: true },
+                  { name: 'Beauty & Co.',              score: 38, color: 'from-slate-600 to-slate-500' },
+                  { name: 'Salón Miriam',              score: 22, color: 'from-slate-700 to-slate-600' },
+                ].map((c) => (
+                  <div key={c.name} className={`flex items-center gap-3 rounded-lg px-3 py-2 ${(c as { you?: boolean }).you ? 'bg-emerald-500/10 border border-emerald-500/20' : ''}`}>
+                    <span className={`text-[10px] font-semibold w-40 shrink-0 truncate ${(c as { you?: boolean }).you ? 'text-emerald-400' : 'text-slate-500'}`}>{c.name}</span>
+                    <div className="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full bg-gradient-to-r ${c.color}`} style={{ width: `${c.score}%` }} />
+                    </div>
+                    <span className={`text-[10px] font-black w-6 text-right ${(c as { you?: boolean }).you ? 'text-emerald-400' : 'text-slate-600'}`}>{c.score}</span>
+                  </div>
+                ))}
+                <div className="rounded-xl bg-slate-800/40 border border-slate-700/60 p-3.5 mt-2">
+                  <p className="text-slate-400 text-xs"><span className="text-white font-bold">Insight:</span> Estás 38 puntos por debajo del líder. Las 3 principales brechas son cobertura geográfica, reseñas recientes y keywords GEO sin posición.</p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'keywords' && (
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Keywords relevantes · Sector peluquería · Madrid</p>
+                {[
+                  { kw: 'peluquería cerca de mí',       vol: '8.1K', pos: null, opp: 'Alta' },
+                  { kw: 'corte de pelo Madrid centro',  vol: '3.4K', pos: 12,   opp: 'Media' },
+                  { kw: 'mechas balayage Madrid',       vol: '2.9K', pos: null, opp: 'Alta' },
+                  { kw: 'peluquería económica Madrid',  vol: '1.8K', pos: 7,    opp: 'Baja' },
+                  { kw: 'tratamiento keratina Madrid',  vol: '1.2K', pos: null, opp: 'Alta' },
+                  { kw: 'tinte raíces Madrid precio',   vol: '940',  pos: null, opp: 'Alta' },
+                ].map((row) => {
+                  const oppColor = row.opp === 'Alta' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                    : row.opp === 'Media' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                    : 'text-slate-500 bg-slate-800/60 border-slate-700';
+                  return (
+                    <div key={row.kw} className="flex items-center gap-3 bg-slate-800/40 rounded-lg px-3 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-200 text-[11px] font-medium truncate">{row.kw}</p>
+                        <p className="text-slate-600 text-[9px]">{row.vol}/mes · {row.pos ? `Pos. ${row.pos}` : 'Sin posición'}</p>
+                      </div>
+                      <span className={`text-[9px] font-bold border rounded-full px-2 py-0.5 shrink-0 ${oppColor}`}>{row.opp}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {activeTab === 'plan' && (
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Plan de acción · Generado por IA · Ordenado por impacto</p>
+                {[
+                  { num: 1, title: 'Optimizar descripción GBP con 3 keywords de alta intención', impact: '+23% clics estimados', time: '15 min', color: 'emerald' },
+                  { num: 2, title: 'Añadir horarios especiales de festivos y agosto',            impact: '+12% visibilidad Maps', time: '5 min',  color: 'teal' },
+                  { num: 3, title: 'Crear 2 posts GBP con keywords geolocalizadas',              impact: '+18% impresiones', time: '30 min', color: 'blue' },
+                  { num: 4, title: 'Campaña de solicitud de reseñas con término clave',          impact: '+31% posición orgánica', time: '20 min', color: 'amber' },
+                  { num: 5, title: 'Corregir incoherencias en citas NAP de directorios',         impact: 'Eliminar fallo crítico', time: '45 min', color: 'orange' },
+                ].map((action) => {
+                  const colorMap: Record<string, string> = {
+                    emerald: 'text-emerald-400 bg-emerald-500/8 border-emerald-500/20',
+                    teal: 'text-teal-400 bg-teal-500/8 border-teal-500/20',
+                    blue: 'text-blue-400 bg-blue-500/8 border-blue-500/20',
+                    amber: 'text-amber-400 bg-amber-500/8 border-amber-500/20',
+                    orange: 'text-orange-400 bg-orange-500/8 border-orange-500/20',
+                  };
+                  return (
+                    <div key={action.num} className={`rounded-xl border p-3.5 flex items-start gap-3 ${colorMap[action.color]}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 border ${colorMap[action.color]}`}>
+                        {action.num}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-200 text-xs font-semibold leading-snug">{action.title}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className={`text-[10px] font-bold ${colorMap[action.color].split(' ')[0]}`}>{action.impact}</span>
+                          <span className="text-slate-600 text-[9px]">· {action.time}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+          </div>
+
+          {/* Locked footer */}
+          <div className="border-t border-slate-800 bg-slate-950/60 px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Lock size={13} className="text-slate-500" />
+              <p className="text-slate-500 text-xs">Análisis completo con datos reales · disponible con tu cuenta</p>
+            </div>
+            <button
+              onClick={onLoginClick}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm
+                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transition-all duration-300 shrink-0"
+            >
+              <Zap size={14} fill="currentColor" /> Analizar mi negocio gratis
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function LandingPage({ onLoginClick }: LandingPageProps) {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
   const { t, lang } = useI18n();
@@ -1466,6 +1949,57 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
       </section>
 
       {/* ── TESTIMONIALS (moved above — section kept for scroll anchor) ── */}
+
+      {/* ── FEATURE SHOWROOM ───────────────────────────────────────── */}
+      <FeatureShowroom onLoginClick={onLoginClick} />
+
+      {/* ── CASE STUDY PLAYGROUND ──────────────────────────────────── */}
+      <CaseStudyPlayground onLoginClick={onLoginClick} />
+
+      {/* ── TRIAL CTA BANNER ───────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pb-6">
+        <div className="relative rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-blue-500/10" />
+          <div className="absolute inset-0 border border-emerald-500/25 rounded-2xl" />
+          <div className="relative flex flex-col sm:flex-row items-center justify-between gap-6 p-7 sm:p-9">
+            <div className="text-center sm:text-left">
+              <div className="inline-flex items-center gap-2 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
+                <Zap size={10} fill="currentColor" /> 7 días gratis · sin tarjeta
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">¿Quieres probarlo con tu propio negocio?</h2>
+              <p className="text-slate-400 text-sm leading-relaxed max-w-md">
+                Obtén <strong className="text-white">7 días de acceso premium gratis</strong> — sin tarjeta de crédito. Analiza tu negocio real, descubre tus competidores y recibe tu plan de acción personalizado.
+              </p>
+              <div className="flex flex-wrap gap-3 mt-4 justify-center sm:justify-start">
+                {[
+                  { icon: <Check size={11} />, label: 'Radar de Competencia GEO completo' },
+                  { icon: <Check size={11} />, label: 'AI Digital Twin activo' },
+                  { icon: <Check size={11} />, label: 'Plan de acción generado por IA' },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-1.5 text-emerald-400 text-xs">
+                    {item.icon} <span className="text-slate-300">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-3 shrink-0">
+              <button
+                onClick={onLoginClick}
+                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl font-bold text-base transition-all duration-300
+                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 whitespace-nowrap"
+              >
+                <Zap size={16} fill="currentColor" />
+                Regístrate ahora — es gratis
+                <ArrowRight size={15} />
+              </button>
+              <p className="text-slate-600 text-[11px] flex items-center gap-1.5">
+                <Shield size={10} /> Sin tarjeta · cancela cuando quieras
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── FAQ ────────────────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-6 py-10">
