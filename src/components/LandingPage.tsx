@@ -67,167 +67,125 @@ const SEO_PLATFORMS_SERVICIO = [
 
 type SeoTipo = 'producto' | 'servicio';
 
-function GateOverlay({
-  title,
-  subtitle,
+function RegisterBanner({
   onGoogle,
   onEmail,
   loading,
   context,
   error,
   businessName,
-  score,
+  lang,
 }: {
-  title: string;
-  subtitle: string;
   onGoogle: () => void;
   onEmail: () => void;
   loading: boolean;
   context: string;
   error?: string;
   businessName?: string;
-  score?: number;
+  lang: string;
 }) {
-  const { t, lang } = useI18n();
-  const [timeLeft, setTimeLeft] = useState(10 * 60);
+  const { t } = useI18n();
 
   useEffect(() => { track('gate_shown', { context }); }, [context]);
 
-  useEffect(() => {
-    const interval = setInterval(() => setTimeLeft((s) => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const title = businessName
+    ? (lang === 'en' ? `Unlock the full report for ${businessName}` : `Desbloquea el informe completo de ${businessName}`)
+    : (lang === 'en' ? 'Unlock your full report' : 'Desbloquea tu informe completo');
 
-  const mins = Math.floor(timeLeft / 60);
-  const secs = timeLeft % 60;
-  const countdown = `${mins}:${secs.toString().padStart(2, '0')}`;
-  const urgent = timeLeft < 120;
-
-  const displayTitle = businessName
-    ? (lang === 'en' ? `Report ready for ${businessName}` : `Informe listo para ${businessName}`)
-    : title;
-
-  const perks = lang === 'en'
-    ? ['Optimized title & description', 'Keyword list to rank #1', 'Competitor comparison']
-    : ['Título y descripción optimizados', 'Lista de keywords para rankear #1', 'Comparativa con competidores'];
+  const features = lang === 'en' ? [
+    { icon: <MapPinned size={10} />, text: 'Full Google Maps profile audit' },
+    { icon: <Sparkles size={10} />, text: 'SEO for 16+ platforms' },
+    { icon: <Eye size={10} />, text: 'Competitor URL analysis' },
+    { icon: <Globe size={10} />, text: 'Local ranking comparison' },
+    { icon: <Calendar size={10} />, text: 'Monthly AI content plan' },
+    { icon: <Star size={10} />, text: 'Review audit + AI GBP description' },
+  ] : [
+    { icon: <MapPinned size={10} />, text: 'Auditoría completa de ficha Google Maps' },
+    { icon: <Sparkles size={10} />, text: 'SEO para Google, Etsy, Amazon y +14 más' },
+    { icon: <Eye size={10} />, text: 'Análisis de URLs de tus competidores' },
+    { icon: <Globe size={10} />, text: 'Comparativa de posicionamiento local' },
+    { icon: <Calendar size={10} />, text: 'Plan de contenidos mensual con IA' },
+    { icon: <Star size={10} />, text: 'Auditoría de reseñas + descripción GBP' },
+  ];
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-4 sm:p-6"
-      style={{ background: 'rgba(5,6,11,0.82)', backdropFilter: 'blur(10px)' }}
+      className="mt-3 rounded-2xl overflow-hidden border border-emerald-500/25"
+      style={{ background: 'linear-gradient(145deg, rgba(16,185,129,0.07) 0%, rgba(15,23,42,0.97) 55%)' }}
     >
-      <div
-        className="w-full max-w-sm rounded-2xl overflow-hidden"
-        style={{
-          background: 'rgba(12,24,38,0.96)',
-          backdropFilter: 'blur(28px)',
-          border: '1px solid rgba(255,255,255,0.10)',
-          boxShadow: '0 40px 80px rgba(0,0,0,0.70), inset 0 1px 0 rgba(255,255,255,0.08)',
-        }}
-      >
-        <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
-        <div className="p-6">
-
-          {/* Header */}
-          <div className="flex items-start justify-between gap-2 mb-4">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                <Sparkles size={16} className="text-emerald-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-white font-extrabold text-base leading-tight truncate">{displayTitle}</p>
-                <p className="text-slate-400 text-[11px] mt-0.5">{subtitle}</p>
-              </div>
-            </div>
-            {/* Countdown */}
-            <div className="shrink-0 text-right ml-2">
-              <p className="text-[9px] text-slate-600 uppercase tracking-wide leading-none mb-0.5">
-                {lang === 'en' ? 'expires in' : 'expira en'}
-              </p>
-              <p className={`text-sm font-mono font-bold leading-none ${urgent ? 'text-red-400' : 'text-amber-400'}`}>
-                {countdown}
-              </p>
-            </div>
+      <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
+            <Lock size={15} className="text-emerald-400" />
           </div>
-
-          {/* Score bar (maps) */}
-          {score !== undefined && (
-            <div className="mb-4 p-3 rounded-xl bg-amber-500/8 border border-amber-500/20">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] text-amber-400 font-semibold uppercase tracking-wide">
-                  {lang === 'en' ? 'Profile optimization' : 'Optimización de ficha'}
-                </span>
-                <span className="text-amber-400 font-bold text-sm">{score}%</span>
-              </div>
-              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400"
-                  style={{ width: `${score}%` }} />
-              </div>
-              <p className="text-[10px] text-slate-500 mt-1.5">
-                {lang === 'en'
-                  ? `Competitors capture ${100 - score}% more calls. Fix it now.`
-                  : `Los competidores te roban el ${100 - score}% de llamadas. Corrígelo ahora.`}
-              </p>
-            </div>
-          )}
-
-          {/* Perks */}
-          <div className="space-y-2 mb-5">
-            {perks.map((perk, i) => (
-              <div key={i} className="flex items-center gap-2.5 text-xs text-slate-300">
-                <div className="w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                  <Check size={9} className="text-emerald-400" />
-                </div>
-                {perk}
-              </div>
-            ))}
+          <div>
+            <p className="text-white font-extrabold text-sm leading-tight">{title}</p>
+            <p className="text-slate-400 text-[11px] mt-0.5 leading-snug">
+              {lang === 'en'
+                ? 'Access all the data for your business and your competitors:'
+                : 'Accede a toda la info de tu negocio y del de la competencia:'}
+            </p>
           </div>
-
-          {/* Error */}
-          {error && (
-            <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5 mb-3">
-              <AlertCircle size={13} className="text-red-400 mt-0.5 shrink-0" />
-              <p className="text-red-400 text-xs leading-relaxed">{error}</p>
-            </div>
-          )}
-
-          {/* Google — primary CTA */}
-          <button
-            onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-bold text-sm transition-all duration-200
-              bg-white text-slate-900 hover:bg-slate-50 shadow-xl shadow-black/40 hover:-translate-y-0.5 active:translate-y-0
-              disabled:opacity-60 disabled:cursor-not-allowed mb-2.5"
-          >
-            {loading ? (
-              <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : <GoogleIconSm />}
-            {loading ? t('widget_redirecting') : (lang === 'en' ? 'See my full report →' : 'Ver mi informe completo →')}
-          </button>
-
-          {/* Email — secondary (visible) */}
-          <button
-            onClick={() => { track('gate_register_click', { context, method: 'email' }); onEmail(); }}
-            className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold
-              border border-slate-600/80 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white hover:border-slate-500 transition-all duration-200"
-          >
-            {lang === 'en' ? 'Continue with email instead' : 'Continuar con email'}
-          </button>
-
-          <p className="text-[10px] text-slate-600 text-center mt-3 flex items-center justify-center gap-1">
-            <Shield size={9} />
-            {lang === 'en' ? '7 days free · no card required · cancel anytime' : '7 días gratis · sin tarjeta · cancela cuando quieras'}
-          </p>
         </div>
+
+        {/* Feature grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-3 mb-5">
+          {features.map((f, i) => (
+            <div key={i} className="flex items-center gap-2 text-[11px] text-slate-300">
+              <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400">
+                {f.icon}
+              </div>
+              {f.text}
+            </div>
+          ))}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5 mb-3">
+            <AlertCircle size={13} className="text-red-400 mt-0.5 shrink-0" />
+            <p className="text-red-400 text-xs leading-relaxed">{error}</p>
+          </div>
+        )}
+
+        {/* Google CTA */}
+        <button
+          onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-bold text-sm transition-all duration-200
+            bg-white text-slate-900 hover:bg-slate-50 shadow-lg shadow-black/30 hover:-translate-y-0.5 active:translate-y-0
+            disabled:opacity-60 disabled:cursor-not-allowed mb-2"
+        >
+          {loading ? (
+            <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : <GoogleIconSm />}
+          {loading ? t('widget_redirecting') : (lang === 'en' ? 'See my full report →' : 'Ver mi informe completo →')}
+        </button>
+
+        {/* Email CTA */}
+        <button
+          onClick={() => { track('gate_register_click', { context, method: 'email' }); onEmail(); }}
+          className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold
+            border border-slate-600/80 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white hover:border-slate-500 transition-all duration-200"
+        >
+          {lang === 'en' ? 'Continue with email instead' : 'Continuar con email'}
+        </button>
+
+        <p className="text-[10px] text-slate-600 text-center mt-3 flex items-center justify-center gap-1">
+          <Shield size={9} />
+          {lang === 'en' ? '7 days free · no card required · cancel anytime' : '7 días gratis · sin tarjeta · cancela cuando quieras'}
+        </p>
       </div>
     </div>
   );
 }
 
-function OwnScanOverlay({ tab, lang, onScan }: {
+function OwnScanBanner({ tab, lang, onScan }: {
   tab: WidgetTab;
   lang: string;
   onScan: (name: string, city: string) => void;
@@ -243,26 +201,52 @@ function OwnScanOverlay({ tab, lang, onScan }: {
     onScan(name.trim(), city.trim());
   };
 
+  const features = lang === 'en' ? [
+    'Your personalized SEO title',
+    'Optimized description to copy',
+    '6 keywords to rank #1',
+    'Competitor comparison (your area)',
+    'Monthly AI content plan',
+    'Review audit + GBP description',
+  ] : [
+    'Título SEO personalizado para tu negocio',
+    'Descripción optimizada lista para copiar',
+    '6 keywords para rankear #1 en Google',
+    'Comparativa con competidores de tu zona',
+    'Plan de contenidos mensual con IA',
+    'Auditoría de reseñas + descripción GBP',
+  ];
+
   return (
     <div
-      className="absolute inset-0 z-20 flex items-center justify-center p-4 rounded-xl"
-      style={{ background: 'rgba(5,6,11,0.90)', backdropFilter: 'blur(12px)' }}
+      className="mt-3 rounded-2xl overflow-hidden border border-teal-500/25"
+      style={{ background: 'linear-gradient(145deg, rgba(20,184,166,0.07) 0%, rgba(15,23,42,0.97) 55%)' }}
     >
-      <div className="w-full max-w-xs">
+      <div className="h-[2px] bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-500" />
+      <div className="p-5">
+        {/* Header */}
         <div className="text-center mb-4">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mx-auto mb-2.5">
-            <Zap size={15} className="text-emerald-400" />
-          </div>
           <p className="text-white font-extrabold text-sm">
-            {lang === 'en' ? 'Now analyze YOUR business' : 'Ahora analiza TU negocio'}
+            {lang === 'en' ? 'Now analyze YOUR real business' : 'Ahora analiza TU negocio real'}
           </p>
-          <p className="text-slate-500 text-[11px] mt-1 leading-snug">
+          <p className="text-slate-400 text-[11px] mt-1 leading-snug">
             {lang === 'en'
-              ? 'The example above is fictional. Enter your real data to get your personalized report.'
-              : 'El ejemplo es ficticio. Introduce los datos de tu negocio real para obtener tu informe.'}
+              ? 'The example above is fictional. Enter your data to get your personalized report:'
+              : 'El ejemplo es ficticio. Introduce tu negocio para obtener tu informe personalizado:'}
           </p>
         </div>
 
+        {/* Feature grid */}
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-4">
+          {features.map((f, i) => (
+            <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-400">
+              <Check size={9} className="text-emerald-400 shrink-0" />
+              {f}
+            </div>
+          ))}
+        </div>
+
+        {/* Own business form */}
         <div className="space-y-2">
           <input
             type="text"
@@ -355,8 +339,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     setTimeout(() => {
       setPhase('result');
       track('widget_scan_result', { tab, auto, ...(tab === 'seo' ? { tipo, platform } : {}) });
-      // Delay gate 1.5 s so user sees their personalized title first
-      setTimeout(() => setShowGate(true), 1500);
+      // Show banner 4 s after result so user can read freely
+      setTimeout(() => setShowGate(true), 4000);
     }, 2800);
   };
 
@@ -605,47 +589,45 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     <p className="text-white text-sm font-medium leading-snug">{mapsTitle}</p>
                   </div>
 
-                  {/* Description + Keywords — gated */}
-                  <div className="relative rounded-xl overflow-hidden">
-                    <div className={`space-y-3 pb-1 transition-all duration-300 ${showGate ? 'blur-sm select-none pointer-events-none' : ''}`}>
-                      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
-                        <p className="text-slate-300 text-xs leading-relaxed">{mapsDesc}</p>
-                      </div>
-                      <div className="p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {mapsKeywords.map((kw, i) => (
-                            <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{kw}</span>
-                          ))}
-                        </div>
+                  {/* Description + Keywords — always visible */}
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
+                      <p className="text-slate-300 text-xs leading-relaxed">{mapsDesc}</p>
+                    </div>
+                    <div className="p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {mapsKeywords.map((kw, i) => (
+                          <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{kw}</span>
+                        ))}
                       </div>
                     </div>
-                    {showGate && scanIsAuto && (
-                      <OwnScanOverlay
-                        tab={tab}
-                        lang={lang}
-                        onScan={(name, city) => {
-                          setBusiness(name);
-                          setCity(city);
-                          handleScan(false);
-                        }}
-                      />
-                    )}
-                    {showGate && !scanIsAuto && (
-                      <GateOverlay
-                        title={t('widget_gate_maps_title')}
-                        subtitle={t('widget_gate_maps_sub')}
-                        onGoogle={handleGoogleAuth}
-                        onEmail={onLoginClick}
-                        loading={googleLoading}
-                        context="maps"
-                        error={googleError}
-                        businessName={displayName}
-                        score={score}
-                      />
-                    )}
                   </div>
+
+                  {/* Banner appears after delay, below content */}
+                  {showGate && scanIsAuto && (
+                    <OwnScanBanner
+                      tab={tab}
+                      lang={lang}
+                      onScan={(name, city) => {
+                        setBusiness(name);
+                        setCity(city);
+                        handleScan(false);
+                      }}
+                    />
+                  )}
+                  {showGate && !scanIsAuto && (
+                    <RegisterBanner
+                      onGoogle={handleGoogleAuth}
+                      onEmail={onLoginClick}
+                      loading={googleLoading}
+                      context="maps"
+                      error={googleError}
+                      businessName={displayName}
+                      lang={lang}
+                    />
+                  )}
                 </div>
               )}
             </>
@@ -794,48 +776,47 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     <p className="text-white text-sm font-medium leading-snug">{seoTitle}</p>
                   </div>
 
-                  {/* Description + Tags — gated */}
-                  <div className="relative rounded-xl overflow-hidden">
-                    <div className={`space-y-3 pb-1 transition-all duration-300 ${showGate ? 'blur-sm select-none pointer-events-none' : ''}`}>
-                      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
-                        <p className="text-slate-300 text-xs leading-relaxed">{seoDesc}</p>
-                      </div>
-                      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
-                          {lang === 'es' ? `Etiquetas · Alt text · Plan de contenido` : `Tags · Alt text · Content plan`}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {[...seoTagsVisible, ...seoTagsBlurred].map((tag, i) => (
-                            <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
-                          ))}
-                        </div>
+                  {/* Description + Tags — always visible */}
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
+                      <p className="text-slate-300 text-xs leading-relaxed">{seoDesc}</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
+                        {lang === 'es' ? `Etiquetas · Alt text · Plan de contenido` : `Tags · Alt text · Content plan`}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[...seoTagsVisible, ...seoTagsBlurred].map((tag, i) => (
+                          <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
+                        ))}
                       </div>
                     </div>
-                    {showGate && scanIsAuto && (
-                      <OwnScanOverlay
-                        tab={tab}
-                        lang={lang}
-                        onScan={(name, city) => {
-                          setProduct(name);
-                          setSeoCity(city);
-                          handleScan(false);
-                        }}
-                      />
-                    )}
-                    {showGate && !scanIsAuto && (
-                      <GateOverlay
-                        title={t('widget_gate_seo_title')}
-                        subtitle={t('widget_gate_seo_sub')}
-                        onGoogle={handleGoogleAuth}
-                        onEmail={onLoginClick}
-                        loading={googleLoading}
-                        context="seo"
-                        error={googleError}
-                        businessName={`${displayProduct}${displaySeoCity ? ` · ${displaySeoCity}` : ''}`}
-                      />
-                    )}
                   </div>
+
+                  {/* Banner appears after delay, below content */}
+                  {showGate && scanIsAuto && (
+                    <OwnScanBanner
+                      tab={tab}
+                      lang={lang}
+                      onScan={(name, city) => {
+                        setProduct(name);
+                        setSeoCity(city);
+                        handleScan(false);
+                      }}
+                    />
+                  )}
+                  {showGate && !scanIsAuto && (
+                    <RegisterBanner
+                      onGoogle={handleGoogleAuth}
+                      onEmail={onLoginClick}
+                      loading={googleLoading}
+                      context="seo"
+                      error={googleError}
+                      businessName={`${displayProduct}${displaySeoCity ? ` · ${displaySeoCity}` : ''}`}
+                      lang={lang}
+                    />
+                  )}
                 </div>
               )}
             </>
