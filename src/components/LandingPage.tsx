@@ -228,12 +228,14 @@ function OwnScanBanner({ tab, lang, onScan }: {
         {/* Header */}
         <div className="text-center mb-4">
           <p className="text-white font-extrabold text-sm">
-            {lang === 'en' ? 'Now analyze YOUR real business' : 'Ahora analiza TU negocio real'}
+            {lang === 'en'
+              ? 'How does YOUR business appear on Google right now?'
+              : '¿Cómo aparece TU negocio en Google ahora mismo?'}
           </p>
           <p className="text-slate-400 text-[11px] mt-1 leading-snug">
             {lang === 'en'
-              ? 'Choose what you want to analyze:'
-              : 'Elige el tipo de análisis que quieres hacer:'}
+              ? 'Enter your details and get your real report in seconds:'
+              : 'Introduce tus datos y obtén tu informe real en segundos:'}
           </p>
         </div>
 
