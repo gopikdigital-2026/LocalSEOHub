@@ -232,8 +232,8 @@ function OwnScanBanner({ tab, lang, onScan }: {
           </p>
           <p className="text-slate-400 text-[11px] mt-1 leading-snug">
             {lang === 'en'
-              ? 'The example above is fictional. What do you want to analyze?'
-              : 'El ejemplo es ficticio. ¿Qué quieres analizar?'}
+              ? 'Choose what you want to analyze:'
+              : 'Elige el tipo de análisis que quieres hacer:'}
           </p>
         </div>
 
