@@ -227,11 +227,92 @@ function GateOverlay({
   );
 }
 
+function OwnScanOverlay({ tab, lang, onScan }: {
+  tab: WidgetTab;
+  lang: string;
+  onScan: (name: string, city: string) => void;
+}) {
+  const [name, setName] = useState('');
+  const [city, setCity] = useState('');
+
+  useEffect(() => { track('own_scan_prompt_shown', { tab }); }, [tab]);
+
+  const handleSubmit = () => {
+    if (!name.trim()) return;
+    track('own_scan_submitted', { tab });
+    onScan(name.trim(), city.trim());
+  };
+
+  return (
+    <div
+      className="absolute inset-0 z-20 flex items-center justify-center p-4 rounded-xl"
+      style={{ background: 'rgba(5,6,11,0.90)', backdropFilter: 'blur(12px)' }}
+    >
+      <div className="w-full max-w-xs">
+        <div className="text-center mb-4">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mx-auto mb-2.5">
+            <Zap size={15} className="text-emerald-400" />
+          </div>
+          <p className="text-white font-extrabold text-sm">
+            {lang === 'en' ? 'Now analyze YOUR business' : 'Ahora analiza TU negocio'}
+          </p>
+          <p className="text-slate-500 text-[11px] mt-1 leading-snug">
+            {lang === 'en'
+              ? 'The example above is fictional. Enter your real data to get your personalized report.'
+              : 'El ejemplo es ficticio. Introduce los datos de tu negocio real para obtener tu informe.'}
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            placeholder={tab === 'maps'
+              ? (lang === 'en' ? 'Your business name...' : 'Nombre de tu negocio...')
+              : (lang === 'en' ? 'Your product or service...' : 'Tu producto o servicio...')}
+            autoFocus
+            className="w-full bg-slate-800/90 border border-slate-600/80 rounded-xl px-4 py-3 text-sm text-slate-100
+              placeholder-slate-600 outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+          />
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            placeholder={lang === 'en' ? 'City (optional)' : 'Ciudad (opcional)'}
+            className="w-full bg-slate-800/90 border border-slate-600/80 rounded-xl px-4 py-3 text-sm text-slate-100
+              placeholder-slate-600 outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={!name.trim()}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm
+              bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+              text-slate-950 shadow-lg shadow-emerald-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0
+              disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          >
+            <Zap size={14} fill="currentColor" />
+            {lang === 'en' ? 'Analyze MY business →' : 'Analizar MI negocio →'}
+          </button>
+        </div>
+
+        <p className="text-[10px] text-slate-600 text-center mt-3 flex items-center justify-center gap-1">
+          <Shield size={9} />
+          {lang === 'en' ? 'No account needed to start' : 'Sin cuenta para empezar'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   const { t, lang } = useI18n();
   const [tab, setTab] = useState<WidgetTab>('maps');
   const [phase, setPhase] = useState<ScanPhase>('idle');
   const [showGate, setShowGate] = useState(false);
+  const [scanIsAuto, setScanIsAuto] = useState(true);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
 
@@ -267,6 +348,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     const trigger = tab === 'maps' ? business : product;
     if (!trigger.trim()) return;
     if (!auto) userActed.current = true;
+    setScanIsAuto(auto);
     track('widget_scan_start', { tab, auto, query: trigger, ...(tab === 'seo' ? { tipo, platform } : { city }) });
     setPhase('scanning');
     setShowGate(false);
@@ -539,7 +621,18 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         </div>
                       </div>
                     </div>
-                    {showGate && (
+                    {showGate && scanIsAuto && (
+                      <OwnScanOverlay
+                        tab={tab}
+                        lang={lang}
+                        onScan={(name, city) => {
+                          setBusiness(name);
+                          setCity(city);
+                          handleScan(false);
+                        }}
+                      />
+                    )}
+                    {showGate && !scanIsAuto && (
                       <GateOverlay
                         title={t('widget_gate_maps_title')}
                         subtitle={t('widget_gate_maps_sub')}
@@ -719,7 +812,18 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         </div>
                       </div>
                     </div>
-                    {showGate && (
+                    {showGate && scanIsAuto && (
+                      <OwnScanOverlay
+                        tab={tab}
+                        lang={lang}
+                        onScan={(name, city) => {
+                          setProduct(name);
+                          setSeoCity(city);
+                          handleScan(false);
+                        }}
+                      />
+                    )}
+                    {showGate && !scanIsAuto && (
                       <GateOverlay
                         title={t('widget_gate_seo_title')}
                         subtitle={t('widget_gate_seo_sub')}
