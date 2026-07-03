@@ -971,16 +971,14 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 }
 
 function ProductMockup() {
-  const [step, setStep] = useState(0);
-  // 0: twin scanning, 1: twin result, 2: radar scanning, 3: radar result
-  useEffect(() => {
-    const durations = [2400, 4600, 2400, 4600];
-    const id = setTimeout(() => setStep(s => (s + 1) % 4), durations[step]);
-    return () => clearTimeout(id);
-  }, [step]);
+  const [isRadar, setIsRadar] = useState(false);
 
-  const isRadar = step >= 2;
-  const isResult = step === 1 || step === 3;
+  useEffect(() => {
+    const id = setInterval(() => setIsRadar(r => !r), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const isResult = true;
 
   const heatValues = [90,65,80,45,70,85,35,75,60,90,55,80,40,70,85,25,60,75,50,85,70,45,80,65,90];
 
@@ -1016,29 +1014,8 @@ function ProductMockup() {
         {/* Content */}
         <div className="p-5 min-h-[210px] relative overflow-hidden">
 
-          {/* ── Twin: scanning ── */}
-          {!isRadar && !isResult && (
-            <div className="flex flex-col items-center justify-center py-5 gap-4 transition-opacity duration-300">
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full border-2 border-emerald-500/25 animate-ping" style={{ animationDuration: '1.8s' }} />
-                <div className="absolute inset-2 rounded-full border border-emerald-400/40 animate-pulse" />
-                <div className="absolute inset-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-white text-sm font-bold">Construyendo tu gemelo digital...</p>
-                <p className="text-slate-500 text-xs mt-1">Analizando señales locales · Comparando zona</p>
-              </div>
-              <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                  style={{ animation: 'scanProgress 2.4s ease-out forwards' }} />
-              </div>
-            </div>
-          )}
-
           {/* ── Twin: result ── */}
-          {!isRadar && isResult && (
+          {!isRadar && (
             <div className="grid grid-cols-2 gap-4 animate-fadeIn">
               <div>
                 <div className="flex items-center gap-2 mb-3">
@@ -1082,33 +1059,8 @@ function ProductMockup() {
             </div>
           )}
 
-          {/* ── Radar: scanning ── */}
-          {isRadar && !isResult && (
-            <div className="flex flex-col items-center justify-center py-5 gap-4">
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full"
-                  style={{ background: 'conic-gradient(from 0deg, rgba(251,146,60,0.35), transparent 55%)', animation: 'radarSweep 1.5s linear infinite' }} />
-                {[0,1,2].map(i => (
-                  <div key={i} className="absolute rounded-full border border-orange-400/25"
-                    style={{ inset: `${i * 7}px`, animation: 'radarRing 2s ease-out infinite', animationDelay: `${i * 0.4}s` }} />
-                ))}
-                <div className="absolute inset-5 rounded-full bg-orange-500/15 flex items-center justify-center">
-                  <Target size={12} className="text-orange-400" />
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-white text-sm font-bold">Escaneando competidores...</p>
-                <p className="text-slate-500 text-xs mt-1">Analizando 8 negocios de tu zona</p>
-              </div>
-              <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full"
-                  style={{ animation: 'scanProgress 2.4s ease-out forwards' }} />
-              </div>
-            </div>
-          )}
-
           {/* ── Radar: result ── */}
-          {isRadar && isResult && (
+          {isRadar && (
             <div className="animate-fadeIn">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wide">Posición vs. Competidores</span>
@@ -1147,16 +1099,12 @@ function ProductMockup() {
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[10px] text-emerald-500 font-medium">
-              {isResult
-                ? (isRadar ? '3 competidores analizados · Brechas detectadas' : 'Gemelo digital activo · 2 zonas críticas')
-                : 'Procesando datos locales...'}
+              {isRadar ? '3 competidores analizados · Brechas detectadas' : 'Gemelo digital activo · 2 zonas críticas'}
             </span>
           </div>
-          {isResult && (
-            <div className="ml-auto h-5 px-2 rounded-md bg-emerald-500/20 border border-emerald-500/20 flex items-center">
-              <span className="text-[9px] text-emerald-400 font-semibold">Copiar informe</span>
-            </div>
-          )}
+          <div className="ml-auto h-5 px-2 rounded-md bg-emerald-500/20 border border-emerald-500/20 flex items-center">
+            <span className="text-[9px] text-emerald-400 font-semibold">Copiar informe</span>
+          </div>
         </div>
       </div>
     </div>
