@@ -188,8 +188,9 @@ function RegisterBanner({
 function OwnScanBanner({ tab, lang, onScan }: {
   tab: WidgetTab;
   lang: string;
-  onScan: (name: string, city: string) => void;
+  onScan: (name: string, city: string, type: WidgetTab) => void;
 }) {
+  const [scanType, setScanType] = useState<WidgetTab>(tab);
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
 
@@ -197,8 +198,8 @@ function OwnScanBanner({ tab, lang, onScan }: {
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    track('own_scan_submitted', { tab });
-    onScan(name.trim(), city.trim());
+    track('own_scan_submitted', { tab: scanType });
+    onScan(name.trim(), city.trim(), scanType);
   };
 
   const features = lang === 'en' ? [
@@ -231,9 +232,35 @@ function OwnScanBanner({ tab, lang, onScan }: {
           </p>
           <p className="text-slate-400 text-[11px] mt-1 leading-snug">
             {lang === 'en'
-              ? 'The example above is fictional. Enter your data to get your personalized report:'
-              : 'El ejemplo es ficticio. Introduce tu negocio para obtener tu informe personalizado:'}
+              ? 'The example above is fictional. What do you want to analyze?'
+              : 'El ejemplo es ficticio. ¿Qué quieres analizar?'}
           </p>
+        </div>
+
+        {/* Type toggle */}
+        <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-700/50 rounded-xl p-1 mb-4">
+          <button
+            onClick={() => { setScanType('maps'); setName(''); }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+              scanType === 'maps'
+                ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <MapPinned size={11} />
+            {lang === 'en' ? 'Local business' : 'Negocio local'}
+          </button>
+          <button
+            onClick={() => { setScanType('seo'); setName(''); }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+              scanType === 'seo'
+                ? 'bg-teal-500/20 border border-teal-500/30 text-teal-300'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <Sparkles size={11} />
+            {lang === 'en' ? 'Product / Service' : 'Producto / Servicio'}
+          </button>
         </div>
 
         {/* Feature grid */}
@@ -253,7 +280,7 @@ function OwnScanBanner({ tab, lang, onScan }: {
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder={tab === 'maps'
+            placeholder={scanType === 'maps'
               ? (lang === 'en' ? 'Your business name...' : 'Nombre de tu negocio...')
               : (lang === 'en' ? 'Your product or service...' : 'Tu producto o servicio...')}
             autoFocus
@@ -278,7 +305,9 @@ function OwnScanBanner({ tab, lang, onScan }: {
               disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             <Zap size={14} fill="currentColor" />
-            {lang === 'en' ? 'Analyze MY business →' : 'Analizar MI negocio →'}
+            {lang === 'en'
+              ? (scanType === 'maps' ? 'Analyze my local business →' : 'Analyze my product/service →')
+              : (scanType === 'maps' ? 'Analizar mi negocio local →' : 'Analizar mi producto/servicio →')}
           </button>
         </div>
 
@@ -328,17 +357,39 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   // Track whether the user has manually interacted (to avoid double-trigger)
   const userActed = useRef(false);
 
-  const handleScan = (auto = false) => {
-    const trigger = tab === 'maps' ? business : product;
+  const handleScan = (
+    auto = false,
+    overrideTab?: WidgetTab,
+    overrideName?: string,
+    overrideCity?: string
+  ) => {
+    const effectiveTab = overrideTab ?? tab;
+    const trigger = effectiveTab === 'maps'
+      ? (overrideName ?? business)
+      : (overrideName ?? product);
     if (!trigger.trim()) return;
     if (!auto) userActed.current = true;
     setScanIsAuto(auto);
-    track('widget_scan_start', { tab, auto, query: trigger, ...(tab === 'seo' ? { tipo, platform } : { city }) });
+    if (overrideTab) setTab(overrideTab);
+    if (overrideName) {
+      if (effectiveTab === 'maps') setBusiness(overrideName);
+      else setProduct(overrideName);
+    }
+    if (overrideCity) {
+      if (effectiveTab === 'maps') setCity(overrideCity);
+      else setSeoCity(overrideCity);
+    }
+    track('widget_scan_start', {
+      tab: effectiveTab,
+      auto,
+      query: trigger,
+      ...(effectiveTab === 'seo' ? { tipo, platform } : { city: overrideCity ?? city }),
+    });
     setPhase('scanning');
     setShowGate(false);
     setTimeout(() => {
       setPhase('result');
-      track('widget_scan_result', { tab, auto, ...(tab === 'seo' ? { tipo, platform } : {}) });
+      track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
       // Show banner 4 s after result so user can read freely
       setTimeout(() => setShowGate(true), 4000);
     }, 2800);
@@ -610,11 +661,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     <OwnScanBanner
                       tab={tab}
                       lang={lang}
-                      onScan={(name, city) => {
-                        setBusiness(name);
-                        setCity(city);
-                        handleScan(false);
-                      }}
+                      onScan={(name, city, type) => handleScan(false, type, name, city)}
                     />
                   )}
                   {showGate && !scanIsAuto && (
@@ -799,11 +846,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     <OwnScanBanner
                       tab={tab}
                       lang={lang}
-                      onScan={(name, city) => {
-                        setProduct(name);
-                        setSeoCity(city);
-                        handleScan(false);
-                      }}
+                      onScan={(name, city, type) => handleScan(false, type, name, city)}
                     />
                   )}
                   {showGate && !scanIsAuto && (
