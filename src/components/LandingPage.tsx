@@ -84,60 +84,76 @@ function RegisterBanner({
   businessName?: string;
   lang: string;
 }) {
-  const { t } = useI18n();
-
   useEffect(() => { track('gate_shown', { context }); }, [context]);
 
-  const title = businessName
-    ? (lang === 'en' ? `Unlock the full report for ${businessName}` : `Desbloquea el informe completo de ${businessName}`)
-    : (lang === 'en' ? 'Unlock your full report' : 'Desbloquea tu informe completo');
+  const name = businessName || (lang === 'en' ? 'your business' : 'tu negocio');
 
-  const features = lang === 'en' ? [
-    { icon: <MapPinned size={10} />, text: 'Full Google Maps profile audit' },
-    { icon: <Sparkles size={10} />, text: 'SEO for 16+ platforms' },
-    { icon: <Eye size={10} />, text: 'Competitor URL analysis' },
-    { icon: <Globe size={10} />, text: 'Local ranking comparison' },
-    { icon: <Calendar size={10} />, text: 'Monthly AI content plan' },
-    { icon: <Star size={10} />, text: 'Review audit + AI GBP description' },
-  ] : [
-    { icon: <MapPinned size={10} />, text: 'Auditoría completa de ficha Google Maps' },
-    { icon: <Sparkles size={10} />, text: 'SEO para Google, Etsy, Amazon y +14 más' },
-    { icon: <Eye size={10} />, text: 'Análisis de URLs de tus competidores' },
-    { icon: <Globe size={10} />, text: 'Comparativa de posicionamiento local' },
-    { icon: <Calendar size={10} />, text: 'Plan de contenidos mensual con IA' },
-    { icon: <Star size={10} />, text: 'Auditoría de reseñas + descripción GBP' },
-  ];
+  type LockedItem = { Icon: React.FC<{ size: number; className?: string }>; label: string; blurText: string };
+
+  const lockedItems: LockedItem[] = context === 'maps'
+    ? (lang === 'en' ? [
+        { Icon: Eye, label: 'Competitor comparison', blurText: '3 businesses in your area ranked above you — see exactly where they beat you' },
+        { Icon: Star, label: 'Review audit + AI response', blurText: '2 unanswered reviews detected — AI-generated replies ready to copy and paste' },
+        { Icon: Globe, label: 'Local GEO ranking score', blurText: 'Your position vs. competitors by keyword and search radius — heat map included' },
+        { Icon: Calendar, label: 'AI monthly content plan', blurText: '8 posts with caption templates and optimal days and times to publish' },
+      ] : [
+        { Icon: Eye, label: 'Comparativa de competidores', blurText: '3 negocios de tu zona posicionados por delante — ve exactamente en qué te superan' },
+        { Icon: Star, label: 'Auditoría de reseñas + IA', blurText: '2 reseñas sin responder detectadas — respuestas IA listas para copiar y pegar' },
+        { Icon: Globe, label: 'Puntuación GEO local', blurText: 'Tu posición vs. competidores por keyword y radio de búsqueda — mapa de calor incluido' },
+        { Icon: Calendar, label: 'Plan de contenidos mensual', blurText: '8 posts con plantillas de texto y los mejores días y horarios de publicación' },
+      ])
+    : (lang === 'en' ? [
+        { Icon: Globe, label: '16+ platform listings', blurText: 'Optimized titles, tags and descriptions for Etsy, Amazon, eBay and 13 more platforms' },
+        { Icon: Eye, label: 'Competitor URL analysis', blurText: 'Side-by-side comparison with top 5 competitors — gaps and quick wins highlighted' },
+        { Icon: Target, label: 'Ad campaign simulator', blurText: 'Simulated Google and Meta campaigns with estimated CPL, reach and ROI for your product' },
+        { Icon: Calendar, label: 'AI content calendar', blurText: '12 ideas with hashtags, best posting formats and a weekly publishing schedule' },
+      ] : [
+        { Icon: Globe, label: 'Fichas en 16+ plataformas', blurText: 'Títulos, etiquetas y descripciones para Etsy, Amazon, eBay y 13 plataformas más' },
+        { Icon: Eye, label: 'Análisis de URLs de competidores', blurText: 'Comparativa directa con los 5 mejores de tu nicho — brechas y victorias rápidas destacadas' },
+        { Icon: Target, label: 'Simulador de campaña', blurText: 'Campañas Google y Meta simuladas con CPL, alcance y ROI estimados para tu producto' },
+        { Icon: Calendar, label: 'Calendario de contenido IA', blurText: '12 ideas con hashtags, formatos y calendario semanal de publicación óptimo' },
+      ]);
 
   return (
     <div
-      className="mt-3 rounded-2xl overflow-hidden border border-emerald-500/25"
-      style={{ background: 'linear-gradient(145deg, rgba(16,185,129,0.07) 0%, rgba(15,23,42,0.97) 55%)' }}
+      className="mt-3 rounded-2xl overflow-hidden"
+      style={{ border: '1px solid rgba(16,185,129,0.28)', background: 'linear-gradient(160deg, rgba(16,185,129,0.09) 0%, rgba(8,14,26,0.99) 55%)' }}
     >
       <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+
       <div className="p-5">
         {/* Header */}
-        <div className="flex items-start gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
-            <Lock size={15} className="text-emerald-400" />
+        <div className="text-center mb-4">
+          <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
+            <BadgeCheck size={11} className="text-emerald-400" />
+            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+              {lang === 'en' ? 'Report ready' : 'Informe listo'}
+            </span>
           </div>
-          <div>
-            <p className="text-white font-extrabold text-sm leading-tight">{title}</p>
-            <p className="text-slate-400 text-[11px] mt-0.5 leading-snug">
-              {lang === 'en'
-                ? 'Access all the data for your business and your competitors:'
-                : 'Accede a toda la info de tu negocio y del de la competencia:'}
-            </p>
-          </div>
+          <p className="text-white font-extrabold text-base leading-tight mb-1">
+            {lang === 'en'
+              ? `4 sections ready for ${name}`
+              : `4 secciones listas para ${name}`}
+          </p>
+          <p className="text-slate-400 text-xs leading-snug">
+            {lang === 'en'
+              ? 'Create your free account to unlock all the data'
+              : 'Crea tu cuenta gratis para desbloquear todos los datos'}
+          </p>
         </div>
 
-        {/* Feature grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-3 mb-5">
-          {features.map((f, i) => (
-            <div key={i} className="flex items-center gap-2 text-[11px] text-slate-300">
-              <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400">
-                {f.icon}
+        {/* Locked preview sections */}
+        <div className="space-y-1.5 mb-4">
+          {lockedItems.map(({ Icon, label, blurText }, i) => (
+            <div key={i} className="rounded-xl border border-slate-700/35 bg-slate-800/25 p-3">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-5 h-5 rounded-md bg-slate-700/50 flex items-center justify-center shrink-0">
+                  <Icon size={10} className="text-slate-500" />
+                </div>
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide flex-1">{label}</span>
+                <Lock size={8} className="text-slate-600 shrink-0" />
               </div>
-              {f.text}
+              <p className="text-[11px] text-slate-400 ml-7 blur-sm select-none pointer-events-none leading-relaxed">{blurText}</p>
             </div>
           ))}
         </div>
@@ -150,12 +166,12 @@ function RegisterBanner({
           </div>
         )}
 
-        {/* Google CTA */}
+        {/* Primary CTA — Google */}
         <button
           onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-bold text-sm transition-all duration-200
-            bg-white text-slate-900 hover:bg-slate-50 shadow-lg shadow-black/30 hover:-translate-y-0.5 active:translate-y-0
+          className="w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold text-sm transition-all duration-200
+            bg-white text-slate-900 hover:bg-slate-50 shadow-xl shadow-black/35 hover:-translate-y-0.5 active:translate-y-0
             disabled:opacity-60 disabled:cursor-not-allowed mb-2"
         >
           {loading ? (
@@ -164,22 +180,30 @@ function RegisterBanner({
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           ) : <GoogleIconSm />}
-          {loading ? t('widget_redirecting') : (lang === 'en' ? 'See my full report →' : 'Ver mi informe completo →')}
+          {loading
+            ? (lang === 'en' ? 'Redirecting...' : 'Redirigiendo...')
+            : (lang === 'en' ? 'Unlock my full report — it\'s free' : 'Desbloquear mi informe completo — es gratis')}
         </button>
 
-        {/* Email CTA */}
+        {/* Secondary — email (text link) */}
         <button
           onClick={() => { track('gate_register_click', { context, method: 'email' }); onEmail(); }}
-          className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold
-            border border-slate-600/80 bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-white hover:border-slate-500 transition-all duration-200"
+          className="w-full text-center text-xs text-slate-500 hover:text-slate-300 transition-colors py-1.5"
         >
-          {lang === 'en' ? 'Continue with email instead' : 'Continuar con email'}
+          {lang === 'en' ? 'or continue with email' : 'o continuar con email'}
         </button>
 
-        <p className="text-[10px] text-slate-600 text-center mt-3 flex items-center justify-center gap-1">
-          <Shield size={9} />
-          {lang === 'en' ? '7 days free · no card required · cancel anytime' : '7 días gratis · sin tarjeta · cancela cuando quieras'}
-        </p>
+        {/* Trust row */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-800/50">
+          <span className="text-[10px] text-slate-600 flex items-center gap-1">
+            <Shield size={9} />
+            {lang === 'en' ? '7 days free · no card' : '7 días gratis · sin tarjeta'}
+          </span>
+          <span className="text-[10px] text-slate-600 flex items-center gap-1">
+            <Users size={9} />
+            {lang === 'en' ? '+1,200 businesses this week' : '+1.200 negocios esta semana'}
+          </span>
+        </div>
       </div>
     </div>
   );
