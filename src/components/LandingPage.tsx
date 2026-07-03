@@ -283,7 +283,7 @@ function OwnScanBanner({ tab, lang, onScan }: {
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             placeholder={scanType === 'maps'
-              ? (lang === 'en' ? 'Your business name...' : 'Nombre de tu negocio...')
+              ? (lang === 'en' ? 'Business name or URL...' : 'Nombre de tu negocio o URL...')
               : (lang === 'en' ? 'Your product or service...' : 'Tu producto o servicio...')}
             autoFocus
             className="w-full bg-slate-800/90 border border-slate-600/80 rounded-xl px-4 py-3 text-sm text-slate-100
