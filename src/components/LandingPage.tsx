@@ -32,9 +32,9 @@ const TOOL_META = [
 ] as const;
 
 const TESTIMONIAL_META = [
-  { name: 'Marta G.', city: 'Toledo', business: 'Cerámica artesanal', stars: 5, initials: 'MG', color: 'from-emerald-500 to-teal-600' },
-  { name: 'Carlos R.', city: 'Valencia', business: 'Reparación de móviles', stars: 5, initials: 'CR', color: 'from-blue-500 to-cyan-600' },
-  { name: 'Laura M.', city: 'Sevilla', business: 'Floristería online', stars: 5, initials: 'LM', color: 'from-rose-500 to-pink-600' },
+  { name: 'Marta G.', city: 'Toledo', business: 'Peluquería Éclat', stars: 5, initials: 'MG', color: 'from-emerald-500 to-teal-600', photo: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop' },
+  { name: 'Carlos R.', city: 'Valencia', business: 'Clínica Dental Ruiz', stars: 5, initials: 'CR', color: 'from-blue-500 to-cyan-600', photo: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop' },
+  { name: 'Laura M.', city: 'Sevilla', business: 'Restaurante La Plaza', stars: 5, initials: 'LM', color: 'from-rose-500 to-pink-600', photo: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop' },
 ] as const;
 
 function GoogleIconSm() {
@@ -226,45 +226,62 @@ function OwnScanBanner({ tab, lang, onScan }: {
     onScan(name.trim(), city.trim(), scanType);
   };
 
-  const features = lang === 'en' ? [
-    'Your personalized SEO title',
-    'Optimized description to copy',
-    '6 keywords to rank #1',
-    'Competitor comparison (your area)',
-    'Monthly AI content plan',
-    'Review audit + GBP description',
+  // Blurred locked items shown to create urgency
+  const lockedPreviews = lang === 'en' ? [
+    { Icon: Globe, label: 'Advanced GEO labels', blurText: '9 structured GEO tags for your category and search radius' },
+    { Icon: Target, label: 'Keyword optimisation', blurText: 'Top 8 keywords with volume and competition score for your niche' },
   ] : [
-    'Título SEO personalizado para tu negocio',
-    'Descripción optimizada lista para copiar',
-    '6 keywords para rankear #1 en Google',
-    'Comparativa con competidores de tu zona',
-    'Plan de contenidos mensual con IA',
-    'Auditoría de reseñas + descripción GBP',
+    { Icon: Globe, label: 'Etiquetas GEO avanzadas', blurText: '9 etiquetas GEO estructuradas para tu categoría y radio de búsqueda' },
+    { Icon: Target, label: 'Optimización de keywords', blurText: '8 keywords principales con volumen y dificultad para tu nicho' },
   ];
 
   return (
     <div
-      className="mt-3 rounded-2xl overflow-hidden border border-teal-500/25"
-      style={{ background: 'linear-gradient(145deg, rgba(20,184,166,0.07) 0%, rgba(15,23,42,0.97) 55%)' }}
+      className="mt-3 rounded-2xl overflow-hidden"
+      style={{ border: '1px solid rgba(20,184,166,0.28)', background: 'linear-gradient(145deg, rgba(20,184,166,0.08) 0%, rgba(10,18,32,0.99) 55%)' }}
     >
       <div className="h-[2px] bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-500" />
       <div className="p-5">
-        {/* Header */}
-        <div className="text-center mb-4">
-          <p className="text-white font-extrabold text-sm">
+        {/* Critical failure hook */}
+        <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5 mb-4">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
+              <AlertCircle size={11} className="text-amber-400" />
+            </div>
+            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+              {lang === 'en' ? 'Critical failure detected in your area' : 'Fallo crítico detectado en tu zona'}
+            </span>
+          </div>
+          <p className="text-amber-300/85 text-xs leading-relaxed pl-7">
             {lang === 'en'
-              ? 'How does YOUR business appear on Google right now?'
-              : '¿Cómo aparece TU negocio en Google ahora mismo?'}
-          </p>
-          <p className="text-slate-400 text-[11px] mt-1 leading-snug">
-            {lang === 'en'
-              ? 'Enter your details and get your real report in seconds:'
-              : 'Introduce tus datos y obtén tu informe real en segundos:'}
+              ? 'Semantic schedule inconsistency found in local listings similar to yours. 68% of searches in your category happen outside standard hours — enter your business to check if you\'re affected.'
+              : 'Inconsistencia semántica de horarios en fichas de tu zona similares a la tuya. El 68% de las búsquedas en tu categoría ocurren fuera del horario estándar — introduce tu negocio para ver si te afecta.'}
           </p>
         </div>
 
+        {/* Locked GEO + keyword previews */}
+        <div className="space-y-1.5 mb-4">
+          {lockedPreviews.map(({ Icon, label, blurText }, i) => (
+            <div key={i} className="rounded-xl border border-slate-700/35 bg-slate-800/25 p-3">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-5 h-5 rounded-md bg-slate-700/50 flex items-center justify-center shrink-0">
+                  <Icon size={10} className="text-slate-500" />
+                </div>
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide flex-1">{label}</span>
+                <Lock size={8} className="text-slate-600 shrink-0" />
+              </div>
+              <p className="text-[11px] text-slate-400 ml-7 blur-sm select-none pointer-events-none leading-relaxed">{blurText}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Heading */}
+        <p className="text-white font-extrabold text-sm text-center mb-3">
+          {lang === 'en' ? 'Enter YOUR business to check for free:' : 'Introduce TU negocio para comprobarlo gratis:'}
+        </p>
+
         {/* Type toggle */}
-        <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-700/50 rounded-xl p-1 mb-4">
+        <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-700/50 rounded-xl p-1 mb-3">
           <button
             onClick={() => { setScanType('maps'); setName(''); }}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
@@ -289,17 +306,7 @@ function OwnScanBanner({ tab, lang, onScan }: {
           </button>
         </div>
 
-        {/* Feature grid */}
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-4">
-          {features.map((f, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-400">
-              <Check size={9} className="text-emerald-400 shrink-0" />
-              {f}
-            </div>
-          ))}
-        </div>
-
-        {/* Own business form */}
+        {/* Form */}
         <div className="space-y-2">
           <input
             type="text"
@@ -325,15 +332,15 @@ function OwnScanBanner({ tab, lang, onScan }: {
           <button
             onClick={handleSubmit}
             disabled={!name.trim()}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-sm
               bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
               text-slate-950 shadow-lg shadow-emerald-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0
               disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             <Zap size={14} fill="currentColor" />
             {lang === 'en'
-              ? (scanType === 'maps' ? 'Analyze my local business →' : 'Analyze my product/service →')
-              : (scanType === 'maps' ? 'Analizar mi negocio local →' : 'Analizar mi producto/servicio →')}
+              ? (scanType === 'maps' ? 'Check my local business →' : 'Check my product/service →')
+              : (scanType === 'maps' ? 'Comprobar mi negocio local →' : 'Comprobar mi producto/servicio →')}
           </button>
         </div>
 
@@ -676,10 +683,34 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
                       <div className="flex flex-wrap gap-2">
                         {mapsKeywords.map((kw, i) => (
-                          <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{kw}</span>
+                          <span
+                            key={i}
+                            className={`text-[11px] rounded-full px-3 py-1 transition-all ${
+                              i < 3
+                                ? 'bg-teal-500/15 border border-teal-500/20 text-teal-300'
+                                : 'bg-teal-500/15 border border-teal-500/20 text-teal-300 blur-sm select-none pointer-events-none'
+                            }`}
+                          >{kw}</span>
                         ))}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Critical failure card — always visible in result */}
+                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
+                        <AlertCircle size={11} className="text-amber-400" />
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+                        {lang === 'en' ? 'Critical Failure Detected' : 'Fallo Crítico Detectado'}
+                      </span>
+                    </div>
+                    <p className="text-amber-300/85 text-xs leading-relaxed pl-7">
+                      {lang === 'en'
+                        ? `Semantic schedule inconsistency: "${displayName}" has no special holiday hours. 68% of searches in your category happen outside standard business hours — you're invisible for those queries.`
+                        : `Inconsistencia semántica de horarios: "${displayName}" no tiene horarios especiales para festivos. El 68% de las búsquedas en tu categoría ocurren fuera del horario estándar — eres invisible en esas consultas.`}
+                    </p>
                   </div>
 
                   {/* Banner appears after delay, below content */}
@@ -860,11 +891,31 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         {lang === 'es' ? `Etiquetas · Alt text · Plan de contenido` : `Tags · Alt text · Content plan`}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {[...seoTagsVisible, ...seoTagsBlurred].map((tag, i) => (
+                        {seoTagsVisible.map((tag, i) => (
                           <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
+                        ))}
+                        {seoTagsBlurred.map((tag, i) => (
+                          <span key={`b${i}`} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1 blur-sm select-none pointer-events-none">{tag}</span>
                         ))}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Critical failure card — always visible in SEO result */}
+                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
+                        <AlertCircle size={11} className="text-amber-400" />
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+                        {lang === 'en' ? 'Critical Failure Detected' : 'Fallo Crítico Detectado'}
+                      </span>
+                    </div>
+                    <p className="text-amber-300/85 text-xs leading-relaxed pl-7">
+                      {lang === 'en'
+                        ? `No GEO semantic layer detected for "${displayProduct}". Your listing lacks structured schema that allows AI engines (ChatGPT, Gemini) to recommend you. Competitors with schema markup appear 3× more in AI-generated summaries.`
+                        : `Capa semántica GEO ausente en "${displayProduct}". Tu ficha carece del schema estructurado que permite a los motores de IA (ChatGPT, Gemini) recomendarte. Los competidores con schema aparecen 3× más en resúmenes generados por IA.`}
+                    </p>
                   </div>
 
                   {/* Banner appears after delay, below content */}
@@ -920,10 +971,24 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 }
 
 function ProductMockup() {
+  const [step, setStep] = useState(0);
+  // 0: twin scanning, 1: twin result, 2: radar scanning, 3: radar result
+  useEffect(() => {
+    const durations = [2400, 4600, 2400, 4600];
+    const id = setTimeout(() => setStep(s => (s + 1) % 4), durations[step]);
+    return () => clearTimeout(id);
+  }, [step]);
+
+  const isRadar = step >= 2;
+  const isResult = step === 1 || step === 3;
+
+  const heatValues = [90,65,80,45,70,85,35,75,60,90,55,80,40,70,85,25,60,75,50,85,70,45,80,65,90];
+
   return (
     <div className="relative mx-auto max-w-3xl">
       <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-teal-500/5 rounded-3xl blur-2xl scale-95" />
       <div className="relative rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
+        {/* Browser chrome */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800 bg-slate-950">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/60" />
@@ -934,75 +999,164 @@ function ProductMockup() {
             <span className="text-slate-600 text-[10px]">localseohub.io</span>
           </div>
         </div>
-        <div className="p-5 grid grid-cols-2 gap-4">
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <div className="h-2 w-20 rounded bg-slate-700/60" />
-              <div className="h-9 rounded-lg border border-slate-700/60 bg-slate-800/80 flex items-center px-3 gap-2">
-                <div className="w-3 h-3 rounded-sm bg-emerald-500/40" />
-                <div className="h-1.5 w-28 rounded bg-slate-600/60" />
+
+        {/* Tab bar */}
+        <div className="flex border-b border-slate-800 bg-slate-950/40">
+          {(['AI Digital Twin', 'Radar de Competencia'] as const).map((tab, i) => (
+            <div key={tab} className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all duration-500 ${
+              (i === 0 && !isRadar) || (i === 1 && isRadar)
+                ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5'
+                : 'border-transparent text-slate-600'
+            }`}>
+              {tab}
+            </div>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="p-5 min-h-[210px] relative overflow-hidden">
+
+          {/* ── Twin: scanning ── */}
+          {!isRadar && !isResult && (
+            <div className="flex flex-col items-center justify-center py-5 gap-4 transition-opacity duration-300">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full border-2 border-emerald-500/25 animate-ping" style={{ animationDuration: '1.8s' }} />
+                <div className="absolute inset-2 rounded-full border border-emerald-400/40 animate-pulse" />
+                <div className="absolute inset-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-white text-sm font-bold">Construyendo tu gemelo digital...</p>
+                <p className="text-slate-500 text-xs mt-1">Analizando señales locales · Comparando zona</p>
+              </div>
+              <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                  style={{ animation: 'scanProgress 2.4s ease-out forwards' }} />
               </div>
             </div>
-            <div className="space-y-1.5">
-              <div className="h-2 w-14 rounded bg-slate-700/60" />
-              <div className="h-9 rounded-lg border border-slate-700/60 bg-slate-800/80 flex items-center px-3 gap-2">
-                <MapPin size={12} className="text-slate-600" />
-                <div className="h-1.5 w-16 rounded bg-slate-600/60" />
+          )}
+
+          {/* ── Twin: result ── */}
+          {!isRadar && isResult && (
+            <div className="grid grid-cols-2 gap-4 animate-fadeIn">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wide">Visibilidad Local</span>
+                </div>
+                <div className="grid grid-cols-5 gap-1 mb-3">
+                  {heatValues.map((v, i) => (
+                    <div key={i} className="h-5 rounded-sm transition-all duration-300" style={{
+                      backgroundColor: v > 75 ? 'rgba(16,185,129,0.55)' : v > 50 ? 'rgba(251,191,36,0.45)' : 'rgba(239,68,68,0.35)',
+                      animationDelay: `${i * 25}ms`,
+                    }} />
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 text-[9px] text-slate-500">
+                  <div className="w-2 h-2 rounded-sm bg-emerald-500/55" /> Dominante
+                  <div className="w-2 h-2 rounded-sm bg-amber-400/45" /> Medio
+                  <div className="w-2 h-2 rounded-sm bg-red-500/35" /> Invisible
+                </div>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <div className="h-2 w-24 rounded bg-slate-700/60" />
-              <div className="h-9 rounded-lg border border-slate-700/60 bg-slate-800/80 flex items-center px-3 gap-2">
-                <div className="h-1.5 w-20 rounded bg-slate-600/60" />
-              </div>
-            </div>
-            <button className="w-full h-9 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center gap-2 mt-1">
-              <Sparkles size={13} className="text-slate-950" />
-              <span className="text-slate-950 text-xs font-bold">Generar SEO</span>
-            </button>
-          </div>
-          <div className="space-y-2.5">
-            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <div className="h-1.5 w-10 rounded bg-emerald-500/40" />
-              </div>
-              <div className="h-1.5 w-full rounded bg-slate-600/50" />
-              <div className="h-1.5 w-4/5 rounded bg-slate-600/40" />
-            </div>
-            <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-3 space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                <div className="h-1.5 w-14 rounded bg-slate-600/50" />
-              </div>
-              <div className="h-1.5 w-full rounded bg-slate-600/40" />
-              <div className="h-1.5 w-full rounded bg-slate-600/40" />
-              <div className="h-1.5 w-3/4 rounded bg-slate-600/30" />
-            </div>
-            <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-3 space-y-2">
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                <div className="h-1.5 w-10 rounded bg-slate-600/50" />
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {[40, 28, 36, 22, 32, 24].map((w, i) => (
-                  <div key={i} className="h-5 rounded-full bg-emerald-500/15 border border-emerald-500/20" style={{ width: `${w}px` }} />
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                  <span className="text-[10px] font-bold text-teal-400 uppercase tracking-wide">AI Sentiment</span>
+                </div>
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2">
+                  <p className="text-emerald-400 text-[10px] font-bold">Entidad destacada</p>
+                  <p className="text-slate-400 text-[9px] mt-0.5">ChatGPT te menciona activamente</p>
+                </div>
+                {[{ name: 'ChatGPT', score: 87 }, { name: 'Gemini', score: 74 }, { name: 'Perplexity', score: 61 }].map(ai => (
+                  <div key={ai.name} className="flex items-center gap-2">
+                    <span className="text-[9px] text-slate-500 w-16 shrink-0">{ai.name}</span>
+                    <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700"
+                        style={{ width: `${ai.score}%` }} />
+                    </div>
+                    <span className="text-[9px] font-bold text-emerald-400">{ai.score}%</span>
+                  </div>
                 ))}
               </div>
             </div>
-          </div>
+          )}
+
+          {/* ── Radar: scanning ── */}
+          {isRadar && !isResult && (
+            <div className="flex flex-col items-center justify-center py-5 gap-4">
+              <div className="relative w-16 h-16">
+                <div className="absolute inset-0 rounded-full"
+                  style={{ background: 'conic-gradient(from 0deg, rgba(251,146,60,0.35), transparent 55%)', animation: 'radarSweep 1.5s linear infinite' }} />
+                {[0,1,2].map(i => (
+                  <div key={i} className="absolute rounded-full border border-orange-400/25"
+                    style={{ inset: `${i * 7}px`, animation: 'radarRing 2s ease-out infinite', animationDelay: `${i * 0.4}s` }} />
+                ))}
+                <div className="absolute inset-5 rounded-full bg-orange-500/15 flex items-center justify-center">
+                  <Target size={12} className="text-orange-400" />
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-white text-sm font-bold">Escaneando competidores...</p>
+                <p className="text-slate-500 text-xs mt-1">Analizando 8 negocios de tu zona</p>
+              </div>
+              <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full"
+                  style={{ animation: 'scanProgress 2.4s ease-out forwards' }} />
+              </div>
+            </div>
+          )}
+
+          {/* ── Radar: result ── */}
+          {isRadar && isResult && (
+            <div className="animate-fadeIn">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wide">Posición vs. Competidores</span>
+                <span className="text-[9px] bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-full px-2 py-0.5 font-semibold">Madrid</span>
+              </div>
+              <div className="space-y-2 mb-3">
+                {[
+                  { name: 'Competidor A', score: 82, bar: 'bg-red-500/65', you: false },
+                  { name: 'Competidor B', score: 71, bar: 'bg-amber-500/55', you: false },
+                  { name: 'Tu negocio',   score: 47, bar: 'bg-emerald-500', you: true  },
+                  { name: 'Competidor C', score: 38, bar: 'bg-slate-600',   you: false },
+                ].map(c => (
+                  <div key={c.name} className={`flex items-center gap-3 rounded-lg px-2 py-1.5 ${c.you ? 'bg-emerald-500/10 border border-emerald-500/20' : ''}`}>
+                    <span className={`text-[10px] font-semibold w-24 shrink-0 ${c.you ? 'text-emerald-400' : 'text-slate-400'}`}>
+                      {c.name}{c.you ? ' ← Tú' : ''}
+                    </span>
+                    <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${c.bar} transition-all duration-700`}
+                        style={{ width: isResult ? `${c.score}%` : '0%' }} />
+                    </div>
+                    <span className={`text-[9px] font-bold w-6 text-right ${c.you ? 'text-emerald-400' : 'text-slate-500'}`}>{c.score}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-start gap-2 bg-amber-500/8 border border-amber-500/20 rounded-lg p-2.5">
+                <AlertCircle size={11} className="text-amber-400 mt-0.5 shrink-0" />
+                <p className="text-amber-400/90 text-[10px] font-medium leading-snug">2 competidores te superan · Análisis de brechas y keywords disponible</p>
+              </div>
+            </div>
+          )}
+
         </div>
+
+        {/* Status bar */}
         <div className="flex items-center gap-3 px-5 py-2.5 border-t border-slate-800 bg-slate-950/60">
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] text-emerald-500 font-medium">Generado en 3.2 seg</span>
+            <span className="text-[10px] text-emerald-500 font-medium">
+              {isResult
+                ? (isRadar ? '3 competidores analizados · Brechas detectadas' : 'Gemelo digital activo · 2 zonas críticas')
+                : 'Procesando datos locales...'}
+            </span>
           </div>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="h-1.5 w-16 rounded bg-emerald-500/25" />
-            <div className="h-5 w-14 rounded-md bg-emerald-500/20 border border-emerald-500/20 flex items-center justify-center">
-              <span className="text-[9px] text-emerald-400 font-semibold">Copiar</span>
+          {isResult && (
+            <div className="ml-auto h-5 px-2 rounded-md bg-emerald-500/20 border border-emerald-500/20 flex items-center">
+              <span className="text-[9px] text-emerald-400 font-semibold">Copiar informe</span>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -1125,6 +1279,54 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           </div>
 
           <ProductMockup />
+        </div>
+      </section>
+
+      {/* ── SOCIAL PROOF (right under hero) ───────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pt-10 pb-2">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-0.5 mb-2">
+            {[...Array(5)].map((_, i) => <Star key={i} size={15} className="text-amber-400 fill-amber-400" />)}
+          </div>
+          <h2 className="text-xl font-bold text-white mb-1">{t('landing_testimonials_title')}</h2>
+          <p className="text-slate-500 text-sm">{t('landing_testimonials_sub')}</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {TESTIMONIALS.map((item) => (
+            <div
+              key={item.name}
+              className="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-6 flex flex-col gap-4
+                hover:border-emerald-500/25 hover:bg-slate-900/90 transition-all duration-300"
+            >
+              <div className="flex items-center gap-0.5">
+                {[...Array(item.stars)].map((_, i) => (
+                  <Star key={i} size={12} className="text-amber-400 fill-amber-400" />
+                ))}
+              </div>
+              <p className="text-slate-200 text-sm leading-relaxed flex-1">"{item.text}"</p>
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5">
+                <p className="text-emerald-400 text-xs font-bold">{item.metric}</p>
+              </div>
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-800">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${item.color} flex items-center justify-center`}>
+                    <span className="text-white text-xs font-bold">{item.initials}</span>
+                  </div>
+                  <img
+                    src={item.photo}
+                    alt={item.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-xs font-bold">{item.name}</p>
+                  <p className="text-slate-500 text-[11px] truncate">{item.business} · {item.city}</p>
+                </div>
+                <BadgeCheck size={15} className="text-emerald-500 shrink-0" />
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -1315,42 +1517,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ───────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 py-10">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-0.5 mb-2">
-            {[...Array(5)].map((_, i) => <Star key={i} size={16} className="text-amber-400 fill-amber-400" />)}
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-1">{t('landing_testimonials_title')}</h2>
-          <p className="text-slate-500 text-sm">{t('landing_testimonials_sub')}</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {TESTIMONIALS.map((item) => (
-            <div key={item.name} className="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-5 flex flex-col gap-3 hover:border-emerald-500/20 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${item.color} flex items-center justify-center shrink-0`}>
-                  <span className="text-white text-xs font-bold">{item.initials}</span>
-                </div>
-                <div>
-                  <p className="text-white text-xs font-bold">{item.name}</p>
-                  <p className="text-slate-500 text-[11px]">{item.business} · {item.city}</p>
-                </div>
-                <div className="ml-auto flex items-center gap-0.5">
-                  {[...Array(item.stars)].map((_, i) => (
-                    <Star key={i} size={10} className="text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-              </div>
-              <p className="text-slate-300 text-sm leading-relaxed flex-1">"{item.text}"</p>
-              <div className="pt-2 border-t border-slate-800">
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-1.5 inline-flex">
-                  <p className="text-emerald-400 text-[10px] font-bold">{item.metric}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ── TESTIMONIALS (moved above — section kept for scroll anchor) ── */}
 
       {/* ── FAQ ────────────────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-6 py-10">

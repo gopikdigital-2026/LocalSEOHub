@@ -357,12 +357,12 @@ const translations = {
 
     // Landing - Testimonials
     landing_testimonials_sub: 'Resultados reales · Primeros accesos',
-    landing_t1_text: 'En 2 semanas tripliqué las visitas a mi tienda de Etsy. No sabía nada de SEO y ahora aparezco en la primera página.',
-    landing_t1_metric: '+312% visitas en Etsy',
-    landing_t2_text: 'Mi Google Business está ahora en el top 3 de Valencia. El escáner de Maps me dijo exactamente qué estaba fallando.',
-    landing_t2_metric: 'Top 3 Google Maps Valencia',
-    landing_t3_text: 'Genera en 30 segundos lo que antes me costaba 2 horas escribir. Vale cada euro y el soporte es inmediato.',
-    landing_t3_metric: '2h ahorradas por producto',
+    landing_t1_text: 'En dos semanas dupliqué las citas. El escáner detectó que mi ficha no tenía horarios para festivos y que mi descripción no mencionaba la zona. Lo corregí en 5 minutos y las llamadas se dispararon.',
+    landing_t1_metric: '+112% citas en 2 semanas',
+    landing_t2_text: 'Estaba en el puesto 9 de Google Maps. Ahora estoy en el Top 3. El informe detectó que mis competidores tenían 47 reseñas más que yo y exactamente cómo revertirlo.',
+    landing_t2_metric: 'Del puesto 9 al Top 3 en 3 semanas',
+    landing_t3_text: 'Optimicé mis fichas en TripAdvisor, Google y Booking en 20 minutos. Las reservas directas subieron un 38% ese mes. Vale muchísimo más de lo que cuesta.',
+    landing_t3_metric: '+38% reservas directas en un mes',
 
     // Landing - FAQ
     landing_faq_badge: 'Preguntas frecuentes',
@@ -792,12 +792,12 @@ const translations = {
 
     // Landing - Testimonials
     landing_testimonials_sub: 'Real results · Early access',
-    landing_t1_text: 'In 2 weeks I tripled visits to my Etsy shop. I knew nothing about SEO and now I appear on the first page.',
-    landing_t1_metric: '+312% visits on Etsy',
-    landing_t2_text: 'My Google Business is now top 3 in Valencia. The Maps scanner told me exactly what was wrong.',
-    landing_t2_metric: 'Top 3 Google Maps Valencia',
-    landing_t3_text: 'Generates in 30 seconds what used to take me 2 hours to write. Worth every euro and support is immediate.',
-    landing_t3_metric: '2h saved per product',
+    landing_t1_text: 'In two weeks I doubled appointments. The scanner detected my listing had no holiday hours and my description didn\'t mention the neighbourhood. Fixed in 5 minutes and calls spiked.',
+    landing_t1_metric: '+112% appointments in 2 weeks',
+    landing_t2_text: 'I was ranked 9th on Google Maps. Now I\'m in the Top 3. The report showed my competitors had 47 more reviews and exactly how to close that gap.',
+    landing_t2_metric: 'From rank 9 to Top 3 in 3 weeks',
+    landing_t3_text: 'I optimised my listings on TripAdvisor, Google and Booking in 20 minutes. Direct bookings went up 38% that month. Worth way more than it costs.',
+    landing_t3_metric: '+38% direct bookings in one month',
 
     // Landing - FAQ
     landing_faq_badge: 'Frequently asked questions',
