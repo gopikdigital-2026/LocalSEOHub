@@ -141,15 +141,15 @@ function RegisterBanner({
         {/* Locked preview sections */}
         <div className="space-y-1.5 mb-4">
           {lockedItems.map(({ Icon, label, blurText }, i) => (
-            <div key={i} className="rounded-xl border border-slate-700/35 bg-slate-800/25 p-3">
-              <div className="flex items-center gap-2 mb-1.5">
+            <div key={i} className="rounded-xl border border-slate-700/35 bg-slate-800/25 p-2.5 sm:p-3">
+              <div className="flex items-center gap-2">
                 <div className="w-5 h-5 rounded-md bg-slate-700/50 flex items-center justify-center shrink-0">
                   <Icon size={10} className="text-slate-500" />
                 </div>
                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide flex-1">{label}</span>
                 <Lock size={8} className="text-slate-600 shrink-0" />
               </div>
-              <p className="text-[11px] text-slate-400 ml-7 blur-sm select-none pointer-events-none leading-relaxed">{blurText}</p>
+              <p className="hidden sm:block text-[11px] text-slate-400 ml-7 mt-1.5 blur-sm select-none pointer-events-none leading-relaxed">{blurText}</p>
             </div>
           ))}
         </div>
@@ -166,7 +166,7 @@ function RegisterBanner({
         <button
           onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold text-sm transition-all duration-200
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs sm:text-sm sm:gap-3 sm:py-4 transition-all duration-200
             bg-white text-slate-900 hover:bg-slate-50 shadow-xl shadow-black/35 hover:-translate-y-0.5 active:translate-y-0
             disabled:opacity-60 disabled:cursor-not-allowed mb-2"
         >
@@ -343,8 +343,6 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   const [tab, setTab] = useState<WidgetTab>('maps');
   const [phase, setPhase] = useState<ScanPhase>('idle');
   const [showGate, setShowGate] = useState(false);
-  const [scanIsAuto, setScanIsAuto] = useState(true);
-  const [ownScanTimedOut, setOwnScanTimedOut] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
 
@@ -373,9 +371,6 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     setShowGate(false);
   };
 
-  // Track whether the user has manually interacted (to avoid double-trigger)
-  const userActed = useRef(false);
-
   const handleScan = (
     auto = false,
     overrideTab?: WidgetTab,
@@ -387,8 +382,6 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
       ? (overrideName ?? business)
       : (overrideName ?? product);
     if (!trigger.trim()) return;
-    if (!auto) userActed.current = true;
-    setScanIsAuto(auto);
     if (overrideTab) setTab(overrideTab);
     if (overrideName) {
       if (effectiveTab === 'maps') setBusiness(overrideName);
@@ -413,24 +406,6 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
       setTimeout(() => setShowGate(true), 4000);
     }, 2800);
   };
-
-  // Auto-run demo after 2s so users see the product working without having to click
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if (!userActed.current) handleScan(true);
-    }, 2000);
-    return () => clearTimeout(t);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Fallback: if OwnScanBanner is visible and user hasn't submitted after 12s, show the gate directly
-  useEffect(() => {
-    if (showGate && scanIsAuto) {
-      setOwnScanTimedOut(false);
-      const t = setTimeout(() => setOwnScanTimedOut(true), 12000);
-      return () => clearTimeout(t);
-    }
-    setOwnScanTimedOut(false);
-  }, [showGate, scanIsAuto]);
 
   const handleGoogleAuth = async () => {
     if (isInAppBrowser()) {
@@ -710,14 +685,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
 
                   {/* Banner appears after delay, below content */}
-                  {showGate && scanIsAuto && !ownScanTimedOut && (
-                    <OwnScanBanner
-                      tab={tab}
-                      lang={lang}
-                      onScan={(name, city, type) => handleScan(false, type, name, city)}
-                    />
-                  )}
-                  {showGate && (!scanIsAuto || ownScanTimedOut) && (
+                  {showGate && (
                     <RegisterBanner
                       onGoogle={handleGoogleAuth}
                       onEmail={onLoginClick}
@@ -915,14 +883,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
 
                   {/* Banner appears after delay, below content */}
-                  {showGate && scanIsAuto && !ownScanTimedOut && (
-                    <OwnScanBanner
-                      tab={tab}
-                      lang={lang}
-                      onScan={(name, city, type) => handleScan(false, type, name, city)}
-                    />
-                  )}
-                  {showGate && (!scanIsAuto || ownScanTimedOut) && (
+                  {showGate && (
                     <RegisterBanner
                       onGoogle={handleGoogleAuth}
                       onEmail={onLoginClick}
