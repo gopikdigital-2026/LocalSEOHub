@@ -9,6 +9,7 @@ import { LogoIcon } from './Logo';
 import { supabase } from '../lib/supabase';
 import { useI18n } from '../lib/i18n';
 import { track } from '../lib/analytics';
+import { isInAppBrowser } from '../lib/socialWebView';
 
 interface LandingPageProps {
   onLoginClick: () => void;
@@ -46,11 +47,6 @@ function GoogleIconSm() {
       <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
     </svg>
   );
-}
-
-function isInAppBrowser(): boolean {
-  const ua = navigator.userAgent || '';
-  return /Instagram|FBAN|FBAV|FB_IAB|FB4A|FBIOS|Twitter|Snapchat|LinkedIn|TikTok|BytedanceWebview/i.test(ua);
 }
 
 type ScanPhase = 'idle' | 'scanning' | 'result';

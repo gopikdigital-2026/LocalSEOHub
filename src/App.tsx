@@ -4437,6 +4437,15 @@ export default function App() {
       setLoginInitialMode('signup');
       setShowLogin(true);
       window.history.replaceState({}, '', '/');
+    } else {
+      // Strip ad/social tracking params so they never break routing or linger in the URL
+      const TRACKING_PARAMS = ['fbclid', 'igsh', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'ttclid', 'msclkid'];
+      const hadTracking = TRACKING_PARAMS.some(p => params.has(p));
+      if (hadTracking) {
+        TRACKING_PARAMS.forEach(p => params.delete(p));
+        const qs = params.toString() ? `?${params}` : '';
+        window.history.replaceState({}, '', `${window.location.pathname}${qs}${window.location.hash}`);
+      }
     }
   }, []);
 
