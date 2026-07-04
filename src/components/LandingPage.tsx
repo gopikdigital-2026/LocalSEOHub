@@ -216,14 +216,13 @@ function OwnScanBanner({ tab, lang, onScan }: {
 }) {
   const [scanType, setScanType] = useState<WidgetTab>(tab);
   const [name, setName] = useState('');
-  const [city, setCity] = useState('');
 
   useEffect(() => { track('own_scan_prompt_shown', { tab }); }, [tab]);
 
   const handleSubmit = () => {
     if (!name.trim()) return;
     track('own_scan_submitted', { tab: scanType });
-    onScan(name.trim(), city.trim(), scanType);
+    onScan(name.trim(), '', scanType);
   };
 
   // Blurred locked items shown to create urgency
@@ -242,24 +241,24 @@ function OwnScanBanner({ tab, lang, onScan }: {
     >
       <div className="h-[2px] bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-500" />
       <div className="p-5">
-        {/* Critical failure hook */}
+        {/* Urgency hook */}
         <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5 mb-4">
           <div className="flex items-center gap-2 mb-1.5">
             <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
               <AlertCircle size={11} className="text-amber-400" />
             </div>
             <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-              {lang === 'en' ? 'Critical failure detected in your area' : 'Fallo crítico detectado en tu zona'}
+              {lang === 'en' ? 'Competitors in your area are gaining ground' : 'Competidores en tu zona están ganando terreno'}
             </span>
           </div>
           <p className="text-amber-300/85 text-xs leading-relaxed pl-7">
             {lang === 'en'
-              ? 'Semantic schedule inconsistency found in local listings similar to yours. 68% of searches in your category happen outside standard hours — enter your business to check if you\'re affected.'
-              : 'Inconsistencia semántica de horarios en fichas de tu zona similares a la tuya. El 68% de las búsquedas en tu categoría ocurren fuera del horario estándar — introduce tu negocio para ver si te afecta.'}
+              ? '3 local businesses similar to yours improved their ranking this week. Enter your name to see how you compare.'
+              : '3 negocios de tu zona han mejorado su posicionamiento esta semana. Pon el tuyo para ver cómo estás frente a ellos.'}
           </p>
         </div>
 
-        {/* Locked GEO + keyword previews */}
+        {/* Locked previews */}
         <div className="space-y-1.5 mb-4">
           {lockedPreviews.map(({ Icon, label, blurText }, i) => (
             <div key={i} className="rounded-xl border border-slate-700/35 bg-slate-800/25 p-3">
@@ -277,7 +276,7 @@ function OwnScanBanner({ tab, lang, onScan }: {
 
         {/* Heading */}
         <p className="text-white font-extrabold text-sm text-center mb-3">
-          {lang === 'en' ? 'Enter YOUR business to check for free:' : 'Introduce TU negocio para comprobarlo gratis:'}
+          {lang === 'en' ? 'Analyse YOUR business — it\'s free:' : 'Analiza TU negocio — es gratis:'}
         </p>
 
         {/* Type toggle */}
@@ -306,7 +305,7 @@ function OwnScanBanner({ tab, lang, onScan }: {
           </button>
         </div>
 
-        {/* Form */}
+        {/* Form — single field, no city, no autoFocus */}
         <div className="space-y-2">
           <input
             type="text"
@@ -314,20 +313,10 @@ function OwnScanBanner({ tab, lang, onScan }: {
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             placeholder={scanType === 'maps'
-              ? (lang === 'en' ? 'Business name or URL...' : 'Nombre de tu negocio o URL...')
+              ? (lang === 'en' ? 'Your business name...' : 'Nombre de tu negocio...')
               : (lang === 'en' ? 'Your product or service...' : 'Tu producto o servicio...')}
-            autoFocus
             className="w-full bg-slate-800/90 border border-slate-600/80 rounded-xl px-4 py-3 text-sm text-slate-100
-              placeholder-slate-600 outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
-          />
-          <input
-            type="text"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder={lang === 'en' ? 'City (optional)' : 'Ciudad (opcional)'}
-            className="w-full bg-slate-800/90 border border-slate-600/80 rounded-xl px-4 py-3 text-sm text-slate-100
-              placeholder-slate-600 outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+              placeholder-slate-500 outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
           />
           <button
             onClick={handleSubmit}
@@ -339,8 +328,8 @@ function OwnScanBanner({ tab, lang, onScan }: {
           >
             <Zap size={14} fill="currentColor" />
             {lang === 'en'
-              ? (scanType === 'maps' ? 'Check my local business →' : 'Check my product/service →')
-              : (scanType === 'maps' ? 'Comprobar mi negocio local →' : 'Comprobar mi producto/servicio →')}
+              ? (scanType === 'maps' ? 'Analyse my business →' : 'Analyse my product/service →')
+              : (scanType === 'maps' ? 'Analizar mi negocio →' : 'Analizar mi producto/servicio →')}
           </button>
         </div>
 
