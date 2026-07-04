@@ -359,6 +359,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   const [phase, setPhase] = useState<ScanPhase>('idle');
   const [showGate, setShowGate] = useState(false);
   const [scanIsAuto, setScanIsAuto] = useState(true);
+  const [ownScanTimedOut, setOwnScanTimedOut] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
 
@@ -435,6 +436,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     }, 2000);
     return () => clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fallback: if OwnScanBanner is visible and user hasn't submitted after 12s, show the gate directly
+  useEffect(() => {
+    if (showGate && scanIsAuto) {
+      setOwnScanTimedOut(false);
+      const t = setTimeout(() => setOwnScanTimedOut(true), 12000);
+      return () => clearTimeout(t);
+    }
+    setOwnScanTimedOut(false);
+  }, [showGate, scanIsAuto]);
 
   const handleGoogleAuth = async () => {
     if (isInAppBrowser()) {
@@ -714,14 +725,14 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
 
                   {/* Banner appears after delay, below content */}
-                  {showGate && scanIsAuto && (
+                  {showGate && scanIsAuto && !ownScanTimedOut && (
                     <OwnScanBanner
                       tab={tab}
                       lang={lang}
                       onScan={(name, city, type) => handleScan(false, type, name, city)}
                     />
                   )}
-                  {showGate && !scanIsAuto && (
+                  {showGate && (!scanIsAuto || ownScanTimedOut) && (
                     <RegisterBanner
                       onGoogle={handleGoogleAuth}
                       onEmail={onLoginClick}
@@ -919,14 +930,14 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
 
                   {/* Banner appears after delay, below content */}
-                  {showGate && scanIsAuto && (
+                  {showGate && scanIsAuto && !ownScanTimedOut && (
                     <OwnScanBanner
                       tab={tab}
                       lang={lang}
                       onScan={(name, city, type) => handleScan(false, type, name, city)}
                     />
                   )}
-                  {showGate && !scanIsAuto && (
+                  {showGate && (!scanIsAuto || ownScanTimedOut) && (
                     <RegisterBanner
                       onGoogle={handleGoogleAuth}
                       onEmail={onLoginClick}
