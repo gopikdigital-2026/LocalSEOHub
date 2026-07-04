@@ -1657,7 +1657,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
             ¿Tienes un negocio local o trabajas<br className="hidden sm:block" />{' '}
             en marketing digital?{' '}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              Aquí está tu ventaja.
+              tu próximo cliente ya te está buscando.
             </span>
           </h1>
 
