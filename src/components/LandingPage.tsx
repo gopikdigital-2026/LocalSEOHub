@@ -1643,51 +1643,100 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         </div>
 
         <div className="max-w-5xl mx-auto px-6 pt-16 pb-10 relative">
-          {/* Urgency badge */}
+          {/* Audience badge */}
           <div className="flex justify-center mb-7">
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
               <Flame size={12} className="text-orange-400" />
-              <span>{t('landing_urgency')}</span>
+              <span>Para negocios locales y agencias de marketing digital</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
           </div>
 
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.1] mb-5 tracking-tight text-center">
-            {t('landing_hero_title1')}{' '}
+          {/* Headline — dual audience */}
+          <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold text-white leading-[1.1] mb-5 tracking-tight text-center">
+            ¿Tienes un negocio local o trabajas<br className="hidden sm:block" />{' '}
+            en marketing digital?{' '}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              {t('landing_hero_title2')}
+              Aquí está tu ventaja.
             </span>
           </h1>
 
-          <p className="text-center text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-7 leading-relaxed">
-            {t('landing_hero_desc2')}
+          <p className="text-center text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+            LocalSEOHub analiza tu visibilidad en Google Maps, detecta lo que hacen tus competidores y genera con IA un plan de acción concreto para que tu negocio — o el de tus clientes — aparezca primero.
           </p>
 
-          {/* Sub bullets */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-9 text-sm text-slate-300">
-            {[t('landing_bullet_1'), t('landing_bullet_2'), t('landing_bullet_3')].map((item) => (
-              <div key={item} className="flex items-center gap-2">
-                <BadgeCheck size={14} className="text-emerald-400 shrink-0" />
-                <span>{item}</span>
+          {/* Dual audience value cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto mb-10">
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                  <MapPin size={15} className="text-emerald-400" />
+                </div>
+                <p className="text-white font-bold text-sm">Tengo un negocio local</p>
               </div>
-            ))}
+              <ul className="space-y-2">
+                {[
+                  'Sé exactamente en qué posición estás vs. tus competidores',
+                  'Descubre por qué te buscan y no te encuentran',
+                  'Recibe un plan de acción semanal generado por IA',
+                  'Mejora tu presencia en Google Maps, ChatGPT y Gemini',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-slate-300 text-xs leading-relaxed">
+                    <Check size={12} className="text-emerald-400 shrink-0 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
+                  <TrendingUp size={15} className="text-blue-400" />
+                </div>
+                <p className="text-white font-bold text-sm">Me dedico al marketing digital</p>
+              </div>
+              <ul className="space-y-2">
+                {[
+                  'Audita a todos tus clientes desde un solo panel',
+                  'Genera informes de SEO local con un solo clic',
+                  'Detecta oportunidades GEO que la competencia no ve',
+                  'Multiplica resultados con IA — sin aumentar tu equipo',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-slate-300 text-xs leading-relaxed">
+                    <Check size={12} className="text-blue-400 shrink-0 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          {/* Scanner widget */}
-          <div className="relative">
-            <div className="flex justify-center mb-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
-                <ChevronDown size={14} className="animate-bounce" />
-                <span>{lang === 'en' ? 'Try it now — no account needed' : 'Pruébalo ahora — sin registro'}</span>
-                <ChevronDown size={14} className="animate-bounce" />
-              </div>
-            </div>
-            <ScannerWidget onLoginClick={onLoginClick} />
+          {/* Primary CTAs */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-5">
+            <button
+              onClick={onLoginClick}
+              className="inline-flex items-center justify-center gap-2.5 px-9 py-4 rounded-xl font-bold text-base transition-all duration-300
+                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
+            >
+              <Zap size={16} fill="currentColor" />
+              Empieza gratis — 7 días premium
+              <ArrowRight size={15} />
+            </button>
+            <button
+              onClick={() => {
+                document.getElementById('demo-scanner')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl font-bold text-sm transition-all duration-300
+                border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white bg-slate-900/60 hover:bg-slate-800/60"
+            >
+              <Eye size={15} />
+              Ver demo en vivo
+            </button>
           </div>
 
           <p className="text-center text-xs text-slate-600 mb-8">
-            {t('landing_have_account')}{' '}
+            Sin tarjeta de crédito · cancela cuando quieras ·{' '}
             <button onClick={onLoginClick} className="text-emerald-500 hover:text-emerald-400 transition-colors font-medium">
               {t('landing_sign_in_link')}
             </button>
@@ -1824,6 +1873,31 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
             </button>
           </div>
         </div>
+      </section>
+
+      {/* ── DEMO SCANNER ───────────────────────────────────────────── */}
+      <section id="demo-scanner" className="max-w-5xl mx-auto px-6 py-12">
+        <div className="text-center mb-7">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
+            <Zap size={11} fill="currentColor" /> Demo en vivo · sin registro
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Pruébalo ahora con cualquier negocio</h2>
+          <p className="text-slate-400 text-sm max-w-xl mx-auto">Introduce el nombre de tu negocio o el de un cliente y mira el análisis en segundos. Sin cuenta, sin tarjeta.</p>
+        </div>
+        <div className="flex justify-center mb-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+            <ChevronDown size={14} className="animate-bounce" />
+            <span>{lang === 'en' ? 'Try it now — no account needed' : 'Análisis instantáneo — sin registro'}</span>
+            <ChevronDown size={14} className="animate-bounce" />
+          </div>
+        </div>
+        <ScannerWidget onLoginClick={onLoginClick} />
+        <p className="text-center text-xs text-slate-600 mt-5">
+          {t('landing_have_account')}{' '}
+          <button onClick={onLoginClick} className="text-emerald-500 hover:text-emerald-400 transition-colors font-medium">
+            {t('landing_sign_in_link')}
+          </button>
+        </p>
       </section>
 
       {/* ── 6 TOOLS ────────────────────────────────────────────────── */}
