@@ -1089,11 +1089,22 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 function ProductMockup() {
   const [isRadar, setIsRadar] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startInterval = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => setIsRadar(r => !r), 5000);
+  };
 
   useEffect(() => {
-    const id = setInterval(() => setIsRadar(r => !r), 5000);
-    return () => clearInterval(id);
-  }, []);
+    startInterval();
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const switchTo = (radar: boolean) => {
+    setIsRadar(radar);
+    startInterval();
+  };
 
   const isResult = true;
 
@@ -1118,13 +1129,17 @@ function ProductMockup() {
         {/* Tab bar */}
         <div className="flex border-b border-slate-800 bg-slate-950/40">
           {(['AI Digital Twin', 'Radar de Competencia'] as const).map((tab, i) => (
-            <div key={tab} className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all duration-500 ${
-              (i === 0 && !isRadar) || (i === 1 && isRadar)
-                ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5'
-                : 'border-transparent text-slate-600'
-            }`}>
+            <button
+              key={tab}
+              onClick={() => switchTo(i === 1)}
+              className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all duration-300 ${
+                (i === 0 && !isRadar) || (i === 1 && isRadar)
+                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5'
+                  : 'border-transparent text-slate-600 hover:text-slate-400'
+              }`}
+            >
               {tab}
-            </div>
+            </button>
           ))}
         </div>
 
@@ -1762,8 +1777,8 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         <div className="max-w-5xl mx-auto px-6 pt-16 pb-10 relative">
           {/* Audience badge */}
           <div className="flex justify-center mb-7">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
-              <Flame size={12} className="text-orange-400" />
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 whitespace-nowrap">
+              <Flame size={13} className="text-orange-400 shrink-0" />
               <span>Para negocios locales y agencias de marketing digital</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
@@ -1961,18 +1976,18 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
 
       {/* ── PAIN POINTS ────────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 py-12">
-        <div className="rounded-2xl border border-red-500/10 bg-red-500/3 p-8">
+        <div className="rounded-2xl border border-amber-500/15 bg-amber-500/3 p-8">
           <div className="text-center mb-7">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/15 rounded-full px-3 py-1 mb-3">
-              <X size={11} /> {t('landing_pain_badge')}
+            <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1 mb-3">
+              <HelpCircle size={11} /> {t('landing_pain_badge')}
             </div>
             <h2 className="text-2xl font-bold text-white">{t('landing_pain_title')}</h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-3xl mx-auto">
             {PAIN_POINTS.map((p) => (
               <div key={p} className="flex items-start gap-3 bg-slate-950/60 rounded-xl p-3.5 border border-slate-800/60">
-                <div className="w-5 h-5 rounded-full bg-red-500/15 border border-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <X size={9} className="text-red-400" />
+                <div className="w-5 h-5 rounded-full bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <AlertCircle size={9} className="text-amber-400" />
                 </div>
                 <p className="text-slate-400 text-xs leading-relaxed">{p}</p>
               </div>
@@ -2154,8 +2169,8 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           <div className="absolute inset-0 border border-emerald-500/25 rounded-2xl" />
           <div className="relative flex flex-col sm:flex-row items-center justify-between gap-6 p-7 sm:p-9">
             <div className="text-center sm:text-left">
-              <div className="inline-flex items-center gap-2 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
-                <Zap size={10} fill="currentColor" /> 7 días gratis · sin tarjeta
+              <div className="inline-flex items-center gap-2 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3 whitespace-nowrap">
+                <Zap size={10} fill="currentColor" className="shrink-0" /> 7 días gratis · sin tarjeta
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">¿Quieres probarlo con tu propio negocio?</h2>
               <p className="text-slate-400 text-sm leading-relaxed max-w-md">
@@ -2213,8 +2228,8 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/12 via-teal-500/8 to-slate-900" />
           <div className="absolute inset-0 border border-emerald-500/20 rounded-2xl" />
           <div className="relative p-10 sm:p-14 text-center">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
-              <Flame size={11} className="text-orange-400" /> {t('landing_final_badge')}
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5 whitespace-nowrap">
+              <Flame size={12} className="text-orange-400 shrink-0" /> {t('landing_final_badge')}
             </div>
             <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4 leading-tight">
               {t('landing_final_title1')}<br className="hidden sm:block" />
