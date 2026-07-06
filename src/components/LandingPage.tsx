@@ -140,12 +140,15 @@ function RegisterBanner({
         {/* Locked preview sections */}
         <div className="space-y-1.5 mb-4">
           {lockedItems.map(({ Icon, label, blurText }, i) => (
-            <div key={i} className="rounded-xl border border-slate-600/40 bg-slate-800/40 px-3 py-2.5 flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg bg-slate-700/60 border border-slate-600/40 flex items-center justify-center shrink-0">
-                <Icon size={11} className="text-slate-400" />
+            <div key={i} className="rounded-xl border border-slate-600/40 bg-slate-800/40 px-3 py-2.5">
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="w-6 h-6 rounded-lg bg-slate-700/60 border border-slate-600/40 flex items-center justify-center shrink-0">
+                  <Icon size={11} className="text-slate-400" />
+                </div>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex-1 leading-tight">{label}</span>
+                <Lock size={10} className="text-slate-500 shrink-0" />
               </div>
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex-1 leading-tight">{label}</span>
-              <Lock size={10} className="text-slate-500 shrink-0" />
+              <p className="text-[11px] text-slate-300 leading-snug pl-8 blur-[3px] select-none pointer-events-none">{blurText}</p>
             </div>
           ))}
         </div>
@@ -423,7 +426,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     scanTimeoutRef.current = setTimeout(() => {
       setPhase('result');
       track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
-    }, 2800);
+    }, 1800);
   };
 
   // Auto-run demo after 2s so users see the product working without having to click
@@ -442,7 +445,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   // Depends only on phase; gateShownRef avoids stale-closure issues.
   useEffect(() => {
     if (phase !== 'result') return;
-    const t = setTimeout(() => triggerGate('auto_timer'), 3500);
+    const t = setTimeout(() => triggerGate('auto_timer'), 1500);
     return () => clearTimeout(t);
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
