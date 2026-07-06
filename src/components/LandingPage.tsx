@@ -1,7 +1,7 @@
 import {
   MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles,
   Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
-  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock, AlertCircle,
+  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock, AlertCircle, ExternalLink,
 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
@@ -80,7 +80,6 @@ function RegisterBanner({
   businessName?: string;
   lang: string;
 }) {
-  useEffect(() => { track('gate_shown', { context }); }, [context]);
 
   const name = businessName || (lang === 'en' ? 'your business' : 'tu negocio');
 
@@ -141,15 +140,12 @@ function RegisterBanner({
         {/* Locked preview sections */}
         <div className="space-y-1.5 mb-4">
           {lockedItems.map(({ Icon, label, blurText }, i) => (
-            <div key={i} className="rounded-xl border border-slate-700/35 bg-slate-800/25 p-2.5 sm:p-3">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-md bg-slate-700/50 flex items-center justify-center shrink-0">
-                  <Icon size={10} className="text-slate-500" />
-                </div>
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide flex-1">{label}</span>
-                <Lock size={8} className="text-slate-600 shrink-0" />
+            <div key={i} className="rounded-xl border border-slate-600/40 bg-slate-800/40 px-3 py-2.5 flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-lg bg-slate-700/60 border border-slate-600/40 flex items-center justify-center shrink-0">
+                <Icon size={11} className="text-slate-400" />
               </div>
-              <p className="hidden sm:block text-[11px] text-slate-400 ml-7 mt-1.5 blur-sm select-none pointer-events-none leading-relaxed">{blurText}</p>
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex-1 leading-tight">{label}</span>
+              <Lock size={10} className="text-slate-500 shrink-0" />
             </div>
           ))}
         </div>
@@ -166,25 +162,27 @@ function RegisterBanner({
         <button
           onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs sm:text-sm sm:gap-3 sm:py-4 transition-all duration-200
+          className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-bold text-sm transition-all duration-200
             bg-white text-slate-900 hover:bg-slate-50 shadow-xl shadow-black/35 hover:-translate-y-0.5 active:translate-y-0
-            disabled:opacity-60 disabled:cursor-not-allowed mb-2"
+            disabled:opacity-60 disabled:cursor-not-allowed mb-3"
         >
           {loading ? (
-            <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           ) : <GoogleIconSm />}
-          {loading
-            ? (lang === 'en' ? 'Redirecting...' : 'Redirigiendo...')
-            : (lang === 'en' ? 'Unlock my full report — it\'s free' : 'Desbloquear mi informe completo — es gratis')}
+          <span className="leading-tight">
+            {loading
+              ? (lang === 'en' ? 'Redirecting...' : 'Redirigiendo...')
+              : (lang === 'en' ? 'Unlock full report — free' : 'Desbloquear informe completo — gratis')}
+          </span>
         </button>
 
-        {/* Secondary — email (text link) */}
+        {/* Secondary — email */}
         <button
           onClick={() => { track('gate_register_click', { context, method: 'email' }); onEmail(); }}
-          className="w-full text-center text-xs text-slate-500 hover:text-slate-300 transition-colors py-1.5"
+          className="w-full text-center text-xs text-slate-400 hover:text-slate-200 transition-colors py-2 border border-slate-700/50 rounded-xl hover:border-slate-600/60"
         >
           {lang === 'en' ? 'or continue with email' : 'o continuar con email'}
         </button>
@@ -343,6 +341,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   const [tab, setTab] = useState<WidgetTab>('maps');
   const [phase, setPhase] = useState<ScanPhase>('idle');
   const [showGate, setShowGate] = useState(false);
+  const [gateDismissed, setGateDismissed] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
 
@@ -371,6 +370,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     setShowGate(false);
   };
 
+  const userActed = useRef(false);
+
   const handleScan = (
     auto = false,
     overrideTab?: WidgetTab,
@@ -382,6 +383,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
       ? (overrideName ?? business)
       : (overrideName ?? product);
     if (!trigger.trim()) return;
+    if (!auto) userActed.current = true;
     if (overrideTab) setTab(overrideTab);
     if (overrideName) {
       if (effectiveTab === 'maps') setBusiness(overrideName);
@@ -402,10 +404,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     setTimeout(() => {
       setPhase('result');
       track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
-      // Show banner 4 s after result so user can read freely
-      setTimeout(() => setShowGate(true), 4000);
     }, 2800);
   };
+
+  // Auto-run demo after 2s so users see the product working without having to click
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!userActed.current) handleScan(true);
+    }, 2000);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGoogleAuth = async () => {
     if (isInAppBrowser()) {
@@ -491,6 +499,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   const scanDisabled = tab === 'maps' ? !business.trim() : !product.trim();
 
   return (
+    <>
     <div className="max-w-2xl mx-auto mb-3">
       {/* glass-card gives the same 3D panel look as the app interface */}
       <div className="glass-card rounded-2xl">
@@ -624,6 +633,18 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       <div className="text-[10px] text-slate-500 mt-0.5">{t('widget_result_optimized')}</div>
                     </div>
                   </div>
+
+                  {/* Try with own data */}
+                  <button
+                    onClick={() => { setPhase('idle'); setShowGate(false); setBusiness(''); setCity(''); }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold
+                      bg-slate-800/60 border border-slate-700/50 text-slate-300
+                      hover:bg-slate-700/60 hover:border-slate-600 hover:text-white
+                      transition-all duration-200"
+                  >
+                    <ChevronRight size={11} className="rotate-180" />
+                    {lang === 'en' ? 'Analyse my own business' : 'Analizar mi propio negocio'}
+                  </button>
                   <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-1000"
                       style={{ width: `${score}%`, background: 'linear-gradient(to right, #f59e0b, #fbbf24)' }} />
@@ -653,16 +674,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     <div className="p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
                       <div className="flex flex-wrap gap-2">
-                        {mapsKeywords.map((kw, i) => (
-                          <span
-                            key={i}
-                            className={`text-[11px] rounded-full px-3 py-1 transition-all ${
-                              i < 3
-                                ? 'bg-teal-500/15 border border-teal-500/20 text-teal-300'
-                                : 'bg-teal-500/15 border border-teal-500/20 text-teal-300 blur-sm select-none pointer-events-none'
-                            }`}
-                          >{kw}</span>
+                        {mapsKeywords.slice(0, 3).map((kw, i) => (
+                          <span key={i} className="text-[11px] rounded-full px-3 py-1 bg-teal-500/15 border border-teal-500/20 text-teal-300">{kw}</span>
                         ))}
+                        <button
+                          onClick={() => { track('gate_shown', { context: 'maps', trigger: 'locked_keywords' }); setShowGate(true); }}
+                          className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-300 transition-all duration-200 cursor-pointer"
+                        >
+                          <Lock size={9} />
+                          {lang === 'en' ? `+${mapsKeywords.length - 3} more` : `+${mapsKeywords.length - 3} más`}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -684,7 +705,22 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     </p>
                   </div>
 
-                  {/* Banner appears after delay, below content */}
+                  {/* Unlock CTA */}
+                  {!showGate && (
+                    <button
+                      onClick={() => { track('gate_shown', { context: 'maps', trigger: 'unlock_cta' }); setShowGate(true); }}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold
+                        bg-emerald-500/10 border border-emerald-500/25 text-emerald-300
+                        hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-200
+                        transition-all duration-200"
+                    >
+                      <Lock size={11} />
+                      {lang === 'en' ? 'Unlock full action plan — free' : 'Ver plan de acción completo — gratis'}
+                      <ChevronRight size={11} />
+                    </button>
+                  )}
+
+                  {/* Banner appears on user action */}
                   {showGate && (
                     <RegisterBanner
                       onGoogle={handleGoogleAuth}
@@ -828,6 +864,18 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       <p className="text-white font-bold text-sm leading-tight">{displayProduct}{displaySeoCity ? ` · ${displaySeoCity}` : ''} · {platform}</p>
                     </div>
                   </div>
+
+                  {/* Try with own data */}
+                  <button
+                    onClick={() => { setPhase('idle'); setShowGate(false); setProduct(''); setSeoCity(''); }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold
+                      bg-slate-800/60 border border-slate-700/50 text-slate-300
+                      hover:bg-slate-700/60 hover:border-slate-600 hover:text-white
+                      transition-all duration-200"
+                  >
+                    <ChevronRight size={11} className="rotate-180" />
+                    {lang === 'en' ? 'Analyse my own product/service' : 'Analizar mi propio producto/servicio'}
+                  </button>
                   <p className="text-[11px] text-teal-400/80 flex items-center gap-1.5">
                     <span>✅</span>
                     <span>{lang === 'es' ? 'Análisis completado. Desbloquea el contenido completo para aplicarlo.' : 'Analysis complete. Unlock the full content to apply it.'}</span>
@@ -858,9 +906,13 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         {seoTagsVisible.map((tag, i) => (
                           <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
                         ))}
-                        {seoTagsBlurred.map((tag, i) => (
-                          <span key={`b${i}`} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1 blur-sm select-none pointer-events-none">{tag}</span>
-                        ))}
+                        <button
+                          onClick={() => { track('gate_shown', { context: 'seo', trigger: 'locked_tags' }); setShowGate(true); }}
+                          className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-300 transition-all duration-200 cursor-pointer"
+                        >
+                          <Lock size={9} />
+                          {lang === 'en' ? `+${seoTagsBlurred.length} more` : `+${seoTagsBlurred.length} más`}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -882,7 +934,22 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     </p>
                   </div>
 
-                  {/* Banner appears after delay, below content */}
+                  {/* Unlock CTA */}
+                  {!showGate && (
+                    <button
+                      onClick={() => { track('gate_shown', { context: 'seo', trigger: 'unlock_cta' }); setShowGate(true); }}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold
+                        bg-teal-500/10 border border-teal-500/25 text-teal-300
+                        hover:bg-teal-500/20 hover:border-teal-500/40 hover:text-teal-200
+                        transition-all duration-200"
+                    >
+                      <Lock size={11} />
+                      {lang === 'en' ? 'Unlock full SEO content — free' : 'Ver contenido SEO completo — gratis'}
+                      <ChevronRight size={11} />
+                    </button>
+                  )}
+
+                  {/* Banner appears on user action */}
                   {showGate && (
                     <RegisterBanner
                       onGoogle={handleGoogleAuth}
@@ -902,6 +969,70 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
         </div>
       </div>
     </div>
+
+    {/* Sticky bottom CTA — always visible without scrolling */}
+    {showGate && phase === 'result' && !gateDismissed && (
+      <div
+        className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div
+          className="pointer-events-auto w-full max-w-md mx-4 mb-4 rounded-2xl overflow-hidden shadow-2xl shadow-black/70"
+          style={{
+            background: 'rgba(10,18,32,0.97)',
+            backdropFilter: 'blur(24px) saturate(160%)',
+            border: '1px solid rgba(16,185,129,0.35)',
+            animation: 'slideUpFadeIn 0.4s ease-out',
+          }}
+        >
+          <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+              <BadgeCheck size={15} className="text-emerald-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-bold leading-tight">
+                {lang === 'en' ? 'Report ready — unlock free' : 'Informe listo — desbloquear gratis'}
+              </p>
+              <p className="text-slate-500 text-[10px] leading-tight mt-0.5">
+                {lang === 'en' ? '7 days · no credit card' : '7 días · sin tarjeta'}
+              </p>
+            </div>
+            {isInAppBrowser() ? (
+              <button
+                onClick={() => {
+                  track('gate_register_click', { context: tab, method: 'open_browser_sticky' });
+                  onLoginClick();
+                }}
+                className="shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg"
+              >
+                <ExternalLink size={12} />
+                {lang === 'en' ? 'Open in browser' : 'Abrir en navegador'}
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  track('gate_register_click', { context: tab, method: 'google_sticky' });
+                  handleGoogleAuth();
+                }}
+                disabled={googleLoading}
+                className="shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-900 transition-colors shadow-lg disabled:opacity-50"
+              >
+                <GoogleIconSm />
+                {lang === 'en' ? 'Unlock free' : 'Desbloquear gratis'}
+              </button>
+            )}
+            <button
+              onClick={() => setGateDismissed(true)}
+              className="shrink-0 p-1.5 text-slate-600 hover:text-slate-400 transition-colors"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
@@ -1593,7 +1724,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none hidden sm:block">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-emerald-500/6 rounded-full blur-3xl" />
           <div className="absolute top-32 left-1/4 w-72 h-72 bg-teal-500/4 rounded-full blur-3xl" />
           <div className="absolute top-20 right-1/4 w-56 h-56 bg-emerald-600/3 rounded-full blur-3xl" />
