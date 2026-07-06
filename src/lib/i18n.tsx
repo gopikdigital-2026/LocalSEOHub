@@ -294,7 +294,7 @@ const translations = {
     landing_sign_in_link: 'Inicia sesión',
     landing_trust_1: 'Sin tarjeta · Sin compromiso',
     landing_trust_2: 'Resultados en menos de 60 segundos',
-    landing_trust_3: 'Acceso anticipado · Plazas limitadas',
+    landing_trust_3: '7 días de prueba gratuita · sin riesgo',
 
     // Landing - Stats
     landing_stat_1: 'Plataformas compatibles',
@@ -356,9 +356,9 @@ const translations = {
     landing_comp_row6_good: 'CSV en 1 clic',
 
     // Landing - Testimonials
-    landing_testimonials_sub: 'Resultados reales · Primeros accesos',
+    landing_testimonials_sub: 'De nuestros primeros usuarios',
     landing_t1_text: 'En dos semanas dupliqué las citas. El escáner detectó que mi ficha no tenía horarios para festivos y que mi descripción no mencionaba la zona. Lo corregí en 5 minutos y las llamadas se dispararon.',
-    landing_t1_metric: '+112% citas en 2 semanas',
+    landing_t1_metric: 'Citas duplicadas en las primeras semanas',
     landing_t2_text: 'Estaba en el puesto 9 de Google Maps. Ahora estoy en el Top 3. El informe detectó que mis competidores tenían 47 reseñas más que yo y exactamente cómo revertirlo.',
     landing_t2_metric: 'Del puesto 9 al Top 3 en 3 semanas',
     landing_t3_text: 'Optimicé mis fichas en TripAdvisor, Google y Booking en 20 minutos. Las reservas directas subieron un 38% ese mes. Vale muchísimo más de lo que cuesta.',
@@ -379,7 +379,7 @@ const translations = {
     landing_faq5_a: 'Cancelas en un clic desde tu panel. Sin formularios, sin llamadas, sin preguntas. Tu acceso Pro se mantiene hasta el fin del período ya pagado.',
 
     // Landing - Final CTA
-    landing_final_badge: 'Acceso anticipado · Precio de lanzamiento',
+    landing_final_badge: 'Precio especial de lanzamiento',
     landing_final_title1: 'Cada día sin LocalSEOHub es un día que',
     landing_final_title2: 'tu competidor aparece antes que tú',
     landing_final_desc: 'Los primeros negocios que adoptan IA en su ciudad ganan una ventaja que es muy difícil de recuperar. Los 7 primeros días son completamente gratis — si no ves resultados, cancelas y no pagas nada.',
@@ -729,7 +729,7 @@ const translations = {
     landing_sign_in_link: 'Sign in',
     landing_trust_1: 'No card · No commitment',
     landing_trust_2: 'Results in under 60 seconds',
-    landing_trust_3: 'Early access · Limited spots',
+    landing_trust_3: '7-day free trial · no risk',
 
     // Landing - Stats
     landing_stat_1: 'Compatible platforms',
@@ -791,9 +791,9 @@ const translations = {
     landing_comp_row6_good: 'CSV in 1 click',
 
     // Landing - Testimonials
-    landing_testimonials_sub: 'Real results · Early access',
+    landing_testimonials_sub: 'From our first users',
     landing_t1_text: 'In two weeks I doubled appointments. The scanner detected my listing had no holiday hours and my description didn\'t mention the neighbourhood. Fixed in 5 minutes and calls spiked.',
-    landing_t1_metric: '+112% appointments in 2 weeks',
+    landing_t1_metric: 'Appointments doubled in first weeks',
     landing_t2_text: 'I was ranked 9th on Google Maps. Now I\'m in the Top 3. The report showed my competitors had 47 more reviews and exactly how to close that gap.',
     landing_t2_metric: 'From rank 9 to Top 3 in 3 weeks',
     landing_t3_text: 'I optimised my listings on TripAdvisor, Google and Booking in 20 minutes. Direct bookings went up 38% that month. Worth way more than it costs.',
@@ -814,7 +814,7 @@ const translations = {
     landing_faq5_a: "Cancel with one click from your dashboard. No forms, no calls, no questions. Your Pro access remains until the end of the already paid period.",
 
     // Landing - Final CTA
-    landing_final_badge: 'Early access · Launch price',
+    landing_final_badge: 'Special launch price',
     landing_final_title1: 'Every day without LocalSEOHub is a day that',
     landing_final_title2: 'your competitor appears before you',
     landing_final_desc: "The first businesses to adopt AI in their city gain an advantage that is very hard to recover. The first 7 days are completely free — if you don't see results, cancel and pay nothing.",

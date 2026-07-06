@@ -194,8 +194,8 @@ function RegisterBanner({
             {lang === 'en' ? '7 days free · no card' : '7 días gratis · sin tarjeta'}
           </span>
           <span className="text-[10px] text-slate-600 flex items-center gap-1">
-            <Users size={9} />
-            {lang === 'en' ? '+1,200 businesses this week' : '+1.200 negocios esta semana'}
+            <Clock size={9} />
+            {lang === 'en' ? 'Instant result · no account needed' : 'Resultado inmediato · sin cuenta'}
           </span>
         </div>
       </div>
@@ -1507,10 +1507,10 @@ function CaseStudyPlayground({ onLoginClick }: { onLoginClick: () => void }) {
       {/* Header */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1 mb-3">
-          <Eye size={11} /> Caso de estudio real
+          <Eye size={11} /> Ejemplo de análisis
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Mira cómo funciona la IA en un negocio real</h2>
-        <p className="text-slate-400 text-sm max-w-xl mx-auto">Hemos analizado <strong className="text-slate-200">Peluquería Éclat</strong> en Madrid. Explora el informe completo tal y como lo vería el dueño del negocio.</p>
+        <p className="text-slate-400 text-sm max-w-xl mx-auto">Así se ve el informe que LocalSEOHub genera para <strong className="text-slate-200">Peluquería Éclat</strong> en Madrid — un ejemplo representativo del análisis real que recibirías para tu negocio.</p>
       </div>
 
       {/* Load trigger */}
@@ -1520,8 +1520,8 @@ function CaseStudyPlayground({ onLoginClick }: { onLoginClick: () => void }) {
             <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center mx-auto mb-4">
               <Eye size={24} className="text-amber-400" />
             </div>
-            <h3 className="text-white font-bold text-base mb-2">Ver análisis de Peluquería Éclat · Madrid</h3>
-            <p className="text-slate-500 text-xs mb-5 leading-relaxed">Informe real generado por LocalSEOHub: Radar GEO, Digital Twin, keywords de alta intención y plan de acción con IA.</p>
+            <h3 className="text-white font-bold text-base mb-2">Ver ejemplo de análisis · Peluquería Éclat</h3>
+            <p className="text-slate-500 text-xs mb-5 leading-relaxed">Explora una muestra del informe que LocalSEOHub genera: Radar GEO, Digital Twin, keywords de alta intención y plan de acción con IA.</p>
             <button
               onClick={() => setLoaded(true)}
               className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm
@@ -1561,11 +1561,7 @@ function CaseStudyPlayground({ onLoginClick }: { onLoginClick: () => void }) {
               </div>
             </div>
             <div className="sm:ml-auto flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-emerald-400 text-[10px] font-semibold">Informe activo</span>
-              </div>
-              <span className="text-slate-600 text-[10px]">Generado hace 2 días</span>
+              <span className="text-slate-500 text-[10px]">Ejemplo de análisis generado con IA</span>
             </div>
           </div>
 
@@ -1943,7 +1939,6 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
                   <p className="text-white text-xs font-bold">{item.name}</p>
                   <p className="text-slate-500 text-[11px] truncate">{item.business} · {item.city}</p>
                 </div>
-                <BadgeCheck size={15} className="text-emerald-500 shrink-0" />
               </div>
             </div>
           ))}
@@ -1958,7 +1953,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
               { value: '16+', label: t('landing_stat_1'), icon: <Globe size={16} className="text-teal-400" /> },
               { value: '< 60 seg', label: t('landing_stat_2'), icon: <Clock size={16} className="text-blue-400" /> },
               { value: '6', label: t('landing_stat_3'), icon: <Sparkles size={16} className="text-emerald-400" /> },
-              { value: '4.2h', label: t('landing_stat_4'), icon: <BarChart3 size={16} className="text-amber-400" /> },
+              { value: '+4h', label: t('landing_stat_4'), icon: <BarChart3 size={16} className="text-amber-400" /> },
             ].map((s) => (
               <div key={s.label} className="flex flex-col items-center gap-1.5">
                 <div className="flex items-center gap-1.5 mb-0.5">{s.icon}</div>
