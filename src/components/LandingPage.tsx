@@ -364,6 +364,10 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   };
 
   const switchTab = (tab_new: WidgetTab) => {
+    if (phase === 'result') {
+      triggerGate('tab_switch');
+      return;
+    }
     track('widget_tab_switch', { tab: tab_new });
     setTab(tab_new);
     setPhase('idle');
@@ -371,6 +375,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   };
 
   const userActed = useRef(false);
+  // Tracks whether the gate has already been triggered for the current scan result.
+  // Using a ref avoids stale-closure issues in effects and callbacks.
+  const gateShownRef = useRef(false);
+
+  const triggerGate = (trigger: string) => {
+    if (gateShownRef.current || gateDismissed) return;
+    gateShownRef.current = true;
+    setShowGate(true);
+    track('gate_shown', { context: tab, trigger });
+  };
 
   const handleScan = (
     auto = false,
@@ -384,6 +398,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
       : (overrideName ?? product);
     if (!trigger.trim()) return;
     if (!auto) userActed.current = true;
+    gateShownRef.current = false;
     if (overrideTab) setTab(overrideTab);
     if (overrideName) {
       if (effectiveTab === 'maps') setBusiness(overrideName);
@@ -415,13 +430,11 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     return () => clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-show gate 10s after result appears (only if not already shown/dismissed)
+  // Auto-show gate 3.5s after result appears.
+  // Depends only on phase; gateShownRef avoids stale-closure issues.
   useEffect(() => {
-    if (phase !== 'result' || showGate || gateDismissed) return;
-    const t = setTimeout(() => {
-      setShowGate(true);
-      track('gate_shown', { context: tab, trigger: 'auto_timer' });
-    }, 10000);
+    if (phase !== 'result') return;
+    const t = setTimeout(() => triggerGate('auto_timer'), 3500);
     return () => clearTimeout(t);
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -688,7 +701,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                           <span key={i} className="text-[11px] rounded-full px-3 py-1 bg-teal-500/15 border border-teal-500/20 text-teal-300">{kw}</span>
                         ))}
                         <button
-                          onClick={() => { track('gate_shown', { context: 'maps', trigger: 'locked_keywords' }); setShowGate(true); }}
+                          onClick={() => triggerGate('locked_keywords')}
                           className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-300 transition-all duration-200 cursor-pointer"
                         >
                           <Lock size={9} />
@@ -699,7 +712,10 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
 
                   {/* Critical failure card — always visible in result */}
-                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5">
+                  <div
+                    className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5 cursor-pointer"
+                    onClick={() => triggerGate('critical_card')}
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
                         <AlertCircle size={11} className="text-amber-400" />
@@ -718,7 +734,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   {/* Unlock CTA */}
                   {!showGate && (
                     <button
-                      onClick={() => { track('gate_shown', { context: 'maps', trigger: 'unlock_cta' }); setShowGate(true); }}
+                      onClick={() => triggerGate('unlock_cta')}
                       className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold
                         bg-emerald-500/10 border border-emerald-500/25 text-emerald-300
                         hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-200
@@ -917,7 +933,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                           <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
                         ))}
                         <button
-                          onClick={() => { track('gate_shown', { context: 'seo', trigger: 'locked_tags' }); setShowGate(true); }}
+                          onClick={() => triggerGate('locked_tags')}
                           className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-300 transition-all duration-200 cursor-pointer"
                         >
                           <Lock size={9} />
@@ -928,7 +944,10 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   </div>
 
                   {/* Critical failure card — always visible in SEO result */}
-                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5">
+                  <div
+                    className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5 cursor-pointer"
+                    onClick={() => triggerGate('critical_card')}
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
                         <AlertCircle size={11} className="text-amber-400" />
@@ -947,7 +966,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                   {/* Unlock CTA */}
                   {!showGate && (
                     <button
-                      onClick={() => { track('gate_shown', { context: 'seo', trigger: 'unlock_cta' }); setShowGate(true); }}
+                      onClick={() => triggerGate('unlock_cta')}
                       className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold
                         bg-teal-500/10 border border-teal-500/25 text-teal-300
                         hover:bg-teal-500/20 hover:border-teal-500/40 hover:text-teal-200
