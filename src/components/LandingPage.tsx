@@ -659,8 +659,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">{t('widget_result_analysis')}</p>
                       <p className="text-white font-bold text-sm leading-tight">{displayName}{displayCity ? ` · ${displayCity}` : ''}</p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-2xl font-extrabold text-amber-400 leading-none">{score}%</div>
+                    <div className="text-right shrink-0 min-w-[3.5rem]">
+                      <div className="text-2xl font-extrabold text-amber-400 leading-tight tabular-nums">{score}%</div>
                       <div className="text-[10px] text-slate-500 mt-0.5">{t('widget_result_optimized')}</div>
                     </div>
                   </div>
@@ -681,7 +681,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                       style={{ width: `${score}%`, background: 'linear-gradient(to right, #f59e0b, #fbbf24)' }} />
                   </div>
                   <p className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
-                    <span>⚠️</span>
+                    <AlertCircle size={11} className="text-amber-400 shrink-0" />
                     <span>{lang === 'es' ? `Tu ficha está infraoptimizada. Los competidores capturan ${100 - score}% más llamadas y visitas.` : `Your profile is under-optimized. Competitors capture ${100 - score}% more calls and visits.`}</span>
                   </p>
 
@@ -911,7 +911,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     {lang === 'en' ? 'Analyse my own product/service' : 'Analizar mi propio producto/servicio'}
                   </button>
                   <p className="text-[11px] text-teal-400/80 flex items-center gap-1.5">
-                    <span>✅</span>
+                    <BadgeCheck size={11} className="text-teal-400 shrink-0" />
                     <span>{lang === 'es' ? 'Análisis completado. Desbloquea el contenido completo para aplicarlo.' : 'Analysis complete. Unlock the full content to apply it.'}</span>
                   </p>
 
