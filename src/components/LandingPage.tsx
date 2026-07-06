@@ -2258,8 +2258,14 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
               </div>
               <div className="w-px h-10 bg-slate-700" />
               <div className="text-left">
-                <p className="text-emerald-400 text-xs font-bold">{t('landing_final_free')}</p>
-                <p className="text-slate-500 text-[11px]">{t('landing_final_no_card')}</p>
+                <p className="text-emerald-400 text-xs font-bold flex items-baseline gap-1">
+                  <span className="text-base font-extrabold tabular-nums leading-none">7</span>
+                  <span>{lang === 'es' ? 'días gratis' : 'days free'}</span>
+                </p>
+                <p className="text-slate-500 text-[11px]">
+                  {lang === 'es' ? 'Sin tarjeta hasta el día ' : 'No card until day '}
+                  <span className="font-bold text-slate-400 tabular-nums">8</span>
+                </p>
               </div>
             </div>
 
