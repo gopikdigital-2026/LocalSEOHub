@@ -378,6 +378,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   // Tracks whether the gate has already been triggered for the current scan result.
   // Using a ref avoids stale-closure issues in effects and callbacks.
   const gateShownRef = useRef(false);
+  // Scan result timeout ref — must be cancelled on new scan or unmount.
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const triggerGate = (trigger: string) => {
     if (gateShownRef.current || gateDismissed) return;
@@ -399,6 +401,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     if (!trigger.trim()) return;
     if (!auto) userActed.current = true;
     gateShownRef.current = false;
+    // Cancel any in-flight scan result timeout before starting a new one.
+    if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
     if (overrideTab) setTab(overrideTab);
     if (overrideName) {
       if (effectiveTab === 'maps') setBusiness(overrideName);
@@ -416,7 +420,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     });
     setPhase('scanning');
     setShowGate(false);
-    setTimeout(() => {
+    scanTimeoutRef.current = setTimeout(() => {
       setPhase('result');
       track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
     }, 2800);
@@ -427,7 +431,11 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     const t = setTimeout(() => {
       if (!userActed.current) handleScan(true);
     }, 2000);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      // Clean up any pending scan result timeout on unmount.
+      if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-show gate 3.5s after result appears.
