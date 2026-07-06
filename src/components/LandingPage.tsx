@@ -415,6 +415,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
     return () => clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-show gate 10s after result appears (only if not already shown/dismissed)
+  useEffect(() => {
+    if (phase !== 'result' || showGate || gateDismissed) return;
+    const t = setTimeout(() => {
+      setShowGate(true);
+      track('gate_shown', { context: tab, trigger: 'auto_timer' });
+    }, 10000);
+    return () => clearTimeout(t);
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleGoogleAuth = async () => {
     if (isInAppBrowser()) {
       onLoginClick();
@@ -636,7 +646,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
 
                   {/* Try with own data */}
                   <button
-                    onClick={() => { setPhase('idle'); setShowGate(false); setBusiness(''); setCity(''); }}
+                    onClick={() => { setPhase('idle'); setShowGate(false); setGateDismissed(false); setBusiness(''); setCity(''); }}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold
                       bg-slate-800/60 border border-slate-700/50 text-slate-300
                       hover:bg-slate-700/60 hover:border-slate-600 hover:text-white
@@ -867,7 +877,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
 
                   {/* Try with own data */}
                   <button
-                    onClick={() => { setPhase('idle'); setShowGate(false); setProduct(''); setSeoCity(''); }}
+                    onClick={() => { setPhase('idle'); setShowGate(false); setGateDismissed(false); setProduct(''); setSeoCity(''); }}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold
                       bg-slate-800/60 border border-slate-700/50 text-slate-300
                       hover:bg-slate-700/60 hover:border-slate-600 hover:text-white
