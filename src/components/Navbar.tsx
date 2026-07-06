@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, ChevronDown, User, XCircle, CheckCircle, ShieldCheck } from 'lucide-react';
+import { LogOut, ChevronDown, User, XCircle, CheckCircle, ShieldCheck, Flame } from 'lucide-react';
 import type { User as SupaUser } from '@supabase/supabase-js';
 import { useI18n, type Lang } from '../lib/i18n';
 import { LogoIcon } from './Logo';
@@ -40,9 +40,10 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
           <nav className="hidden sm:flex items-center gap-1">
             <button
               onClick={onPricingClick}
-              className="px-4 py-2 rounded-full text-sm font-semibold text-emerald-400 hover:text-emerald-300
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-emerald-400 hover:text-emerald-300
                 hover:bg-emerald-500/10 transition-all duration-200"
             >
+              <Flame size={13} className="text-orange-400 shrink-0" />
               {t('nav_pricing')}
             </button>
           </nav>
@@ -154,8 +155,9 @@ export default function Navbar({ user, onLoginClick, onPricingClick, onSignOut, 
             <>
               <button
                 onClick={onPricingClick}
-                className="sm:hidden px-3 py-1.5 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                className="sm:hidden inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors whitespace-nowrap"
               >
+                <Flame size={12} className="text-orange-400 shrink-0" />
                 {t('nav_pricing')}
               </button>
               <button
