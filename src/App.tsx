@@ -4386,6 +4386,7 @@ export default function App() {
   const { isActive, status, trialDaysLeft, cancelAtPeriodEnd, currentPeriodEnd, loadingSubscription, refresh } = useSubscription(user);
   const [showLogin, setShowLogin] = useState(false);
   const [loginInitialMode, setLoginInitialMode] = useState<'login' | 'signup'>('signup');
+  const [loginInitialEmail, setLoginInitialEmail] = useState('');
   const [oauthErrorMsg, setOauthErrorMsg] = useState('');
   // Initialized from sessionStorage so Google OAuth redirect restores the intent
   const [pendingCheckout, setPendingCheckout] = useState(() => {
@@ -4548,7 +4549,7 @@ export default function App() {
             onSignOut={signOut}
           />
           <LandingPage
-            onLoginClick={() => { setLoginInitialMode('signup'); setShowLogin(true); }}
+            onLoginClick={(email?: string) => { setLoginInitialEmail(email ?? ''); setLoginInitialMode('signup'); setShowLogin(true); }}
             onSubscribeClick={() => {
               try { sessionStorage.setItem('postAuthAction', 'checkout'); } catch { /* sandboxed */ }
               setPendingCheckout(true);
@@ -4557,7 +4558,7 @@ export default function App() {
             }}
             scrollToPricing={showPricing}
           />
-          {showLogin && <LoginModal onClose={() => { setShowLogin(false); setOauthErrorMsg(''); }} initialMode={loginInitialMode} initialError={oauthErrorMsg} />}
+          {showLogin && <LoginModal onClose={() => { setShowLogin(false); setOauthErrorMsg(''); setLoginInitialEmail(''); }} initialMode={loginInitialMode} initialError={oauthErrorMsg} initialEmail={loginInitialEmail} />}
         </div>
       </Suspense>
     );

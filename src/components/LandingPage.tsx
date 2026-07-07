@@ -1,8 +1,9 @@
 import {
   MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles,
   Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
-  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock, AlertCircle, ExternalLink,
+  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock, AlertCircle, ExternalLink, Mail,
 } from 'lucide-react';
+import type { FormEvent } from 'react';
 import React, { useState, useEffect, useRef } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
@@ -12,7 +13,7 @@ import { track } from '../lib/analytics';
 import { isInAppBrowser } from '../lib/socialWebView';
 
 interface LandingPageProps {
-  onLoginClick: () => void;
+  onLoginClick: (email?: string) => void;
   onSubscribeClick: () => void;
   scrollToPricing?: boolean;
 }
@@ -63,28 +64,44 @@ const SEO_PLATFORMS_SERVICIO = [
 
 type SeoTipo = 'producto' | 'servicio';
 
-function RegisterBanner({
+function InlineGate({
   onGoogle,
-  onEmail,
-  loading,
+  onLoginClick,
+  googleLoading,
   context,
-  error,
-  businessName,
+  googleError,
   lang,
+  score,
 }: {
   onGoogle: () => void;
-  onEmail: () => void;
-  loading: boolean;
+  onLoginClick: (email?: string) => void;
+  googleLoading: boolean;
   context: string;
-  error?: string;
-  businessName?: string;
+  googleError?: string;
   lang: string;
+  score?: number;
 }) {
+  const [email, setEmail] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
+  const [secs, setSecs] = React.useState(599);
 
-  const name = businessName || (lang === 'en' ? 'your business' : 'tu negocio');
+  React.useEffect(() => {
+    if (secs <= 0) return;
+    const t = setTimeout(() => setSecs(s => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [secs]);
+
+  const timerLabel = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
+
+  const handleEmailSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    track('gate_register_click', { context, method: 'email_inline' });
+    setSubmitted(true);
+    onLoginClick(email.trim());
+  };
 
   type LockedItem = { Icon: React.FC<{ size: number; className?: string }>; label: string; blurText: string };
-
   const lockedItems: LockedItem[] = context === 'maps'
     ? (lang === 'en' ? [
         { Icon: Eye, label: 'Competitor comparison', blurText: '3 businesses in your area ranked above you — see exactly where they beat you' },
@@ -109,98 +126,227 @@ function RegisterBanner({
         { Icon: Calendar, label: 'Calendario de contenido IA', blurText: '12 ideas con hashtags, formatos y calendario semanal de publicación óptimo' },
       ]);
 
+  const inApp = isInAppBrowser();
+
+  if (submitted) {
+    return (
+      <div className="mt-3 rounded-2xl p-5 text-center space-y-2"
+        style={{ border: '1px solid rgba(16,185,129,0.28)', background: 'linear-gradient(160deg, rgba(16,185,129,0.09) 0%, rgba(8,14,26,0.99) 55%)' }}
+      >
+        <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mx-auto">
+          <Check size={18} className="text-emerald-400" />
+        </div>
+        <p className="text-white font-bold text-sm">
+          {lang === 'en' ? 'Opening your report...' : 'Abriendo tu informe...'}
+        </p>
+      </div>
+    );
+  }
+
+  const isLowScore = score !== undefined && score < 60;
+
   return (
     <div
       className="mt-3 rounded-2xl overflow-hidden"
-      style={{ border: '1px solid rgba(16,185,129,0.28)', background: 'linear-gradient(160deg, rgba(16,185,129,0.09) 0%, rgba(8,14,26,0.99) 55%)' }}
+      style={{
+        border: isLowScore ? '1px solid rgba(251,146,60,0.35)' : '1px solid rgba(16,185,129,0.28)',
+        background: isLowScore
+          ? 'linear-gradient(160deg, rgba(251,146,60,0.08) 0%, rgba(8,14,26,0.99) 55%)'
+          : 'linear-gradient(160deg, rgba(16,185,129,0.09) 0%, rgba(8,14,26,0.99) 55%)',
+      }}
     >
-      <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+      <div className={`h-[2px] bg-gradient-to-r ${isLowScore ? 'from-orange-500 via-amber-400 to-yellow-500' : 'from-emerald-500 via-teal-400 to-cyan-500'}`} />
 
       <div className="p-5">
         {/* Header */}
         <div className="text-center mb-4">
-          <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
-            <BadgeCheck size={11} className="text-emerald-400" />
-            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
-              {lang === 'en' ? 'Report ready' : 'Informe listo'}
+          {/* Urgency timer badge */}
+          <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 mb-2 ${
+            isLowScore
+              ? 'bg-orange-500/10 border border-orange-500/20'
+              : 'bg-red-500/10 border border-red-500/20'
+          }`}>
+            <Clock size={10} className={isLowScore ? 'text-orange-400' : 'text-red-400'} />
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${isLowScore ? 'text-orange-400' : 'text-red-400'}`}>
+              {lang === 'en'
+                ? `Report expires in ${timerLabel}`
+                : `Informe disponible ${timerLabel}`}
             </span>
           </div>
-          <p className="text-white font-extrabold text-base leading-tight mb-1">
-            {lang === 'en'
-              ? `4 sections ready for ${name}`
-              : `4 secciones listas para ${name}`}
+
+          <p className="text-white font-extrabold text-base leading-tight mb-1.5">
+            {score !== undefined
+              ? (lang === 'en'
+                  ? (isLowScore ? `Your profile scored ${score}/100 — here's what's costing you customers` : `Your profile scored ${score}/100 — see the full breakdown`)
+                  : (isLowScore ? `Tu ficha tiene ${score}/100 — esto te está costando clientes` : `Tu ficha tiene ${score}/100 — ve el análisis completo`))
+              : (lang === 'en'
+                  ? 'Your full competitive report is ready'
+                  : 'Tu informe competitivo completo está listo')}
           </p>
           <p className="text-slate-400 text-xs leading-snug">
             {lang === 'en'
-              ? 'Create your free account to unlock all the data'
-              : 'Crea tu cuenta gratis para desbloquear todos los datos'}
+              ? 'Free access · no card required · instant'
+              : 'Acceso gratuito · sin tarjeta · inmediato'}
           </p>
         </div>
 
-        {/* Locked preview sections */}
+        {/* Locked preview — shimmer effect */}
+        <style>{`
+          @keyframes shimmer-slide {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+          }
+          .gate-shimmer { animation: shimmer-slide 2.4s ease-in-out infinite; }
+        `}</style>
         <div className="space-y-1.5 mb-4">
           {lockedItems.map(({ Icon, label, blurText }, i) => (
-            <div key={i} className="rounded-xl border border-slate-600/40 bg-slate-800/40 px-3 py-2.5">
+            <div key={i} className="relative rounded-xl border border-slate-600/40 bg-slate-800/40 px-3 py-2.5 overflow-hidden">
+              {/* Shimmer highlight */}
+              <div
+                className="gate-shimmer absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent pointer-events-none"
+                style={{ animationDelay: `${i * 0.4}s` }}
+              />
               <div className="flex items-center gap-2.5 mb-1">
-                <div className="w-6 h-6 rounded-lg bg-slate-700/60 border border-slate-600/40 flex items-center justify-center shrink-0">
-                  <Icon size={11} className="text-slate-400" />
+                <div className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${
+                  isLowScore ? 'bg-orange-500/10 border-orange-500/20' : 'bg-emerald-500/10 border-emerald-500/20'
+                }`}>
+                  <Icon size={11} className={isLowScore ? 'text-orange-400' : 'text-emerald-400'} />
                 </div>
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex-1 leading-tight">{label}</span>
+                <span className="text-xs font-semibold text-slate-300 flex-1 leading-tight">{label}</span>
                 <Lock size={10} className="text-slate-500 shrink-0" />
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug pl-8 blur-[3px] select-none pointer-events-none">{blurText}</p>
+              <p className="text-[11px] text-slate-300 leading-snug pl-8 blur-[3.5px] select-none pointer-events-none">{blurText}</p>
             </div>
           ))}
         </div>
 
-        {/* Error */}
-        {error && (
-          <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5 mb-3">
-            <AlertCircle size={13} className="text-red-400 mt-0.5 shrink-0" />
-            <p className="text-red-400 text-xs leading-relaxed">{error}</p>
-          </div>
+        {/* ── CTAs ─────────────────────────────────────────────── */}
+        {!inApp ? (
+          <>
+            {/* PRIMARY: Google — 1 click, zero friction */}
+            <button
+              type="button"
+              onClick={() => { track('gate_register_click', { context, method: 'google_inline' }); onGoogle(); }}
+              disabled={googleLoading}
+              className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl font-semibold text-sm transition-all duration-200
+                bg-white hover:bg-slate-50 text-slate-900 shadow-lg shadow-black/20
+                disabled:opacity-60 disabled:cursor-not-allowed mb-2"
+            >
+              {googleLoading ? (
+                <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : <GoogleIconSm />}
+              <span>
+                {googleLoading
+                  ? (lang === 'en' ? 'Redirecting...' : 'Redirigiendo...')
+                  : (lang === 'en' ? 'Continue with Google — instant access' : 'Continuar con Google — acceso inmediato')}
+              </span>
+            </button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex-1 h-px bg-slate-800" />
+              <span className="text-[10px] text-slate-600 uppercase tracking-wider">
+                {lang === 'en' ? 'or with email' : 'o con email'}
+              </span>
+              <div className="flex-1 h-px bg-slate-800" />
+            </div>
+
+            {/* SECONDARY: email */}
+            <form onSubmit={handleEmailSubmit} className="flex gap-2 mb-3">
+              <div className="relative flex-1">
+                <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={lang === 'en' ? 'your@email.com' : 'tu@email.com'}
+                  className="w-full bg-slate-950/80 border border-slate-700/70 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-100
+                    placeholder-slate-600 outline-none transition-all duration-200
+                    focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!email.trim()}
+                className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200
+                  bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {lang === 'en' ? 'Unlock' : 'Acceder'} <ArrowRight size={13} />
+              </button>
+            </form>
+          </>
+        ) : (
+          /* In-app browser: email primary, Google not available */
+          <>
+            <form onSubmit={handleEmailSubmit} className="flex gap-2 mb-2">
+              <div className="relative flex-1">
+                <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={lang === 'en' ? 'your@email.com' : 'tu@email.com'}
+                  className="w-full bg-slate-950/80 border border-slate-700/70 rounded-xl pl-9 pr-3 py-3 text-sm text-slate-100
+                    placeholder-slate-600 outline-none transition-all duration-200
+                    focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!email.trim()}
+                className="shrink-0 flex items-center gap-1.5 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200
+                  bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {lang === 'en' ? 'Unlock' : 'Acceder'} <ArrowRight size={13} />
+              </button>
+            </form>
+            <button
+              type="button"
+              onClick={() => { track('gate_register_click', { context, method: 'email_inapp' }); onLoginClick(); }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all duration-200
+                bg-slate-800/60 border border-slate-700/50 text-slate-300 hover:bg-slate-700/60 hover:text-white mb-3"
+            >
+              <ExternalLink size={13} />
+              {lang === 'en' ? 'Open in browser for Google login' : 'Abrir en navegador para Google'}
+            </button>
+          </>
         )}
 
-        {/* Primary CTA — Google */}
-        <button
-          onClick={() => { track('gate_register_click', { context, method: 'google' }); onGoogle(); }}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-bold text-sm transition-all duration-200
-            bg-white text-slate-900 hover:bg-slate-50 shadow-xl shadow-black/35 hover:-translate-y-0.5 active:translate-y-0
-            disabled:opacity-60 disabled:cursor-not-allowed mb-3"
-        >
-          {loading ? (
-            <svg className="animate-spin w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          ) : <GoogleIconSm />}
-          <span className="leading-tight">
-            {loading
-              ? (lang === 'en' ? 'Redirecting...' : 'Redirigiendo...')
-              : (lang === 'en' ? 'Unlock full report — free' : 'Desbloquear informe completo — gratis')}
-          </span>
-        </button>
-
-        {/* Secondary — email */}
-        <button
-          onClick={() => { track('gate_register_click', { context, method: 'email' }); onEmail(); }}
-          className="w-full text-center text-xs text-slate-400 hover:text-slate-200 transition-colors py-2 border border-slate-700/50 rounded-xl hover:border-slate-600/60"
-        >
-          {lang === 'en' ? 'or continue with email' : 'o continuar con email'}
-        </button>
-
         {/* Trust row */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-800/50">
+        <div className="flex items-center justify-center gap-3 pt-2 border-t border-slate-800/50">
           <span className="text-[10px] text-slate-600 flex items-center gap-1">
             <Shield size={9} />
-            {lang === 'en' ? '7 days free · no card' : '7 días gratis · sin tarjeta'}
+            {lang === 'en' ? '7 days free' : '7 días gratis'}
           </span>
+          <span className="text-slate-700">·</span>
           <span className="text-[10px] text-slate-600 flex items-center gap-1">
-            <Clock size={9} />
-            {lang === 'en' ? 'Instant result · no account needed' : 'Resultado inmediato · sin cuenta'}
+            <Shield size={9} />
+            {lang === 'en' ? 'No card' : 'Sin tarjeta'}
+          </span>
+          <span className="text-slate-700">·</span>
+          <span className="text-[10px] text-slate-600 flex items-center gap-1">
+            <Shield size={9} />
+            {lang === 'en' ? 'No spam' : 'Sin spam'}
           </span>
         </div>
+
+        <p className="text-center text-[10px] text-slate-600 mt-2">
+          {lang === 'en' ? 'Already have an account?' : '¿Ya tienes cuenta?'}{' '}
+          <button
+            type="button"
+            onClick={() => { track('gate_register_click', { context, method: 'login_link' }); onLoginClick(); }}
+            className="text-emerald-400 hover:text-emerald-300 transition-colors"
+          >
+            {lang === 'en' ? 'Sign in' : 'Inicia sesión'}
+          </button>
+        </p>
       </div>
     </div>
   );
@@ -339,12 +485,10 @@ function OwnScanBanner({ tab, lang, onScan }: {
   );
 }
 
-function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
+function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => void }) {
   const { t, lang } = useI18n();
   const [tab, setTab] = useState<WidgetTab>('maps');
   const [phase, setPhase] = useState<ScanPhase>('idle');
-  const [showGate, setShowGate] = useState(false);
-  const [gateDismissed, setGateDismissed] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
 
@@ -367,29 +511,13 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
   };
 
   const switchTab = (tab_new: WidgetTab) => {
-    if (phase === 'result') {
-      triggerGate('tab_switch');
-      return;
-    }
     track('widget_tab_switch', { tab: tab_new });
     setTab(tab_new);
     setPhase('idle');
-    setShowGate(false);
   };
 
   const userActed = useRef(false);
-  // Tracks whether the gate has already been triggered for the current scan result.
-  // Using a ref avoids stale-closure issues in effects and callbacks.
-  const gateShownRef = useRef(false);
-  // Scan result timeout ref — must be cancelled on new scan or unmount.
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const triggerGate = (trigger: string) => {
-    if (gateShownRef.current || gateDismissed) return;
-    gateShownRef.current = true;
-    setShowGate(true);
-    track('gate_shown', { context: tab, trigger });
-  };
 
   const handleScan = (
     auto = false,
@@ -403,7 +531,6 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
       : (overrideName ?? product);
     if (!trigger.trim()) return;
     if (!auto) userActed.current = true;
-    gateShownRef.current = false;
     // Cancel any in-flight scan result timeout before starting a new one.
     if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
     if (overrideTab) setTab(overrideTab);
@@ -422,10 +549,10 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
       ...(effectiveTab === 'seo' ? { tipo, platform } : { city: overrideCity ?? city }),
     });
     setPhase('scanning');
-    setShowGate(false);
     scanTimeoutRef.current = setTimeout(() => {
       setPhase('result');
       track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
+      track('gate_shown', { context: effectiveTab, trigger: 'auto_inline' });
     }, 1800);
   };
 
@@ -440,14 +567,6 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
       if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Auto-show gate 3.5s after result appears.
-  // Depends only on phase; gateShownRef avoids stale-closure issues.
-  useEffect(() => {
-    if (phase !== 'result') return;
-    const t = setTimeout(() => triggerGate('auto_timer'), 1500);
-    return () => clearTimeout(t);
-  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGoogleAuth = async () => {
     if (isInAppBrowser()) {
@@ -670,7 +789,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
 
                   {/* Try with own data */}
                   <button
-                    onClick={() => { setPhase('idle'); setShowGate(false); setGateDismissed(false); setBusiness(''); setCity(''); }}
+                    onClick={() => { setPhase('idle'); setBusiness(''); setCity(''); }}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold
                       bg-slate-800/60 border border-slate-700/50 text-slate-300
                       hover:bg-slate-700/60 hover:border-slate-600 hover:text-white
@@ -711,22 +830,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         {mapsKeywords.slice(0, 3).map((kw, i) => (
                           <span key={i} className="text-[11px] rounded-full px-3 py-1 bg-teal-500/15 border border-teal-500/20 text-teal-300">{kw}</span>
                         ))}
-                        <button
-                          onClick={() => triggerGate('locked_keywords')}
-                          className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-300 transition-all duration-200 cursor-pointer"
-                        >
+                        <span className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400">
                           <Lock size={9} />
                           {lang === 'en' ? `+${mapsKeywords.length - 3} more` : `+${mapsKeywords.length - 3} más`}
-                        </button>
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Critical failure card — always visible in result */}
-                  <div
-                    className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5 cursor-pointer"
-                    onClick={() => triggerGate('critical_card')}
-                  >
+                  {/* Critical failure card */}
+                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
                         <AlertCircle size={11} className="text-amber-400" />
@@ -742,33 +855,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     </p>
                   </div>
 
-                  {/* Unlock CTA */}
-                  {!showGate && (
-                    <button
-                      onClick={() => triggerGate('unlock_cta')}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold
-                        bg-emerald-500/10 border border-emerald-500/25 text-emerald-300
-                        hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-200
-                        transition-all duration-200"
-                    >
-                      <Lock size={11} />
-                      {lang === 'en' ? 'Unlock full action plan — free' : 'Ver plan de acción completo — gratis'}
-                      <ChevronRight size={11} />
-                    </button>
-                  )}
-
-                  {/* Banner appears on user action */}
-                  {showGate && (
-                    <RegisterBanner
-                      onGoogle={handleGoogleAuth}
-                      onEmail={onLoginClick}
-                      loading={googleLoading}
-                      context="maps"
-                      error={googleError}
-                      businessName={displayName}
-                      lang={lang}
-                    />
-                  )}
+                  {/* Inline gate — always visible, no modal needed */}
+                  <InlineGate
+                    onGoogle={handleGoogleAuth}
+                    onLoginClick={onLoginClick}
+                    googleLoading={googleLoading}
+                    context="maps"
+                    googleError={googleError}
+                    lang={lang}
+                    score={score}
+                  />
                 </div>
               )}
             </>
@@ -943,22 +1039,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                         {seoTagsVisible.map((tag, i) => (
                           <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
                         ))}
-                        <button
-                          onClick={() => triggerGate('locked_tags')}
-                          className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-300 transition-all duration-200 cursor-pointer"
-                        >
+                        <span className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400">
                           <Lock size={9} />
                           {lang === 'en' ? `+${seoTagsBlurred.length} more` : `+${seoTagsBlurred.length} más`}
-                        </button>
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Critical failure card — always visible in SEO result */}
-                  <div
-                    className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5 cursor-pointer"
-                    onClick={() => triggerGate('critical_card')}
-                  >
+                  {/* Critical failure card */}
+                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
                         <AlertCircle size={11} className="text-amber-400" />
@@ -974,33 +1064,15 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
                     </p>
                   </div>
 
-                  {/* Unlock CTA */}
-                  {!showGate && (
-                    <button
-                      onClick={() => triggerGate('unlock_cta')}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold
-                        bg-teal-500/10 border border-teal-500/25 text-teal-300
-                        hover:bg-teal-500/20 hover:border-teal-500/40 hover:text-teal-200
-                        transition-all duration-200"
-                    >
-                      <Lock size={11} />
-                      {lang === 'en' ? 'Unlock full SEO content — free' : 'Ver contenido SEO completo — gratis'}
-                      <ChevronRight size={11} />
-                    </button>
-                  )}
-
-                  {/* Banner appears on user action */}
-                  {showGate && (
-                    <RegisterBanner
-                      onGoogle={handleGoogleAuth}
-                      onEmail={onLoginClick}
-                      loading={googleLoading}
-                      context="seo"
-                      error={googleError}
-                      businessName={`${displayProduct}${displaySeoCity ? ` · ${displaySeoCity}` : ''}`}
-                      lang={lang}
-                    />
-                  )}
+                  {/* Inline gate — always visible, no modal needed */}
+                  <InlineGate
+                    onGoogle={handleGoogleAuth}
+                    onLoginClick={onLoginClick}
+                    googleLoading={googleLoading}
+                    context="seo"
+                    googleError={googleError}
+                    lang={lang}
+                  />
                 </div>
               )}
             </>
@@ -1009,69 +1081,6 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: () => void }) {
         </div>
       </div>
     </div>
-
-    {/* Sticky bottom CTA — always visible without scrolling */}
-    {showGate && phase === 'result' && !gateDismissed && (
-      <div
-        className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
-        <div
-          className="pointer-events-auto w-full max-w-md mx-4 mb-4 rounded-2xl overflow-hidden shadow-2xl shadow-black/70"
-          style={{
-            background: 'rgba(10,18,32,0.97)',
-            backdropFilter: 'blur(24px) saturate(160%)',
-            border: '1px solid rgba(16,185,129,0.35)',
-            animation: 'slideUpFadeIn 0.4s ease-out',
-          }}
-        >
-          <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-              <BadgeCheck size={15} className="text-emerald-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-xs font-bold leading-tight">
-                {lang === 'en' ? 'Report ready — unlock free' : 'Informe listo — desbloquear gratis'}
-              </p>
-              <p className="text-slate-500 text-[10px] leading-tight mt-0.5">
-                {lang === 'en' ? '7 days · no credit card' : '7 días · sin tarjeta'}
-              </p>
-            </div>
-            {isInAppBrowser() ? (
-              <button
-                onClick={() => {
-                  track('gate_register_click', { context: tab, method: 'open_browser_sticky' });
-                  onLoginClick();
-                }}
-                className="shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-lg"
-              >
-                <ExternalLink size={12} />
-                {lang === 'en' ? 'Open in browser' : 'Abrir en navegador'}
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  track('gate_register_click', { context: tab, method: 'google_sticky' });
-                  handleGoogleAuth();
-                }}
-                disabled={googleLoading}
-                className="shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-900 transition-colors shadow-lg disabled:opacity-50"
-              >
-                <GoogleIconSm />
-                {lang === 'en' ? 'Unlock free' : 'Desbloquear gratis'}
-              </button>
-            )}
-            <button
-              onClick={() => setGateDismissed(true)}
-              className="shrink-0 p-1.5 text-slate-600 hover:text-slate-400 transition-colors"
-            >
-              <X size={13} />
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
     </>
   );
 }

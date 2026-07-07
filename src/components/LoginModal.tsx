@@ -8,6 +8,7 @@ interface LoginModalProps {
   onClose: () => void;
   initialMode?: Mode;
   initialError?: string;
+  initialEmail?: string;
 }
 
 type Mode = 'login' | 'signup';
@@ -21,9 +22,9 @@ function isAndroid(): boolean {
   return /Android/i.test(navigator.userAgent);
 }
 
-export default function LoginModal({ onClose, initialMode = 'login', initialError = '' }: LoginModalProps) {
+export default function LoginModal({ onClose, initialMode = 'login', initialError = '', initialEmail = '' }: LoginModalProps) {
   const [mode, setMode] = useState<Mode>(initialMode);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -91,14 +92,21 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
         track('register_success', { method: 'email' });
         onClose();
       } else {
-        // Email confirmation enabled — try auto-login so the user isn't stranded
+        // Email confirmation required — use instant signup edge function to bypass it
+        const res = await supabase.functions.invoke('signup-instant', { body: { email, password } });
+        if (res.error) {
+          setError(translateError(res.error.message));
+          setLoading(false);
+          return;
+        }
+        // Now sign in with the confirmed account
         const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
         if (!loginErr) {
           trackCompleteRegistration();
           track('register_success', { method: 'email' });
           onClose();
         } else {
-          setSuccess('¡Cuenta creada! Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar el email, luego inicia sesión.');
+          setError(translateError(loginErr.message));
         }
       }
     }
