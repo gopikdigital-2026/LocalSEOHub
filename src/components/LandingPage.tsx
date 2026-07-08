@@ -522,6 +522,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
   const userActed = useRef(false);
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gateRef = useRef<HTMLDivElement | null>(null);
+  const gateContextRef = useRef<string>('maps');
 
   const handleScan = (
     auto = false,
@@ -560,8 +562,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
       track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
       // Gate shown after 3.5s delay — lets user absorb the first result before asking to register
       gateTimeoutRef.current = setTimeout(() => {
+        gateContextRef.current = effectiveTab;
         setGateVisible(true);
-        track('gate_shown', { context: effectiveTab, trigger: 'delayed_inline' });
       }, 3500);
     }, 1800);
   };
@@ -578,6 +580,27 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
       if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fire gate_shown only when the gate actually enters the viewport, then scroll it into view
+  useEffect(() => {
+    if (!gateVisible || !gateRef.current) return;
+    const el = gateRef.current;
+    let fired = false;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !fired) {
+          fired = true;
+          track('gate_shown', { context: gateContextRef.current, trigger: 'delayed_inline' });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    // Scroll gate into view so users on long-scroll mobile actually see it
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return () => observer.disconnect();
+  }, [gateVisible]);
 
   const handleGoogleAuth = async () => {
     if (isInAppBrowser()) {
@@ -868,6 +891,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
 
                   {/* Inline gate — shown after 9s delay to let user absorb results */}
                   {gateVisible && (
+                  <div ref={gateRef}>
                   <InlineGate
                     onGoogle={handleGoogleAuth}
                     onLoginClick={onLoginClick}
@@ -877,6 +901,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     lang={lang}
                     score={score}
                   />
+                  </div>
                   )}
                 </div>
               )}
@@ -1079,6 +1104,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
 
                   {/* Inline gate — shown after 9s delay to let user absorb results */}
                   {gateVisible && (
+                  <div ref={gateRef}>
                   <InlineGate
                     onGoogle={handleGoogleAuth}
                     onLoginClick={onLoginClick}
@@ -1087,6 +1113,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     googleError={googleError}
                     lang={lang}
                   />
+                  </div>
                   )}
                 </div>
               )}
