@@ -489,6 +489,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
   const { t, lang } = useI18n();
   const [tab, setTab] = useState<WidgetTab>('maps');
   const [phase, setPhase] = useState<ScanPhase>('idle');
+  const [gateVisible, setGateVisible] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
 
@@ -514,10 +515,13 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
     track('widget_tab_switch', { tab: tab_new });
     setTab(tab_new);
     setPhase('idle');
+    setGateVisible(false);
+    if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
   };
 
   const userActed = useRef(false);
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleScan = (
     auto = false,
@@ -533,6 +537,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
     if (!auto) userActed.current = true;
     // Cancel any in-flight scan result timeout before starting a new one.
     if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+    if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
+    setGateVisible(false);
     if (overrideTab) setTab(overrideTab);
     if (overrideName) {
       if (effectiveTab === 'maps') setBusiness(overrideName);
@@ -552,7 +558,11 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
     scanTimeoutRef.current = setTimeout(() => {
       setPhase('result');
       track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
-      track('gate_shown', { context: effectiveTab, trigger: 'auto_inline' });
+      // Gate shown after 3.5s delay — lets user absorb the first result before asking to register
+      gateTimeoutRef.current = setTimeout(() => {
+        setGateVisible(true);
+        track('gate_shown', { context: effectiveTab, trigger: 'delayed_inline' });
+      }, 3500);
     }, 1800);
   };
 
@@ -565,6 +575,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
       clearTimeout(t);
       // Clean up any pending scan result timeout on unmount.
       if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
+      if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -855,7 +866,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     </p>
                   </div>
 
-                  {/* Inline gate — always visible, no modal needed */}
+                  {/* Inline gate — shown after 9s delay to let user absorb results */}
+                  {gateVisible && (
                   <InlineGate
                     onGoogle={handleGoogleAuth}
                     onLoginClick={onLoginClick}
@@ -865,6 +877,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     lang={lang}
                     score={score}
                   />
+                  )}
                 </div>
               )}
             </>
@@ -1064,7 +1077,8 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     </p>
                   </div>
 
-                  {/* Inline gate — always visible, no modal needed */}
+                  {/* Inline gate — shown after 9s delay to let user absorb results */}
+                  {gateVisible && (
                   <InlineGate
                     onGoogle={handleGoogleAuth}
                     onLoginClick={onLoginClick}
@@ -1073,6 +1087,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     googleError={googleError}
                     lang={lang}
                   />
+                  )}
                 </div>
               )}
             </>
@@ -1790,9 +1805,9 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           <div className="absolute top-20 right-1/4 w-56 h-56 bg-emerald-600/3 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-5xl mx-auto px-6 pt-16 pb-10 relative">
+        <div className="max-w-5xl mx-auto px-6 pt-12 pb-6 relative">
           {/* Audience badge */}
-          <div className="flex justify-center mb-7">
+          <div className="flex justify-center mb-6">
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 whitespace-nowrap">
               <Flame size={13} className="text-orange-400 shrink-0" />
               <span>Para negocios locales y agencias de marketing digital</span>
@@ -1800,21 +1815,39 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
             </div>
           </div>
 
-          {/* Headline — dual audience */}
-          <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold text-white leading-[1.1] mb-5 tracking-tight text-center">
-            ¿Tienes un negocio local o trabajas<br className="hidden sm:block" />{' '}
-            en marketing digital?{' '}
+          {/* Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-[3.2rem] font-bold text-white leading-[1.1] mb-4 tracking-tight text-center">
+            Tu próximo cliente ya te está buscando.{' '}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              tu próximo cliente ya te está buscando.
+              ¿Te encuentran a ti o a tu competencia?
             </span>
           </h1>
 
           <p className="text-center text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
-            LocalSEOHub analiza tu visibilidad en Google Maps, detecta lo que hacen tus competidores y genera con IA un plan de acción concreto para que tu negocio — o el de tus clientes — aparezca primero.
+            Introduce tu negocio abajo y mira en segundos cómo estás posicionado, qué hacen tus competidores y qué debes mejorar — sin registro ni tarjeta.
           </p>
 
-          {/* Dual audience value cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto mb-10">
+          {/* Scanner widget — the hero IS the demo */}
+          <ScannerWidget onLoginClick={onLoginClick} />
+
+          {/* Trust signals */}
+          <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500 mt-6 mb-12">
+            <div className="flex items-center gap-1.5">
+              <Shield size={11} className="text-emerald-500" />
+              <span>{t('landing_trust_1')}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Clock size={11} className="text-teal-500" />
+              <span>{t('landing_trust_2')}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Users size={11} className="text-emerald-400" />
+              <span>{t('landing_trust_3')}</span>
+            </div>
+          </div>
+
+          {/* Dual audience value cards — visible after scanner, gives context for scrollers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
             <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
               <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
@@ -1859,54 +1892,12 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
             </div>
           </div>
 
-          {/* Primary CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-5">
-            <button
-              onClick={onLoginClick}
-              className="inline-flex items-center justify-center gap-2.5 px-9 py-4 rounded-xl font-bold text-base transition-all duration-300
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
-            >
-              <Zap size={16} fill="currentColor" />
-              Empieza gratis — 7 días premium
-              <ArrowRight size={15} />
-            </button>
-            <button
-              onClick={() => {
-                document.getElementById('demo-scanner')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl font-bold text-sm transition-all duration-300
-                border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white bg-slate-900/60 hover:bg-slate-800/60"
-            >
-              <Eye size={15} />
-              Ver demo en vivo
-            </button>
-          </div>
-
-          <p className="text-center text-xs text-slate-600 mb-8">
-            Sin tarjeta de crédito · cancela cuando quieras ·{' '}
+          <p className="text-center text-xs text-slate-600 mt-5">
+            {t('landing_have_account')}{' '}
             <button onClick={onLoginClick} className="text-emerald-500 hover:text-emerald-400 transition-colors font-medium">
               {t('landing_sign_in_link')}
             </button>
           </p>
-
-          {/* Trust signals */}
-          <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500 mb-14">
-            <div className="flex items-center gap-1.5">
-              <Shield size={11} className="text-emerald-500" />
-              <span>{t('landing_trust_1')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock size={11} className="text-teal-500" />
-              <span>{t('landing_trust_2')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Users size={11} className="text-emerald-400" />
-              <span>{t('landing_trust_3')}</span>
-            </div>
-          </div>
-
-          <ProductMockup />
         </div>
       </section>
 
@@ -2020,31 +2011,6 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
             </button>
           </div>
         </div>
-      </section>
-
-      {/* ── DEMO SCANNER ───────────────────────────────────────────── */}
-      <section id="demo-scanner" className="max-w-5xl mx-auto px-6 py-12">
-        <div className="text-center mb-7">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
-            <Zap size={11} fill="currentColor" /> Demo en vivo · sin registro
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Pruébalo ahora con cualquier negocio</h2>
-          <p className="text-slate-400 text-sm max-w-xl mx-auto">Introduce el nombre de tu negocio o el de un cliente y mira el análisis en segundos. Sin cuenta, sin tarjeta.</p>
-        </div>
-        <div className="flex justify-center mb-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
-            <ChevronDown size={14} className="animate-bounce" />
-            <span>{lang === 'en' ? 'Try it now — no account needed' : 'Análisis instantáneo — sin registro'}</span>
-            <ChevronDown size={14} className="animate-bounce" />
-          </div>
-        </div>
-        <ScannerWidget onLoginClick={onLoginClick} />
-        <p className="text-center text-xs text-slate-600 mt-5">
-          {t('landing_have_account')}{' '}
-          <button onClick={onLoginClick} className="text-emerald-500 hover:text-emerald-400 transition-colors font-medium">
-            {t('landing_sign_in_link')}
-          </button>
-        </p>
       </section>
 
       {/* ── 6 TOOLS ────────────────────────────────────────────────── */}

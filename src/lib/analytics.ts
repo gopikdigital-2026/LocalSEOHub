@@ -1,5 +1,3 @@
-import { supabase } from './supabase';
-
 const SESSION_KEY = 'ls_sid';
 
 function getSessionId(): string {
@@ -11,16 +9,41 @@ function getSessionId(): string {
   return sid;
 }
 
-// Fire-and-forget — never throws, never blocks the UI
+// Read the Supabase session synchronously from localStorage so this works even
+// during page unload (where async getSession() would be cancelled).
+function getStoredUserId(): string | null {
+  try {
+    const key = Object.keys(localStorage).find(
+      (k) => k.startsWith('sb-') && k.endsWith('-auth-token')
+    );
+    if (!key) return null;
+    const data = JSON.parse(localStorage.getItem(key) ?? '{}');
+    return data?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Uses fetch with keepalive:true so the request survives page unloads (e.g.
+// when a Google OAuth redirect fires immediately after the click event).
 export function track(eventName: string, properties: Record<string, unknown> = {}) {
-  const sessionId = getSessionId();
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    // Must call .then() to actually execute the lazy Supabase query
-    supabase.from('analytics_events').insert({
-      session_id: sessionId,
-      user_id: session?.user?.id ?? null,
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/analytics_events`;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+  fetch(url, {
+    method: 'POST',
+    keepalive: true,
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': anonKey,
+      'Authorization': `Bearer ${anonKey}`,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({
+      session_id: getSessionId(),
+      user_id: getStoredUserId(),
       event_name: eventName,
       properties,
-    }).then(() => {});
+    }),
   }).catch(() => {});
 }

@@ -84,30 +84,20 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
         onClose();
       }
     } else {
-      const { data, error: authError } = await supabase.auth.signUp({ email, password });
-      if (authError) {
-        setError(translateError(authError.message));
-      } else if (data.session) {
+      // Use signup-instant to create a pre-confirmed account, bypassing email verification
+      const res = await supabase.functions.invoke('signup-instant', { body: { email, password } });
+      if (res.error) {
+        setError(translateError(res.error.message));
+        setLoading(false);
+        return;
+      }
+      const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (!loginErr) {
         trackCompleteRegistration();
         track('register_success', { method: 'email' });
         onClose();
       } else {
-        // Email confirmation required — use instant signup edge function to bypass it
-        const res = await supabase.functions.invoke('signup-instant', { body: { email, password } });
-        if (res.error) {
-          setError(translateError(res.error.message));
-          setLoading(false);
-          return;
-        }
-        // Now sign in with the confirmed account
-        const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (!loginErr) {
-          trackCompleteRegistration();
-          track('register_success', { method: 'email' });
-          onClose();
-        } else {
-          setError(translateError(loginErr.message));
-        }
+        setError(translateError(loginErr.message));
       }
     }
 

@@ -42,12 +42,22 @@ Deno.serve(async (req: Request) => {
   });
 
   if (createError) {
-    // If user already exists, just return a signal to try login
     const alreadyExists = createError.message.toLowerCase().includes("already") ||
       createError.message.toLowerCase().includes("exists") ||
       createError.status === 422;
 
     if (alreadyExists) {
+      // User exists but may be unconfirmed — find and confirm them
+      const { data: listData } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+      const existing = listData?.users?.find(
+        (u) => u.email?.toLowerCase() === email.toLowerCase()
+      );
+      if (existing && !existing.email_confirmed_at) {
+        await adminClient.auth.admin.updateUserById(existing.id, {
+          email_confirm: true,
+          password,
+        });
+      }
       return new Response(JSON.stringify({ exists: true }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
