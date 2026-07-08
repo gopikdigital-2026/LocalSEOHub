@@ -824,12 +824,12 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                   {/* Try with own data */}
                   <button
                     onClick={() => { setPhase('idle'); setBusiness(''); setCity(''); }}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold
-                      bg-slate-800/60 border border-slate-700/50 text-slate-200
-                      hover:bg-slate-700/60 hover:border-slate-600 hover:text-white
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold
+                      bg-emerald-500/15 border border-emerald-500/40 text-emerald-300
+                      hover:bg-emerald-500/25 hover:border-emerald-400/60 hover:text-emerald-200
                       transition-all duration-200"
                   >
-                    <ChevronRight size={13} className="rotate-180" />
+                    <ChevronRight size={14} className="rotate-180" />
                     {lang === 'en' ? 'Analyse my own business' : 'Analizar mi propio negocio'}
                   </button>
                   <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
@@ -1039,12 +1039,12 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                   {/* Try with own data */}
                   <button
                     onClick={() => { setPhase('idle'); setShowGate(false); setGateDismissed(false); setProduct(''); setSeoCity(''); }}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold
-                      bg-slate-800/60 border border-slate-700/50 text-slate-200
-                      hover:bg-slate-700/60 hover:border-slate-600 hover:text-white
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold
+                      bg-emerald-500/15 border border-emerald-500/40 text-emerald-300
+                      hover:bg-emerald-500/25 hover:border-emerald-400/60 hover:text-emerald-200
                       transition-all duration-200"
                   >
-                    <ChevronRight size={13} className="rotate-180" />
+                    <ChevronRight size={14} className="rotate-180" />
                     {lang === 'en' ? 'Analyse my own product/service' : 'Analizar mi propio producto/servicio'}
                   </button>
                   <p className="text-[11px] text-teal-400/80 flex items-center gap-1.5">
