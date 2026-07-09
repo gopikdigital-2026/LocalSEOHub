@@ -1,7 +1,8 @@
 import {
   MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles,
   Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
-  Clock, Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock, AlertCircle, ExternalLink, Mail,
+  Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock, AlertCircle, ExternalLink, Mail,
+  Clock,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import React, { useState, useEffect, useRef } from 'react';
@@ -9,7 +10,7 @@ import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './Legal
 import { LogoIcon } from './Logo';
 import { supabase } from '../lib/supabase';
 import { useI18n } from '../lib/i18n';
-import { track } from '../lib/analytics';
+import { track, storeGoogleIntent } from '../lib/analytics';
 import { isInAppBrowser } from '../lib/socialWebView';
 
 interface LandingPageProps {
@@ -83,15 +84,22 @@ function InlineGate({
 }) {
   const [email, setEmail] = React.useState('');
   const [submitted, setSubmitted] = React.useState(false);
-  const [secs, setSecs] = React.useState(599);
+  const ctaRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
-    if (secs <= 0) return;
-    const t = setTimeout(() => setSecs(s => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [secs]);
-
-  const timerLabel = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
+    if (!ctaRef.current) return;
+    const el = ctaRef.current;
+    let fired = false;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !fired) {
+        fired = true;
+        track('gate_cta_visible', { context });
+        observer.disconnect();
+      }
+    }, { threshold: 0.3 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [context]);
 
   const handleEmailSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -101,32 +109,8 @@ function InlineGate({
     onLoginClick(email.trim());
   };
 
-  type LockedItem = { Icon: React.FC<{ size: number; className?: string }>; label: string; blurText: string };
-  const lockedItems: LockedItem[] = context === 'maps'
-    ? (lang === 'en' ? [
-        { Icon: Eye, label: 'Competitor comparison', blurText: '3 businesses in your area ranked above you — see exactly where they beat you' },
-        { Icon: Star, label: 'Review audit + AI response', blurText: '2 unanswered reviews detected — AI-generated replies ready to copy and paste' },
-        { Icon: Globe, label: 'Local GEO ranking score', blurText: 'Your position vs. competitors by keyword and search radius — heat map included' },
-        { Icon: Calendar, label: 'AI monthly content plan', blurText: '8 posts with caption templates and optimal days and times to publish' },
-      ] : [
-        { Icon: Eye, label: 'Comparativa de competidores', blurText: '3 negocios de tu zona posicionados por delante — ve exactamente en qué te superan' },
-        { Icon: Star, label: 'Auditoría de reseñas + IA', blurText: '2 reseñas sin responder detectadas — respuestas IA listas para copiar y pegar' },
-        { Icon: Globe, label: 'Puntuación GEO local', blurText: 'Tu posición vs. competidores por keyword y radio de búsqueda — mapa de calor incluido' },
-        { Icon: Calendar, label: 'Plan de contenidos mensual', blurText: '8 posts con plantillas de texto y los mejores días y horarios de publicación' },
-      ])
-    : (lang === 'en' ? [
-        { Icon: Globe, label: '16+ platform listings', blurText: 'Optimized titles, tags and descriptions for Etsy, Amazon, eBay and 13 more platforms' },
-        { Icon: Eye, label: 'Competitor URL analysis', blurText: 'Side-by-side comparison with top 5 competitors — gaps and quick wins highlighted' },
-        { Icon: Target, label: 'Ad campaign simulator', blurText: 'Simulated Google and Meta campaigns with estimated CPL, reach and ROI for your product' },
-        { Icon: Calendar, label: 'AI content calendar', blurText: '12 ideas with hashtags, best posting formats and a weekly publishing schedule' },
-      ] : [
-        { Icon: Globe, label: 'Fichas en 16+ plataformas', blurText: 'Títulos, etiquetas y descripciones para Etsy, Amazon, eBay y 13 plataformas más' },
-        { Icon: Eye, label: 'Análisis de URLs de competidores', blurText: 'Comparativa directa con los 5 mejores de tu nicho — brechas y victorias rápidas destacadas' },
-        { Icon: Target, label: 'Simulador de campaña', blurText: 'Campañas Google y Meta simuladas con CPL, alcance y ROI estimados para tu producto' },
-        { Icon: Calendar, label: 'Calendario de contenido IA', blurText: '12 ideas con hashtags, formatos y calendario semanal de publicación óptimo' },
-      ]);
-
   const inApp = isInAppBrowser();
+  const isLowScore = score !== undefined && score < 60;
 
   if (submitted) {
     return (
@@ -143,97 +127,112 @@ function InlineGate({
     );
   }
 
-  const isLowScore = score !== undefined && score < 60;
+  // Blurred teaser rows — shape of the data they'll see, names hidden
+  const teaserRows = context === 'maps'
+    ? [
+        { rank: '#1', stars: '4.8', reviews: lang === 'en' ? '127 reviews' : '127 reseñas', gap: lang === 'en' ? '+89 vs you' : '+89 vs ti' },
+        { rank: '#2', stars: '4.6', reviews: lang === 'en' ? '89 reviews' : '89 reseñas',  gap: lang === 'en' ? '+51 vs you' : '+51 vs ti' },
+        { rank: '#3', stars: '4.3', reviews: lang === 'en' ? '54 reviews' : '54 reseñas',  gap: lang === 'en' ? '+16 vs you' : '+16 vs ti' },
+      ]
+    : [
+        { rank: '#1', stars: '94', reviews: lang === 'en' ? '16 platforms' : '16 plataformas', gap: lang === 'en' ? '+31 keywords' : '+31 keywords' },
+        { rank: '#2', stars: '87', reviews: lang === 'en' ? '12 platforms' : '12 plataformas', gap: lang === 'en' ? '+18 keywords' : '+18 keywords' },
+        { rank: '#3', stars: '79', reviews: lang === 'en' ? '9 platforms' : '9 plataformas',  gap: lang === 'en' ? '+7 keywords' : '+7 keywords' },
+      ];
+
+  const scoreColor = isLowScore ? { ring: 'rgba(251,146,60,0.5)', bg: 'rgba(251,146,60,0.08)', text: 'text-orange-300', border: 'rgba(251,146,60,0.30)' }
+                                : { ring: 'rgba(16,185,129,0.5)',  bg: 'rgba(16,185,129,0.07)',  text: 'text-emerald-300', border: 'rgba(16,185,129,0.28)' };
 
   return (
     <div
       className="mt-3 rounded-2xl overflow-hidden"
-      style={{
-        border: isLowScore ? '1px solid rgba(251,146,60,0.35)' : '1px solid rgba(16,185,129,0.28)',
-        background: isLowScore
-          ? 'linear-gradient(160deg, rgba(251,146,60,0.08) 0%, rgba(8,14,26,0.99) 55%)'
-          : 'linear-gradient(160deg, rgba(16,185,129,0.09) 0%, rgba(8,14,26,0.99) 55%)',
-      }}
+      style={{ border: `1px solid ${scoreColor.border}`, background: `linear-gradient(170deg, ${scoreColor.bg} 0%, rgba(8,14,26,0.99) 50%)` }}
     >
+      {/* Gradient top accent */}
       <div className={`h-[2px] bg-gradient-to-r ${isLowScore ? 'from-orange-500 via-amber-400 to-yellow-500' : 'from-emerald-500 via-teal-400 to-cyan-500'}`} />
 
-      <div className="p-5">
-        {/* Header */}
-        <div className="text-center mb-4">
-          {/* Urgency timer badge */}
-          <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 mb-2 ${
-            isLowScore
-              ? 'bg-orange-500/10 border border-orange-500/20'
-              : 'bg-red-500/10 border border-red-500/20'
-          }`}>
-            <Clock size={10} className={isLowScore ? 'text-orange-400' : 'text-red-400'} />
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${isLowScore ? 'text-orange-400' : 'text-red-400'}`}>
+      <div className="p-4 space-y-3">
+
+        {/* ── Score hero + headline ──────────────────────────────── */}
+        <div className="flex items-center gap-3">
+          {score !== undefined && (
+            <div className="relative shrink-0">
+              <svg width="52" height="52" viewBox="0 0 52 52" className="rotate-[-90deg]">
+                <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+                <circle cx="26" cy="26" r="22" fill="none" stroke={isLowScore ? '#f97316' : '#10b981'} strokeWidth="4"
+                  strokeDasharray={`${2 * Math.PI * 22 * score / 100} ${2 * Math.PI * 22}`}
+                  strokeLinecap="round" />
+              </svg>
+              <span className={`absolute inset-0 flex items-center justify-center text-[13px] font-black ${scoreColor.text}`}>{score}</span>
+            </div>
+          )}
+          <div>
+            <p className="text-white font-extrabold text-[15px] leading-tight">
               {lang === 'en'
-                ? `Report expires in ${timerLabel}`
-                : `Informe disponible ${timerLabel}`}
+                ? (isLowScore ? 'Competitors are taking your customers' : 'Your full report is generated')
+                : (isLowScore ? 'Tus competidores te quitan clientes' : 'Tu informe completo está generado')}
+            </p>
+            <p className={`text-[11px] mt-0.5 ${scoreColor.text}`}>
+              {lang === 'en'
+                ? (isLowScore ? `${score}/100 — see who and by how much` : `${score}/100 — see the full breakdown`)
+                : (isLowScore ? `${score}/100 — ve quién y por cuánto` : `${score}/100 — ve el análisis completo`)}
+            </p>
+          </div>
+        </div>
+
+        {/* ── Blurred competitor preview ─────────────────────────── */}
+        <div className="rounded-xl overflow-hidden border border-slate-700/40" style={{ background: 'rgba(15,23,42,0.6)' }}>
+          <div className="px-3 py-1.5 border-b border-slate-700/40 flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500/70" />
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-500/70" />
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/70" />
+            <span className="ml-1 text-[9px] text-slate-500 font-mono">
+              {context === 'maps'
+                ? (lang === 'en' ? 'google_maps_ranking.json' : 'ranking_google_maps.json')
+                : (lang === 'en' ? 'seo_competitor_gap.json' : 'brecha_seo_competidores.json')}
             </span>
           </div>
-
-          <p className="text-white font-extrabold text-base leading-tight mb-1.5">
-            {score !== undefined
-              ? (lang === 'en'
-                  ? (isLowScore ? `Your profile scored ${score}/100 — here's what's costing you customers` : `Your profile scored ${score}/100 — see the full breakdown`)
-                  : (isLowScore ? `Tu ficha tiene ${score}/100 — esto te está costando clientes` : `Tu ficha tiene ${score}/100 — ve el análisis completo`))
-              : (lang === 'en'
-                  ? 'Your full competitive report is ready'
-                  : 'Tu informe competitivo completo está listo')}
-          </p>
-          <p className="text-slate-400 text-xs leading-snug">
-            {lang === 'en'
-              ? 'Free access · no card required · instant'
-              : 'Acceso gratuito · sin tarjeta · inmediato'}
-          </p>
-        </div>
-
-        {/* Locked preview — shimmer effect */}
-        <style>{`
-          @keyframes shimmer-slide {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(200%); }
-          }
-          .gate-shimmer { animation: shimmer-slide 2.4s ease-in-out infinite; }
-        `}</style>
-        <div className="space-y-1.5 mb-4">
-          {lockedItems.map(({ Icon, label, blurText }, i) => (
-            <div key={i} className="relative rounded-xl border border-slate-600/40 bg-slate-800/40 px-3 py-2.5 overflow-hidden">
-              {/* Shimmer highlight */}
-              <div
-                className="gate-shimmer absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent pointer-events-none"
-                style={{ animationDelay: `${i * 0.4}s` }}
-              />
-              <div className="flex items-center gap-2.5 mb-1">
-                <div className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${
-                  isLowScore ? 'bg-orange-500/10 border-orange-500/20' : 'bg-emerald-500/10 border-emerald-500/20'
-                }`}>
-                  <Icon size={11} className={isLowScore ? 'text-orange-400' : 'text-emerald-400'} />
-                </div>
-                <span className="text-xs font-semibold text-slate-300 flex-1 leading-tight">{label}</span>
-                <Lock size={10} className="text-slate-500 shrink-0" />
+          {teaserRows.map(({ rank, stars, reviews, gap }, i) => (
+            <div key={i} className={`flex items-center gap-2 px-3 py-2 ${i < teaserRows.length - 1 ? 'border-b border-slate-700/30' : ''}`}>
+              <span className={`text-[9px] font-black w-5 shrink-0 ${i === 0 ? 'text-amber-400' : 'text-slate-500'}`}>{rank}</span>
+              {/* Blurred business name */}
+              <span
+                className="flex-1 text-[11px] text-slate-300 font-medium select-none truncate"
+                style={{ filter: 'blur(4.5px)', userSelect: 'none' }}
+              >
+                {i === 0 ? 'Restaurante Casa Pepe' : i === 1 ? 'Bar La Terraza' : 'Cafeteria El Rincon'}
+              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <Star size={9} className="text-amber-400 fill-amber-400" />
+                <span className="text-[9px] text-slate-300 font-semibold">{stars}</span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug pl-8 blur-[3.5px] select-none pointer-events-none">{blurText}</p>
+              <span className="text-[9px] text-slate-500 shrink-0 hidden xs:block">{reviews}</span>
+              <span className={`text-[9px] font-bold shrink-0 ${isLowScore ? 'text-red-400' : 'text-orange-400'}`}>{gap}</span>
             </div>
           ))}
+          <div className="px-3 py-2 flex items-center justify-center gap-1.5 border-t border-slate-700/30" style={{ background: 'rgba(0,0,0,0.3)' }}>
+            <Lock size={9} className="text-slate-500" />
+            <span className="text-[9px] text-slate-500">
+              {lang === 'en' ? 'Unlock to reveal competitor names + full analysis' : 'Desbloquea para ver los nombres y el análisis completo'}
+            </span>
+          </div>
         </div>
 
-        {/* ── CTAs ─────────────────────────────────────────────── */}
-        {!inApp ? (
-          <>
-            {/* PRIMARY: Google — 1 click, zero friction */}
+        {/* ── CTAs ───────────────────────────────────────────────── */}
+        <div ref={ctaRef} className="space-y-2">
+          {/* PRIMARY: Google (1 click) */}
+          {!inApp ? (
             <button
               type="button"
-              onClick={() => { track('gate_register_click', { context, method: 'google_inline' }); onGoogle(); }}
+              onClick={() => { track('gate_register_click', { context, method: 'google_inline' }); storeGoogleIntent(context); onGoogle(); }}
               disabled={googleLoading}
-              className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl font-semibold text-sm transition-all duration-200
-                bg-white hover:bg-slate-50 text-slate-900 shadow-lg shadow-black/20
-                disabled:opacity-60 disabled:cursor-not-allowed mb-2"
+              className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-[13px] transition-all duration-150
+                bg-emerald-500 hover:bg-emerald-400 active:scale-[0.985] text-slate-950
+                shadow-[0_4px_20px_rgba(16,185,129,0.35)]
+                disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none"
             >
               {googleLoading ? (
-                <svg className="animate-spin w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin w-3.5 h-3.5 text-slate-800" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
@@ -241,112 +240,80 @@ function InlineGate({
               <span>
                 {googleLoading
                   ? (lang === 'en' ? 'Redirecting...' : 'Redirigiendo...')
-                  : (lang === 'en' ? 'Continue with Google — instant access' : 'Continuar con Google — acceso inmediato')}
+                  : (lang === 'en' ? 'Continue with Google (1 click)' : 'Continuar con Google (1 clic)')}
               </span>
             </button>
-
-            {/* Divider */}
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex-1 h-px bg-slate-800" />
-              <span className="text-[10px] text-slate-600 uppercase tracking-wider">
-                {lang === 'en' ? 'or with email' : 'o con email'}
-              </span>
-              <div className="flex-1 h-px bg-slate-800" />
-            </div>
-
-            {/* SECONDARY: email */}
-            <form onSubmit={handleEmailSubmit} className="flex gap-2 mb-3">
-              <div className="relative flex-1">
-                <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={lang === 'en' ? 'your@email.com' : 'tu@email.com'}
-                  className="w-full bg-slate-950/80 border border-slate-700/70 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-100
-                    placeholder-slate-600 outline-none transition-all duration-200
-                    focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={!email.trim()}
-                className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200
-                  bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20
-                  disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {lang === 'en' ? 'Unlock' : 'Acceder'} <ArrowRight size={13} />
-              </button>
-            </form>
-          </>
-        ) : (
-          /* In-app browser: email primary, Google not available */
-          <>
-            <form onSubmit={handleEmailSubmit} className="flex gap-2 mb-2">
-              <div className="relative flex-1">
-                <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={lang === 'en' ? 'your@email.com' : 'tu@email.com'}
-                  className="w-full bg-slate-950/80 border border-slate-700/70 rounded-xl pl-9 pr-3 py-3 text-sm text-slate-100
-                    placeholder-slate-600 outline-none transition-all duration-200
-                    focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={!email.trim()}
-                className="shrink-0 flex items-center gap-1.5 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200
-                  bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20
-                  disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {lang === 'en' ? 'Unlock' : 'Acceder'} <ArrowRight size={13} />
-              </button>
-            </form>
+          ) : (
             <button
               type="button"
               onClick={() => { track('gate_register_click', { context, method: 'email_inapp' }); onLoginClick(); }}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all duration-200
-                bg-slate-800/60 border border-slate-700/50 text-slate-300 hover:bg-slate-700/60 hover:text-white mb-3"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-[13px] transition-all duration-150
+                bg-emerald-500 hover:bg-emerald-400 active:scale-[0.985] text-slate-950
+                shadow-[0_4px_20px_rgba(16,185,129,0.35)]"
             >
               <ExternalLink size={13} />
-              {lang === 'en' ? 'Open in browser for Google login' : 'Abrir en navegador para Google'}
+              {lang === 'en' ? 'Open in browser for Google login' : 'Ver mi informe completo'}
             </button>
-          </>
-        )}
+          )}
 
-        {/* Trust row */}
-        <div className="flex items-center justify-center gap-3 pt-2 border-t border-slate-800/50">
-          <span className="text-[10px] text-slate-600 flex items-center gap-1">
-            <Shield size={9} />
-            {lang === 'en' ? '7 days free' : '7 días gratis'}
-          </span>
-          <span className="text-slate-700">·</span>
-          <span className="text-[10px] text-slate-600 flex items-center gap-1">
-            <Shield size={9} />
-            {lang === 'en' ? 'No card' : 'Sin tarjeta'}
-          </span>
-          <span className="text-slate-700">·</span>
-          <span className="text-[10px] text-slate-600 flex items-center gap-1">
-            <Shield size={9} />
-            {lang === 'en' ? 'No spam' : 'Sin spam'}
-          </span>
+          {/* Divider */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-slate-800" />
+            <span className="text-[9px] text-slate-600 px-1">
+              {lang === 'en' ? 'or sign up with email' : 'o regístrate con email'}
+            </span>
+            <div className="flex-1 h-px bg-slate-800" />
+          </div>
+
+          {/* SECONDARY: email form */}
+          <form onSubmit={handleEmailSubmit} className="flex gap-2">
+            <div className="relative flex-1">
+              <Mail size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={lang === 'en' ? 'your@email.com' : 'tu@email.com'}
+                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-xl pl-9 pr-3 py-2.5 text-[13px] text-slate-100
+                  placeholder-slate-600 outline-none transition-all duration-150
+                  focus:border-slate-500/60 focus:ring-1 focus:ring-slate-500/15"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!email.trim()}
+              className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-semibold text-[12px] transition-all duration-150
+                bg-slate-700/80 hover:bg-slate-600/80 border border-slate-600/60 text-slate-200 active:scale-[0.985]
+                disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            >
+              <ArrowRight size={13} />
+            </button>
+          </form>
+
+          {googleError && (
+            <p className="text-[10px] text-red-400 text-center">{googleError}</p>
+          )}
+
+          {/* Trust + sign in */}
+          <div className="flex items-center justify-center gap-3 pt-0.5">
+            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />{lang === 'en' ? 'Free 7 days' : '7 días gratis'}</span>
+            <span className="text-slate-700 text-[9px]">·</span>
+            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />{lang === 'en' ? 'No card' : 'Sin tarjeta'}</span>
+            <span className="text-slate-700 text-[9px]">·</span>
+            <span className="text-[9px] text-slate-600">
+              {lang === 'en' ? 'Already have an account?' : '¿Ya tienes cuenta?'}{' '}
+              <button
+                type="button"
+                onClick={() => { track('gate_register_click', { context, method: 'login_link' }); onLoginClick(); }}
+                className="text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                {lang === 'en' ? 'Sign in' : 'Inicia sesión'}
+              </button>
+            </span>
+          </div>
         </div>
 
-        <p className="text-center text-[10px] text-slate-600 mt-2">
-          {lang === 'en' ? 'Already have an account?' : '¿Ya tienes cuenta?'}{' '}
-          <button
-            type="button"
-            onClick={() => { track('gate_register_click', { context, method: 'login_link' }); onLoginClick(); }}
-            className="text-emerald-400 hover:text-emerald-300 transition-colors"
-          >
-            {lang === 'en' ? 'Sign in' : 'Inicia sesión'}
-          </button>
-        </p>
       </div>
     </div>
   );
@@ -560,11 +527,11 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
     scanTimeoutRef.current = setTimeout(() => {
       setPhase('result');
       track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
-      // Gate shown after 3.5s delay — lets user absorb the first result before asking to register
+      // Gate shown after 8s delay — lets user absorb the result before asking to register
       gateTimeoutRef.current = setTimeout(() => {
         gateContextRef.current = effectiveTab;
         setGateVisible(true);
-      }, 3500);
+      }, 8000);
     }, 1800);
   };
 
@@ -609,6 +576,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
     }
     setGoogleLoading(true);
     setGoogleError('');
+    storeGoogleIntent(gateContextRef.current);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/`, queryParams: { prompt: 'select_account' } },

@@ -1,4 +1,5 @@
 const SESSION_KEY = 'ls_sid';
+const GOOGLE_INTENT_KEY = '_ga_intent';
 
 function getSessionId(): string {
   let sid = localStorage.getItem(SESSION_KEY);
@@ -47,3 +48,28 @@ export function track(eventName: string, properties: Record<string, unknown> = {
     }),
   }).catch(() => {});
 }
+
+// Call this immediately before triggering Google OAuth redirect.
+// Stores the intent in localStorage so it can be flushed on the next page load
+// if the keepalive fetch didn't survive the navigation.
+export function storeGoogleIntent(context: string) {
+  try {
+    localStorage.setItem(GOOGLE_INTENT_KEY, JSON.stringify({ context, ts: Date.now() }));
+  } catch { /* ignore */ }
+}
+
+// Flush any Google OAuth intent stored before a redirect (runs once on module load).
+function flushGoogleIntent() {
+  try {
+    const raw = localStorage.getItem(GOOGLE_INTENT_KEY);
+    if (!raw) return;
+    const intent = JSON.parse(raw) as { context: string; ts: number };
+    localStorage.removeItem(GOOGLE_INTENT_KEY);
+    // Only flush if the redirect happened within the last 3 minutes
+    if (Date.now() - intent.ts < 180_000) {
+      track('google_auth_attempted', { context: intent.context, elapsed_ms: Date.now() - intent.ts });
+    }
+  } catch { /* ignore */ }
+}
+
+flushGoogleIntent();
