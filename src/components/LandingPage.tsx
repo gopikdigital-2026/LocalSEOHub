@@ -244,16 +244,18 @@ function InlineGate({
               </span>
             </button>
           ) : (
-            <button
-              type="button"
+            <a
+              href={window.location.href}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => { track('gate_register_click', { context, method: 'email_inapp' }); onLoginClick(); }}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-[13px] transition-all duration-150
                 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.985] text-slate-950
-                shadow-[0_4px_20px_rgba(16,185,129,0.35)]"
+                shadow-[0_4px_20px_rgba(16,185,129,0.35)] no-underline"
             >
               <ExternalLink size={13} />
-              {lang === 'en' ? 'Open in browser for Google login' : 'Ver mi informe completo'}
-            </button>
+              {lang === 'en' ? 'Open in browser to continue' : 'Abrir en navegador para continuar'}
+            </a>
           )}
 
           {/* Divider */}
@@ -577,11 +579,25 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
     setGoogleLoading(true);
     setGoogleError('');
     storeGoogleIntent(gateContextRef.current);
+
+    // Reset loading if the user navigates back without completing OAuth
+    let cleanedUp = false;
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      clearTimeout(fallbackTimer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+    const onVisible = () => { if (!document.hidden) { cleanup(); setGoogleLoading(false); } };
+    document.addEventListener('visibilitychange', onVisible);
+    const fallbackTimer = setTimeout(() => { cleanup(); setGoogleLoading(false); }, 15000);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/`, queryParams: { prompt: 'select_account' } },
     });
     if (error) {
+      cleanup();
       track('auth_error', { method: 'google', error: error.message });
       setGoogleLoading(false);
       setGoogleError(lang === 'en' ? 'Google not available right now. Try registering with email.' : 'Google no está disponible ahora. Regístrate con email.');

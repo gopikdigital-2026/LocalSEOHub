@@ -57,6 +57,18 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
   const handleGoogleAuth = async () => {
     setGoogleLoading(true);
     clearMessages();
+
+    let cleanedUp = false;
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      clearTimeout(fallbackTimer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+    const onVisible = () => { if (!document.hidden) { cleanup(); setGoogleLoading(false); } };
+    document.addEventListener('visibilitychange', onVisible);
+    const fallbackTimer = setTimeout(() => { cleanup(); setGoogleLoading(false); }, 15000);
+
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -65,6 +77,7 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
       },
     });
     if (authError) {
+      cleanup();
       setError(translateError(authError.message));
       setGoogleLoading(false);
     }
