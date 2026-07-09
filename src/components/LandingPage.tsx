@@ -73,6 +73,7 @@ function InlineGate({
   googleError,
   lang,
   score,
+  businessName,
 }: {
   onGoogle: () => void;
   onLoginClick: (email?: string) => void;
@@ -81,6 +82,7 @@ function InlineGate({
   googleError?: string;
   lang: string;
   score?: number;
+  businessName?: string;
 }) {
   const [email, setEmail] = React.useState('');
   const [submitted, setSubmitted] = React.useState(false);
@@ -127,7 +129,7 @@ function InlineGate({
     );
   }
 
-  // Blurred teaser rows — shape of the data they'll see, names hidden
+  // Blurred competitor rows — placeholder names, not fake specific businesses
   const teaserRows = context === 'maps'
     ? [
         { rank: '#1', stars: '4.8', reviews: lang === 'en' ? '127 reviews' : '127 reseñas', gap: lang === 'en' ? '+89 vs you' : '+89 vs ti' },
@@ -139,6 +141,10 @@ function InlineGate({
         { rank: '#2', stars: '87', reviews: lang === 'en' ? '12 platforms' : '12 plataformas', gap: lang === 'en' ? '+18 keywords' : '+18 keywords' },
         { rank: '#3', stars: '79', reviews: lang === 'en' ? '9 platforms' : '9 plataformas',  gap: lang === 'en' ? '+7 keywords' : '+7 keywords' },
       ];
+
+  const competitorLabels = lang === 'en'
+    ? ['Competitor #1 in your area', 'Competitor #2 in your area', 'Competitor #3 in your area']
+    : ['Competidor #1 en tu zona', 'Competidor #2 en tu zona', 'Competidor #3 en tu zona'];
 
   const scoreColor = isLowScore ? { ring: 'rgba(251,146,60,0.5)', bg: 'rgba(251,146,60,0.08)', text: 'text-orange-300', border: 'rgba(251,146,60,0.30)' }
                                 : { ring: 'rgba(16,185,129,0.5)',  bg: 'rgba(16,185,129,0.07)',  text: 'text-emerald-300', border: 'rgba(16,185,129,0.28)' };
@@ -168,9 +174,11 @@ function InlineGate({
           )}
           <div>
             <p className="text-white font-extrabold text-[15px] leading-tight">
-              {lang === 'en'
-                ? (isLowScore ? 'Competitors are taking your customers' : 'Your full report is generated')
-                : (isLowScore ? 'Tus competidores te quitan clientes' : 'Tu informe completo está generado')}
+              {businessName
+                ? (lang === 'en' ? `Your report for ${businessName} is ready` : `Tu informe de ${businessName} está listo`)
+                : (lang === 'en'
+                  ? (isLowScore ? 'Competitors are taking your customers' : 'Your full report is generated')
+                  : (isLowScore ? 'Tus competidores te quitan clientes' : 'Tu informe completo está generado'))}
             </p>
             <p className={`text-[11px] mt-0.5 ${scoreColor.text}`}>
               {lang === 'en'
@@ -195,12 +203,11 @@ function InlineGate({
           {teaserRows.map(({ rank, stars, reviews, gap }, i) => (
             <div key={i} className={`flex items-center gap-2 px-3 py-2 ${i < teaserRows.length - 1 ? 'border-b border-slate-700/30' : ''}`}>
               <span className={`text-[9px] font-black w-5 shrink-0 ${i === 0 ? 'text-amber-400' : 'text-slate-500'}`}>{rank}</span>
-              {/* Blurred business name */}
               <span
                 className="flex-1 text-[11px] text-slate-300 font-medium select-none truncate"
                 style={{ filter: 'blur(4.5px)', userSelect: 'none' }}
               >
-                {i === 0 ? 'Restaurante Casa Pepe' : i === 1 ? 'Bar La Terraza' : 'Cafeteria El Rincon'}
+                {competitorLabels[i]}
               </span>
               <div className="flex items-center gap-1 shrink-0">
                 <Star size={9} className="text-amber-400 fill-amber-400" />
@@ -462,14 +469,16 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
 
-  // Maps tab — pre-filled so the CTA is active from the first second
-  const [business, setBusiness] = useState(lang === 'en' ? 'Smith Dental Clinic' : 'Clínica Dental Pérez');
-  const [city, setCity] = useState(lang === 'en' ? 'London' : 'Madrid');
+  const [isDemoScan, setIsDemoScan] = useState(false);
+
+  // Maps tab
+  const [business, setBusiness] = useState('');
+  const [city, setCity] = useState('');
   const [score] = useState(() => Math.floor(38 + Math.random() * 22));
 
-  // SEO tab — pre-filled with a realistic example
-  const [product, setProduct] = useState(lang === 'en' ? 'teeth whitening' : 'blanqueamiento dental');
-  const [seoCity, setSeoCity] = useState(lang === 'en' ? 'London' : 'Madrid');
+  // SEO tab
+  const [product, setProduct] = useState('');
+  const [seoCity, setSeoCity] = useState('');
   const [tipo, setTipo] = useState<SeoTipo>('servicio');
   const [platform, setPlatform] = useState('Google Business');
 
@@ -506,7 +515,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
       : (overrideName ?? product);
     if (!trigger.trim()) return;
     if (!auto) userActed.current = true;
-    // Cancel any in-flight scan result timeout before starting a new one.
+    setIsDemoScan(auto);
     if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
     if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
     setGateVisible(false);
@@ -529,18 +538,27 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
     scanTimeoutRef.current = setTimeout(() => {
       setPhase('result');
       track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
-      // Gate shown after 8s delay — lets user absorb the result before asking to register
+      // Gate immediately for user's own data; 3s delay for demo
       gateTimeoutRef.current = setTimeout(() => {
         gateContextRef.current = effectiveTab;
         setGateVisible(true);
-      }, 8000);
+      }, auto ? 3000 : 0);
     }, 1800);
   };
 
   // Auto-run demo after 2s so users see the product working without having to click
   useEffect(() => {
+    const demoBusiness = lang === 'en' ? 'Smith Dental Clinic' : 'Clínica Dental Pérez';
+    const demoCity = lang === 'en' ? 'London' : 'Madrid';
+    const demoProduct = lang === 'en' ? 'teeth whitening' : 'blanqueamiento dental';
     const t = setTimeout(() => {
-      if (!userActed.current) handleScan(true);
+      if (!userActed.current) {
+        setBusiness(demoBusiness);
+        setCity(demoCity);
+        setProduct(demoProduct);
+        setSeoCity(demoCity);
+        handleScan(true);
+      }
     }, 2000);
     return () => {
       clearTimeout(t);
@@ -706,19 +724,14 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
             <>
               {phase === 'idle' && (
                 <>
-                  <div className="flex items-center justify-between gap-2.5 mb-5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                        <MapPinned size={14} className="text-emerald-400" />
-                      </div>
-                      <div>
-                        <p className="text-white text-sm font-bold leading-tight">{t('widget_maps_heading')}</p>
-                        <p className="text-slate-500 text-[11px]">{t('widget_maps_subheading')}</p>
-                      </div>
+                  <div className="flex items-center gap-2.5 mb-5">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                      <MapPinned size={14} className="text-emerald-400" />
                     </div>
-                    <span className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/25 text-amber-400">
-                      {lang === 'en' ? 'EXAMPLE' : 'EJEMPLO'}
-                    </span>
+                    <div>
+                      <p className="text-white text-sm font-bold leading-tight">{t('widget_maps_heading')}</p>
+                      <p className="text-slate-500 text-[11px]">{t('widget_maps_subheading')}</p>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
@@ -756,9 +769,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     {t('widget_maps_btn')}
                   </button>
                   <p className="text-center text-[11px] text-slate-500 mt-3">
-                    {lang === 'en'
-                      ? 'Click to see the result — then use your own data'
-                      : 'Haz clic para ver el resultado — luego usa tus datos'}
+                    {lang === 'en' ? 'Free · No account needed' : 'Gratis · Sin cuenta para empezar'}
                   </p>
                 </>
               )}
@@ -793,6 +804,33 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
 
               {phase === 'result' && (
                 <div className="space-y-3">
+
+                  {/* Demo banner — primary CTA when scanning example data */}
+                  {isDemoScan && (
+                    <div className="rounded-xl border border-teal-500/40 bg-teal-500/8 p-4">
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-400 uppercase tracking-wider">
+                          {lang === 'en' ? 'EXAMPLE' : 'EJEMPLO'}
+                        </span>
+                        <p className="text-slate-400 text-[11px]">
+                          {lang === 'en' ? 'Analysis of a sample business' : 'Análisis de un negocio de ejemplo'}
+                        </p>
+                      </div>
+                      <p className="text-white font-extrabold text-sm mb-3">
+                        {lang === 'en' ? 'Now analyse YOUR own business:' : 'Ahora analiza TU propio negocio:'}
+                      </p>
+                      <button
+                        onClick={() => { setPhase('idle'); setBusiness(''); setCity(''); setGateVisible(false); }}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm
+                          bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                          text-slate-950 shadow-lg shadow-emerald-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                      >
+                        <Zap size={14} fill="currentColor" />
+                        {lang === 'en' ? 'Analyse my own business →' : 'Analizar mi propio negocio →'}
+                      </button>
+                    </div>
+                  )}
+
                   {/* Score — always visible */}
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -805,17 +843,6 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     </div>
                   </div>
 
-                  {/* Try with own data */}
-                  <button
-                    onClick={() => { setPhase('idle'); setBusiness(''); setCity(''); }}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold
-                      bg-emerald-500/15 border border-emerald-500/40 text-emerald-300
-                      hover:bg-emerald-500/25 hover:border-emerald-400/60 hover:text-emerald-200
-                      transition-all duration-200"
-                  >
-                    <ChevronRight size={14} className="rotate-180" />
-                    {lang === 'en' ? 'Analyse my own business' : 'Analizar mi propio negocio'}
-                  </button>
                   <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-1000"
                       style={{ width: `${score}%`, background: 'linear-gradient(to right, #f59e0b, #fbbf24)' }} />
@@ -825,7 +852,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     <span>{lang === 'es' ? `Tu ficha está infraoptimizada. Los competidores capturan ${100 - score}% más llamadas y visitas.` : `Your profile is under-optimized. Competitors capture ${100 - score}% more calls and visits.`}</span>
                   </p>
 
-                  {/* Optimized title — always visible (proves value before gate) */}
+                  {/* Optimized title — always visible */}
                   <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
                     <div className="flex items-center justify-between mb-1.5">
                       <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">{t('widget_seo_title_lbl')}</p>
@@ -836,23 +863,17 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     <p className="text-white text-sm font-medium leading-snug">{mapsTitle}</p>
                   </div>
 
-                  {/* Description + Keywords — always visible */}
-                  <div className="space-y-3">
-                    <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
-                      <p className="text-slate-300 text-xs leading-relaxed">{mapsDesc}</p>
-                    </div>
-                    <div className="p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {mapsKeywords.slice(0, 3).map((kw, i) => (
-                          <span key={i} className="text-[11px] rounded-full px-3 py-1 bg-teal-500/15 border border-teal-500/20 text-teal-300">{kw}</span>
-                        ))}
-                        <span className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400">
-                          <Lock size={9} />
-                          {lang === 'en' ? `+${mapsKeywords.length - 3} more` : `+${mapsKeywords.length - 3} más`}
-                        </span>
-                      </div>
+                  {/* Keywords preview (first 2 free, rest locked) */}
+                  <div className="p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {mapsKeywords.slice(0, 2).map((kw, i) => (
+                        <span key={i} className="text-[11px] rounded-full px-3 py-1 bg-teal-500/15 border border-teal-500/20 text-teal-300">{kw}</span>
+                      ))}
+                      <span className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400">
+                        <Lock size={9} />
+                        {lang === 'en' ? `+${mapsKeywords.length - 2} locked` : `+${mapsKeywords.length - 2} bloqueadas`}
+                      </span>
                     </div>
                   </div>
 
@@ -873,7 +894,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     </p>
                   </div>
 
-                  {/* Inline gate — shown after 9s delay to let user absorb results */}
+                  {/* Inline gate */}
                   {gateVisible && (
                   <div ref={gateRef}>
                   <InlineGate
@@ -884,6 +905,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     googleError={googleError}
                     lang={lang}
                     score={score}
+                    businessName={isDemoScan ? undefined : displayName}
                   />
                   </div>
                   )}
@@ -897,19 +919,14 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
             <>
               {phase === 'idle' && (
                 <>
-                  <div className="flex items-center justify-between gap-2.5 mb-5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
-                        <Sparkles size={14} className="text-teal-400" />
-                      </div>
+                  <div className="flex items-center gap-2.5 mb-5">
+                    <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
+                      <Sparkles size={14} className="text-teal-400" />
+                    </div>
                     <div>
                       <p className="text-white text-sm font-bold leading-tight">{t('widget_seo_heading')}</p>
                       <p className="text-slate-500 text-[11px]">{t('widget_seo_subheading')}</p>
                     </div>
-                    </div>
-                    <span className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/25 text-amber-400">
-                      {lang === 'en' ? 'EXAMPLE' : 'EJEMPLO'}
-                    </span>
                   </div>
 
                   {/* Tipo de negocio toggle */}
@@ -978,9 +995,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     {t('widget_seo_btn')}
                   </button>
                   <p className="text-center text-[11px] text-slate-500 mt-3">
-                    {lang === 'en'
-                      ? 'Click to see the result — then use your own data'
-                      : 'Haz clic para ver el resultado — luego usa tus datos'}
+                    {lang === 'en' ? 'Free · No account needed' : 'Gratis · Sin cuenta para empezar'}
                   </p>
                 </>
               )}
@@ -1020,23 +1035,49 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     </div>
                   </div>
 
-                  {/* Try with own data */}
-                  <button
-                    onClick={() => { setPhase('idle'); setShowGate(false); setGateDismissed(false); setProduct(''); setSeoCity(''); }}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold
-                      bg-emerald-500/15 border border-emerald-500/40 text-emerald-300
-                      hover:bg-emerald-500/25 hover:border-emerald-400/60 hover:text-emerald-200
-                      transition-all duration-200"
-                  >
-                    <ChevronRight size={14} className="rotate-180" />
-                    {lang === 'en' ? 'Analyse my own product/service' : 'Analizar mi propio producto/servicio'}
-                  </button>
+                  {/* Demo banner — primary CTA when scanning example data */}
+                  {isDemoScan && (
+                    <div className="rounded-xl border border-teal-500/40 bg-teal-500/8 p-4">
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-400 uppercase tracking-wider">
+                          {lang === 'en' ? 'EXAMPLE' : 'EJEMPLO'}
+                        </span>
+                        <p className="text-slate-400 text-[11px]">
+                          {lang === 'en' ? 'Analysis of a sample product/service' : 'Análisis de un producto/servicio de ejemplo'}
+                        </p>
+                      </div>
+                      <p className="text-white font-extrabold text-sm mb-3">
+                        {lang === 'en' ? 'Now analyse YOUR own product or service:' : 'Ahora analiza TU propio producto o servicio:'}
+                      </p>
+                      <button
+                        onClick={() => { setPhase('idle'); setProduct(''); setSeoCity(''); setGateVisible(false); }}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm
+                          bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400
+                          text-slate-950 shadow-lg shadow-teal-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                      >
+                        <Sparkles size={14} />
+                        {lang === 'en' ? 'Analyse my own product/service →' : 'Analizar mi propio producto/servicio →'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Header — always visible */}
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
+                      <Sparkles size={12} className="text-teal-400" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{t('widget_seo_result_lbl')}</p>
+                      <p className="text-white font-bold text-sm leading-tight">{displayProduct}{displaySeoCity ? ` · ${displaySeoCity}` : ''} · {platform}</p>
+                    </div>
+                  </div>
+
                   <p className="text-[11px] text-teal-400/80 flex items-center gap-1.5">
                     <BadgeCheck size={11} className="text-teal-400 shrink-0" />
                     <span>{lang === 'es' ? 'Análisis completado. Desbloquea el contenido completo para aplicarlo.' : 'Analysis complete. Unlock the full content to apply it.'}</span>
                   </p>
 
-                  {/* SEO title — always visible (proves value before gate) */}
+                  {/* SEO title — always visible */}
                   <div className="rounded-xl bg-teal-500/5 border border-teal-500/15 p-3.5">
                     <div className="flex items-center justify-between mb-1.5">
                       <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider">{t('widget_seo_opt_title')}</p>
@@ -1047,25 +1088,19 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     <p className="text-white text-sm font-medium leading-snug">{seoTitle}</p>
                   </div>
 
-                  {/* Description + Tags — always visible */}
-                  <div className="space-y-3">
-                    <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">{t('widget_desc_lbl')}</p>
-                      <p className="text-slate-300 text-xs leading-relaxed">{seoDesc}</p>
-                    </div>
-                    <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
-                        {lang === 'es' ? `Etiquetas · Alt text · Plan de contenido` : `Tags · Alt text · Content plan`}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {seoTagsVisible.map((tag, i) => (
-                          <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
-                        ))}
-                        <span className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400">
-                          <Lock size={9} />
-                          {lang === 'en' ? `+${seoTagsBlurred.length} more` : `+${seoTagsBlurred.length} más`}
-                        </span>
-                      </div>
+                  {/* Tags preview (visible only, rest locked) */}
+                  <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
+                      {lang === 'es' ? `Etiquetas · Alt text · Plan de contenido` : `Tags · Alt text · Content plan`}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {seoTagsVisible.slice(0, 2).map((tag, i) => (
+                        <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
+                      ))}
+                      <span className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400">
+                        <Lock size={9} />
+                        {lang === 'en' ? `+${seoTagsBlurred.length + 1} locked` : `+${seoTagsBlurred.length + 1} bloqueadas`}
+                      </span>
                     </div>
                   </div>
 
@@ -1086,7 +1121,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     </p>
                   </div>
 
-                  {/* Inline gate — shown after 9s delay to let user absorb results */}
+                  {/* Inline gate */}
                   {gateVisible && (
                   <div ref={gateRef}>
                   <InlineGate
@@ -1096,6 +1131,7 @@ function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => voi
                     context="seo"
                     googleError={googleError}
                     lang={lang}
+                    businessName={isDemoScan ? undefined : displayProduct}
                   />
                   </div>
                   )}
