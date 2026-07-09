@@ -1,11 +1,11 @@
+import React, { useState, useRef, useEffect, type FormEvent } from 'react';
 import {
-  MapPin, Zap, TrendingUp, Shield, Star, Check, ArrowRight, Sparkles,
-  Eye, Globe, Target, Calendar, MapPinned, ChevronRight, X, HelpCircle,
-  Users, Award, BarChart3, Flame, BadgeCheck, ChevronDown, Lock, AlertCircle, ExternalLink, Mail,
-  Clock,
+  MapPin, Zap, Shield, Star, Check, ArrowRight, Sparkles,
+  Eye, Globe, Target, MapPinned, Lock, AlertCircle, ExternalLink,
+  Mail, ChevronDown, Brain, FileText, BarChart3, Users, Award,
+  BadgeCheck, Flame, TrendingUp, CheckCircle2, Building2, Mic,
+  MessageSquare, Clock, Radar, ChevronRight, Search,
 } from 'lucide-react';
-import type { FormEvent } from 'react';
-import React, { useState, useEffect, useRef } from 'react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
 import { supabase } from '../lib/supabase';
@@ -19,27 +19,209 @@ interface LandingPageProps {
   scrollToPricing?: boolean;
 }
 
-const PLATFORMS = [
-  'Etsy', 'Shopify', 'Amazon', 'Google Business', 'Wallapop',
-  'Vinted', 'eBay', 'Instagram', 'TripAdvisor', 'Booking.com',
-  'WooCommerce', 'Doctoralia', 'Habitissimo', 'Treatwell', 'Facebook Marketplace', 'Web propia',
+// ─── Tool trial config ────────────────────────────────────────────────────────
+type TrialToolId = 'seo' | 'maps' | 'twin' | 'radar' | 'advisor';
+type DemoPhase = 'idle' | 'scanning' | 'result';
+
+const TRIAL_TOOLS: Array<{
+  id: TrialToolId;
+  label: string;
+  shortLabel: string;
+  IconComponent: React.ElementType;
+  gradient: string;
+  border: string;
+  iconBg: string;
+  ph1: string;
+  ph2: string;
+  btn: string;
+  scanMsg: string;
+}> = [
+  {
+    id: 'seo',
+    label: 'Generador SEO',
+    shortLabel: 'SEO',
+    IconComponent: FileText,
+    gradient: 'from-emerald-500/15 to-teal-500/8',
+    border: 'border-emerald-500/30',
+    iconBg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+    ph1: 'Tu negocio o producto (ej: peluquería, fontanero…)',
+    ph2: 'Tu ciudad',
+    btn: 'Generar mi SEO gratis',
+    scanMsg: 'Generando contenido SEO optimizado…',
+  },
+  {
+    id: 'maps',
+    label: 'Escaner Maps',
+    shortLabel: 'Maps',
+    IconComponent: MapPinned,
+    gradient: 'from-blue-500/15 to-sky-500/8',
+    border: 'border-blue-500/30',
+    iconBg: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
+    ph1: 'Nombre de tu negocio en Google Maps',
+    ph2: 'Tu ciudad',
+    btn: 'Escanear mi ficha gratis',
+    scanMsg: 'Analizando tu ficha de Google Maps…',
+  },
+  {
+    id: 'twin',
+    label: 'AI Digital Twin',
+    shortLabel: 'Twin',
+    IconComponent: Eye,
+    gradient: 'from-cyan-500/15 to-sky-500/8',
+    border: 'border-cyan-500/30',
+    iconBg: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/25',
+    ph1: 'Nombre de tu negocio',
+    ph2: 'Categoría (ej: restaurante, clínica, tienda…)',
+    btn: 'Crear mi Digital Twin gratis',
+    scanMsg: 'Construyendo tu gemelo digital…',
+  },
+  {
+    id: 'radar',
+    label: 'Radar de Competencia',
+    shortLabel: 'Radar',
+    IconComponent: Target,
+    gradient: 'from-orange-500/15 to-amber-500/8',
+    border: 'border-orange-500/30',
+    iconBg: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
+    ph1: 'Nombre de tu negocio',
+    ph2: 'Tu ciudad',
+    btn: 'Analizar mis competidores gratis',
+    scanMsg: 'Escaneando competidores en tu zona…',
+  },
+  {
+    id: 'advisor',
+    label: 'AI Advisor',
+    shortLabel: 'Advisor',
+    IconComponent: Brain,
+    gradient: 'from-rose-500/15 to-pink-500/8',
+    border: 'border-rose-500/30',
+    iconBg: 'bg-rose-500/15 text-rose-400 border-rose-500/25',
+    ph1: 'Nombre de tu negocio',
+    ph2: 'Tu mayor reto de captación ahora mismo',
+    btn: 'Obtener consejo gratis',
+    scanMsg: 'Analizando tu situación con IA…',
+  },
 ];
 
-const TOOL_META = [
-  { icon: <Sparkles size={22} />, badge: 'Core', color: 'from-emerald-500/10 to-teal-500/5', border: 'border-emerald-500/20', iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' },
-  { icon: <MapPinned size={22} />, badge: 'Maps', color: 'from-blue-500/10 to-sky-500/5', border: 'border-blue-500/20', iconBg: 'bg-blue-500/10 border-blue-500/20 text-blue-400' },
-  { icon: <Eye size={22} />, badge: 'Twin', color: 'from-cyan-500/10 to-sky-500/5', border: 'border-cyan-500/20', iconBg: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400' },
-  { icon: <Target size={22} />, badge: 'Radar', color: 'from-orange-500/10 to-amber-500/5', border: 'border-orange-500/20', iconBg: 'bg-orange-500/10 border-orange-500/20 text-orange-400' },
-  { icon: <Globe size={22} />, badge: 'GEO', color: 'from-teal-500/10 to-cyan-500/5', border: 'border-teal-500/20', iconBg: 'bg-teal-500/10 border-teal-500/20 text-teal-400' },
-  { icon: <Calendar size={22} />, badge: 'Plan', color: 'from-rose-500/10 to-pink-500/5', border: 'border-rose-500/20', iconBg: 'bg-rose-500/10 border-rose-500/20 text-rose-400' },
-] as const;
+const TOOLS_SHOWCASE = [
+  {
+    icon: FileText,
+    name: 'Generador de Contenido SEO',
+    desc: 'Genera títulos, descripciones y keywords optimizadas para Google Business, Etsy, Shopify, Amazon y 13 plataformas más. La IA adapta el copy a tu categoría, ciudad y algoritmo específico.',
+    badge: '16+ plataformas',
+    color: 'emerald',
+  },
+  {
+    icon: MapPinned,
+    name: 'Escaner de Fichas de Maps',
+    desc: 'Audita tu Google Business Profile con IA. Puntuación de optimización 0-100, fallos críticos detectados automáticamente y plan de acción con los cambios exactos que debes aplicar.',
+    badge: 'Puntuación 0-100',
+    color: 'blue',
+  },
+  {
+    icon: Eye,
+    name: 'AI Digital Twin',
+    desc: 'Crea un gemelo digital de tu negocio y visualiza cómo te perciben los buscadores. Mapa de calor de visibilidad por zonas de tu ciudad para detectar dónde pierdes clientes.',
+    badge: 'Mapa de calor local',
+    color: 'cyan',
+  },
+  {
+    icon: Target,
+    name: 'Radar de Competencia',
+    desc: 'Pega la URL de cualquier competidor y obtén un análisis completo de sus keywords, puntuación SEO y estrategia. Genera contramedidas automáticas personalizadas para superarle.',
+    badge: 'Análisis en tiempo real',
+    color: 'orange',
+  },
+  {
+    icon: Globe,
+    name: 'GEO Audit — Visibilidad en IA',
+    desc: 'Mide si ChatGPT, Gemini o Perplexity recomiendan tu negocio. El 30% de las búsquedas ya pasan por IA — asegúrate de que te mencionan cuando alguien pregunta por tu servicio.',
+    badge: 'ChatGPT · Gemini',
+    color: 'teal',
+  },
+  {
+    icon: Brain,
+    name: 'AI Business Advisor',
+    desc: 'Consejero de marketing digital disponible 24/7. Describe tu situación y recibe un plan de acción concreto, priorizado y adaptado a tu tipo de negocio y presupuesto real.',
+    badge: 'Estrategia personalizada',
+    color: 'rose',
+  },
+  {
+    icon: Mic,
+    name: 'Voice & Campaign Simulator',
+    desc: 'Simula cómo suena tu negocio en búsquedas por voz (Siri, Alexa, Google Assistant) y previsualiza el rendimiento de campañas antes de invertir un solo euro en publicidad.',
+    badge: 'Voz + Campañas',
+    color: 'violet',
+  },
+];
 
-const TESTIMONIAL_META = [
-  { name: 'Marta G.', city: 'Toledo', business: 'Peluquería Éclat', stars: 5, initials: 'MG', color: 'from-emerald-500 to-teal-600', photo: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop' },
-  { name: 'Carlos R.', city: 'Valencia', business: 'Clínica Dental Ruiz', stars: 5, initials: 'CR', color: 'from-blue-500 to-cyan-600', photo: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop' },
-  { name: 'Laura M.', city: 'Sevilla', business: 'Restaurante La Plaza', stars: 5, initials: 'LM', color: 'from-rose-500 to-pink-600', photo: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop' },
-] as const;
+const TESTIMONIALS = [
+  {
+    name: 'Javier Medina',
+    role: 'Fontanero autónomo',
+    city: 'Zaragoza',
+    stars: 5,
+    metric: '+3 llamadas en 48h',
+    text: 'Llevaba 3 años con mi negocio en Google Maps sin conseguir que me llamasen. Con el Escaner me di cuenta de que mi ficha tenía 6 fallos críticos. Los corregí un martes y ese mismo viernes tuve 3 llamadas nuevas.',
+    photo: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop',
+    initials: 'JM',
+  },
+  {
+    name: 'Ana Climent',
+    role: 'Directora, Agencia Digital Spark',
+    city: 'Valencia',
+    stars: 5,
+    metric: '10 horas/semana ahorradas',
+    text: 'Gestionamos SEO local para 12 pequeños negocios. LocalSEOHub nos ahorra entre 8 y 10 horas semanales de trabajo manual. El Generador SEO solo ya justifica con creces la suscripción.',
+    photo: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop',
+    initials: 'AC',
+  },
+  {
+    name: 'David Ramos',
+    role: 'Fisioterapeuta, Clínica FisioRDR',
+    city: 'Málaga',
+    stars: 5,
+    metric: '4 de cada 5 respuestas de ChatGPT',
+    text: 'El GEO Audit me mostró que ChatGPT no me recomendaba cuando alguien preguntaba por fisioterapeutas en Málaga. Apliqué los cambios y ahora aparezco en 4 de cada 5 consultas de IA.',
+    photo: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop',
+    initials: 'DR',
+  },
+  {
+    name: 'Marta Iglesias',
+    role: 'Propietaria, Peluquería Éclat',
+    city: 'Madrid',
+    stars: 5,
+    metric: 'Del puesto 8 al 2 en Maps',
+    text: 'Nunca había entendido de SEO. Con el Generador metí mi nombre y mi barrio y en 30 segundos tuve el texto perfecto para mi ficha. Pasé del puesto 8 al 2 en búsquedas de peluquería en mi zona.',
+    photo: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop',
+    initials: 'MI',
+  },
+];
 
+const FAQS = [
+  {
+    q: '¿Necesito saber de SEO para usar LocalSEOHub?',
+    a: 'No. Está diseñado para propietarios de negocios sin conocimientos técnicos. Introduces el nombre de tu negocio y tu ciudad — la IA hace el resto. Sin jerga, sin configuraciones complejas.',
+  },
+  {
+    q: '¿Funciona para cualquier tipo de negocio local?',
+    a: 'Sí. Fontaneros, peluquerías, restaurantes, clínicas, tiendas de ropa, academias, abogados, talleres mecánicos… Cualquier negocio que quiera aparecer en búsquedas locales se beneficia de LocalSEOHub.',
+  },
+  {
+    q: '¿Qué pasa cuando terminan los 7 días de prueba?',
+    a: 'Si decides continuar, se activa tu suscripción mensual. Si no, puedes cancelar en cualquier momento antes del día 7 sin que se te cobre nada. No pedimos tarjeta para empezar.',
+  },
+  {
+    q: '¿Puedo usar LocalSEOHub para varios negocios o clientes?',
+    a: 'Sí. Muchos de nuestros usuarios son agencias de marketing digital que gestionan varios clientes. Con una sola suscripción puedes analizar y generar contenido para todos.',
+  },
+  {
+    q: '¿Los textos generados son únicos o plantillas genéricas?',
+    a: 'Cada texto se genera en el momento con IA adaptada a tu negocio, tu ciudad, tu categoría y la plataforma elegida. Nunca recibirás el mismo texto que otro usuario.',
+  },
+];
+
+// ─── Google icon ──────────────────────────────────────────────────────────────
 function GoogleIconSm() {
   return (
     <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
@@ -51,59 +233,31 @@ function GoogleIconSm() {
   );
 }
 
-type ScanPhase = 'idle' | 'scanning' | 'result';
-type WidgetTab = 'maps' | 'seo';
-
-const SEO_PLATFORMS_PRODUCTO = [
-  'Etsy', 'Shopify', 'WooCommerce', 'Amazon', 'eBay', 'Wallapop', 'Vinted', 'Facebook Marketplace',
-];
-
-const SEO_PLATFORMS_SERVICIO = [
-  'Google Business', 'Web propia / Blog SEO', 'Instagram / Facebook',
-  'Booking.com', 'Doctoralia', 'TripAdvisor', 'Habitissimo', 'Treatwell',
-];
-
-type SeoTipo = 'producto' | 'servicio';
-
-function InlineGate({
+// ─── Registration gate ────────────────────────────────────────────────────────
+function RegistrationGate({
   onGoogle,
   onLoginClick,
   googleLoading,
-  context,
   googleError,
-  lang,
-  score,
+  context,
   businessName,
+  toolLabel,
 }: {
   onGoogle: () => void;
   onLoginClick: (email?: string) => void;
   googleLoading: boolean;
+  googleError: string;
   context: string;
-  googleError?: string;
-  lang: string;
-  score?: number;
   businessName?: string;
+  toolLabel: string;
 }) {
-  const [email, setEmail] = React.useState('');
-  const [submitted, setSubmitted] = React.useState(false);
-  const ctaRef = React.useRef<HTMLDivElement | null>(null);
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const inApp = isInAppBrowser();
 
-  React.useEffect(() => {
-    if (!ctaRef.current) return;
-    const el = ctaRef.current;
-    let fired = false;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !fired) {
-        fired = true;
-        track('gate_cta_visible', { context });
-        observer.disconnect();
-      }
-    }, { threshold: 0.3 });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [context]);
+  useEffect(() => { track('gate_shown', { context, trigger: 'tool_result' }); }, [context]);
 
-  const handleEmailSubmit = (e: FormEvent) => {
+  const handleEmail = (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     track('gate_register_click', { context, method: 'email_inline' });
@@ -111,123 +265,45 @@ function InlineGate({
     onLoginClick(email.trim());
   };
 
-  const inApp = isInAppBrowser();
-  const isLowScore = score !== undefined && score < 60;
-
   if (submitted) {
     return (
-      <div className="mt-3 rounded-2xl p-5 text-center space-y-2"
-        style={{ border: '1px solid rgba(16,185,129,0.28)', background: 'linear-gradient(160deg, rgba(16,185,129,0.09) 0%, rgba(8,14,26,0.99) 55%)' }}
-      >
+      <div className="rounded-2xl p-5 text-center space-y-2 border border-emerald-500/28"
+        style={{ background: 'linear-gradient(160deg, rgba(16,185,129,0.09) 0%, rgba(8,14,26,0.99) 55%)' }}>
         <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mx-auto">
           <Check size={18} className="text-emerald-400" />
         </div>
-        <p className="text-white font-bold text-sm">
-          {lang === 'en' ? 'Opening your report...' : 'Abriendo tu informe...'}
-        </p>
+        <p className="text-white font-bold text-sm">Abriendo tu informe completo…</p>
       </div>
     );
   }
 
-  // Blurred competitor rows — placeholder names, not fake specific businesses
-  const teaserRows = context === 'maps'
-    ? [
-        { rank: '#1', stars: '4.8', reviews: lang === 'en' ? '127 reviews' : '127 reseñas', gap: lang === 'en' ? '+89 vs you' : '+89 vs ti' },
-        { rank: '#2', stars: '4.6', reviews: lang === 'en' ? '89 reviews' : '89 reseñas',  gap: lang === 'en' ? '+51 vs you' : '+51 vs ti' },
-        { rank: '#3', stars: '4.3', reviews: lang === 'en' ? '54 reviews' : '54 reseñas',  gap: lang === 'en' ? '+16 vs you' : '+16 vs ti' },
-      ]
-    : [
-        { rank: '#1', stars: '94', reviews: lang === 'en' ? '16 platforms' : '16 plataformas', gap: lang === 'en' ? '+31 keywords' : '+31 keywords' },
-        { rank: '#2', stars: '87', reviews: lang === 'en' ? '12 platforms' : '12 plataformas', gap: lang === 'en' ? '+18 keywords' : '+18 keywords' },
-        { rank: '#3', stars: '79', reviews: lang === 'en' ? '9 platforms' : '9 plataformas',  gap: lang === 'en' ? '+7 keywords' : '+7 keywords' },
-      ];
-
-  const competitorLabels = lang === 'en'
-    ? ['Competitor #1 in your area', 'Competitor #2 in your area', 'Competitor #3 in your area']
-    : ['Competidor #1 en tu zona', 'Competidor #2 en tu zona', 'Competidor #3 en tu zona'];
-
-  const scoreColor = isLowScore ? { ring: 'rgba(251,146,60,0.5)', bg: 'rgba(251,146,60,0.08)', text: 'text-orange-300', border: 'rgba(251,146,60,0.30)' }
-                                : { ring: 'rgba(16,185,129,0.5)',  bg: 'rgba(16,185,129,0.07)',  text: 'text-emerald-300', border: 'rgba(16,185,129,0.28)' };
-
   return (
-    <div
-      className="mt-3 rounded-2xl overflow-hidden"
-      style={{ border: `1px solid ${scoreColor.border}`, background: `linear-gradient(170deg, ${scoreColor.bg} 0%, rgba(8,14,26,0.99) 50%)` }}
-    >
-      {/* Gradient top accent */}
-      <div className={`h-[2px] bg-gradient-to-r ${isLowScore ? 'from-orange-500 via-amber-400 to-yellow-500' : 'from-emerald-500 via-teal-400 to-cyan-500'}`} />
+    <div className="rounded-2xl overflow-hidden border border-emerald-500/30"
+      style={{ background: 'linear-gradient(170deg, rgba(16,185,129,0.08) 0%, rgba(8,14,26,0.99) 50%)' }}>
+      <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+      <div className="p-5 space-y-3">
 
-      <div className="p-4 space-y-3">
-
-        {/* ── Score hero + headline ──────────────────────────────── */}
-        <div className="flex items-center gap-3">
-          {score !== undefined && (
-            <div className="relative shrink-0">
-              <svg width="52" height="52" viewBox="0 0 52 52" className="rotate-[-90deg]">
-                <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
-                <circle cx="26" cy="26" r="22" fill="none" stroke={isLowScore ? '#f97316' : '#10b981'} strokeWidth="4"
-                  strokeDasharray={`${2 * Math.PI * 22 * score / 100} ${2 * Math.PI * 22}`}
-                  strokeLinecap="round" />
-              </svg>
-              <span className={`absolute inset-0 flex items-center justify-center text-[13px] font-black ${scoreColor.text}`}>{score}</span>
-            </div>
-          )}
-          <div>
-            <p className="text-white font-extrabold text-[15px] leading-tight">
-              {businessName
-                ? (lang === 'en' ? `Your report for ${businessName} is ready` : `Tu informe de ${businessName} está listo`)
-                : (lang === 'en'
-                  ? (isLowScore ? 'Competitors are taking your customers' : 'Your full report is generated')
-                  : (isLowScore ? 'Tus competidores te quitan clientes' : 'Tu informe completo está generado'))}
-            </p>
-            <p className={`text-[11px] mt-0.5 ${scoreColor.text}`}>
-              {lang === 'en'
-                ? (isLowScore ? `${score}/100 — see who and by how much` : `${score}/100 — see the full breakdown`)
-                : (isLowScore ? `${score}/100 — ve quién y por cuánto` : `${score}/100 — ve el análisis completo`)}
-            </p>
-          </div>
+        <div className="text-center space-y-1">
+          <p className="text-white font-extrabold text-base leading-tight">
+            {businessName
+              ? `Tu análisis de "${businessName}" está listo`
+              : `Tu ${toolLabel} está listo`}
+          </p>
+          <p className="text-emerald-400 text-[12px]">
+            Regístrate gratis para ver el informe completo — 7 días sin coste, sin tarjeta
+          </p>
         </div>
 
-        {/* ── Blurred competitor preview ─────────────────────────── */}
-        <div className="rounded-xl overflow-hidden border border-slate-700/40" style={{ background: 'rgba(15,23,42,0.6)' }}>
-          <div className="px-3 py-1.5 border-b border-slate-700/40 flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500/70" />
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-500/70" />
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/70" />
-            <span className="ml-1 text-[9px] text-slate-500 font-mono">
-              {context === 'maps'
-                ? (lang === 'en' ? 'google_maps_ranking.json' : 'ranking_google_maps.json')
-                : (lang === 'en' ? 'seo_competitor_gap.json' : 'brecha_seo_competidores.json')}
-            </span>
-          </div>
-          {teaserRows.map(({ rank, stars, reviews, gap }, i) => (
-            <div key={i} className={`flex items-center gap-2 px-3 py-2 ${i < teaserRows.length - 1 ? 'border-b border-slate-700/30' : ''}`}>
-              <span className={`text-[9px] font-black w-5 shrink-0 ${i === 0 ? 'text-amber-400' : 'text-slate-500'}`}>{rank}</span>
-              <span
-                className="flex-1 text-[11px] text-slate-300 font-medium select-none truncate"
-                style={{ filter: 'blur(4.5px)', userSelect: 'none' }}
-              >
-                {competitorLabels[i]}
-              </span>
-              <div className="flex items-center gap-1 shrink-0">
-                <Star size={9} className="text-amber-400 fill-amber-400" />
-                <span className="text-[9px] text-slate-300 font-semibold">{stars}</span>
-              </div>
-              <span className="text-[9px] text-slate-500 shrink-0 hidden xs:block">{reviews}</span>
-              <span className={`text-[9px] font-bold shrink-0 ${isLowScore ? 'text-red-400' : 'text-orange-400'}`}>{gap}</span>
+        <div className="grid grid-cols-3 gap-2 py-1">
+          {['Informe completo', 'Todas las keywords', 'Plan de acción'].map((item) => (
+            <div key={item} className="flex flex-col items-center gap-1 rounded-xl bg-slate-800/40 border border-slate-700/40 p-2">
+              <Check size={11} className="text-emerald-400" />
+              <span className="text-[10px] text-slate-400 text-center leading-tight">{item}</span>
             </div>
           ))}
-          <div className="px-3 py-2 flex items-center justify-center gap-1.5 border-t border-slate-700/30" style={{ background: 'rgba(0,0,0,0.3)' }}>
-            <Lock size={9} className="text-slate-500" />
-            <span className="text-[9px] text-slate-500">
-              {lang === 'en' ? 'Unlock to reveal competitor names + full analysis' : 'Desbloquea para ver los nombres y el análisis completo'}
-            </span>
-          </div>
         </div>
 
-        {/* ── CTAs ───────────────────────────────────────────────── */}
-        <div ref={ctaRef} className="space-y-2">
-          {/* PRIMARY: Google (1 click) */}
+        <div className="space-y-2" onClick={() => track('gate_cta_visible', { context })}>
           {!inApp ? (
             <button
               type="button"
@@ -235,925 +311,519 @@ function InlineGate({
               disabled={googleLoading}
               className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-[13px] transition-all duration-150
                 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.985] text-slate-950
-                shadow-[0_4px_20px_rgba(16,185,129,0.35)]
-                disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none"
+                shadow-[0_4px_20px_rgba(16,185,129,0.35)] disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {googleLoading ? (
-                <svg className="animate-spin w-3.5 h-3.5 text-slate-800" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : <GoogleIconSm />}
-              <span>
-                {googleLoading
-                  ? (lang === 'en' ? 'Redirecting...' : 'Redirigiendo...')
-                  : (lang === 'en' ? 'Continue with Google (1 click)' : 'Continuar con Google (1 clic)')}
-              </span>
+              {googleLoading
+                ? <svg className="animate-spin w-3.5 h-3.5 text-slate-800" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                : <GoogleIconSm />}
+              <span>{googleLoading ? 'Redirigiendo…' : 'Registrarme con Google (1 clic)'}</span>
             </button>
           ) : (
-            <a
-              href={window.location.href}
-              target="_blank"
-              rel="noopener noreferrer"
+            <a href={window.location.href} target="_blank" rel="noopener noreferrer"
               onClick={() => { track('gate_register_click', { context, method: 'email_inapp' }); onLoginClick(); }}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-[13px] transition-all duration-150
-                bg-emerald-500 hover:bg-emerald-400 active:scale-[0.985] text-slate-950
-                shadow-[0_4px_20px_rgba(16,185,129,0.35)] no-underline"
-            >
-              <ExternalLink size={13} />
-              {lang === 'en' ? 'Open in browser to continue' : 'Abrir en navegador para continuar'}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-[13px]
+                bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_4px_20px_rgba(16,185,129,0.35)] no-underline">
+              <ExternalLink size={13} />Abrir en navegador para continuar
             </a>
           )}
 
-          {/* Divider */}
           <div className="flex items-center gap-2">
             <div className="flex-1 h-px bg-slate-800" />
-            <span className="text-[9px] text-slate-600 px-1">
-              {lang === 'en' ? 'or sign up with email' : 'o regístrate con email'}
-            </span>
+            <span className="text-[9px] text-slate-600 px-1">o con email</span>
             <div className="flex-1 h-px bg-slate-800" />
           </div>
 
-          {/* SECONDARY: email form */}
-          <form onSubmit={handleEmailSubmit} className="flex gap-2">
+          <form onSubmit={handleEmail} className="flex gap-2">
             <div className="relative flex-1">
               <Mail size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={lang === 'en' ? 'your@email.com' : 'tu@email.com'}
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
                 className="w-full bg-slate-900/80 border border-slate-700/60 rounded-xl pl-9 pr-3 py-2.5 text-[13px] text-slate-100
-                  placeholder-slate-600 outline-none transition-all duration-150
-                  focus:border-slate-500/60 focus:ring-1 focus:ring-slate-500/15"
-              />
+                  placeholder-slate-600 outline-none transition-all focus:border-slate-500/60 focus:ring-1 focus:ring-slate-500/15" />
             </div>
-            <button
-              type="submit"
-              disabled={!email.trim()}
-              className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-semibold text-[12px] transition-all duration-150
-                bg-slate-700/80 hover:bg-slate-600/80 border border-slate-600/60 text-slate-200 active:scale-[0.985]
-                disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-            >
+            <button type="submit" disabled={!email.trim()}
+              className="flex items-center justify-center px-4 py-2.5 rounded-xl font-semibold text-[12px]
+                bg-slate-700/80 hover:bg-slate-600/80 border border-slate-600/60 text-slate-200
+                disabled:opacity-40 disabled:cursor-not-allowed shrink-0 transition-all">
               <ArrowRight size={13} />
             </button>
           </form>
 
-          {googleError && (
-            <p className="text-[10px] text-red-400 text-center">{googleError}</p>
-          )}
+          {googleError && <p className="text-[10px] text-red-400 text-center">{googleError}</p>}
 
-          {/* Trust + sign in */}
-          <div className="flex items-center justify-center gap-3 pt-0.5">
-            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />{lang === 'en' ? 'Free 7 days' : '7 días gratis'}</span>
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />7 días gratis</span>
             <span className="text-slate-700 text-[9px]">·</span>
-            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />{lang === 'en' ? 'No card' : 'Sin tarjeta'}</span>
+            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />Sin tarjeta</span>
             <span className="text-slate-700 text-[9px]">·</span>
             <span className="text-[9px] text-slate-600">
-              {lang === 'en' ? 'Already have an account?' : '¿Ya tienes cuenta?'}{' '}
-              <button
-                type="button"
-                onClick={() => { track('gate_register_click', { context, method: 'login_link' }); onLoginClick(); }}
-                className="text-emerald-400 hover:text-emerald-300 transition-colors"
-              >
-                {lang === 'en' ? 'Sign in' : 'Inicia sesión'}
+              ¿Ya tienes cuenta?{' '}
+              <button type="button" onClick={() => { track('gate_register_click', { context, method: 'login_link' }); onLoginClick(); }}
+                className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                Inicia sesión
               </button>
             </span>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-function OwnScanBanner({ tab, lang, onScan }: {
-  tab: WidgetTab;
-  lang: string;
-  onScan: (name: string, city: string, type: WidgetTab) => void;
-}) {
-  const [scanType, setScanType] = useState<WidgetTab>(tab);
-  const [name, setName] = useState('');
-
-  useEffect(() => { track('own_scan_prompt_shown', { tab }); }, [tab]);
-
-  const handleSubmit = () => {
-    if (!name.trim()) return;
-    track('own_scan_submitted', { tab: scanType });
-    onScan(name.trim(), '', scanType);
-  };
-
-  // Blurred locked items shown to create urgency
-  const lockedPreviews = lang === 'en' ? [
-    { Icon: Globe, label: 'Advanced GEO labels', blurText: '9 structured GEO tags for your category and search radius' },
-    { Icon: Target, label: 'Keyword optimisation', blurText: 'Top 8 keywords with volume and competition score for your niche' },
-  ] : [
-    { Icon: Globe, label: 'Etiquetas GEO avanzadas', blurText: '9 etiquetas GEO estructuradas para tu categoría y radio de búsqueda' },
-    { Icon: Target, label: 'Optimización de keywords', blurText: '8 keywords principales con volumen y dificultad para tu nicho' },
-  ];
+// ─── Tool demo result renderers ───────────────────────────────────────────────
+function SeoResult({ input1, input2 }: { input1: string; input2: string }) {
+  const biz = input1 || 'tu negocio';
+  const city = input2 || 'tu ciudad';
+  const title = `${biz} en ${city} — Expertos Locales · Reserva Online · Resultados Garantizados`;
+  const desc = `¿Buscas ${biz.toLowerCase()} en ${city}? Somos especialistas con más de 10 años de experiencia. Ofrecemos atención personalizada, presupuesto sin compromiso y el mejor servicio de la zona.`;
+  const kws = [`${biz.toLowerCase()} ${city}`, `mejor ${biz.toLowerCase()} ${city}`];
+  const score = Math.floor(38 + Math.random() * 28);
 
   return (
-    <div
-      className="mt-3 rounded-2xl overflow-hidden"
-      style={{ border: '1px solid rgba(20,184,166,0.28)', background: 'linear-gradient(145deg, rgba(20,184,166,0.08) 0%, rgba(10,18,32,0.99) 55%)' }}
-    >
-      <div className="h-[2px] bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-500" />
-      <div className="p-5">
-        {/* Urgency hook */}
-        <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5 mb-4">
-          <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
-              <AlertCircle size={11} className="text-amber-400" />
-            </div>
-            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-              {lang === 'en' ? 'Competitors in your area are gaining ground' : 'Competidores en tu zona están ganando terreno'}
-            </span>
-          </div>
-          <p className="text-amber-300/85 text-xs leading-relaxed pl-7">
-            {lang === 'en'
-              ? '3 local businesses similar to yours improved their ranking this week. Enter your name to see how you compare.'
-              : '3 negocios de tu zona han mejorado su posicionamiento esta semana. Pon el tuyo para ver cómo estás frente a ellos.'}
-          </p>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Resultado generado</p>
+        <span className="text-[9px] bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-full px-2 py-0.5 font-semibold uppercase">Gratis</span>
+      </div>
+      <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
+        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">Título SEO optimizado</p>
+        <p className="text-white text-sm font-medium leading-snug">{title}</p>
+      </div>
+      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Descripción (vista previa)</p>
+        <p className="text-slate-300 text-xs leading-relaxed">{desc}</p>
+        <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-500">
+          <Lock size={9} />
+          <span>Versión SEO extendida + schema estructurado bloqueados</span>
         </div>
+      </div>
+      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Keywords</p>
+        <div className="flex flex-wrap gap-2">
+          {kws.map((k) => <span key={k} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{k}</span>)}
+          <span className="flex items-center gap-1 text-[11px] bg-slate-700/60 border border-slate-600/50 text-slate-400 rounded-full px-3 py-1"><Lock size={9} />+8 bloqueadas</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/6 border border-amber-500/25">
+        <AlertCircle size={14} className="text-amber-400 shrink-0" />
+        <p className="text-amber-300/90 text-xs">Tu ficha actual tiene un score estimado de <strong>{score}/100</strong>. Con las optimizaciones completas puedes llegar a 85+.</p>
+      </div>
+    </div>
+  );
+}
 
-        {/* Locked previews */}
-        <div className="space-y-1.5 mb-4">
-          {lockedPreviews.map(({ Icon, label, blurText }, i) => (
-            <div key={i} className="rounded-xl border border-slate-700/35 bg-slate-800/25 p-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="w-5 h-5 rounded-md bg-slate-700/50 flex items-center justify-center shrink-0">
-                  <Icon size={10} className="text-slate-500" />
-                </div>
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide flex-1">{label}</span>
-                <Lock size={8} className="text-slate-600 shrink-0" />
-              </div>
-              <p className="text-[11px] text-slate-400 ml-7 blur-sm select-none pointer-events-none leading-relaxed">{blurText}</p>
+function MapsResult({ input1, input2 }: { input1: string; input2: string }) {
+  const biz = input1 || 'tu negocio';
+  const city = input2 || 'tu ciudad';
+  const score = Math.floor(32 + Math.random() * 30);
+  const title = `${biz} en ${city} — Abierto hoy | Atención personalizada | Reserva online`;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">Puntuación de optimización</p>
+          <p className="text-white font-bold text-sm">{biz} · {city}</p>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-2xl font-extrabold text-amber-400 tabular-nums">{score}/100</div>
+          <div className="text-[10px] text-slate-500">Infraoptimizado</div>
+        </div>
+      </div>
+      <div className="w-full bg-slate-800/60 rounded-full h-2.5 overflow-hidden">
+        <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-1000"
+          style={{ width: `${score}%` }} />
+      </div>
+      <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
+        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">Título optimizado (gratis)</p>
+        <p className="text-white text-sm font-medium leading-snug">{title}</p>
+      </div>
+      <div className="rounded-xl bg-amber-500/6 border border-amber-500/25 p-3.5">
+        <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider mb-2">Fallos críticos detectados</p>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-xs text-amber-300/80">
+            <AlertCircle size={10} className="text-amber-400 shrink-0" />
+            <span>Sin horarios especiales para festivos (pierdes el 68% de búsquedas nocturnas)</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Lock size={10} className="shrink-0" /><span className="blur-[3px] select-none">Descripción sin keywords semánticas locales</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Lock size={10} className="shrink-0" /><span className="blur-[3px] select-none">Sin schema de negocio estructurado</span>
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Lock size={9} className="text-slate-500" />
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Competidores cercanos — bloqueado</p>
+        </div>
+        <div className="space-y-1.5">
+          {['Competidor #1 en tu zona', 'Competidor #2 en tu zona'].map((c, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-[9px] font-black text-amber-400 w-4">#{i + 1}</span>
+              <span className="text-[11px] text-slate-300 blur-[5px] select-none flex-1">{c}</span>
+              <span className="text-[9px] text-red-400 font-bold">+{i === 0 ? 47 : 29} pts</span>
             </div>
           ))}
         </div>
-
-        {/* Heading */}
-        <p className="text-white font-extrabold text-sm text-center mb-3">
-          {lang === 'en' ? 'Analyse YOUR business — it\'s free:' : 'Analiza TU negocio — es gratis:'}
-        </p>
-
-        {/* Type toggle */}
-        <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-700/50 rounded-xl p-1 mb-3">
-          <button
-            onClick={() => { setScanType('maps'); setName(''); }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
-              scanType === 'maps'
-                ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
-                : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            <MapPinned size={11} />
-            {lang === 'en' ? 'Local business' : 'Negocio local'}
-          </button>
-          <button
-            onClick={() => { setScanType('seo'); setName(''); }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
-              scanType === 'seo'
-                ? 'bg-teal-500/20 border border-teal-500/30 text-teal-300'
-                : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            <Sparkles size={11} />
-            {lang === 'en' ? 'Product / Service' : 'Producto / Servicio'}
-          </button>
-        </div>
-
-        {/* Form — single field, no city, no autoFocus */}
-        <div className="space-y-2">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder={scanType === 'maps'
-              ? (lang === 'en' ? 'Your business name...' : 'Nombre de tu negocio...')
-              : (lang === 'en' ? 'Your product or service...' : 'Tu producto o servicio...')}
-            className="w-full bg-slate-800/90 border border-slate-600/80 rounded-xl px-4 py-3 text-sm text-slate-100
-              placeholder-slate-500 outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={!name.trim()}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-sm
-              bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-              text-slate-950 shadow-lg shadow-emerald-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0
-              disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-          >
-            <Zap size={14} fill="currentColor" />
-            {lang === 'en'
-              ? (scanType === 'maps' ? 'Analyse my business →' : 'Analyse my product/service →')
-              : (scanType === 'maps' ? 'Analizar mi negocio →' : 'Analizar mi producto/servicio →')}
-          </button>
-        </div>
-
-        <p className="text-[10px] text-slate-600 text-center mt-3 flex items-center justify-center gap-1">
-          <Shield size={9} />
-          {lang === 'en' ? 'No account needed to start' : 'Sin cuenta para empezar'}
-        </p>
       </div>
     </div>
   );
 }
 
-function ScannerWidget({ onLoginClick }: { onLoginClick: (email?: string) => void }) {
-  const { t, lang } = useI18n();
-  const [tab, setTab] = useState<WidgetTab>('maps');
-  const [phase, setPhase] = useState<ScanPhase>('idle');
-  const [gateVisible, setGateVisible] = useState(false);
+function TwinResult({ input1, input2 }: { input1: string; input2: string }) {
+  const biz = input1 || 'tu negocio';
+  const cat = input2 || 'negocio local';
+  const score = Math.floor(40 + Math.random() * 28);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-0.5">Gemelo Digital creado</p>
+          <p className="text-white font-bold text-sm">{biz} · {cat}</p>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-2xl font-extrabold text-cyan-400 tabular-nums">{score}/100</div>
+          <div className="text-[10px] text-slate-500">Presencia digital</div>
+        </div>
+      </div>
+      <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
+        <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 transition-all duration-1000"
+          style={{ width: `${score}%` }} />
+      </div>
+      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Señales detectadas</p>
+        <div className="space-y-2">
+          {[
+            { ok: true, label: 'Presencia en Google Maps: Activa' },
+            { ok: true, label: 'Categoría principal: Correcta' },
+            { ok: false, label: 'Keywords semánticas en descripción' },
+          ].map(({ ok, label }, i) => (
+            <div key={i} className="flex items-center gap-2 text-xs">
+              {ok
+                ? <BadgeCheck size={11} className="text-emerald-400 shrink-0" />
+                : <AlertCircle size={11} className="text-amber-400 shrink-0" />}
+              <span className={ok ? 'text-slate-300' : 'text-amber-300/80'}>{label}</span>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Lock size={10} className="shrink-0" />
+            <span className="blur-[3px] select-none">Schema estructurado: No detectado</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Lock size={10} className="shrink-0" />
+            <span className="blur-[3px] select-none">Visibilidad en IA generativa: Sin datos</span>
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3">
+        <div className="flex items-center gap-2">
+          <Lock size={9} className="text-slate-500" />
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Mapa de calor de visibilidad por zonas — bloqueado</p>
+        </div>
+        <div className="mt-2 grid grid-cols-5 gap-1">
+          {[90, 45, 70, 20, 85, 35, 60, 80, 25, 55].map((v, i) => (
+            <div key={i} className="h-6 rounded-sm opacity-30"
+              style={{ background: `rgba(34,211,238,${v / 100})` }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RadarResult({ input1, input2 }: { input1: string; input2: string }) {
+  const biz = input1 || 'Tu negocio';
+  const city = input2 || 'tu ciudad';
+  const myScore = Math.floor(30 + Math.random() * 25);
+  const comps = [
+    { score: myScore + 42 + Math.floor(Math.random() * 10), reviews: 142 },
+    { score: myScore + 28 + Math.floor(Math.random() * 8), reviews: 97 },
+    { score: myScore + 15 + Math.floor(Math.random() * 6), reviews: 63 },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="text-center shrink-0">
+          <div className="text-2xl font-extrabold text-orange-400 tabular-nums">{myScore}</div>
+          <div className="text-[9px] text-slate-500">Tu score</div>
+        </div>
+        <div className="flex-1">
+          <p className="text-white font-bold text-sm">{biz}</p>
+          <p className="text-slate-500 text-[11px]">vs. 3 competidores en {city}</p>
+        </div>
+      </div>
+      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5 space-y-2.5">
+        {comps.map((c, i) => (
+          <div key={i} className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 blur-[4px] select-none">Competidor #{i + 1} en {city}</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[10px] text-red-400 font-bold">+{c.score - myScore} pts</span>
+                <Star size={9} className="text-amber-400 fill-amber-400" />
+                <span className="text-[9px] text-slate-400">{c.reviews}</span>
+              </div>
+            </div>
+            <div className="w-full bg-slate-700/40 rounded-full h-1.5">
+              <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-400"
+                style={{ width: `${Math.min(c.score, 100)}%` }} />
+            </div>
+          </div>
+        ))}
+        <div className="space-y-1 border-t border-slate-700/50 pt-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-emerald-400">{biz} (tú)</span>
+            <span className="text-[10px] text-slate-400 font-bold">{myScore}/100</span>
+          </div>
+          <div className="w-full bg-slate-700/40 rounded-full h-1.5">
+            <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+              style={{ width: `${myScore}%` }} />
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3">
+        <div className="flex items-center gap-2">
+          <Lock size={9} className="text-slate-500" />
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Plan para superar al #1 en 30 días — bloqueado</p>
+        </div>
+        <div className="mt-2 space-y-1">
+          {['Acción inmediata #1 para cerrar la brecha', 'Palabras clave que el #1 usa y tú no', 'Estrategia de reseñas semana a semana'].map((item) => (
+            <p key={item} className="text-[11px] text-slate-500 blur-[3.5px] select-none">{item}</p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdvisorResult({ input1, input2 }: { input1: string; input2: string }) {
+  const biz = input1 || 'tu negocio';
+  const problem = input2 || 'captación de clientes';
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Consejo AI para {biz}</p>
+      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Análisis de tu situación</p>
+        <p className="text-slate-300 text-xs leading-relaxed">
+          Para un negocio como <strong className="text-white">{biz}</strong>, el mayor obstáculo en la captación suele ser la baja visibilidad local: apareces tarde en los resultados cuando un cliente potencial busca "{problem.toLowerCase()}" cerca de tu dirección. Esto se debe principalmente a una ficha de Google Business Profile incompleta y a la ausencia de señales semánticas locales…
+        </p>
+        <div className="mt-2 flex items-center gap-1.5">
+          <Lock size={9} className="text-slate-500" />
+          <span className="text-[10px] text-slate-500">Análisis completo (8 puntos más) bloqueado</span>
+        </div>
+      </div>
+      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Lock size={9} className="text-slate-500" />
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Plan de acción en 5 pasos — bloqueado</p>
+        </div>
+        <div className="space-y-1">
+          {['Quick win esta semana: optimizar ficha GBP', 'Conseguir 10 reseñas con plantilla incluida', 'Keywords locales prioritarias para tu categoría'].map((item) => (
+            <p key={item} className="text-[11px] text-slate-500 blur-[3.5px] select-none">{item}</p>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/6 border border-rose-500/20">
+        <AlertCircle size={14} className="text-rose-400 shrink-0" />
+        <p className="text-rose-300/90 text-xs">Sin un plan estructurado, la mayoría de negocios locales pierden entre el 60% y el 80% de sus clientes potenciales ante competidores mejor posicionados.</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main tool trial widget ───────────────────────────────────────────────────
+function ToolTrialSection({ onLoginClick }: { onLoginClick: (email?: string) => void }) {
+  const [activeTool, setActiveTool] = useState(0);
+  const [input1, setInput1] = useState('');
+  const [input2, setInput2] = useState('');
+  const [phase, setPhase] = useState<DemoPhase>('idle');
+  const [showGate, setShowGate] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState('');
+  const [lockedInput1, setLockedInput1] = useState('');
+  const [lockedInput2, setLockedInput2] = useState('');
+  const scanRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [isDemoScan, setIsDemoScan] = useState(false);
+  const tool = TRIAL_TOOLS[activeTool];
 
-  // Maps tab
-  const [business, setBusiness] = useState('');
-  const [city, setCity] = useState('');
-  const [score] = useState(() => Math.floor(38 + Math.random() * 22));
-
-  // SEO tab
-  const [product, setProduct] = useState('');
-  const [seoCity, setSeoCity] = useState('');
-  const [tipo, setTipo] = useState<SeoTipo>('servicio');
-  const [platform, setPlatform] = useState('Google Business');
-
-  const platformOptions = tipo === 'producto' ? SEO_PLATFORMS_PRODUCTO : SEO_PLATFORMS_SERVICIO;
-
-  const handleTipoChange = (tipo_new: SeoTipo) => {
-    setTipo(tipo_new);
-    setPlatform(tipo_new === 'producto' ? SEO_PLATFORMS_PRODUCTO[0] : SEO_PLATFORMS_SERVICIO[0]);
-  };
-
-  const switchTab = (tab_new: WidgetTab) => {
-    track('widget_tab_switch', { tab: tab_new });
-    setTab(tab_new);
+  const switchTool = (idx: number) => {
+    if (scanRef.current) clearTimeout(scanRef.current);
+    setActiveTool(idx);
+    setInput1('');
+    setInput2('');
     setPhase('idle');
-    setGateVisible(false);
-    if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
+    setShowGate(false);
+    setGoogleError('');
   };
 
-  const userActed = useRef(false);
-  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gateRef = useRef<HTMLDivElement | null>(null);
-  const gateContextRef = useRef<string>('maps');
-
-  const handleScan = (
-    auto = false,
-    overrideTab?: WidgetTab,
-    overrideName?: string,
-    overrideCity?: string
-  ) => {
-    const effectiveTab = overrideTab ?? tab;
-    const trigger = effectiveTab === 'maps'
-      ? (overrideName ?? business)
-      : (overrideName ?? product);
-    if (!trigger.trim()) return;
-    if (!auto) userActed.current = true;
-    setIsDemoScan(auto);
-    if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
-    if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
-    setGateVisible(false);
-    if (overrideTab) setTab(overrideTab);
-    if (overrideName) {
-      if (effectiveTab === 'maps') setBusiness(overrideName);
-      else setProduct(overrideName);
-    }
-    if (overrideCity) {
-      if (effectiveTab === 'maps') setCity(overrideCity);
-      else setSeoCity(overrideCity);
-    }
-    track('widget_scan_start', {
-      tab: effectiveTab,
-      auto,
-      query: trigger,
-      ...(effectiveTab === 'seo' ? { tipo, platform } : { city: overrideCity ?? city }),
-    });
+  const handleScan = () => {
+    if (!input1.trim()) return;
+    setLockedInput1(input1.trim());
+    setLockedInput2(input2.trim());
     setPhase('scanning');
-    scanTimeoutRef.current = setTimeout(() => {
+    setShowGate(false);
+    track('widget_scan_start', { tool: tool.id, input: input1 });
+    scanRef.current = setTimeout(() => {
       setPhase('result');
-      track('widget_scan_result', { tab: effectiveTab, auto, ...(effectiveTab === 'seo' ? { tipo, platform } : {}) });
-      // Gate immediately for user's own data; 3s delay for demo
-      gateTimeoutRef.current = setTimeout(() => {
-        gateContextRef.current = effectiveTab;
-        setGateVisible(true);
-      }, auto ? 3000 : 0);
+      setShowGate(true);
+      track('widget_scan_result', { tool: tool.id });
     }, 1800);
   };
 
-  // Auto-run demo after 2s so users see the product working without having to click
-  useEffect(() => {
-    const demoBusiness = lang === 'en' ? 'Smith Dental Clinic' : 'Clínica Dental Pérez';
-    const demoCity = lang === 'en' ? 'London' : 'Madrid';
-    const demoProduct = lang === 'en' ? 'teeth whitening' : 'blanqueamiento dental';
-    const t = setTimeout(() => {
-      if (!userActed.current) {
-        setBusiness(demoBusiness);
-        setCity(demoCity);
-        setProduct(demoProduct);
-        setSeoCity(demoCity);
-        handleScan(true);
-      }
-    }, 2000);
-    return () => {
-      clearTimeout(t);
-      // Clean up any pending scan result timeout on unmount.
-      if (scanTimeoutRef.current) clearTimeout(scanTimeoutRef.current);
-      if (gateTimeoutRef.current) clearTimeout(gateTimeoutRef.current);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Fire gate_shown only when the gate actually enters the viewport, then scroll it into view
-  useEffect(() => {
-    if (!gateVisible || !gateRef.current) return;
-    const el = gateRef.current;
-    let fired = false;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !fired) {
-          fired = true;
-          track('gate_shown', { context: gateContextRef.current, trigger: 'delayed_inline' });
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(el);
-    // Scroll gate into view so users on long-scroll mobile actually see it
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    return () => observer.disconnect();
-  }, [gateVisible]);
+  useEffect(() => () => { if (scanRef.current) clearTimeout(scanRef.current); }, []);
 
   const handleGoogleAuth = async () => {
-    if (isInAppBrowser()) {
-      onLoginClick();
-      return;
-    }
+    if (isInAppBrowser()) { onLoginClick(); return; }
     setGoogleLoading(true);
     setGoogleError('');
-    storeGoogleIntent(gateContextRef.current);
-
-    // Reset loading if the user navigates back without completing OAuth
-    let cleanedUp = false;
-    const cleanup = () => {
-      if (cleanedUp) return;
-      cleanedUp = true;
-      clearTimeout(fallbackTimer);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
-    const onVisible = () => { if (!document.hidden) { cleanup(); setGoogleLoading(false); } };
-    document.addEventListener('visibilitychange', onVisible);
-    const fallbackTimer = setTimeout(() => { cleanup(); setGoogleLoading(false); }, 15000);
-
+    storeGoogleIntent(tool.id);
+    let cleaned = false;
+    const cleanup = () => { if (cleaned) return; cleaned = true; clearTimeout(fb); document.removeEventListener('visibilitychange', onVis); };
+    const onVis = () => { if (!document.hidden) { cleanup(); setGoogleLoading(false); } };
+    document.addEventListener('visibilitychange', onVis);
+    const fb = setTimeout(() => { cleanup(); setGoogleLoading(false); }, 15000);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/`, queryParams: { prompt: 'select_account' } },
     });
-    if (error) {
-      cleanup();
-      track('auth_error', { method: 'google', error: error.message });
-      setGoogleLoading(false);
-      setGoogleError(lang === 'en' ? 'Google not available right now. Try registering with email.' : 'Google no está disponible ahora. Regístrate con email.');
-    }
+    if (error) { cleanup(); setGoogleLoading(false); setGoogleError('Google no está disponible. Regístrate con email.'); }
   };
 
-  // Maps derived content
-  const displayName = business.trim() || (lang === 'es' ? 'Tu negocio' : 'Your business');
-  const displayCity = city.trim();
-  const locPrep = lang === 'es' ? 'en' : 'in';
-  const mapsTitle = lang === 'es'
-    ? `${displayName}${displayCity ? ` en ${displayCity}` : ''} — Abierto hoy | Atención personalizada`
-    : `${displayName}${displayCity ? ` in ${displayCity}` : ''} — Open today | Personalized service`;
-  const mapsDesc = lang === 'es'
-    ? `¿Buscas ${displayName.toLowerCase()}${displayCity ? ` en ${displayCity}` : ''}? Somos especialistas con más de 10 años de experiencia. Ofrecemos atención personalizada, resultados garantizados y el mejor servicio${displayCity ? ` en ${displayCity}` : ' de la zona'}.`
-    : `Looking for ${displayName.toLowerCase()}${displayCity ? ` in ${displayCity}` : ''}? We are specialists with over 10 years of experience. We offer personalized service, guaranteed results and the best service${displayCity ? ` in ${displayCity}` : ' in the area'}.`;
-  const nearMeStr = lang === 'es' ? 'cerca de mí' : 'near me';
-  const mapsKeywords = lang === 'es'
-    ? [
-        `${displayName.toLowerCase()} ${displayCity || 'cerca de mí'}`,
-        `mejor ${displayName.toLowerCase()} ${displayCity || 'local'}`,
-        `${displayName.toLowerCase()} barato${displayCity ? ` ${displayCity}` : ''}`,
-        `${displayName.toLowerCase()} opiniones`,
-        `${displayName.toLowerCase()} reserva online`,
-        `${displayName.toLowerCase()} precio`,
-      ]
-    : [
-        `${displayName.toLowerCase()} ${displayCity || 'near me'}`,
-        `best ${displayName.toLowerCase()} ${displayCity || 'local'}`,
-        `cheap ${displayName.toLowerCase()}${displayCity ? ` ${displayCity}` : ''}`,
-        `${displayName.toLowerCase()} reviews`,
-        `${displayName.toLowerCase()} book online`,
-        `${displayName.toLowerCase()} price`,
-      ];
-
-  // SEO derived content
-  const displayProduct = product.trim() || (tipo === 'producto' ? (lang === 'es' ? 'tu producto' : 'your product') : (lang === 'es' ? 'tu servicio' : 'your service'));
-  const displaySeoCity = seoCity.trim();
-  const isServicio = tipo === 'servicio';
-  const seoTitle = lang === 'es'
-    ? (isServicio
-        ? `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Expertos locales · Reserva online`
-        : `${displayProduct}${displaySeoCity ? ` en ${displaySeoCity}` : ''} | ${platform} — Mejor precio · Envío rápido`)
-    : (isServicio
-        ? `${displayProduct}${displaySeoCity ? ` in ${displaySeoCity}` : ''} | ${platform} — Local experts · Book online`
-        : `${displayProduct}${displaySeoCity ? ` in ${displaySeoCity}` : ''} | ${platform} — Best price · Fast delivery`);
-  const seoDesc = lang === 'es'
-    ? (isServicio
-        ? `¿Necesitas ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''}? Somos especialistas con años de experiencia. Atención personalizada, presupuesto sin compromiso y resultados garantizados. Llámanos o reserva online ahora.`
-        : `Descubre ${displayProduct.toLowerCase()}${displaySeoCity ? ` en ${displaySeoCity}` : ''} al mejor precio. Calidad garantizada, valoraciones reales y entrega rápida. Encuentra tu ${displayProduct.toLowerCase()} ideal con las mejores especificaciones del mercado.`)
-    : (isServicio
-        ? `Do you need ${displayProduct.toLowerCase()}${displaySeoCity ? ` in ${displaySeoCity}` : ''}? We are specialists with years of experience. Personalized service, free quote and guaranteed results. Call us or book online now.`
-        : `Discover ${displayProduct.toLowerCase()}${displaySeoCity ? ` in ${displaySeoCity}` : ''} at the best price. Guaranteed quality, real ratings and fast delivery. Find your ideal ${displayProduct.toLowerCase()} with the best specifications on the market.`);
-  const seoTagsVisible = lang === 'es'
-    ? (isServicio
-        ? [`${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`, `${displayProduct.toLowerCase()} profesional`, `${displayProduct.toLowerCase()} precio`]
-        : [`${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`, `comprar ${displayProduct.toLowerCase()} online`, `${displayProduct.toLowerCase()} precio`])
-    : (isServicio
-        ? [`${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`, `professional ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} price`]
-        : [`${displayProduct.toLowerCase()}${displaySeoCity ? ` ${displaySeoCity}` : ''}`, `buy ${displayProduct.toLowerCase()} online`, `${displayProduct.toLowerCase()} price`]);
-  const seoTagsBlurred = lang === 'es'
-    ? (isServicio
-        ? [`mejor ${displayProduct.toLowerCase()} ${displaySeoCity || 'cerca de mí'}`, `${displayProduct.toLowerCase()} barato`, `${displayProduct.toLowerCase()} opiniones`, `contratar ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} urgente`]
-        : [`${displayProduct.toLowerCase()} barato`, `mejor ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} oferta`, `${displayProduct.toLowerCase()} ${platform.toLowerCase()}`, `${displayProduct.toLowerCase()} envío gratis`])
-    : (isServicio
-        ? [`best ${displayProduct.toLowerCase()} ${displaySeoCity || 'near me'}`, `cheap ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} reviews`, `hire ${displayProduct.toLowerCase()}`, `urgent ${displayProduct.toLowerCase()}`]
-        : [`cheap ${displayProduct.toLowerCase()}`, `best ${displayProduct.toLowerCase()}`, `${displayProduct.toLowerCase()} deals`, `${displayProduct.toLowerCase()} on ${platform}`, `free shipping ${displayProduct.toLowerCase()}`]);
-
-  const INPUT_CLS = 'w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all duration-200 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20';
-  const scanDisabled = tab === 'maps' ? !business.trim() : !product.trim();
+  const INPUT_CLS = 'w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20';
 
   return (
-    <>
-    <div className="max-w-2xl mx-auto mb-3">
-      {/* glass-card gives the same 3D panel look as the app interface */}
-      <div className="glass-card rounded-2xl">
-        <div className="h-[2px] rounded-t-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+    <div className="max-w-2xl mx-auto">
+      <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
 
-        <div className="p-6">
-
-          {/* ── Tab switcher (only in idle) ── */}
-          {phase === 'idle' && (
-            <div className="flex items-center gap-1 bg-slate-950/50 rounded-xl p-1 mb-5 border border-white/5">
-              {(['maps', 'seo'] as WidgetTab[]).map((tab_id) => (
-                <button
-                  key={tab_id}
-                  onClick={() => switchTab(tab_id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                    tab === tab_id
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                      : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                >
-                  {tab_id === 'maps' ? <MapPinned size={12} /> : <Sparkles size={12} />}
-                  <span className="hidden sm:inline">
-                    {tab_id === 'maps' ? t('widget_tab_maps') : t('widget_tab_seo')}
-                  </span>
-                  <span className="sm:hidden">{tab_id === 'maps' ? 'Maps' : 'SEO'}</span>
+        {/* Tool picker */}
+        <div className="px-5 pt-5 pb-3">
+          <p className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold mb-3 text-center">
+            Elige una herramienta y pruébala gratis ahora
+          </p>
+          <div className="grid grid-cols-5 gap-1">
+            {TRIAL_TOOLS.map((t, i) => {
+              const Icon = t.IconComponent;
+              const isActive = activeTool === i;
+              return (
+                <button key={t.id} onClick={() => switchTool(i)}
+                  className={`flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl text-[10px] font-semibold transition-all duration-200 ${
+                    isActive
+                      ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+                      : 'text-slate-500 hover:text-slate-300 border border-transparent hover:bg-slate-800/40'
+                  }`}>
+                  <Icon size={14} className={isActive ? 'text-emerald-400' : 'text-slate-500'} />
+                  <span className="hidden sm:block truncate w-full text-center">{t.shortLabel}</span>
                 </button>
-              ))}
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="px-5 pb-5">
+          {/* Active tool header */}
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${tool.iconBg}`}>
+              <tool.IconComponent size={14} />
+            </div>
+            <div>
+              <p className="text-white text-sm font-bold leading-tight">{tool.label}</p>
+              <p className="text-slate-500 text-[11px]">Análisis gratuito — sin registro</p>
+            </div>
+          </div>
+
+          {/* Idle — form */}
+          {phase === 'idle' && (
+            <div className="space-y-3">
+              <input type="text" value={input1} onChange={(e) => setInput1(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+                placeholder={tool.ph1} className={INPUT_CLS} />
+              <input type="text" value={input2} onChange={(e) => setInput2(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+                placeholder={tool.ph2} className={INPUT_CLS} />
+              <button onClick={handleScan} disabled={!input1.trim()}
+                className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
+                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+                <Zap size={16} fill="currentColor" />
+                {tool.btn}
+              </button>
+              <p className="text-center text-[11px] text-slate-600 flex items-center justify-center gap-1">
+                <Shield size={9} />Sin registro · Sin tarjeta · Resultado en segundos
+              </p>
             </div>
           )}
 
-          {/* ══ MAPS TAB ══ */}
-          {tab === 'maps' && (
-            <>
-              {phase === 'idle' && (
-                <>
-                  <div className="flex items-center gap-2.5 mb-5">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                      <MapPinned size={14} className="text-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-bold leading-tight">{t('widget_maps_heading')}</p>
-                      <p className="text-slate-500 text-[11px]">{t('widget_maps_subheading')}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                    <input
-                      type="text"
-                      value={business}
-                      onChange={(e) => setBusiness(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                      placeholder={t('widget_maps_ph_biz')}
-                      className={INPUT_CLS}
-                    />
-                    <div className="relative">
-                      <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
-                      <input
-                        type="text"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                        placeholder={t('widget_maps_ph_city')}
-                        className={`${INPUT_CLS} pl-9`}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleScan()}
-                    disabled={scanDisabled}
-                    className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
-                      bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                      text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0
-                      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none
-                      animate-pulse-once"
-                  >
-                    <Zap size={16} fill="currentColor" />
-                    {t('widget_maps_btn')}
-                  </button>
-                  <p className="text-center text-[11px] text-slate-500 mt-3">
-                    {lang === 'en' ? 'Free · No account needed' : 'Gratis · Sin cuenta para empezar'}
-                  </p>
-                </>
-              )}
-
-              {phase === 'scanning' && (
-                <div className="py-8 flex flex-col items-center gap-6">
-                  <div className="relative w-28 h-28 flex items-center justify-center">
-                    <div className="absolute inset-0 rounded-full"
-                      style={{ background: 'conic-gradient(from 0deg, rgba(16,185,129,0.20), transparent 55%)', animation: 'radarSweep 1.8s linear infinite' }} />
-                    {[0, 1, 2].map((i) => (
-                      <div key={i} className="absolute rounded-full border border-emerald-400/40"
-                        style={{ width: `${44 + i * 22}px`, height: `${44 + i * 22}px`, animation: 'radarRing 2s ease-out infinite', animationDelay: `${i * 0.55}s` }} />
-                    ))}
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/40 z-10">
-                      <MapPinned size={17} className="text-slate-950" />
-                    </div>
-                  </div>
-                  <div className="text-center space-y-1">
-                    <p className="text-white font-bold text-sm">{t('widget_scanning_title')}</p>
-                    <p className="text-slate-500 text-xs">
-                      {lang === 'es'
-                        ? `Escaneando "${displayName}"${displayCity ? ` en ${displayCity}` : ''} · Comparando con competidores`
-                        : `Scanning "${displayName}"${displayCity ? ` in ${displayCity}` : ''} · Comparing with competitors`}
-                    </p>
-                  </div>
-                  <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                      style={{ animation: 'scanProgress 3s ease-out forwards' }} />
-                  </div>
+          {/* Scanning */}
+          {phase === 'scanning' && (
+            <div className="py-10 flex flex-col items-center gap-5">
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full"
+                  style={{ background: 'conic-gradient(from 0deg, rgba(16,185,129,0.25), transparent 55%)', animation: 'radarSweep 1.8s linear infinite' }} />
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="absolute rounded-full border border-emerald-400/35"
+                    style={{ width: `${40 + i * 20}px`, height: `${40 + i * 20}px`, animation: 'radarRing 2s ease-out infinite', animationDelay: `${i * 0.55}s` }} />
+                ))}
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/40 z-10">
+                  <tool.IconComponent size={18} className="text-slate-950" />
                 </div>
-              )}
-
-              {phase === 'result' && (
-                <div className="space-y-3">
-
-                  {/* Demo banner — primary CTA when scanning example data */}
-                  {isDemoScan && (
-                    <div className="rounded-xl border border-teal-500/40 bg-teal-500/8 p-4">
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-400 uppercase tracking-wider">
-                          {lang === 'en' ? 'EXAMPLE' : 'EJEMPLO'}
-                        </span>
-                        <p className="text-slate-400 text-[11px]">
-                          {lang === 'en' ? 'Analysis of a sample business' : 'Análisis de un negocio de ejemplo'}
-                        </p>
-                      </div>
-                      <p className="text-white font-extrabold text-sm mb-3">
-                        {lang === 'en' ? 'Now analyse YOUR own business:' : 'Ahora analiza TU propio negocio:'}
-                      </p>
-                      <button
-                        onClick={() => { setPhase('idle'); setBusiness(''); setCity(''); setGateVisible(false); }}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm
-                          bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                          text-slate-950 shadow-lg shadow-emerald-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
-                      >
-                        <Zap size={14} fill="currentColor" />
-                        {lang === 'en' ? 'Analyse my own business →' : 'Analizar mi propio negocio →'}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Score — always visible */}
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">{t('widget_result_analysis')}</p>
-                      <p className="text-white font-bold text-sm leading-tight">{displayName}{displayCity ? ` · ${displayCity}` : ''}</p>
-                    </div>
-                    <div className="text-right shrink-0 min-w-[3.5rem]">
-                      <div className="text-2xl font-extrabold text-amber-400 leading-tight tabular-nums">{score}%</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">{t('widget_result_optimized')}</div>
-                    </div>
-                  </div>
-
-                  <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-1000"
-                      style={{ width: `${score}%`, background: 'linear-gradient(to right, #f59e0b, #fbbf24)' }} />
-                  </div>
-                  <p className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
-                    <AlertCircle size={11} className="text-amber-400 shrink-0" />
-                    <span>{lang === 'es' ? `Tu ficha está infraoptimizada. Los competidores capturan ${100 - score}% más llamadas y visitas.` : `Your profile is under-optimized. Competitors capture ${100 - score}% more calls and visits.`}</span>
-                  </p>
-
-                  {/* Optimized title — always visible */}
-                  <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">{t('widget_seo_title_lbl')}</p>
-                      <span className="text-[9px] bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-full px-2 py-0.5 font-semibold uppercase tracking-wide">
-                        {lang === 'en' ? 'Free' : 'Gratis'}
-                      </span>
-                    </div>
-                    <p className="text-white text-sm font-medium leading-snug">{mapsTitle}</p>
-                  </div>
-
-                  {/* Keywords preview (first 2 free, rest locked) */}
-                  <div className="p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">{t('widget_keywords_lbl')}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {mapsKeywords.slice(0, 2).map((kw, i) => (
-                        <span key={i} className="text-[11px] rounded-full px-3 py-1 bg-teal-500/15 border border-teal-500/20 text-teal-300">{kw}</span>
-                      ))}
-                      <span className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400">
-                        <Lock size={9} />
-                        {lang === 'en' ? `+${mapsKeywords.length - 2} locked` : `+${mapsKeywords.length - 2} bloqueadas`}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Critical failure card */}
-                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
-                        <AlertCircle size={11} className="text-amber-400" />
-                      </div>
-                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-                        {lang === 'en' ? 'Critical Failure Detected' : 'Fallo Crítico Detectado'}
-                      </span>
-                    </div>
-                    <p className="text-amber-300/85 text-xs leading-relaxed pl-7">
-                      {lang === 'en'
-                        ? `Semantic schedule inconsistency: "${displayName}" has no special holiday hours. 68% of searches in your category happen outside standard business hours — you're invisible for those queries.`
-                        : `Inconsistencia semántica de horarios: "${displayName}" no tiene horarios especiales para festivos. El 68% de las búsquedas en tu categoría ocurren fuera del horario estándar — eres invisible en esas consultas.`}
-                    </p>
-                  </div>
-
-                  {/* Inline gate */}
-                  {gateVisible && (
-                  <div ref={gateRef}>
-                  <InlineGate
-                    onGoogle={handleGoogleAuth}
-                    onLoginClick={onLoginClick}
-                    googleLoading={googleLoading}
-                    context="maps"
-                    googleError={googleError}
-                    lang={lang}
-                    score={score}
-                    businessName={isDemoScan ? undefined : displayName}
-                  />
-                  </div>
-                  )}
-                </div>
-              )}
-            </>
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-white font-bold text-sm">{tool.scanMsg}</p>
+                <p className="text-slate-500 text-xs">Analizando: <span className="text-slate-300">"{lockedInput1}"</span></p>
+              </div>
+              <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                  style={{ animation: 'scanProgress 2.5s ease-out forwards' }} />
+              </div>
+            </div>
           )}
 
-          {/* ══ SEO TAB ══ */}
-          {tab === 'seo' && (
-            <>
-              {phase === 'idle' && (
-                <>
-                  <div className="flex items-center gap-2.5 mb-5">
-                    <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
-                      <Sparkles size={14} className="text-teal-400" />
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-bold leading-tight">{t('widget_seo_heading')}</p>
-                      <p className="text-slate-500 text-[11px]">{t('widget_seo_subheading')}</p>
-                    </div>
-                  </div>
+          {/* Result */}
+          {phase === 'result' && (
+            <div className="space-y-3">
+              <button onClick={() => { setPhase('idle'); setInput1(''); setInput2(''); setShowGate(false); }}
+                className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-300 transition-colors mb-1">
+                <ChevronRight size={11} className="rotate-180" />
+                Analizar otro negocio
+              </button>
 
-                  {/* Tipo de negocio toggle */}
-                  <div className="mb-4">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-2">{t('widget_tipo_lbl')}</p>
-                    <div className="flex items-center gap-1.5 bg-slate-950/60 border border-slate-800/80 rounded-xl p-1 w-fit">
-                      {(['producto', 'servicio'] as SeoTipo[]).map((tipoOpt) => (
-                        <button
-                          key={tipoOpt}
-                          type="button"
-                          onClick={() => handleTipoChange(tipoOpt)}
-                          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 capitalize ${
-                            tipo === tipoOpt
-                              ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          {tipoOpt === 'producto' ? t('dash_tipo_producto') : t('dash_tipo_servicio')}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              {activeTool === 0 && <SeoResult input1={lockedInput1} input2={lockedInput2} />}
+              {activeTool === 1 && <MapsResult input1={lockedInput1} input2={lockedInput2} />}
+              {activeTool === 2 && <TwinResult input1={lockedInput1} input2={lockedInput2} />}
+              {activeTool === 3 && <RadarResult input1={lockedInput1} input2={lockedInput2} />}
+              {activeTool === 4 && <AdvisorResult input1={lockedInput1} input2={lockedInput2} />}
 
-                  <div className="space-y-3 mb-4">
-                    <input
-                      type="text"
-                      value={product}
-                      onChange={(e) => setProduct(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                      placeholder={tipo === 'producto' ? t('widget_seo_ph_prod') : t('widget_seo_ph_serv')}
-                      className={INPUT_CLS}
-                    />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="relative">
-                        <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
-                        <input
-                          type="text"
-                          value={seoCity}
-                          onChange={(e) => setSeoCity(e.target.value)}
-                          placeholder={t('widget_seo_ph_city')}
-                          className={`${INPUT_CLS} pl-9`}
-                        />
-                      </div>
-                      <select
-                        value={platform}
-                        onChange={(e) => setPlatform(e.target.value)}
-                        className="w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 outline-none transition-all duration-200 focus:border-teal-500/60 focus:ring-1 focus:ring-teal-500/20 appearance-none cursor-pointer"
-                      >
-                        {platformOptions.map((p) => (
-                          <option key={p} value={p} className="bg-slate-900">{p}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleScan()}
-                    disabled={scanDisabled}
-                    className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
-                      bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400
-                      text-slate-950 shadow-xl shadow-teal-500/30 hover:shadow-teal-500/45 hover:-translate-y-0.5 active:translate-y-0
-                      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none
-                      animate-pulse-once"
-                  >
-                    <Sparkles size={16} />
-                    {t('widget_seo_btn')}
-                  </button>
-                  <p className="text-center text-[11px] text-slate-500 mt-3">
-                    {lang === 'en' ? 'Free · No account needed' : 'Gratis · Sin cuenta para empezar'}
-                  </p>
-                </>
+              {showGate && (
+                <RegistrationGate
+                  onGoogle={handleGoogleAuth}
+                  onLoginClick={onLoginClick}
+                  googleLoading={googleLoading}
+                  googleError={googleError}
+                  context={tool.id}
+                  businessName={lockedInput1 || undefined}
+                  toolLabel={tool.label}
+                />
               )}
-
-              {phase === 'scanning' && (
-                <div className="py-8 flex flex-col items-center gap-6">
-                  <div className="relative w-24 h-24 flex items-center justify-center">
-                    {[0, 1, 2, 3].map((i) => (
-                      <div key={i} className="absolute rounded-full border border-teal-400/30"
-                        style={{ width: `${28 + i * 18}px`, height: `${28 + i * 18}px`, animation: 'radarRing 2.2s ease-out infinite', animationDelay: `${i * 0.45}s` }} />
-                    ))}
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center shadow-xl shadow-teal-500/40 z-10">
-                      <Sparkles size={20} className="text-slate-950" />
-                    </div>
-                  </div>
-                  <div className="text-center space-y-1">
-                    <p className="text-white font-bold text-sm">{t('widget_seo_scanning')}</p>
-                    <p className="text-slate-500 text-xs">{lang === 'es' ? `Optimizando "${displayProduct}" (${tipo}) para ${platform}${displaySeoCity ? ` en ${displaySeoCity}` : ''}` : `Optimizing "${displayProduct}" (${tipo}) for ${platform}${displaySeoCity ? ` in ${displaySeoCity}` : ''}`}</p>
-                  </div>
-                  <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full"
-                      style={{ animation: 'scanProgress 3s ease-out forwards' }} />
-                  </div>
-                </div>
-              )}
-
-              {phase === 'result' && (
-                <div className="space-y-3">
-                  {/* Header — always visible */}
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
-                      <Sparkles size={12} className="text-teal-400" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{t('widget_seo_result_lbl')}</p>
-                      <p className="text-white font-bold text-sm leading-tight">{displayProduct}{displaySeoCity ? ` · ${displaySeoCity}` : ''} · {platform}</p>
-                    </div>
-                  </div>
-
-                  {/* Demo banner — primary CTA when scanning example data */}
-                  {isDemoScan && (
-                    <div className="rounded-xl border border-teal-500/40 bg-teal-500/8 p-4">
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-400 uppercase tracking-wider">
-                          {lang === 'en' ? 'EXAMPLE' : 'EJEMPLO'}
-                        </span>
-                        <p className="text-slate-400 text-[11px]">
-                          {lang === 'en' ? 'Analysis of a sample product/service' : 'Análisis de un producto/servicio de ejemplo'}
-                        </p>
-                      </div>
-                      <p className="text-white font-extrabold text-sm mb-3">
-                        {lang === 'en' ? 'Now analyse YOUR own product or service:' : 'Ahora analiza TU propio producto o servicio:'}
-                      </p>
-                      <button
-                        onClick={() => { setPhase('idle'); setProduct(''); setSeoCity(''); setGateVisible(false); }}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm
-                          bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400
-                          text-slate-950 shadow-lg shadow-teal-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
-                      >
-                        <Sparkles size={14} />
-                        {lang === 'en' ? 'Analyse my own product/service →' : 'Analizar mi propio producto/servicio →'}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Header — always visible */}
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
-                      <Sparkles size={12} className="text-teal-400" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{t('widget_seo_result_lbl')}</p>
-                      <p className="text-white font-bold text-sm leading-tight">{displayProduct}{displaySeoCity ? ` · ${displaySeoCity}` : ''} · {platform}</p>
-                    </div>
-                  </div>
-
-                  <p className="text-[11px] text-teal-400/80 flex items-center gap-1.5">
-                    <BadgeCheck size={11} className="text-teal-400 shrink-0" />
-                    <span>{lang === 'es' ? 'Análisis completado. Desbloquea el contenido completo para aplicarlo.' : 'Analysis complete. Unlock the full content to apply it.'}</span>
-                  </p>
-
-                  {/* SEO title — always visible */}
-                  <div className="rounded-xl bg-teal-500/5 border border-teal-500/15 p-3.5">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-[10px] text-teal-400 font-bold uppercase tracking-wider">{t('widget_seo_opt_title')}</p>
-                      <span className="text-[9px] bg-teal-500/15 border border-teal-500/25 text-teal-400 rounded-full px-2 py-0.5 font-semibold uppercase tracking-wide">
-                        {lang === 'en' ? 'Free' : 'Gratis'}
-                      </span>
-                    </div>
-                    <p className="text-white text-sm font-medium leading-snug">{seoTitle}</p>
-                  </div>
-
-                  {/* Tags preview (visible only, rest locked) */}
-                  <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">
-                      {lang === 'es' ? `Etiquetas · Alt text · Plan de contenido` : `Tags · Alt text · Content plan`}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {seoTagsVisible.slice(0, 2).map((tag, i) => (
-                        <span key={i} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{tag}</span>
-                      ))}
-                      <span className="flex items-center gap-1.5 text-[11px] rounded-full px-3 py-1 bg-slate-700/60 border border-slate-600/50 text-slate-400">
-                        <Lock size={9} />
-                        {lang === 'en' ? `+${seoTagsBlurred.length + 1} locked` : `+${seoTagsBlurred.length + 1} bloqueadas`}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Critical failure card */}
-                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-3.5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/25 flex items-center justify-center shrink-0">
-                        <AlertCircle size={11} className="text-amber-400" />
-                      </div>
-                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-                        {lang === 'en' ? 'Critical Failure Detected' : 'Fallo Crítico Detectado'}
-                      </span>
-                    </div>
-                    <p className="text-amber-300/85 text-xs leading-relaxed pl-7">
-                      {lang === 'en'
-                        ? `No GEO semantic layer detected for "${displayProduct}". Your listing lacks structured schema that allows AI engines (ChatGPT, Gemini) to recommend you. Competitors with schema markup appear 3× more in AI-generated summaries.`
-                        : `Capa semántica GEO ausente en "${displayProduct}". Tu ficha carece del schema estructurado que permite a los motores de IA (ChatGPT, Gemini) recomendarte. Los competidores con schema aparecen 3× más en resúmenes generados por IA.`}
-                    </p>
-                  </div>
-
-                  {/* Inline gate */}
-                  {gateVisible && (
-                  <div ref={gateRef}>
-                  <InlineGate
-                    onGoogle={handleGoogleAuth}
-                    onLoginClick={onLoginClick}
-                    googleLoading={googleLoading}
-                    context="seo"
-                    googleError={googleError}
-                    lang={lang}
-                    businessName={isDemoScan ? undefined : displayProduct}
-                  />
-                  </div>
-                  )}
-                </div>
-              )}
-            </>
+            </div>
           )}
-
         </div>
       </div>
     </div>
-    </>
   );
 }
 
+// ─── FAQ accordion ────────────────────────────────────────────────────────────
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <button
-      onClick={() => setOpen((v) => !v)}
-      className="w-full text-left rounded-xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/70 transition-colors overflow-hidden"
-    >
+    <button onClick={() => setOpen((v) => !v)}
+      className="w-full text-left rounded-xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/70 transition-colors overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-5 py-4">
         <span className="text-sm font-semibold text-white">{q}</span>
         <div className={`shrink-0 w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
@@ -1169,1169 +839,440 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-function ProductMockup() {
-  const [isRadar, setIsRadar] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+// ─── Color map for tool cards ─────────────────────────────────────────────────
+const TOOL_COLORS: Record<string, { bg: string; border: string; icon: string; badge: string }> = {
+  emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400', badge: 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400' },
+  blue:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400',    badge: 'bg-blue-500/15 border-blue-500/25 text-blue-400' },
+  cyan:    { bg: 'bg-cyan-500/10',    border: 'border-cyan-500/20',    icon: 'text-cyan-400',    badge: 'bg-cyan-500/15 border-cyan-500/25 text-cyan-400' },
+  orange:  { bg: 'bg-orange-500/10',  border: 'border-orange-500/20',  icon: 'text-orange-400',  badge: 'bg-orange-500/15 border-orange-500/25 text-orange-400' },
+  teal:    { bg: 'bg-teal-500/10',    border: 'border-teal-500/20',    icon: 'text-teal-400',    badge: 'bg-teal-500/15 border-teal-500/25 text-teal-400' },
+  rose:    { bg: 'bg-rose-500/10',    border: 'border-rose-500/20',    icon: 'text-rose-400',    badge: 'bg-rose-500/15 border-rose-500/25 text-rose-400' },
+  violet:  { bg: 'bg-violet-500/10',  border: 'border-violet-500/20',  icon: 'text-violet-400',  badge: 'bg-violet-500/15 border-violet-500/25 text-violet-400' },
+};
 
-  const startInterval = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => setIsRadar(r => !r), 5000);
-  };
-
-  useEffect(() => {
-    startInterval();
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const switchTo = (radar: boolean) => {
-    setIsRadar(radar);
-    startInterval();
-  };
-
-  const isResult = true;
-
-  const heatValues = [90,65,80,45,70,85,35,75,60,90,55,80,40,70,85,25,60,75,50,85,70,45,80,65,90];
-
-  return (
-    <div className="relative mx-auto max-w-3xl">
-      <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-teal-500/5 rounded-3xl blur-2xl scale-95" />
-      <div className="relative rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
-        {/* Browser chrome */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800 bg-slate-950">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/60" />
-            <div className="w-3 h-3 rounded-full bg-amber-500/60" />
-            <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
-          </div>
-          <div className="flex-1 mx-3 h-5 rounded-md bg-slate-800 flex items-center px-3">
-            <span className="text-slate-600 text-[10px]">localseohub.io</span>
-          </div>
-        </div>
-
-        {/* Tab bar */}
-        <div className="flex border-b border-slate-800 bg-slate-950/40">
-          {(['AI Digital Twin', 'Radar de Competencia'] as const).map((tab, i) => (
-            <button
-              key={tab}
-              onClick={() => switchTo(i === 1)}
-              className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all duration-300 ${
-                (i === 0 && !isRadar) || (i === 1 && isRadar)
-                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5'
-                  : 'border-transparent text-slate-600 hover:text-slate-400'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div className="p-5 min-h-[210px] relative overflow-hidden">
-
-          {/* ── Twin: result ── */}
-          {!isRadar && (
-            <div className="grid grid-cols-2 gap-4 animate-fadeIn">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wide">Visibilidad Local</span>
-                </div>
-                <div className="grid grid-cols-5 gap-1 mb-3">
-                  {heatValues.map((v, i) => (
-                    <div key={i} className="h-5 rounded-sm transition-all duration-300" style={{
-                      backgroundColor: v > 75 ? 'rgba(16,185,129,0.55)' : v > 50 ? 'rgba(251,191,36,0.45)' : 'rgba(239,68,68,0.35)',
-                      animationDelay: `${i * 25}ms`,
-                    }} />
-                  ))}
-                </div>
-                <div className="flex items-center gap-2 text-[9px] text-slate-500">
-                  <div className="w-2 h-2 rounded-sm bg-emerald-500/55" /> Dominante
-                  <div className="w-2 h-2 rounded-sm bg-amber-400/45" /> Medio
-                  <div className="w-2 h-2 rounded-sm bg-red-500/35" /> Invisible
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                  <span className="text-[10px] font-bold text-teal-400 uppercase tracking-wide">AI Sentiment</span>
-                </div>
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2">
-                  <p className="text-emerald-400 text-[10px] font-bold">Entidad destacada</p>
-                  <p className="text-slate-400 text-[9px] mt-0.5">ChatGPT te menciona activamente</p>
-                </div>
-                {[{ name: 'ChatGPT', score: 87 }, { name: 'Gemini', score: 74 }, { name: 'Perplexity', score: 61 }].map(ai => (
-                  <div key={ai.name} className="flex items-center gap-2">
-                    <span className="text-[9px] text-slate-500 w-16 shrink-0">{ai.name}</span>
-                    <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700"
-                        style={{ width: `${ai.score}%` }} />
-                    </div>
-                    <span className="text-[9px] font-bold text-emerald-400">{ai.score}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── Radar: result ── */}
-          {isRadar && (
-            <div className="animate-fadeIn">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wide">Posición vs. Competidores</span>
-                <span className="text-[9px] bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-full px-2 py-0.5 font-semibold">Madrid</span>
-              </div>
-              <div className="space-y-2 mb-3">
-                {[
-                  { name: 'Competidor A', score: 82, bar: 'bg-red-500/65', you: false },
-                  { name: 'Competidor B', score: 71, bar: 'bg-amber-500/55', you: false },
-                  { name: 'Tu negocio',   score: 47, bar: 'bg-emerald-500', you: true  },
-                  { name: 'Competidor C', score: 38, bar: 'bg-slate-600',   you: false },
-                ].map(c => (
-                  <div key={c.name} className={`flex items-center gap-3 rounded-lg px-2 py-1.5 ${c.you ? 'bg-emerald-500/10 border border-emerald-500/20' : ''}`}>
-                    <span className={`text-[10px] font-semibold w-24 shrink-0 ${c.you ? 'text-emerald-400' : 'text-slate-400'}`}>
-                      {c.name}{c.you ? ' ← Tú' : ''}
-                    </span>
-                    <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${c.bar} transition-all duration-700`}
-                        style={{ width: isResult ? `${c.score}%` : '0%' }} />
-                    </div>
-                    <span className={`text-[9px] font-bold w-6 text-right ${c.you ? 'text-emerald-400' : 'text-slate-500'}`}>{c.score}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-start gap-2 bg-amber-500/8 border border-amber-500/20 rounded-lg p-2.5">
-                <AlertCircle size={11} className="text-amber-400 mt-0.5 shrink-0" />
-                <p className="text-amber-400/90 text-[10px] font-medium leading-snug">2 competidores te superan · Análisis de brechas y keywords disponible</p>
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        {/* Status bar */}
-        <div className="flex items-center gap-3 px-5 py-2.5 border-t border-slate-800 bg-slate-950/60">
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] text-emerald-500 font-medium">
-              {isRadar ? '3 competidores analizados · Brechas detectadas' : 'Gemelo digital activo · 2 zonas críticas'}
-            </span>
-          </div>
-          <div className="ml-auto h-5 px-2 rounded-md bg-emerald-500/20 border border-emerald-500/20 flex items-center">
-            <span className="text-[9px] text-emerald-400 font-semibold">Copiar informe</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// FEATURE SHOWROOM
-// ─────────────────────────────────────────────────────────────
-
-type ShowroomTab = 'radar' | 'twin' | 'keywords';
-
-function FeatureShowroom({ onLoginClick }: { onLoginClick: () => void }) {
-  const [active, setActive] = useState<ShowroomTab>('radar');
-
-  const tabs: { id: ShowroomTab; label: string; icon: React.ReactNode; accent: string }[] = [
-    { id: 'radar', label: 'Radar de Competencia GEO', icon: <Target size={14} />, accent: 'orange' },
-    { id: 'twin',  label: 'AI Digital Twin',          icon: <Eye size={14} />,    accent: 'emerald' },
-    { id: 'keywords', label: 'Optimizador de Keywords', icon: <Sparkles size={14} />, accent: 'teal' },
-  ];
-
-  const accentMap: Record<string, { tab: string; active: string; badge: string; bar: string }> = {
-    orange:  { tab: 'hover:text-orange-300', active: 'text-orange-400 border-orange-400 bg-orange-500/10', badge: 'bg-orange-500/15 text-orange-400 border-orange-500/25', bar: 'from-orange-500 to-amber-400' },
-    emerald: { tab: 'hover:text-emerald-300', active: 'text-emerald-400 border-emerald-400 bg-emerald-500/10', badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25', bar: 'from-emerald-500 to-teal-400' },
-    teal:    { tab: 'hover:text-teal-300', active: 'text-teal-400 border-teal-400 bg-teal-500/10', badge: 'bg-teal-500/15 text-teal-400 border-teal-500/25', bar: 'from-teal-500 to-cyan-400' },
-  };
-
-  return (
-    <section className="max-w-5xl mx-auto px-6 py-14">
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
-          <Zap size={11} fill="currentColor" /> Herramientas en acción
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Todo lo que necesitas para dominar tu zona local</h2>
-        <p className="text-slate-400 text-sm max-w-xl mx-auto">Explora las tres herramientas principales de LocalSEOHub. Sin demos pregrabadas — así es como funciona de verdad.</p>
-      </div>
-
-      {/* Tab selector */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-8 justify-center">
-        {tabs.map((tab) => {
-          const c = accentMap[tab.accent];
-          const isActive = active === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActive(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200
-                ${isActive ? c.active + ' border-current' : 'text-slate-500 border-slate-800 bg-slate-900/40 ' + c.tab}
-              `}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Panel */}
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 overflow-hidden shadow-2xl shadow-black/40">
-
-        {/* ── RADAR PANEL ── */}
-        {active === 'radar' && (
-          <div className="p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 rounded-xl bg-orange-500/15 border border-orange-500/25 flex items-center justify-center shrink-0">
-                <Target size={17} className="text-orange-400" />
-              </div>
-              <div>
-                <h3 className="text-white font-bold text-sm">Radar de Competencia GEO</h3>
-                <p className="text-slate-500 text-xs">Posición real vs. competidores en tu código postal</p>
-              </div>
-              <span className="ml-auto text-[10px] font-bold bg-orange-500/15 text-orange-400 border border-orange-500/25 rounded-full px-3 py-1">Madrid · 28004</span>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-5">
-              {/* Bar chart */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-4">Puntuación de visibilidad local</p>
-                {[
-                  { name: 'Peluquería Centro Madrid', score: 89, highlight: false, color: 'from-red-500 to-orange-400' },
-                  { name: 'Estilo Urbano BCN',         score: 74, highlight: false, color: 'from-amber-500 to-yellow-400' },
-                  { name: 'TU NEGOCIO',                score: 51, highlight: true,  color: 'from-emerald-500 to-teal-400' },
-                  { name: 'Beauty & Co.',              score: 38, highlight: false, color: 'from-slate-600 to-slate-500' },
-                  { name: 'Salón Miriam',              score: 22, highlight: false, color: 'from-slate-700 to-slate-600' },
-                ].map((c) => (
-                  <div key={c.name} className={`flex items-center gap-3 rounded-lg px-3 py-2 ${c.highlight ? 'bg-emerald-500/10 border border-emerald-500/20' : ''}`}>
-                    <span className={`text-[10px] font-semibold w-32 shrink-0 truncate ${c.highlight ? 'text-emerald-400' : 'text-slate-500'}`}>
-                      {c.highlight ? '→ ' : ''}{c.name}
-                    </span>
-                    <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full bg-gradient-to-r ${c.color} transition-all duration-700`} style={{ width: `${c.score}%` }} />
-                    </div>
-                    <span className={`text-[10px] font-bold w-6 text-right ${c.highlight ? 'text-emerald-400' : 'text-slate-600'}`}>{c.score}</span>
-                  </div>
-                ))}
-              </div>
-              {/* Insight cards */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-4">Brechas detectadas · 3 oportunidades</p>
-                {[
-                  { icon: <MapPin size={13} />, label: 'Cobertura geográfica', detail: 'Solo apareces en 2 de 8 zonas de búsqueda cercanas', color: 'text-orange-400', bg: 'bg-orange-500/8 border-orange-500/20' },
-                  { icon: <Star size={13} />,   label: 'Reseñas recientes',     detail: 'Llevas 47 días sin recibir una reseña nueva', color: 'text-amber-400', bg: 'bg-amber-500/8 border-amber-500/20' },
-                  { icon: <Globe size={13} />,  label: 'Palabras clave GEO',    detail: '4 keywords de alta intención sin posición en Maps', color: 'text-red-400', bg: 'bg-red-500/8 border-red-500/20' },
-                ].map((item) => (
-                  <div key={item.label} className={`rounded-xl border p-3.5 ${item.bg}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={item.color}>{item.icon}</span>
-                      <span className={`text-[11px] font-bold ${item.color}`}>{item.label}</span>
-                    </div>
-                    <p className="text-slate-400 text-[10px] leading-snug pl-5">{item.detail}</p>
-                  </div>
-                ))}
-                <button onClick={onLoginClick} className="w-full mt-2 py-2.5 rounded-xl bg-gradient-to-r from-orange-500/80 to-amber-500/80 hover:from-orange-500 hover:to-amber-500 text-white text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2">
-                  <Zap size={12} fill="currentColor" /> Ver mi Radar completo
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── TWIN PANEL ── */}
-        {active === 'twin' && (
-          <div className="p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                <Eye size={17} className="text-emerald-400" />
-              </div>
-              <div>
-                <h3 className="text-white font-bold text-sm">AI Digital Twin</h3>
-                <p className="text-slate-500 text-xs">Mapa de calor de visibilidad por zonas + presencia en IAs</p>
-              </div>
-              <div className="ml-auto flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] text-emerald-500 font-medium">Gemelo activo</span>
-              </div>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-5">
-              {/* Heat map */}
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Mapa de calor · Visibilidad local (5×5 km)</p>
-                <div className="grid grid-cols-5 gap-1 mb-3">
-                  {[90,65,80,45,70,85,35,75,60,90,55,80,40,70,85,25,60,75,50,85,70,45,80,65,90].map((v, i) => (
-                    <div key={i} title={`Zona ${i+1}: ${v}%`} className="h-8 rounded-sm cursor-default transition-transform hover:scale-110" style={{
-                      backgroundColor: v > 75 ? 'rgba(16,185,129,0.55)' : v > 50 ? 'rgba(251,191,36,0.45)' : 'rgba(239,68,68,0.35)',
-                    }} />
-                  ))}
-                </div>
-                <div className="flex items-center gap-3 text-[9px] text-slate-500">
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block bg-emerald-500/55" />Dominante</span>
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block bg-amber-400/45" />Medio</span>
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm inline-block bg-red-500/35" />Invisible</span>
-                </div>
-              </div>
-              {/* AI presence */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Presencia en IAs generativas</p>
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-4">
-                  <p className="text-emerald-400 text-xs font-bold">Entidad destacada en ChatGPT</p>
-                  <p className="text-slate-400 text-[10px] mt-0.5">Tu negocio aparece activamente en resultados de búsqueda conversacional</p>
-                </div>
-                {[{ name: 'ChatGPT', score: 87, color: 'from-emerald-500 to-teal-500' }, { name: 'Google Gemini', score: 74, color: 'from-blue-500 to-cyan-500' }, { name: 'Perplexity', score: 61, color: 'from-purple-500 to-violet-500' }, { name: 'Bing Copilot', score: 43, color: 'from-slate-500 to-slate-400' }].map((ai) => (
-                  <div key={ai.name} className="flex items-center gap-2">
-                    <span className="text-[10px] text-slate-500 w-20 shrink-0">{ai.name}</span>
-                    <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full bg-gradient-to-r ${ai.color}`} style={{ width: `${ai.score}%` }} />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400 w-8 text-right">{ai.score}%</span>
-                  </div>
-                ))}
-                <button onClick={onLoginClick} className="w-full mt-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/80 to-teal-500/80 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2">
-                  <Zap size={12} fill="currentColor" /> Activar mi Gemelo Digital
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── KEYWORDS PANEL ── */}
-        {active === 'keywords' && (
-          <div className="p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
-                <Sparkles size={17} className="text-teal-400" />
-              </div>
-              <div>
-                <h3 className="text-white font-bold text-sm">Optimizador de Palabras Clave</h3>
-                <p className="text-slate-500 text-xs">Keywords de alta intención ordenadas por oportunidad real</p>
-              </div>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-5">
-              {/* Keyword table */}
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Top keywords · Tu sector · Madrid</p>
-                <div className="space-y-2">
-                  {[
-                    { kw: 'peluquería cerca de mí',       vol: '8.1K', pos: null,  opp: 'Alta', oppColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-                    { kw: 'corte de pelo Madrid centro',  vol: '3.4K', pos: 12,    opp: 'Media', oppColor: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-                    { kw: 'mechas balayage Madrid',       vol: '2.9K', pos: null,  opp: 'Alta', oppColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-                    { kw: 'peluquería económica Madrid',  vol: '1.8K', pos: 7,     opp: 'Baja', oppColor: 'text-slate-500 bg-slate-800/60 border-slate-700' },
-                    { kw: 'tratamiento keratina Madrid',  vol: '1.2K', pos: null,  opp: 'Alta', oppColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-                  ].map((row) => (
-                    <div key={row.kw} className="flex items-center gap-2 bg-slate-800/40 rounded-lg px-3 py-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-slate-200 text-[11px] font-medium truncate">{row.kw}</p>
-                        <p className="text-slate-600 text-[9px]">{row.vol}/mes · Pos. actual: {row.pos ?? 'sin posición'}</p>
-                      </div>
-                      <span className={`text-[9px] font-bold border rounded-full px-2 py-0.5 shrink-0 ${row.oppColor}`}>{row.opp}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Action recommendations */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Plan de acción generado por IA</p>
-                {[
-                  { step: '1', title: 'Añadir keyword a descripción GBP', impact: '+23% clics estimados', color: 'text-emerald-400', bg: 'bg-emerald-500/8 border-emerald-500/20' },
-                  { step: '2', title: 'Crear post GBP con keyword local', impact: '+15% visibilidad Maps', color: 'text-teal-400', bg: 'bg-teal-500/8 border-teal-500/20' },
-                  { step: '3', title: 'Solicitar reseñas con término clave', impact: '+31% posición orgánica', color: 'text-blue-400', bg: 'bg-blue-500/8 border-blue-500/20' },
-                ].map((action) => (
-                  <div key={action.step} className={`rounded-xl border p-3.5 ${action.bg}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${action.color} bg-current/10`} style={{ background: 'rgba(255,255,255,0.07)' }}>
-                        <span className={action.color}>{action.step}</span>
-                      </div>
-                      <span className={`text-[11px] font-bold ${action.color}`}>{action.title}</span>
-                    </div>
-                    <p className="text-slate-400 text-[10px] pl-7">{action.impact}</p>
-                  </div>
-                ))}
-                <button onClick={onLoginClick} className="w-full mt-2 py-2.5 rounded-xl bg-gradient-to-r from-teal-500/80 to-cyan-500/80 hover:from-teal-500 hover:to-cyan-500 text-white text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2">
-                  <Zap size={12} fill="currentColor" /> Ver mis keywords reales
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// CASE STUDY PLAYGROUND
-// ─────────────────────────────────────────────────────────────
-
-type PlaygroundTab = 'overview' | 'radar' | 'keywords' | 'plan';
-
-function CaseStudyPlayground({ onLoginClick }: { onLoginClick: () => void }) {
-  const [loaded, setLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<PlaygroundTab>('overview');
-
-  const playgroundTabs: { id: PlaygroundTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'overview',  label: 'Resumen',       icon: <BarChart3 size={12} /> },
-    { id: 'radar',     label: 'Competidores',  icon: <Target size={12} /> },
-    { id: 'keywords',  label: 'Keywords',      icon: <Sparkles size={12} /> },
-    { id: 'plan',      label: 'Plan IA',        icon: <TrendingUp size={12} /> },
-  ];
-
-  return (
-    <section className="max-w-5xl mx-auto px-6 py-14">
-      {/* Header */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1 mb-3">
-          <Eye size={11} /> Ejemplo de análisis
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Mira cómo funciona la IA en un negocio real</h2>
-        <p className="text-slate-400 text-sm max-w-xl mx-auto">Así se ve el informe que LocalSEOHub genera para <strong className="text-slate-200">Peluquería Éclat</strong> en Madrid — un ejemplo representativo del análisis real que recibirías para tu negocio.</p>
-      </div>
-
-      {/* Load trigger */}
-      {!loaded ? (
-        <div className="flex flex-col items-center gap-5">
-          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-8 max-w-lg w-full text-center">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center mx-auto mb-4">
-              <Eye size={24} className="text-amber-400" />
-            </div>
-            <h3 className="text-white font-bold text-base mb-2">Ver ejemplo de análisis · Peluquería Éclat</h3>
-            <p className="text-slate-500 text-xs mb-5 leading-relaxed">Explora una muestra del informe que LocalSEOHub genera: Radar GEO, Digital Twin, keywords de alta intención y plan de acción con IA.</p>
-            <button
-              onClick={() => setLoaded(true)}
-              className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm
-                bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400
-                text-slate-950 shadow-lg shadow-amber-500/20 hover:-translate-y-0.5 transition-all duration-300"
-            >
-              <Zap size={15} fill="currentColor" /> Cargar informe de ejemplo
-            </button>
-          </div>
-          {/* Preview teaser grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl opacity-60 pointer-events-none select-none blur-[1px]">
-            {[
-              { label: 'Puntuación GEO', value: '51/100', sub: '3 competidores por delante', color: 'text-amber-400' },
-              { label: 'Keywords sin posición', value: '4', sub: 'alta intención · sin ranquear', color: 'text-red-400' },
-              { label: 'Presencia ChatGPT', value: '87%', sub: 'entidad destacada', color: 'text-emerald-400' },
-              { label: 'Acciones IA', value: '9', sub: 'priorizadas por impacto', color: 'text-teal-400' },
-            ].map((m) => (
-              <div key={m.label} className="rounded-xl bg-slate-900/60 border border-slate-800 p-3 text-center">
-                <p className={`text-xl font-black ${m.color}`}>{m.value}</p>
-                <p className="text-white text-[10px] font-bold mt-0.5">{m.label}</p>
-                <p className="text-slate-600 text-[9px] mt-0.5">{m.sub}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 shadow-2xl shadow-black/40 overflow-hidden">
-          {/* Report header */}
-          <div className="bg-slate-950/80 border-b border-slate-800 px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
-                <span className="text-white text-sm font-black">PE</span>
-              </div>
-              <div>
-                <p className="text-white font-bold text-sm">Peluquería Éclat</p>
-                <p className="text-slate-500 text-xs">Calle Fuencarral 18, Madrid · Peluquería y estética</p>
-              </div>
-            </div>
-            <div className="sm:ml-auto flex items-center gap-2">
-              <span className="text-slate-500 text-[10px]">Ejemplo de análisis generado con IA</span>
-            </div>
-          </div>
-
-          {/* Tab navigation */}
-          <div className="flex border-b border-slate-800 bg-slate-950/40 overflow-x-auto">
-            {playgroundTabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-3 text-xs font-semibold border-b-2 transition-all whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5'
-                    : 'border-transparent text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab content */}
-          <div className="p-5 sm:p-6">
-
-            {activeTab === 'overview' && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { label: 'Puntuación GEO', value: '51', max: '/100', color: 'text-amber-400', bg: 'bg-amber-500/8 border-amber-500/20' },
-                    { label: 'Keywords sin pos.', value: '4', max: ' oportunidades', color: 'text-red-400', bg: 'bg-red-500/8 border-red-500/20' },
-                    { label: 'Presencia ChatGPT', value: '87', max: '%', color: 'text-emerald-400', bg: 'bg-emerald-500/8 border-emerald-500/20' },
-                    { label: 'Acciones IA', value: '9', max: ' priorizadas', color: 'text-teal-400', bg: 'bg-teal-500/8 border-teal-500/20' },
-                  ].map((m) => (
-                    <div key={m.label} className={`rounded-xl border p-4 text-center ${m.bg}`}>
-                      <p className={`text-2xl font-black ${m.color}`}>{m.value}<span className="text-xs font-normal text-slate-500">{m.max}</span></p>
-                      <p className="text-slate-400 text-[10px] mt-1">{m.label}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle size={13} className="text-amber-400 shrink-0" />
-                    <span className="text-amber-400 text-xs font-bold">3 fallos críticos detectados</span>
-                  </div>
-                  <ul className="space-y-1.5 pl-5">
-                    {[
-                      'Sin horarios especiales configurados para festivos — inconsistencia semántica detectada',
-                      'Descripción de ficha no contiene ninguna keyword de alta intención',
-                      'Ratio de respuesta a reseñas: 23% (recomendado &gt;80%)',
-                    ].map((issue) => (
-                      <li key={issue} className="text-amber-300/80 text-[11px] flex items-start gap-2">
-                        <span className="text-amber-500 shrink-0 mt-0.5">·</span>
-                        <span dangerouslySetInnerHTML={{ __html: issue }} />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'radar' && (
-              <div className="space-y-4">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Posición vs. competidores · Fuencarral · Madrid</p>
-                {[
-                  { name: 'Peluquería Centro Madrid', score: 89, color: 'from-red-500 to-orange-400' },
-                  { name: 'Estilo Urbano BCN',         score: 74, color: 'from-amber-500 to-yellow-400' },
-                  { name: 'Peluquería Éclat ← Tú',    score: 51, color: 'from-emerald-500 to-teal-400', you: true },
-                  { name: 'Beauty & Co.',              score: 38, color: 'from-slate-600 to-slate-500' },
-                  { name: 'Salón Miriam',              score: 22, color: 'from-slate-700 to-slate-600' },
-                ].map((c) => (
-                  <div key={c.name} className={`flex items-center gap-3 rounded-lg px-3 py-2 ${(c as { you?: boolean }).you ? 'bg-emerald-500/10 border border-emerald-500/20' : ''}`}>
-                    <span className={`text-[10px] font-semibold w-40 shrink-0 truncate ${(c as { you?: boolean }).you ? 'text-emerald-400' : 'text-slate-500'}`}>{c.name}</span>
-                    <div className="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full bg-gradient-to-r ${c.color}`} style={{ width: `${c.score}%` }} />
-                    </div>
-                    <span className={`text-[10px] font-black w-6 text-right ${(c as { you?: boolean }).you ? 'text-emerald-400' : 'text-slate-600'}`}>{c.score}</span>
-                  </div>
-                ))}
-                <div className="rounded-xl bg-slate-800/40 border border-slate-700/60 p-3.5 mt-2">
-                  <p className="text-slate-400 text-xs"><span className="text-white font-bold">Insight:</span> Estás 38 puntos por debajo del líder. Las 3 principales brechas son cobertura geográfica, reseñas recientes y keywords GEO sin posición.</p>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'keywords' && (
-              <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Keywords relevantes · Sector peluquería · Madrid</p>
-                {[
-                  { kw: 'peluquería cerca de mí',       vol: '8.1K', pos: null, opp: 'Alta' },
-                  { kw: 'corte de pelo Madrid centro',  vol: '3.4K', pos: 12,   opp: 'Media' },
-                  { kw: 'mechas balayage Madrid',       vol: '2.9K', pos: null, opp: 'Alta' },
-                  { kw: 'peluquería económica Madrid',  vol: '1.8K', pos: 7,    opp: 'Baja' },
-                  { kw: 'tratamiento keratina Madrid',  vol: '1.2K', pos: null, opp: 'Alta' },
-                  { kw: 'tinte raíces Madrid precio',   vol: '940',  pos: null, opp: 'Alta' },
-                ].map((row) => {
-                  const oppColor = row.opp === 'Alta' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-                    : row.opp === 'Media' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                    : 'text-slate-500 bg-slate-800/60 border-slate-700';
-                  return (
-                    <div key={row.kw} className="flex items-center gap-3 bg-slate-800/40 rounded-lg px-3 py-2.5">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-slate-200 text-[11px] font-medium truncate">{row.kw}</p>
-                        <p className="text-slate-600 text-[9px]">{row.vol}/mes · {row.pos ? `Pos. ${row.pos}` : 'Sin posición'}</p>
-                      </div>
-                      <span className={`text-[9px] font-bold border rounded-full px-2 py-0.5 shrink-0 ${oppColor}`}>{row.opp}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {activeTab === 'plan' && (
-              <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Plan de acción · Generado por IA · Ordenado por impacto</p>
-                {[
-                  { num: 1, title: 'Optimizar descripción GBP con 3 keywords de alta intención', impact: '+23% clics estimados', time: '15 min', color: 'emerald' },
-                  { num: 2, title: 'Añadir horarios especiales de festivos y agosto',            impact: '+12% visibilidad Maps', time: '5 min',  color: 'teal' },
-                  { num: 3, title: 'Crear 2 posts GBP con keywords geolocalizadas',              impact: '+18% impresiones', time: '30 min', color: 'blue' },
-                  { num: 4, title: 'Campaña de solicitud de reseñas con término clave',          impact: '+31% posición orgánica', time: '20 min', color: 'amber' },
-                  { num: 5, title: 'Corregir incoherencias en citas NAP de directorios',         impact: 'Eliminar fallo crítico', time: '45 min', color: 'orange' },
-                ].map((action) => {
-                  const colorMap: Record<string, string> = {
-                    emerald: 'text-emerald-400 bg-emerald-500/8 border-emerald-500/20',
-                    teal: 'text-teal-400 bg-teal-500/8 border-teal-500/20',
-                    blue: 'text-blue-400 bg-blue-500/8 border-blue-500/20',
-                    amber: 'text-amber-400 bg-amber-500/8 border-amber-500/20',
-                    orange: 'text-orange-400 bg-orange-500/8 border-orange-500/20',
-                  };
-                  return (
-                    <div key={action.num} className={`rounded-xl border p-3.5 flex items-start gap-3 ${colorMap[action.color]}`}>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 border ${colorMap[action.color]}`}>
-                        {action.num}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-slate-200 text-xs font-semibold leading-snug">{action.title}</p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className={`text-[10px] font-bold ${colorMap[action.color].split(' ')[0]}`}>{action.impact}</span>
-                          <span className="text-slate-600 text-[9px]">· {action.time}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-          </div>
-
-          {/* Locked footer */}
-          <div className="border-t border-slate-800 bg-slate-950/60 px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Lock size={13} className="text-slate-500" />
-              <p className="text-slate-500 text-xs">Análisis completo con datos reales · disponible con tu cuenta</p>
-            </div>
-            <button
-              onClick={onLoginClick}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transition-all duration-300 shrink-0"
-            >
-              <Zap size={14} fill="currentColor" /> Analizar mi negocio gratis
-            </button>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-export default function LandingPage({ onLoginClick }: LandingPageProps) {
+// ─── Main landing page ────────────────────────────────────────────────────────
+export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
-  const { t, lang } = useI18n();
+  const { lang } = useI18n();
+  const pricingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { track('page_view', { page: 'landing' }); }, []);
 
-  const PAIN_POINTS = [t('landing_pain_1'), t('landing_pain_2'), t('landing_pain_3'), t('landing_pain_4'), t('landing_pain_5')];
-
-  const TOOLS = TOOL_META.map((m, i) => ({
-    ...m,
-    title: t(`landing_tool_${i + 1}_title` as Parameters<typeof t>[0]),
-    desc: t(`landing_tool_${i + 1}_desc` as Parameters<typeof t>[0]),
-  }));
-
-  const TESTIMONIALS = TESTIMONIAL_META.map((m, i) => ({
-    ...m,
-    text: t(`landing_t${i + 1}_text` as Parameters<typeof t>[0]),
-    metric: t(`landing_t${i + 1}_metric` as Parameters<typeof t>[0]),
-  }));
-
-  const FAQS = [
-    { q: t('landing_faq1_q'), a: t('landing_faq1_a') },
-    { q: t('landing_faq2_q'), a: t('landing_faq2_a') },
-    { q: t('landing_faq3_q'), a: t('landing_faq3_a') },
-    { q: t('landing_faq4_q'), a: t('landing_faq4_a') },
-    { q: t('landing_faq5_q'), a: t('landing_faq5_a') },
-  ];
-
-  const COMPARISON_ROWS = [
-    { label: t('landing_comp_row1_label'), bad: t('landing_comp_row1_bad'), good: t('landing_comp_row1_good') },
-    { label: t('landing_comp_row2_label'), bad: t('landing_comp_row2_bad'), good: t('landing_comp_row2_good') },
-    { label: t('landing_comp_row3_label'), bad: t('landing_comp_row3_bad'), good: t('landing_comp_row3_good') },
-    { label: t('landing_comp_row4_label'), bad: t('landing_comp_row4_bad'), good: t('landing_comp_row4_good') },
-    { label: t('landing_comp_row5_label'), bad: t('landing_comp_row5_bad'), good: t('landing_comp_row5_good') },
-    { label: t('landing_comp_row6_label'), bad: t('landing_comp_row6_bad'), good: t('landing_comp_row6_good') },
-  ];
+  const scrollToPricing = () => pricingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
 
-      {/* ── HERO ──────────────────────────────────────────────────── */}
+      {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none hidden sm:block">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-emerald-500/6 rounded-full blur-3xl" />
-          <div className="absolute top-32 left-1/4 w-72 h-72 bg-teal-500/4 rounded-full blur-3xl" />
-          <div className="absolute top-20 right-1/4 w-56 h-56 bg-emerald-600/3 rounded-full blur-3xl" />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl" />
+          <div className="absolute top-40 left-1/4 w-64 h-64 bg-teal-500/4 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-5xl mx-auto px-6 pt-12 pb-6 relative">
+        <div className="max-w-5xl mx-auto px-5 pt-12 pb-8 relative">
+
           {/* Audience badge */}
           <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 whitespace-nowrap">
-              <Flame size={13} className="text-orange-400 shrink-0" />
-              <span>Para negocios locales y agencias de marketing digital</span>
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
+              <Flame size={12} className="text-orange-400" />
+              Para negocios locales y agencias de marketing digital
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
           </div>
 
           {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-[3.2rem] font-bold text-white leading-[1.1] mb-4 tracking-tight text-center">
-            Tu próximo cliente ya te está buscando.{' '}
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-[1.1] mb-4 tracking-tight text-center">
+            LocalSEOHub.io —{' '}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              ¿Te encuentran a ti o a tu competencia?
+              Todo el potencial de la IA local en tus manos
             </span>
           </h1>
 
-          <p className="text-center text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
-            Introduce tu negocio abajo y mira en segundos cómo estás posicionado, qué hacen tus competidores y qué debes mejorar — sin registro ni tarjeta.
+          <p className="text-center text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-3 leading-relaxed">
+            La plataforma que ayuda a negocios locales y agencias de marketing a captar más clientes de una forma fácil, rápida y sin necesidad de saber de SEO.
+          </p>
+          <p className="text-center text-slate-500 text-sm max-w-xl mx-auto mb-8">
+            7 herramientas de IA para posicionarte en Google Maps, SEO local, búsquedas por voz y el nuevo mundo de la IA generativa.
           </p>
 
-          {/* Scanner widget — the hero IS the demo */}
-          <ScannerWidget onLoginClick={onLoginClick} />
-
-          {/* Trust signals */}
-          <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500 mt-6 mb-12">
-            <div className="flex items-center gap-1.5">
-              <Shield size={11} className="text-emerald-500" />
-              <span>{t('landing_trust_1')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock size={11} className="text-teal-500" />
-              <span>{t('landing_trust_2')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Users size={11} className="text-emerald-400" />
-              <span>{t('landing_trust_3')}</span>
-            </div>
-          </div>
-
-          {/* Dual audience value cards — visible after scanner, gives context for scrollers */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                  <MapPin size={15} className="text-emerald-400" />
-                </div>
-                <p className="text-white font-bold text-sm">Tengo un negocio local</p>
-              </div>
-              <ul className="space-y-2">
-                {[
-                  'Sé exactamente en qué posición estás vs. tus competidores',
-                  'Descubre por qué te buscan y no te encuentran',
-                  'Recibe un plan de acción semanal generado por IA',
-                  'Mejora tu presencia en Google Maps, ChatGPT y Gemini',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-slate-300 text-xs leading-relaxed">
-                    <Check size={12} className="text-emerald-400 shrink-0 mt-0.5" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
-                  <TrendingUp size={15} className="text-blue-400" />
-                </div>
-                <p className="text-white font-bold text-sm">Me dedico al marketing digital</p>
-              </div>
-              <ul className="space-y-2">
-                {[
-                  'Audita a todos tus clientes desde un solo panel',
-                  'Genera informes de SEO local con un solo clic',
-                  'Detecta oportunidades GEO que la competencia no ve',
-                  'Multiplica resultados con IA — sin aumentar tu equipo',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-slate-300 text-xs leading-relaxed">
-                    <Check size={12} className="text-blue-400 shrink-0 mt-0.5" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <p className="text-center text-xs text-slate-600 mt-5">
-            {t('landing_have_account')}{' '}
-            <button onClick={onLoginClick} className="text-emerald-500 hover:text-emerald-400 transition-colors font-medium">
-              {t('landing_sign_in_link')}
-            </button>
-          </p>
-        </div>
-      </section>
-
-      {/* ── SOCIAL PROOF (right under hero) ───────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 pt-10 pb-2">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-0.5 mb-2">
-            {[...Array(5)].map((_, i) => <Star key={i} size={15} className="text-amber-400 fill-amber-400" />)}
-          </div>
-          <h2 className="text-xl font-bold text-white mb-1">{t('landing_testimonials_title')}</h2>
-          <p className="text-slate-500 text-sm">{t('landing_testimonials_sub')}</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {TESTIMONIALS.map((item) => (
-            <div
-              key={item.name}
-              className="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-6 flex flex-col gap-4
-                hover:border-emerald-500/25 hover:bg-slate-900/90 transition-all duration-300"
-            >
-              <div className="flex items-center gap-0.5">
-                {[...Array(item.stars)].map((_, i) => (
-                  <Star key={i} size={12} className="text-amber-400 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-slate-200 text-sm leading-relaxed flex-1">"{item.text}"</p>
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5">
-                <p className="text-emerald-400 text-xs font-bold">{item.metric}</p>
-              </div>
-              <div className="flex items-center gap-3 pt-3 border-t border-slate-800">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${item.color} flex items-center justify-center`}>
-                    <span className="text-white text-xs font-bold">{item.initials}</span>
-                  </div>
-                  <img
-                    src={item.photo}
-                    alt={item.name}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => (e.currentTarget.style.display = 'none')}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-bold">{item.name}</p>
-                  <p className="text-slate-500 text-[11px] truncate">{item.business} · {item.city}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── STATS BAR ──────────────────────────────────────────────── */}
-      <section className="border-y border-slate-800/60 py-8 mt-10">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-            {[
-              { value: '16+', label: t('landing_stat_1'), icon: <Globe size={16} className="text-teal-400" /> },
-              { value: '< 60 seg', label: t('landing_stat_2'), icon: <Clock size={16} className="text-blue-400" /> },
-              { value: '6', label: t('landing_stat_3'), icon: <Sparkles size={16} className="text-emerald-400" /> },
-              { value: '+4h', label: t('landing_stat_4'), icon: <BarChart3 size={16} className="text-amber-400" /> },
-            ].map((s) => (
-              <div key={s.label} className="flex flex-col items-center gap-1.5">
-                <div className="flex items-center gap-1.5 mb-0.5">{s.icon}</div>
-                <span className="text-2xl font-bold text-white">{s.value}</span>
-                <span className="text-xs text-slate-500">{s.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PLATFORM STRIP ─────────────────────────────────────────── */}
-      <section className="py-8 overflow-hidden">
-        <div className="max-w-5xl mx-auto px-6">
-          <p className="text-center text-xs text-slate-600 uppercase tracking-widest font-semibold mb-5">{t('landing_compat')}</p>
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5">
-            {PLATFORMS.map((p) => (
-              <span key={p} className="text-slate-600 text-sm font-medium hover:text-slate-400 transition-colors cursor-default">{p}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PAIN POINTS ────────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 py-12">
-        <div className="rounded-2xl border border-amber-500/15 bg-amber-500/3 p-8">
-          <div className="text-center mb-7">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1 mb-3">
-              <HelpCircle size={11} /> {t('landing_pain_badge')}
-            </div>
-            <h2 className="text-2xl font-bold text-white">{t('landing_pain_title')}</h2>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-3xl mx-auto">
-            {PAIN_POINTS.map((p) => (
-              <div key={p} className="flex items-start gap-3 bg-slate-950/60 rounded-xl p-3.5 border border-slate-800/60">
-                <div className="w-5 h-5 rounded-full bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <AlertCircle size={9} className="text-amber-400" />
-                </div>
-                <p className="text-slate-400 text-xs leading-relaxed">{p}</p>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-7">
-            <p className="text-slate-400 text-sm mb-4">{t('landing_pain_resolved')}</p>
-            <button
-              onClick={onLoginClick}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
+            <button onClick={onSubscribeClick}
+              className="flex items-center gap-2.5 px-7 py-4 rounded-xl font-bold text-base
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transition-all duration-300"
-            >
-              {t('landing_start_free')} <ArrowRight size={15} />
+                text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+              <Zap size={16} fill="currentColor" />
+              Prueba 7 días gratis — sin tarjeta
+            </button>
+            <button onClick={() => document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm text-slate-300
+                border border-slate-700/60 hover:border-slate-600/60 hover:bg-slate-800/40 transition-all duration-200">
+              <Eye size={14} />
+              Ver una herramienta en acción
+            </button>
+          </div>
+
+          {/* Stats bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto">
+            {[
+              { value: '7', label: 'Herramientas de IA', icon: Sparkles },
+              { value: '16+', label: 'Plataformas compatibles', icon: Globe },
+              { value: '4.9★', label: 'Valoración media', icon: Star },
+              { value: '7 días', label: 'Prueba gratuita', icon: Shield },
+            ].map(({ value, label, icon: Icon }) => (
+              <div key={label} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-900/50 border border-slate-800/60">
+                <Icon size={14} className="text-emerald-400" />
+                <span className="text-white font-extrabold text-lg leading-none">{value}</span>
+                <span className="text-slate-500 text-[10px] text-center">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── DEMO INTERACTIVO ──────────────────────────────────────────────────── */}
+      <section id="demo-section" className="py-14 px-5 max-w-5xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-teal-400 mb-4">
+            <Zap size={11} fill="currentColor" />
+            Prueba gratuita — sin registro
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+            Introduce tu negocio y ve tu análisis ahora
+          </h2>
+          <p className="text-slate-400 text-sm max-w-xl mx-auto">
+            Elige una de las 5 herramientas, escribe el nombre de tu negocio y recibe un análisis real en segundos. Cuando quieras ver el informe completo, regístrate gratis.
+          </p>
+        </div>
+        <ToolTrialSection onLoginClick={onLoginClick} />
+      </section>
+
+      {/* ── 7 HERRAMIENTAS ───────────────────────────────────────────────────── */}
+      <section className="py-14 px-5 bg-slate-900/30 border-y border-slate-800/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+              7 herramientas profesionales, una sola plataforma
+            </h2>
+            <p className="text-slate-400 text-sm max-w-xl mx-auto">
+              Cada herramienta ataca un problema diferente del posicionamiento local. Juntas forman el arsenal más completo disponible para negocios locales.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {TOOLS_SHOWCASE.map((tool, i) => {
+              const Icon = tool.icon;
+              const c = TOOL_COLORS[tool.color] ?? TOOL_COLORS.emerald;
+              return (
+                <div key={i}
+                  className={`rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 ${c.border} bg-gradient-to-br from-slate-900/80 to-slate-950/80`}
+                  style={{ background: `linear-gradient(145deg, rgba(15,23,42,0.9) 0%, rgba(8,14,26,0.95) 100%)` }}>
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${c.bg} ${c.border}`}>
+                      <Icon size={16} className={c.icon} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-bold text-sm leading-tight">{tool.name}</p>
+                      <span className={`inline-block mt-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${c.badge}`}>
+                        {tool.badge}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-slate-400 text-xs leading-relaxed">{tool.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="text-center mt-8">
+            <button onClick={onSubscribeClick}
+              className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-sm
+                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                text-slate-950 shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5 transition-all duration-200">
+              <Zap size={14} fill="currentColor" />
+              Acceder a las 7 herramientas — 7 días gratis
             </button>
           </div>
         </div>
       </section>
 
-      {/* ── 6 TOOLS ────────────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 py-10">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/20 rounded-full px-3 py-1 mb-3">
-            <Award size={11} /> {t('landing_tools_badge')}
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">{t('landing_tools_title2')}</h2>
-          <p className="text-slate-400 max-w-xl mx-auto text-sm">{t('landing_tools_sub2')}</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {TOOLS.map((tool) => (
-            <div
-              key={tool.title}
-              className={`group rounded-2xl bg-gradient-to-br ${tool.color} border ${tool.border} p-6 hover:scale-[1.02] transition-all duration-300 flex flex-col`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 ${tool.iconBg}`}>
-                  {tool.icon}
+      {/* ── PARA AGENCIAS ────────────────────────────────────────────────────── */}
+      <section className="py-14 px-5">
+        <div className="max-w-4xl mx-auto">
+          <div className="rounded-2xl border border-teal-500/25 overflow-hidden"
+            style={{ background: 'linear-gradient(145deg, rgba(20,184,166,0.07) 0%, rgba(8,14,26,0.98) 60%)' }}>
+            <div className="h-[2px] bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-500" />
+            <div className="p-6 sm:p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
+                  <Building2 size={18} className="text-teal-400" />
                 </div>
-                <span className={`text-[10px] font-bold rounded-full px-2.5 py-1 border ${tool.iconBg} opacity-80`}>
-                  {tool.badge}
+                <div>
+                  <p className="text-teal-400 text-[11px] font-bold uppercase tracking-wider mb-1">Para agencias de marketing digital</p>
+                  <h3 className="text-white text-xl font-extrabold leading-tight">
+                    Multiplica tu capacidad sin aumentar tu equipo
+                  </h3>
+                </div>
+              </div>
+              <p className="text-slate-400 text-sm leading-relaxed mb-6 max-w-2xl">
+                Si gestionas el SEO local de varios clientes, LocalSEOHub te permite generar en minutos lo que antes te costaba horas. Análisis, reportes, contenido y estrategia para todos tus clientes desde un único panel.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                {[
+                  { icon: Clock, text: 'Genera contenido SEO para 10 clientes en menos de 30 minutos' },
+                  { icon: BarChart3, text: 'Reportes de competencia listos para presentar al cliente' },
+                  { icon: Target, text: 'Radar de competencia para cada negocio que gestiones' },
+                  { icon: FileText, text: 'Exportación a CSV compatible con Shopify, Etsy y GMB' },
+                ].map(({ icon: Icon, text }) => (
+                  <div key={text} className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">
+                    <Icon size={13} className="text-teal-400 shrink-0 mt-0.5" />
+                    <span className="text-slate-300 text-xs leading-relaxed">{text}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={onSubscribeClick}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
+                  bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-lg shadow-teal-500/25 hover:-translate-y-0.5 transition-all duration-200">
+                <ArrowRight size={14} />
+                Probar para mi agencia — gratis 7 días
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CÓMO FUNCIONA ────────────────────────────────────────────────────── */}
+      <section className="py-14 px-5 bg-slate-900/20 border-y border-slate-800/40">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Tan fácil como 1, 2, 3</h2>
+            <p className="text-slate-400 text-sm">En menos de 60 segundos tienes tu primer análisis listo.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {[
+              { step: '01', icon: Search, title: 'Introduce tu negocio', desc: 'Escribe el nombre de tu negocio, tu ciudad y el servicio o producto que ofreces. Sin formularios largos ni configuraciones.' },
+              { step: '02', icon: Sparkles, title: 'La IA lo analiza todo', desc: 'En segundos recibes tu análisis SEO, puntuación de visibilidad, competidores y recomendaciones concretas y priorizadas.' },
+              { step: '03', icon: TrendingUp, title: 'Aplica y capta clientes', desc: 'Copia los textos con un clic, aplica los cambios en tu ficha y empieza a aparecer antes que tu competencia.' },
+            ].map(({ step, icon: Icon, title, desc }) => (
+              <div key={step} className="relative">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                    <Icon size={16} className="text-emerald-400" />
+                  </div>
+                  <span className="text-4xl font-black text-slate-800/80 tabular-nums">{step}</span>
+                </div>
+                <h3 className="text-white font-bold text-base mb-2">{title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
+      <section className="py-14 px-5">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Lo que dicen nuestros usuarios</h2>
+            <p className="text-slate-400 text-sm">Negocios reales, resultados reales.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {TESTIMONIALS.map((t, i) => (
+              <div key={i} className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 space-y-3">
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: t.stars }).map((_, j) => (
+                    <Star key={j} size={12} className="text-amber-400 fill-amber-400" />
+                  ))}
+                  <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/25 text-emerald-400">
+                    {t.metric}
+                  </span>
+                </div>
+                <p className="text-slate-300 text-sm leading-relaxed">"{t.text}"</p>
+                <div className="flex items-center gap-3 pt-1 border-t border-slate-800/60">
+                  <img src={t.photo} alt={t.name} className="w-9 h-9 rounded-full object-cover border border-slate-700/50" />
+                  <div>
+                    <p className="text-white text-sm font-bold">{t.name}</p>
+                    <p className="text-slate-500 text-[11px]">{t.role} · {t.city}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── COMPARATIVA ──────────────────────────────────────────────────────── */}
+      <section className="py-14 px-5 bg-slate-900/30 border-y border-slate-800/50">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-extrabold text-white mb-2">Con LocalSEOHub vs. sin él</h2>
+            <p className="text-slate-400 text-sm">La diferencia en posicionamiento es real y medible.</p>
+          </div>
+          <div className="rounded-2xl border border-slate-700/50 overflow-hidden">
+            <div className="grid grid-cols-3 text-center text-[11px] font-bold uppercase tracking-wider border-b border-slate-700/50">
+              <div className="py-3 px-4 text-slate-500">Situación</div>
+              <div className="py-3 px-4 text-red-400 bg-red-500/5 border-x border-slate-700/50">Sin LocalSEOHub</div>
+              <div className="py-3 px-4 text-emerald-400 bg-emerald-500/5">Con LocalSEOHub</div>
+            </div>
+            {[
+              ['Tiempo para generar contenido SEO', '4-6 horas', '2 minutos'],
+              ['Análisis de competidores', 'Manual o imposible', 'Automático e instantáneo'],
+              ['Visibilidad en ChatGPT / Gemini', 'Desconocida', 'Medida y optimizada'],
+              ['Coste mensual', '300-600€/mes agencia', '9,99€/mes todo incluido'],
+              ['Conocimientos técnicos necesarios', 'Experto en SEO', 'Ninguno'],
+            ].map(([label, bad, good], i) => (
+              <div key={i} className={`grid grid-cols-3 text-sm border-b border-slate-800/40 ${i % 2 === 0 ? '' : 'bg-slate-900/20'}`}>
+                <div className="py-3 px-4 text-slate-400 text-xs flex items-center">{label}</div>
+                <div className="py-3 px-4 text-red-400/80 text-xs flex items-center justify-center bg-red-500/3 border-x border-slate-800/40">
+                  <span className="flex items-center gap-1"><span className="text-red-500">✗</span> {bad}</span>
+                </div>
+                <div className="py-3 px-4 text-emerald-400/90 text-xs flex items-center justify-center bg-emerald-500/3">
+                  <span className="flex items-center gap-1"><span className="text-emerald-500">✓</span> {good}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ──────────────────────────────────────────────────────────── */}
+      <section ref={pricingRef} className="py-16 px-5">
+        <div className="max-w-lg mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Precio simple y transparente</h2>
+            <p className="text-slate-400 text-sm">Acceso completo a todas las herramientas. Sin sorpresas ni letra pequeña.</p>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-500/30 overflow-hidden"
+            style={{ background: 'linear-gradient(160deg, rgba(16,185,129,0.08) 0%, rgba(8,14,26,0.99) 55%)' }}>
+            <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+            <div className="p-6 sm:p-8">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
+                  TODO INCLUIDO
                 </span>
               </div>
-              <h3 className="font-semibold text-white mb-2 text-sm leading-tight">{tool.title}</h3>
-              <p className="text-slate-400 text-xs leading-relaxed flex-1">{tool.desc}</p>
-              <div className="mt-4 flex items-center gap-1 text-emerald-500 text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                <Check size={11} /> {t('landing_included')}
+              <div className="flex items-end gap-2 mb-1 mt-3">
+                <span className="text-4xl font-extrabold text-white">9,99€</span>
+                <span className="text-slate-400 text-sm mb-1">/mes</span>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+              <p className="text-slate-500 text-[12px] mb-6">7 días gratis, después 9,99€/mes · Cancela cuando quieras</p>
 
-      {/* ── HOW IT WORKS ───────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 py-12">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">{t('landing_howto_title')}</h2>
-          <p className="text-slate-400 text-sm">{t('landing_howto_sub')}</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative">
-          <div className="hidden sm:block absolute top-8 left-[calc(16.66%+1rem)] right-[calc(16.66%+1rem)] h-px bg-gradient-to-r from-emerald-500/20 via-teal-500/30 to-emerald-500/20" />
-          {[
-            {
-              num: '01', title: t('landing_howto_s1_title'),
-              desc: t('landing_howto_s1_desc'),
-              icon: <MapPin size={20} />,
-            },
-            {
-              num: '02', title: t('landing_howto_s2_title'),
-              desc: t('landing_howto_s2_desc'),
-              icon: <Sparkles size={20} />,
-              highlight: true,
-            },
-            {
-              num: '03', title: t('landing_howto_s3_title'),
-              desc: t('landing_howto_s3_desc'),
-              icon: <TrendingUp size={20} />,
-            },
-          ].map((step) => (
-            <div key={step.num} className="relative flex flex-col items-center text-center p-6">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 z-10 transition-transform duration-300 hover:scale-110
-                ${step.highlight
-                  ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-slate-950 shadow-xl shadow-emerald-500/30'
-                  : 'bg-slate-900 border-2 border-slate-700 text-emerald-400'}`}
-              >
-                {step.highlight ? step.icon : <span className="text-xl font-bold text-emerald-400">{step.num}</span>}
-              </div>
-              <h3 className="font-bold text-white mb-2 text-sm">{step.title}</h3>
-              <p className="text-slate-400 text-xs leading-relaxed">{step.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── COMPARISON TABLE ───────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 py-12">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1 mb-3">
-            <BarChart3 size={11} /> {t('landing_comp_badge')}
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">{t('landing_comp_title')}</h2>
-          <p className="text-slate-400 text-sm max-w-lg mx-auto">{t('landing_comp_sub')}</p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-800/80 overflow-hidden">
-          {/* Header */}
-          <div className="grid grid-cols-3 text-xs font-bold uppercase tracking-wider">
-            <div className="px-5 py-3.5 text-slate-500 bg-slate-900/80 border-b border-slate-800" />
-            <div className="px-5 py-3.5 text-slate-500 bg-slate-900/80 border-b border-slate-800 border-l border-slate-800 text-center">{t('landing_comp_col_bad')}</div>
-            <div className="px-5 py-3.5 text-emerald-400 bg-emerald-500/8 border-b border-emerald-500/20 border-l border-emerald-500/20 text-center">LocalSEOHub</div>
-          </div>
-          {COMPARISON_ROWS.map((row, i) => (
-            <div key={row.label} className={`grid grid-cols-3 text-sm ${i < COMPARISON_ROWS.length - 1 ? 'border-b border-slate-800/60' : ''}`}>
-              <div className="px-5 py-4 text-slate-300 font-medium bg-slate-900/40">{row.label}</div>
-              <div className="px-5 py-4 text-slate-500 bg-slate-900/20 border-l border-slate-800 flex items-center gap-2">
-                <X size={13} className="text-red-500/70 shrink-0" />
-                {row.bad}
-              </div>
-              <div className="px-5 py-4 text-emerald-400 bg-emerald-500/5 border-l border-emerald-500/15 flex items-center gap-2 font-medium">
-                <Check size={13} className="text-emerald-500 shrink-0" />
-                {row.good}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center mt-8">
-          <button
-            onClick={onLoginClick}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm transition-all duration-300
-              bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-              text-slate-950 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5"
-          >
-            <Zap size={15} fill="currentColor" />
-            {t('landing_comp_try')}
-            <ArrowRight size={15} />
-          </button>
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS (moved above — section kept for scroll anchor) ── */}
-
-      {/* ── FEATURE SHOWROOM ───────────────────────────────────────── */}
-      <FeatureShowroom onLoginClick={onLoginClick} />
-
-      {/* ── CASE STUDY PLAYGROUND ──────────────────────────────────── */}
-      <CaseStudyPlayground onLoginClick={onLoginClick} />
-
-      {/* ── TRIAL CTA BANNER ───────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 pb-6">
-        <div className="relative rounded-2xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-blue-500/10" />
-          <div className="absolute inset-0 border border-emerald-500/25 rounded-2xl" />
-          <div className="relative flex flex-col sm:flex-row items-center justify-between gap-6 p-7 sm:p-9">
-            <div className="text-center sm:text-left">
-              <div className="inline-flex items-center gap-2 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3 whitespace-nowrap">
-                <Zap size={10} fill="currentColor" className="shrink-0" /> 7 días gratis · sin tarjeta
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">¿Quieres probarlo con tu propio negocio?</h2>
-              <p className="text-slate-400 text-sm leading-relaxed max-w-md">
-                Obtén <strong className="text-white">7 días de acceso premium gratis</strong> — sin tarjeta de crédito. Analiza tu negocio real, descubre tus competidores y recibe tu plan de acción personalizado.
-              </p>
-              <div className="flex flex-wrap gap-3 mt-4 justify-center sm:justify-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-7">
                 {[
-                  { icon: <Check size={11} />, label: 'Radar de Competencia GEO completo' },
-                  { icon: <Check size={11} />, label: 'AI Digital Twin activo' },
-                  { icon: <Check size={11} />, label: 'Plan de acción generado por IA' },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-1.5 text-emerald-400 text-xs">
-                    {item.icon} <span className="text-slate-300">{item.label}</span>
+                  'Generador SEO ilimitado (16+ plataformas)',
+                  'Escaner de Ficha Google Maps + Score',
+                  'AI Digital Twin con mapa de calor',
+                  'Radar de Competencia en tiempo real',
+                  'GEO Audit — visibilidad en ChatGPT y Gemini',
+                  'AI Business Advisor personalizado',
+                  'Voice & Campaign Simulator',
+                  'Exportación a CSV (Shopify, Etsy)',
+                  'Soporte prioritario por email',
+                  'Actualizaciones del motor IA incluidas',
+                ].map((f) => (
+                  <div key={f} className="flex items-start gap-2 text-xs text-slate-300">
+                    <CheckCircle2 size={13} className="text-emerald-400 shrink-0 mt-0.5" />
+                    {f}
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="flex flex-col items-center gap-3 shrink-0">
-              <button
-                onClick={onLoginClick}
-                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl font-bold text-base transition-all duration-300
+
+              <button onClick={onSubscribeClick}
+                className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
                   bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 whitespace-nowrap"
-              >
+                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
                 <Zap size={16} fill="currentColor" />
-                Regístrate ahora — es gratis
-                <ArrowRight size={15} />
+                Empezar 7 días gratis — sin tarjeta
               </button>
-              <p className="text-slate-600 text-[11px] flex items-center gap-1.5">
-                <Shield size={10} /> Sin tarjeta · cancela cuando quieras
+              <p className="text-center text-[11px] text-slate-500 mt-3 flex items-center justify-center gap-1.5">
+                <Shield size={10} className="text-slate-600" />
+                Pago seguro con Stripe · Sin permanencia · Cancela en cualquier momento
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FAQ ────────────────────────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 py-10">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 bg-slate-800/60 border border-slate-700/60 rounded-full px-3 py-1 mb-3">
-            <HelpCircle size={11} /> {t('landing_faq_badge')}
+      {/* ── CTA FINAL ────────────────────────────────────────────────────────── */}
+      <section className="py-14 px-5 bg-slate-900/40 border-y border-slate-800/50">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-orange-400 mb-5">
+            <Flame size={12} className="text-orange-400" />
+            Tu competencia ya usa IA
           </div>
-          <h2 className="text-2xl font-bold text-white">{t('landing_faq_title')}</h2>
-        </div>
-        <div className="space-y-2">
-          {FAQS.map((faq) => (
-            <FAQItem key={faq.q} q={faq.q} a={faq.a} />
-          ))}
-        </div>
-      </section>
-
-      {/* ── FINAL CTA ──────────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 pb-20">
-        <div className="relative rounded-2xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/12 via-teal-500/8 to-slate-900" />
-          <div className="absolute inset-0 border border-emerald-500/20 rounded-2xl" />
-          <div className="relative p-10 sm:p-14 text-center">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5 whitespace-nowrap">
-              <Flame size={12} className="text-orange-400 shrink-0" /> {t('landing_final_badge')}
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4 leading-tight">
-              {t('landing_final_title1')}<br className="hidden sm:block" />
-              <span className="text-emerald-400"> {t('landing_final_title2')}</span>
-            </h2>
-            <p className="text-slate-400 mb-6 max-w-lg mx-auto text-sm leading-relaxed">
-              {t('landing_final_desc')}
-            </p>
-
-            {/* Price anchor */}
-            <div className="inline-flex items-center gap-3 bg-slate-900/60 border border-slate-700/60 rounded-2xl px-6 py-3 mb-7">
-              <div className="text-left">
-                <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wide">{t('landing_final_plan')}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">{t('landing_final_price')}</span>
-                  <span className="text-slate-400 text-sm">{t('landing_final_per_mo')}</span>
-                </div>
-              </div>
-              <div className="w-px h-10 bg-slate-700" />
-              <div className="text-left">
-                <p className="text-emerald-400 text-xs font-bold flex items-baseline gap-1">
-                  <span className="text-base font-extrabold tabular-nums leading-none">7</span>
-                  <span>{lang === 'es' ? 'días gratis' : 'days free'}</span>
-                </p>
-                <p className="text-slate-500 text-[11px]">
-                  {lang === 'es' ? 'Sin tarjeta hasta el día ' : 'No card until day '}
-                  <span className="font-bold text-slate-400 tabular-nums">8</span>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={onLoginClick}
-                className="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-xl font-bold text-base transition-all duration-300
-                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                  text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5"
-              >
-                <Zap size={17} fill="currentColor" />
-                {t('landing_final_cta')}
-                <ArrowRight size={16} />
-              </button>
-            </div>
-            <p className="text-xs text-slate-600 mt-4 flex items-center justify-center gap-1.5">
-              <Shield size={10} /> {t('landing_final_trust')}
-            </p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 leading-tight">
+            Cada día sin LocalSEOHub es un día que tus competidores aparecen antes que tú
+          </h2>
+          <p className="text-slate-400 text-sm max-w-xl mx-auto mb-8 leading-relaxed">
+            Únete a los negocios locales y agencias que ya usan LocalSEOHub para captar más clientes, ahorrar tiempo y superar a su competencia en Google Maps e IA generativa.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button onClick={onSubscribeClick}
+              className="flex items-center gap-2.5 px-8 py-4 rounded-xl font-bold text-base
+                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                text-slate-950 shadow-xl shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-200">
+              <Zap size={16} fill="currentColor" />
+              Empezar gratis ahora — 7 días sin coste
+            </button>
+            <button onClick={() => onLoginClick()}
+              className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm text-slate-400
+                border border-slate-700/60 hover:border-slate-600 hover:text-slate-300 hover:bg-slate-800/40 transition-all duration-200">
+              Ya tengo cuenta — Iniciar sesión
+            </button>
+          </div>
+          <div className="flex items-center justify-center gap-5 mt-6">
+            {['Sin tarjeta para empezar', 'Cancela en cualquier momento', 'Soporte en español'].map((t) => (
+              <span key={t} className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                <Check size={10} className="text-emerald-500" />{t}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ─────────────────────────────────────────────────── */}
-      <footer className="border-t border-slate-800/50 py-7">
-        <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <LogoIcon size={22} />
-            <span className="text-xs text-slate-600 font-medium">LocalSEO<span className="text-emerald-600">Hub</span></span>
+      {/* ── FAQ ──────────────────────────────────────────────────────────────── */}
+      <section className="py-14 px-5">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-extrabold text-white mb-2">Preguntas frecuentes</h2>
+            <p className="text-slate-400 text-sm">Todo lo que necesitas saber antes de empezar.</p>
           </div>
-          <p className="text-xs text-slate-700">{t('landing_footer_cr')}</p>
-          <div className="flex items-center gap-4">
-            <button onClick={() => setLegalModal('privacy')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-              {t('landing_footer_priv')}
-            </button>
-            <button onClick={() => setLegalModal('terms')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-              {t('landing_footer_terms2')}
-            </button>
-            <button onClick={() => setLegalModal('contact')} className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-              {t('footer_contact')}
-            </button>
+          <div className="space-y-2">
+            {FAQS.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ───────────────────────────────────────────────────────────── */}
+      <footer className="border-t border-slate-800/60 py-8 px-5">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <LogoIcon size={20} />
+              <span className="text-white font-bold text-sm">LocalSEOHub.io</span>
+              <span className="text-slate-600 text-xs">© 2026</span>
+            </div>
+            <div className="flex items-center gap-5">
+              {[
+                { label: 'Privacidad', modal: 'privacy' as LegalModal },
+                { label: 'Términos', modal: 'terms' as LegalModal },
+                { label: 'Contacto', modal: 'contact' as LegalModal },
+              ].map(({ label, modal }) => (
+                <button key={label} onClick={() => setLegalModal(modal)}
+                  className="text-slate-500 hover:text-slate-300 text-xs transition-colors">
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </footer>
 
+      {/* ── LEGAL MODALS ─────────────────────────────────────────────────────── */}
       {legalModal === 'privacy' && <PrivacyModal onClose={() => setLegalModal(null)} />}
-      {legalModal === 'terms' && <TermsModal onClose={() => setLegalModal(null)} />}
+      {legalModal === 'terms'   && <TermsModal   onClose={() => setLegalModal(null)} />}
       {legalModal === 'contact' && <ContactModal onClose={() => setLegalModal(null)} />}
     </div>
   );
