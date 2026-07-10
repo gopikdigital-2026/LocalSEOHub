@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
-import { supabase } from '../lib/supabase';
 import { useI18n } from '../lib/i18n';
 import { track, storeGoogleIntent } from '../lib/analytics';
 import { isInAppBrowser } from '../lib/socialWebView';
@@ -234,19 +233,16 @@ function GoogleIconSm() {
 }
 
 // ─── Registration gate ────────────────────────────────────────────────────────
+// NOTE: Google button routes through onLoginClick (opens LoginModal) instead of
+// calling signInWithOAuth directly. Direct OAuth had 0% completion rate — users
+// were landing on Google consent but never returning. LoginModal is the proven path.
 function RegistrationGate({
-  onGoogle,
   onLoginClick,
-  googleLoading,
-  googleError,
   context,
   businessName,
   toolLabel,
 }: {
-  onGoogle: () => void;
   onLoginClick: (email?: string) => void;
-  googleLoading: boolean;
-  googleError: string;
   context: string;
   businessName?: string;
   toolLabel: string;
@@ -263,6 +259,12 @@ function RegistrationGate({
     track('gate_register_click', { context, method: 'email_inline' });
     setSubmitted(true);
     onLoginClick(email.trim());
+  };
+
+  const handleGoogle = () => {
+    track('gate_register_click', { context, method: 'google_modal' });
+    storeGoogleIntent(context);
+    onLoginClick(); // abre LoginModal — el flujo que sí completa
   };
 
   if (submitted) {
@@ -304,54 +306,50 @@ function RegistrationGate({
         </div>
 
         <div className="space-y-2" onClick={() => track('gate_cta_visible', { context })}>
-          {!inApp ? (
-            <button
-              type="button"
-              onClick={() => { track('gate_register_click', { context, method: 'google_inline' }); storeGoogleIntent(context); onGoogle(); }}
-              disabled={googleLoading}
-              className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-[13px] transition-all duration-150
-                bg-emerald-500 hover:bg-emerald-400 active:scale-[0.985] text-slate-950
-                shadow-[0_4px_20px_rgba(16,185,129,0.35)] disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {googleLoading
-                ? <svg className="animate-spin w-3.5 h-3.5 text-slate-800" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                : <GoogleIconSm />}
-              <span>{googleLoading ? 'Redirigiendo…' : 'Registrarme con Google (1 clic)'}</span>
-            </button>
-          ) : (
-            <a href={window.location.href} target="_blank" rel="noopener noreferrer"
-              onClick={() => { track('gate_register_click', { context, method: 'email_inapp' }); onLoginClick(); }}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-[13px]
-                bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_4px_20px_rgba(16,185,129,0.35)] no-underline">
-              <ExternalLink size={13} />Abrir en navegador para continuar
-            </a>
-          )}
 
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-px bg-slate-800" />
-            <span className="text-[9px] text-slate-600 px-1">o con email</span>
-            <div className="flex-1 h-px bg-slate-800" />
-          </div>
-
-          <form onSubmit={handleEmail} className="flex gap-2">
-            <div className="relative flex-1">
-              <Mail size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+          {/* PRIMARY: email — es el método que convierte según los datos */}
+          <form onSubmit={handleEmail} className="space-y-2">
+            <div className="relative">
+              <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
-                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-xl pl-9 pr-3 py-2.5 text-[13px] text-slate-100
-                  placeholder-slate-600 outline-none transition-all focus:border-slate-500/60 focus:ring-1 focus:ring-slate-500/15" />
+                placeholder="tu@email.com — empieza gratis"
+                className="w-full bg-slate-900/80 border border-slate-600/60 rounded-xl pl-10 pr-3 py-3 text-sm text-slate-100
+                  placeholder-slate-600 outline-none transition-all focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20" />
             </div>
             <button type="submit" disabled={!email.trim()}
-              className="flex items-center justify-center px-4 py-2.5 rounded-xl font-semibold text-[12px]
-                bg-slate-700/80 hover:bg-slate-600/80 border border-slate-600/60 text-slate-200
-                disabled:opacity-40 disabled:cursor-not-allowed shrink-0 transition-all">
-              <ArrowRight size={13} />
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all duration-150
+                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                text-slate-950 shadow-[0_4px_20px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 active:translate-y-0
+                disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+              <ArrowRight size={14} />
+              Ver mi informe completo — gratis
             </button>
           </form>
 
-          {googleError && <p className="text-[10px] text-red-400 text-center">{googleError}</p>}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-slate-800" />
+            <span className="text-[9px] text-slate-600 px-1">o</span>
+            <div className="flex-1 h-px bg-slate-800" />
+          </div>
 
-          <div className="flex items-center justify-center gap-3">
+          {/* SECONDARY: Google / in-app fallback */}
+          {inApp ? (
+            <a href={window.location.href} target="_blank" rel="noopener noreferrer"
+              onClick={() => { track('gate_register_click', { context, method: 'inapp_open' }); }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-[12px]
+                border border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-800/40 transition-all no-underline">
+              <ExternalLink size={12} />Abrir en navegador para continuar
+            </a>
+          ) : (
+            <button type="button" onClick={handleGoogle}
+              className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl font-semibold text-[12px]
+                border border-slate-700/60 hover:border-slate-600/80 text-slate-300 hover:bg-slate-800/40 transition-all">
+              <GoogleIconSm />
+              Continuar con Google
+            </button>
+          )}
+
+          <div className="flex items-center justify-center gap-3 pt-0.5">
             <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />7 días gratis</span>
             <span className="text-slate-700 text-[9px]">·</span>
             <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />Sin tarjeta</span>
@@ -636,17 +634,26 @@ function AdvisorResult({ input1, input2 }: { input1: string; input2: string }) {
 }
 
 // ─── Main tool trial widget ───────────────────────────────────────────────────
-function ToolTrialSection({ onLoginClick }: { onLoginClick: (email?: string) => void }) {
-  const [activeTool, setActiveTool] = useState(0);
+function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (email?: string) => void; initialToolIdx?: number }) {
+  const [activeTool, setActiveTool] = useState(initialToolIdx ?? 0);
   const [input1, setInput1] = useState('');
   const [input2, setInput2] = useState('');
   const [phase, setPhase] = useState<DemoPhase>('idle');
   const [showGate, setShowGate] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleError, setGoogleError] = useState('');
   const [lockedInput1, setLockedInput1] = useState('');
   const [lockedInput2, setLockedInput2] = useState('');
   const scanRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (initialToolIdx !== undefined) {
+      if (scanRef.current) clearTimeout(scanRef.current);
+      setActiveTool(initialToolIdx);
+      setInput1('');
+      setInput2('');
+      setPhase('idle');
+      setShowGate(false);
+    }
+  }, [initialToolIdx]);
 
   const tool = TRIAL_TOOLS[activeTool];
 
@@ -657,7 +664,6 @@ function ToolTrialSection({ onLoginClick }: { onLoginClick: (email?: string) => 
     setInput2('');
     setPhase('idle');
     setShowGate(false);
-    setGoogleError('');
   };
 
   const handleScan = () => {
@@ -675,23 +681,6 @@ function ToolTrialSection({ onLoginClick }: { onLoginClick: (email?: string) => 
   };
 
   useEffect(() => () => { if (scanRef.current) clearTimeout(scanRef.current); }, []);
-
-  const handleGoogleAuth = async () => {
-    if (isInAppBrowser()) { onLoginClick(); return; }
-    setGoogleLoading(true);
-    setGoogleError('');
-    storeGoogleIntent(tool.id);
-    let cleaned = false;
-    const cleanup = () => { if (cleaned) return; cleaned = true; clearTimeout(fb); document.removeEventListener('visibilitychange', onVis); };
-    const onVis = () => { if (!document.hidden) { cleanup(); setGoogleLoading(false); } };
-    document.addEventListener('visibilitychange', onVis);
-    const fb = setTimeout(() => { cleanup(); setGoogleLoading(false); }, 15000);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/`, queryParams: { prompt: 'select_account' } },
-    });
-    if (error) { cleanup(); setGoogleLoading(false); setGoogleError('Google no está disponible. Regístrate con email.'); }
-  };
 
   const INPUT_CLS = 'w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20';
 
@@ -801,10 +790,7 @@ function ToolTrialSection({ onLoginClick }: { onLoginClick: (email?: string) => 
 
               {showGate && (
                 <RegistrationGate
-                  onGoogle={handleGoogleAuth}
                   onLoginClick={onLoginClick}
-                  googleLoading={googleLoading}
-                  googleError={googleError}
                   context={tool.id}
                   businessName={lockedInput1 || undefined}
                   toolLabel={tool.label}
@@ -840,6 +826,90 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 }
 
 // ─── Color map for tool cards ─────────────────────────────────────────────────
+// ─── Per-tool benefits for the picker section ────────────────────────────────
+const TOOL_BENEFITS: Array<{
+  id: string;
+  trialIdx?: number;
+  icon: React.ElementType;
+  name: string;
+  badge: string;
+  color: string;
+  tagline: string;
+  benefits: string[];
+}> = [
+  {
+    id: 'seo', trialIdx: 0, icon: FileText, name: 'Generador SEO',
+    badge: '16+ plataformas', color: 'emerald',
+    tagline: 'Contenido SEO listo para copiar en 30 segundos',
+    benefits: [
+      'Títulos y descripciones optimizados para Google, Shopify, Amazon y 13 plataformas más',
+      'Keywords de alta intención de compra adaptadas a tu ciudad y categoría',
+      'Schema estructurado y versión extendida para máximo impacto en buscadores',
+    ],
+  },
+  {
+    id: 'maps', trialIdx: 1, icon: MapPinned, name: 'Escaner Maps',
+    badge: 'Puntuación 0-100', color: 'blue',
+    tagline: 'Descubre por qué tu ficha no aparece en los primeros resultados',
+    benefits: [
+      'Score de optimización 0-100 con fallos críticos detectados automáticamente',
+      'Plan de acción exacto: qué cambiar, cómo y en qué orden',
+      'Comparativa con los competidores mejor posicionados en tu zona',
+    ],
+  },
+  {
+    id: 'twin', trialIdx: 2, icon: Eye, name: 'AI Digital Twin',
+    badge: 'Mapa de calor local', color: 'cyan',
+    tagline: 'Ve tu negocio tal y como lo ven los buscadores',
+    benefits: [
+      'Mapa de calor de visibilidad por zonas de tu ciudad',
+      'Señales de presencia digital auditadas en tiempo real',
+      'Identifica los barrios donde pierdes clientes frente a la competencia',
+    ],
+  },
+  {
+    id: 'radar', trialIdx: 3, icon: Target, name: 'Radar de Competencia',
+    badge: 'Análisis en tiempo real', color: 'orange',
+    tagline: 'Conoce la estrategia exacta de tus competidores',
+    benefits: [
+      'Analiza keywords, score SEO y estrategia de cualquier competidor',
+      'Contramedidas automáticas y personalizadas para superarles',
+      'Detecta las brechas de posicionamiento que puedes explotar hoy',
+    ],
+  },
+  {
+    id: 'geo', trialIdx: undefined, icon: Globe, name: 'GEO Audit — IA',
+    badge: 'ChatGPT · Gemini', color: 'teal',
+    tagline: 'Aparece cuando la IA responde a tus clientes potenciales',
+    benefits: [
+      'Mide si ChatGPT, Gemini o Perplexity te recomiendan cuando alguien pregunta por tu servicio',
+      'El 30% de las búsquedas ya pasan por IA — optimiza antes que tu competencia',
+      'Informe de visibilidad comparado con los negocios líderes de tu sector',
+    ],
+  },
+  {
+    id: 'advisor', trialIdx: 4, icon: Brain, name: 'AI Business Advisor',
+    badge: 'Estrategia personalizada', color: 'rose',
+    tagline: 'Tu consejero de marketing digital disponible 24/7',
+    benefits: [
+      'Describe tu situación y recibe un plan de acción concreto y priorizado',
+      'Adaptado a tu tipo de negocio, tu ciudad y tu presupuesto real',
+      'Estrategias probadas que otros negocios locales ya están aplicando',
+    ],
+  },
+  {
+    id: 'voice', trialIdx: undefined, icon: Mic, name: 'Voice & Campañas',
+    badge: 'Voz + Publicidad', color: 'violet',
+    tagline: 'Domina la búsqueda por voz y optimiza tu publicidad',
+    benefits: [
+      'Simula cómo suenas en Siri, Alexa y Google Assistant antes de publicar',
+      'Previsualiza el rendimiento de campañas antes de invertir un solo euro',
+      'Optimiza tu presencia en el canal de búsqueda de mayor crecimiento',
+    ],
+  },
+];
+
+// ─── Color map for tool cards ─────────────────────────────────────────────────
 const TOOL_COLORS: Record<string, { bg: string; border: string; icon: string; badge: string }> = {
   emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400', badge: 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400' },
   blue:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400',    badge: 'bg-blue-500/15 border-blue-500/25 text-blue-400' },
@@ -853,12 +923,19 @@ const TOOL_COLORS: Record<string, { bg: string; border: string; icon: string; ba
 // ─── Main landing page ────────────────────────────────────────────────────────
 export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
+  const [selectedToolIdx, setSelectedToolIdx] = useState<number | undefined>(undefined);
   const { lang } = useI18n();
   const pricingRef = useRef<HTMLDivElement>(null);
+  const demoRef = useRef<HTMLElement>(null);
 
   useEffect(() => { track('page_view', { page: 'landing' }); }, []);
 
   const scrollToPricing = () => pricingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const handlePickTool = (trialIdx: number) => {
+    setSelectedToolIdx(trialIdx);
+    setTimeout(() => demoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -905,11 +982,11 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
               <Zap size={16} fill="currentColor" />
               Prueba 7 días gratis — sin tarjeta
             </button>
-            <button onClick={() => document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            <button onClick={() => document.getElementById('tool-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm text-slate-300
                 border border-slate-700/60 hover:border-slate-600/60 hover:bg-slate-800/40 transition-all duration-200">
               <Eye size={14} />
-              Ver una herramienta en acción
+              Elegir una herramienta
             </button>
           </div>
 
@@ -931,8 +1008,88 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
+      {/* ── ELIGE TU HERRAMIENTA ────────────────────────────────────────────── */}
+      <section id="tool-picker" className="py-14 px-5 bg-slate-900/30 border-y border-slate-800/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-4">
+              <Sparkles size={11} />
+              7 herramientas — elige la que necesitas ahora
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+              ¿Qué quieres mejorar de tu negocio hoy?
+            </h2>
+            <p className="text-slate-400 text-sm max-w-xl mx-auto">
+              Cada herramienta resuelve un problema concreto de visibilidad local. Elige una, pruébala gratis y ve los resultados en segundos.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {TOOL_BENEFITS.map((tool) => {
+              const Icon = tool.icon;
+              const c = TOOL_COLORS[tool.color] ?? TOOL_COLORS.emerald;
+              const isTrial = tool.trialIdx !== undefined;
+              return (
+                <div key={tool.id}
+                  className={`group relative rounded-2xl border p-5 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${c.border}`}
+                  style={{ background: 'linear-gradient(145deg, rgba(15,23,42,0.92) 0%, rgba(8,14,26,0.97) 100%)' }}>
+
+                  {isTrial && (
+                    <span className="absolute top-3.5 right-3.5 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/25 text-emerald-400">
+                      Gratis
+                    </span>
+                  )}
+
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${c.bg} ${c.border}`}>
+                      <Icon size={18} className={c.icon} />
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-sm leading-tight">{tool.name}</p>
+                      <span className={`inline-block mt-0.5 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${c.badge}`}>
+                        {tool.badge}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className={`text-xs font-semibold mb-3 leading-snug ${c.icon}`}>{tool.tagline}</p>
+
+                  <ul className="space-y-2 mb-5 flex-1">
+                    {tool.benefits.map((b, bi) => (
+                      <li key={bi} className="flex items-start gap-2 text-[11px] text-slate-400 leading-relaxed">
+                        <Check size={10} className={`${c.icon} shrink-0 mt-0.5`} />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {isTrial ? (
+                    <button
+                      onClick={() => handlePickTool(tool.trialIdx!)}
+                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-150
+                        bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                        text-slate-950 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/35`}>
+                      <Zap size={11} fill="currentColor" />
+                      Analizar mi negocio gratis
+                    </button>
+                  ) : (
+                    <button
+                      onClick={onSubscribeClick}
+                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-150
+                        border ${c.border} ${c.icon} hover:bg-slate-800/40`}>
+                      <ArrowRight size={11} />
+                      Incluida en la suscripción
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ── DEMO INTERACTIVO ──────────────────────────────────────────────────── */}
-      <section id="demo-section" className="py-14 px-5 max-w-5xl mx-auto">
+      <section ref={demoRef} id="demo-section" className="py-14 px-5 max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-teal-400 mb-4">
             <Zap size={11} fill="currentColor" />
@@ -945,56 +1102,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             Elige una de las 5 herramientas, escribe el nombre de tu negocio y recibe un análisis real en segundos. Cuando quieras ver el informe completo, regístrate gratis.
           </p>
         </div>
-        <ToolTrialSection onLoginClick={onLoginClick} />
-      </section>
-
-      {/* ── 7 HERRAMIENTAS ───────────────────────────────────────────────────── */}
-      <section className="py-14 px-5 bg-slate-900/30 border-y border-slate-800/50">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
-              7 herramientas profesionales, una sola plataforma
-            </h2>
-            <p className="text-slate-400 text-sm max-w-xl mx-auto">
-              Cada herramienta ataca un problema diferente del posicionamiento local. Juntas forman el arsenal más completo disponible para negocios locales.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {TOOLS_SHOWCASE.map((tool, i) => {
-              const Icon = tool.icon;
-              const c = TOOL_COLORS[tool.color] ?? TOOL_COLORS.emerald;
-              return (
-                <div key={i}
-                  className={`rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-0.5 ${c.border} bg-gradient-to-br from-slate-900/80 to-slate-950/80`}
-                  style={{ background: `linear-gradient(145deg, rgba(15,23,42,0.9) 0%, rgba(8,14,26,0.95) 100%)` }}>
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${c.bg} ${c.border}`}>
-                      <Icon size={16} className={c.icon} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-bold text-sm leading-tight">{tool.name}</p>
-                      <span className={`inline-block mt-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${c.badge}`}>
-                        {tool.badge}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-slate-400 text-xs leading-relaxed">{tool.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="text-center mt-8">
-            <button onClick={onSubscribeClick}
-              className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-sm
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5 transition-all duration-200">
-              <Zap size={14} fill="currentColor" />
-              Acceder a las 7 herramientas — 7 días gratis
-            </button>
-          </div>
-        </div>
+        <ToolTrialSection onLoginClick={onLoginClick} initialToolIdx={selectedToolIdx} />
       </section>
 
       {/* ── PARA AGENCIAS ────────────────────────────────────────────────────── */}
