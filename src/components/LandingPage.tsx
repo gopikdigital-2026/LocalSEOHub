@@ -926,15 +926,13 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
   const [selectedToolIdx, setSelectedToolIdx] = useState<number | undefined>(undefined);
   const { lang } = useI18n();
   const pricingRef = useRef<HTMLDivElement>(null);
-  const demoRef = useRef<HTMLElement>(null);
+  const heroWidgetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { track('page_view', { page: 'landing' }); }, []);
 
-  const scrollToPricing = () => pricingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
   const handlePickTool = (trialIdx: number) => {
     setSelectedToolIdx(trialIdx);
-    setTimeout(() => demoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    setTimeout(() => heroWidgetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
   };
 
   return (
@@ -943,67 +941,72 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
           <div className="absolute top-40 left-1/4 w-64 h-64 bg-teal-500/4 rounded-full blur-3xl" />
+          <div className="absolute top-20 right-1/4 w-72 h-72 bg-cyan-500/3 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-5xl mx-auto px-5 pt-12 pb-8 relative">
+        <div className="max-w-6xl mx-auto px-5 pt-12 pb-16 relative">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
 
-          {/* Audience badge */}
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
-              <Flame size={12} className="text-orange-400" />
-              Para negocios locales y agencias de marketing digital
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            </div>
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-[1.1] mb-4 tracking-tight text-center">
-            LocalSEOHub.io —{' '}
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              Todo el potencial de la IA local en tus manos
-            </span>
-          </h1>
-
-          <p className="text-center text-slate-400 text-base sm:text-lg max-w-2xl mx-auto mb-3 leading-relaxed">
-            La plataforma que ayuda a negocios locales y agencias de marketing a captar más clientes de una forma fácil, rápida y sin necesidad de saber de SEO.
-          </p>
-          <p className="text-center text-slate-500 text-sm max-w-xl mx-auto mb-8">
-            7 herramientas de IA para posicionarte en Google Maps, SEO local, búsquedas por voz y el nuevo mundo de la IA generativa.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
-            <button onClick={onSubscribeClick}
-              className="flex items-center gap-2.5 px-7 py-4 rounded-xl font-bold text-base
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
-              <Zap size={16} fill="currentColor" />
-              Prueba 7 días gratis — sin tarjeta
-            </button>
-            <button onClick={() => document.getElementById('tool-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm text-slate-300
-                border border-slate-700/60 hover:border-slate-600/60 hover:bg-slate-800/40 transition-all duration-200">
-              <Eye size={14} />
-              Elegir una herramienta
-            </button>
-          </div>
-
-          {/* Stats bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto">
-            {[
-              { value: '7', label: 'Herramientas de IA', icon: Sparkles },
-              { value: '16+', label: 'Plataformas compatibles', icon: Globe },
-              { value: '4.9★', label: 'Valoración media', icon: Star },
-              { value: '7 días', label: 'Prueba gratuita', icon: Shield },
-            ].map(({ value, label, icon: Icon }) => (
-              <div key={label} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-900/50 border border-slate-800/60">
-                <Icon size={14} className="text-emerald-400" />
-                <span className="text-white font-extrabold text-lg leading-none">{value}</span>
-                <span className="text-slate-500 text-[10px] text-center">{label}</span>
+            {/* ── Left: copy ── */}
+            <div>
+              <div className="mb-5">
+                <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
+                  <Flame size={12} className="text-orange-400" />
+                  Para negocios locales y agencias de marketing
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
               </div>
-            ))}
+
+              <h1 className="text-3xl sm:text-4xl xl:text-5xl font-extrabold text-white leading-[1.1] mb-4 tracking-tight">
+                Más clientes locales con{' '}
+                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                  7 herramientas de IA
+                </span>
+              </h1>
+
+              <p className="text-slate-400 text-base sm:text-lg mb-3 leading-relaxed">
+                SEO local, Google Maps, análisis de competencia y visibilidad en IA generativa — sin saber de SEO.
+              </p>
+              <p className="text-slate-500 text-sm mb-8">
+                Introduce tu negocio y obtén tu primer análisis en segundos, completamente gratis.
+              </p>
+
+              <div className="space-y-2.5 mb-8">
+                {[
+                  '7 días gratis — sin tarjeta de crédito',
+                  'Resultados en segundos, sin configuraciones',
+                  'Agencias y autónomos en toda España',
+                ].map((text) => (
+                  <div key={text} className="flex items-center gap-2.5 text-sm text-slate-300">
+                    <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                    {text}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { value: '7', label: 'Herramientas IA', icon: Sparkles },
+                  { value: '16+', label: 'Plataformas', icon: Globe },
+                  { value: '4.9★', label: 'Valoración', icon: Star },
+                  { value: '9,99€', label: '/mes todo incl.', icon: Shield },
+                ].map(({ value, label, icon: Icon }) => (
+                  <div key={label} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-900/50 border border-slate-800/60">
+                    <Icon size={13} className="text-emerald-400" />
+                    <span className="text-white font-extrabold text-base leading-none">{value}</span>
+                    <span className="text-slate-500 text-[10px] text-center">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Right: interactive widget ── */}
+            <div ref={heroWidgetRef}>
+              <ToolTrialSection onLoginClick={onLoginClick} initialToolIdx={selectedToolIdx} />
+            </div>
+
           </div>
         </div>
       </section>
@@ -1086,23 +1089,6 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             })}
           </div>
         </div>
-      </section>
-
-      {/* ── DEMO INTERACTIVO ──────────────────────────────────────────────────── */}
-      <section ref={demoRef} id="demo-section" className="py-14 px-5 max-w-5xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-teal-400 mb-4">
-            <Zap size={11} fill="currentColor" />
-            Prueba gratuita — sin registro
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
-            Introduce tu negocio y ve tu análisis ahora
-          </h2>
-          <p className="text-slate-400 text-sm max-w-xl mx-auto">
-            Elige una de las 5 herramientas, escribe el nombre de tu negocio y recibe un análisis real en segundos. Cuando quieras ver el informe completo, regístrate gratis.
-          </p>
-        </div>
-        <ToolTrialSection onLoginClick={onLoginClick} initialToolIdx={selectedToolIdx} />
       </section>
 
       {/* ── PARA AGENCIAS ────────────────────────────────────────────────────── */}
