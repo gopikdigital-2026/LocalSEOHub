@@ -251,18 +251,18 @@ function Step2Analysis({ onNext }: { onNext: () => void }) {
           {CHECKLIST_ITEMS.map((item) => {
             const isChecked = checked.has(item.id);
             return (
-              <AnimatePresence key={item.id}>
-                <motion.div
-                  layout
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.35, ease: [0.16,1,0.3,1] }}
-                  className={`flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all duration-300 ${
-                    isChecked
-                      ? 'border-emerald-500/25 bg-emerald-500/5'
-                      : 'border-slate-800/60 bg-slate-900/40'
-                  }`}
-                >
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.35, ease: [0.16,1,0.3,1] }}
+                className={`flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all duration-300 ${
+                  isChecked
+                    ? 'border-emerald-500/25 bg-emerald-500/5'
+                    : 'border-slate-800/60 bg-slate-900/40'
+                }`}
+              >
                   <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 transition-all duration-300 ${
                     isChecked
                       ? 'bg-emerald-500/15 border-emerald-500/30'
@@ -288,7 +288,6 @@ function Step2Analysis({ onNext }: { onNext: () => void }) {
                     </motion.span>
                   )}
                 </motion.div>
-              </AnimatePresence>
             );
           })}
         </div>
@@ -459,16 +458,29 @@ function Step4Mission({ onNext, userEmail }: { onNext: () => void; userEmail?: s
 // ─── Step 5: Celebration ──────────────────────────────────────────────────────
 function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; userEmail?: string }) {
   const [showConfetti, setShowConfetti] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const r = getResults(userEmail);
+  const [loaded,       setLoaded]       = useState(false);
+  const [completing,   setCompleting]   = useState(false);
+  const r        = getResults(userEmail);
   const newScore = Math.min(r.score + Math.min(r.gain, 9), 99);
 
+  // Track mount so we never call setState after unmount
+  const mounted = useRef(true);
+  useEffect(() => { return () => { mounted.current = false; }; }, []);
+
   useEffect(() => {
+    if (!mounted.current) return;
     setShowConfetti(true);
-    const t = setTimeout(() => setLoaded(true), 200);
-    const stop = setTimeout(() => setShowConfetti(false), 3200);
+    const t    = setTimeout(() => { if (mounted.current) setLoaded(true);         }, 200);
+    const stop = setTimeout(() => { if (mounted.current) setShowConfetti(false); }, 3200);
     return () => { clearTimeout(t); clearTimeout(stop); };
   }, []);
+
+  const handleComplete = useCallback(() => {
+    if (completing) return;
+    setCompleting(true);
+    // Let the whileTap animation and any pending Framer Motion callbacks fully settle
+    setTimeout(() => { if (mounted.current) onComplete(); }, 350);
+  }, [completing, onComplete]);
 
   return (
     <StepWrap stepKey="s5">
@@ -540,13 +552,14 @@ function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; use
 
         <motion.div variants={FU}>
           <motion.button
-            onClick={onComplete}
-            whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.97 }}
-            className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl font-bold text-base
+            onClick={handleComplete}
+            disabled={completing}
+            whileHover={completing ? {} : { scale: 1.02, y: -1 }} whileTap={completing ? {} : { scale: 0.97 }}
+            className={`w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl font-bold text-base
               bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
-              shadow-xl shadow-emerald-500/25"
+              shadow-xl shadow-emerald-500/25 transition-opacity ${completing ? 'opacity-70' : ''}`}
           >
-            Ver mi panel de control
+            {completing ? 'Abriendo panel...' : 'Ver mi panel de control'}
             <ArrowRight size={15} />
           </motion.button>
         </motion.div>
