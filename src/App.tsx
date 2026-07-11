@@ -81,6 +81,7 @@ const AiCampaignSandbox = lazy(() => import('./components/AiCampaignSandbox'));
 const SchemaCodePanel   = lazy(() => import('./components/SchemaCodePanel'));
 const AiVoiceSimulator  = lazy(() => import('./components/AiVoiceSimulator'));
 const MapsScanner       = lazy(() => import('./components/MapsScanner'));
+import MissionControl from './components/MissionControl';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -3263,66 +3264,13 @@ function Dashboard({
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      {/* Tabs */}
-      <div
-        className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-8 rounded-2xl p-2.5 glass-card"
-      >
-        {[
-          { id: 'generator',    icon: <Sparkles size={14} />,    label: t('tab_generator') },
-          { id: 'saved',        icon: <History size={14} />,      label: t('tab_saved') },
-          { id: 'maps-scanner', icon: <MapPinned size={14} />,   label: t('tab_maps') },
-          { id: 'ai-twin',      icon: <BrainCircuit size={14} />, label: t('tab_twin') },
-          { id: 'radar',        icon: <Radar size={14} />,        label: t('tab_radar') },
-          { id: 'geo-audit',    icon: <ScanSearch size={14} />,   label: t('tab_geo') },
-        ].map(({ id, icon, label }) => (
-          <button
-            key={id}
-            onClick={() => { track('tool_open', { tool: id }); setTab(id as typeof tab); }}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200
-              ${tab === id
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
-            style={tab === id ? { boxShadow: '0 4px 14px rgba(16,185,129,0.35)' } : {
-              background: 'rgba(15,28,44,0.6)',
-              border: '1px solid rgba(255,255,255,0.05)',
-            }}
-          >
-            <span className={tab === id ? 'text-white' : 'text-slate-500'}>{icon}</span>
-            {label}
-          </button>
-        ))}
-        {/* AI Advisor — full-width on mobile (col-span-2) to match the hero tab look */}
-        <button
-          onClick={() => setTab('ai-advisor')}
-          className={`col-span-2 sm:col-span-1 flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200
-            ${tab === 'ai-advisor'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
-          style={tab === 'ai-advisor' ? { boxShadow: '0 4px 14px rgba(16,185,129,0.35)' } : {
-            background: 'rgba(15,28,44,0.6)',
-            border: '1px solid rgba(255,255,255,0.05)',
-          }}
-        >
-          <span className={tab === 'ai-advisor' ? 'text-white' : 'text-slate-500'}><BarChart2 size={14} /></span>
-          AI Advisor
-        </button>
-        {/* AI Voice Simulator */}
-        <button
-          onClick={() => setTab('voice-sim')}
-          className={`col-span-2 sm:col-span-1 flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200
-            ${tab === 'voice-sim'
-              ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
-          style={tab === 'voice-sim' ? { boxShadow: '0 4px 14px rgba(59,130,246,0.35)' } : {
-            background: 'rgba(15,28,44,0.6)',
-            border: '1px solid rgba(255,255,255,0.05)',
-          }}
-        >
-          <span className={tab === 'voice-sim' ? 'text-white' : 'text-blue-500'}><Mic size={14} /></span>
-          Voice Sim
-        </button>
-      </div>
+    <MissionControl
+      tab={tab}
+      setTab={(t) => { track('tool_open', { tool: t }); setTab(t as typeof tab); }}
+      isActive={isActive}
+      onSubscribe={onSubscribe}
+      userEmail={session?.user?.email ?? ''}
+    >
 
       {tab === 'saved' ? (
         <div>
@@ -4241,7 +4189,7 @@ function Dashboard({
       )}
       </>
       )}
-    </main>
+    </MissionControl>
   );
 }
 
