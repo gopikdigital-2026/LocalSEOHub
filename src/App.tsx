@@ -82,6 +82,8 @@ const SchemaCodePanel   = lazy(() => import('./components/SchemaCodePanel'));
 const AiVoiceSimulator  = lazy(() => import('./components/AiVoiceSimulator'));
 const MapsScanner       = lazy(() => import('./components/MapsScanner'));
 import MissionControl from './components/MissionControl';
+import OnboardingFlow from './components/OnboardingFlow';
+import BusinessDigitalTwin from './components/BusinessDigitalTwin';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -3281,7 +3283,10 @@ function Dashboard({
           <MapsScanner previewMode={previewMode} />
         </Suspense>
       ) : tab === 'ai-twin' ? (
-        <AiDigitalTwin />
+        <BusinessDigitalTwin
+          onNavigate={(t) => { track('tool_open', { tool: t }); setTab(t as typeof tab); }}
+          userEmail={session?.user?.email ?? ''}
+        />
       ) : tab === 'radar' ? (
         <CompetitorRadar city={city} />
       ) : tab === 'geo-audit' ? (
@@ -4350,6 +4355,7 @@ export default function App() {
   const [cancelError, setCancelError] = useState('');
   const [cancelDone, setCancelDone] = useState(false);
   const [showAdminDenied, setShowAdminDenied] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useLocalStorage<boolean>('lsh_onboarding_done', false);
 
   const isAdminEmail = !!(import.meta.env.VITE_ADMIN_EMAIL && user?.email === import.meta.env.VITE_ADMIN_EMAIL);
 
@@ -4519,6 +4525,16 @@ export default function App() {
       return null;
     }
     return <Suspense fallback={null}><AdminDashboard session={session} /></Suspense>;
+  }
+
+  // Onboarding gate — show guided flow for new users before entering dashboard
+  if (!onboardingDone) {
+    return (
+      <OnboardingFlow
+        userEmail={user?.email ?? ''}
+        onComplete={() => setOnboardingDone(true)}
+      />
+    );
   }
 
   return (

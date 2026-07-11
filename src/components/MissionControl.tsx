@@ -6,13 +6,14 @@ import {
   BrainCircuit, TrendingUp, CheckCircle2, Sparkles, AlertCircle,
   ChevronRight, Trophy, ArrowRight, Check, Lock, Star,
   Clock, Activity, MessageSquare, Camera, PenLine, Search,
-  Flame, RefreshCw, ChevronUp,
+  Flame, RefreshCw, ChevronUp, Bot,
 } from 'lucide-react';
 import { track } from '../lib/analytics';
+import AiAutopilot from './AiAutopilot';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type MCView = 'home' | 'tool';
-type SectionId = 'home' | 'negocio' | 'competidores' | 'ia' | 'automatizaciones' | 'configuracion';
+type MCView = 'home' | 'autopilot' | 'tool';
+type SectionId = 'home' | 'negocio' | 'competidores' | 'ia' | 'automatizaciones' | 'configuracion' | 'autopilot';
 
 export interface MissionControlProps {
   tab: string;
@@ -51,8 +52,9 @@ const SECTIONS: Record<string, { label: string; tools: { tab: string; label: str
   },
 };
 
-const NAV: { id: SectionId; label: string; Icon: React.ElementType; tab?: string; divider?: boolean }[] = [
+const NAV: { id: SectionId; label: string; Icon: React.ElementType; tab?: string; divider?: boolean; badge?: string }[] = [
   { id: 'home',             label: 'Dashboard',        Icon: LayoutDashboard },
+  { id: 'autopilot',        label: 'AI Autopilot',     Icon: Bot,            badge: 'Nuevo' },
   { id: 'negocio',          label: 'Mi Negocio',       Icon: Building2,  tab: 'generator'    },
   { id: 'competidores',     label: 'Competidores',     Icon: Target,     tab: 'radar'        },
   { id: 'ia',               label: 'IA',               Icon: Brain,      tab: 'ai-advisor'   },
@@ -166,6 +168,15 @@ const AI_INSIGHTS = [
     accent: 'violet',
     Icon: RefreshCw,
   },
+];
+
+// Permanent setup checklist
+const SETUP_CHECKLIST = [
+  { id: 'ch1', label: 'Completa tu perfil de negocio',   done: true  },
+  { id: 'ch2', label: 'Conecta Google Business',          done: false },
+  { id: 'ch3', label: 'Completa la primera misión',       done: true  },
+  { id: 'ch4', label: 'Obtén tu primer +5% de visibilidad', done: true  },
+  { id: 'ch5', label: 'Invita a un colaborador',          done: false },
 ];
 
 const CLR_MAP: Record<string, { dot: string; bg: string; border: string; text: string; badge: string }> = {
@@ -296,6 +307,68 @@ function Card({ children, className = '', accent }: { children: React.ReactNode;
       style={{ background: `linear-gradient(135deg,${bg ? '' : ''}rgba(12,18,32,0.97) 0%,rgba(7,10,18,0.99) 100%)` }}
     >
       {children}
+    </div>
+  );
+}
+
+// ─── Setup checklist ──────────────────────────────────────────────────────────
+function SetupChecklist() {
+  const done  = SETUP_CHECKLIST.filter(i => i.done).length;
+  const total = SETUP_CHECKLIST.length;
+  const pct   = Math.round((done / total) * 100);
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-2xl border border-slate-700/40 overflow-hidden"
+      style={{ background: 'linear-gradient(135deg,rgba(12,18,32,0.97) 0%,rgba(7,10,18,0.99) 100%)' }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full px-5 py-4 flex items-center gap-3"
+      >
+        <div className="flex-1 text-left">
+          <p className="text-xs font-bold text-slate-300">Completa tu perfil</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">{done}/{total} completados · {pct}%</p>
+        </div>
+        <div className="w-20 h-1 rounded-full bg-slate-800 overflow-hidden shrink-0">
+          <motion.div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.8, ease: [0.16,1,0.3,1] }}
+          />
+        </div>
+        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronRight size={14} className="text-slate-600 rotate-90" />
+        </motion.div>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.16,1,0.3,1] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className="px-5 pb-4 pt-1 space-y-2 border-t border-slate-800/40">
+              {SETUP_CHECKLIST.map(item => (
+                <div key={item.id} className="flex items-center gap-3">
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                    item.done
+                      ? 'bg-emerald-500/15 border-emerald-500/30'
+                      : 'bg-slate-800/60 border-slate-700/40'
+                  }`}>
+                    {item.done && <Check size={10} className="text-emerald-400" />}
+                  </div>
+                  <span className={`text-xs font-medium ${item.done ? 'text-slate-400 line-through' : 'text-slate-300'}`}>
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -613,9 +686,13 @@ function MCHome({
           </div>
         </motion.div>
 
+        {/* ─── Setup checklist ─── */}
+        <motion.div variants={FU}>
+          <SetupChecklist />
+        </motion.div>
+
         {/* ─── Subscription gate ─── */}
-        {!isActive && (
-          <motion.div
+        {!isActive && (          <motion.div
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }}
             className="rounded-2xl border border-emerald-500/20 p-6 text-center"
             style={{ background: 'linear-gradient(160deg,rgba(16,185,129,0.07) 0%,rgba(8,14,26,0.99) 100%)' }}
@@ -678,7 +755,7 @@ const Sidebar = memo(function Sidebar({
 
       {/* Nav items */}
       <div className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(({ id, label, Icon, tab, divider }) => {
+        {NAV.map(({ id, label, Icon, tab, divider, badge }) => {
           const active = activeSection === id;
           return (
             <React.Fragment key={id}>
@@ -693,6 +770,11 @@ const Sidebar = memo(function Sidebar({
               >
                 <Icon size={15} className={active ? 'text-emerald-400' : 'text-slate-500'} />
                 <span className="flex-1 text-left">{label}</span>
+                {badge && !active && (
+                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase tracking-wide">
+                    {badge}
+                  </span>
+                )}
                 {active && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />}
               </motion.button>
             </React.Fragment>
@@ -824,6 +906,9 @@ export default function MissionControl({
     if (id === 'home') {
       setView('home');
       setActiveSection('home');
+    } else if (id === 'autopilot') {
+      setView('autopilot');
+      setActiveSection('autopilot');
     } else {
       if (toolTab) { track('tool_open', { tool: toolTab }); setTab(toolTab); }
       setView('tool');
@@ -876,6 +961,17 @@ export default function MissionControl({
                 onStartMission={handleStartMission}
                 onCompleteMission={handleCompleteMission}
                 onCompletePriority={handleCompletePriority}
+                onNavigate={navigate}
+                isActive={isActive}
+                onSubscribe={onSubscribe}
+              />
+            </motion.div>
+          ) : view === 'autopilot' ? (
+            <motion.div key="autopilot"
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}
+            >
+              <AiAutopilot
                 onNavigate={navigate}
                 isActive={isActive}
                 onSubscribe={onSubscribe}
