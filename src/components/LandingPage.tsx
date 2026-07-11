@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, type FormEvent } from 'react';
+import React, { useState, useRef, useEffect, useMemo, memo, type FormEvent } from 'react';
+import { motion, useInView } from 'framer-motion';
 import {
   MapPin, Zap, Shield, Star, Check, ArrowRight, Sparkles,
   Eye, Globe, Target, MapPinned, Lock, AlertCircle, ExternalLink,
@@ -1081,521 +1082,424 @@ function HeroDashboard() {
   );
 }
 
-// ─── Main landing page (redesigned) ──────────────────────────────────────────
+// ─── Animation presets ───────────────────────────────────────────────────────
+const FU = {
+  hidden: { opacity: 0, y: 22 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } },
+};
+const FI = {
+  hidden: { opacity: 0 },
+  show:   { opacity: 1, transition: { duration: 0.45 } },
+};
+const STAGGER = { show: { transition: { staggerChildren: 0.09 } } };
+const HOVER_CARD = { scale: 1.02, y: -3, transition: { duration: 0.2 } };
+
+// Reusable scroll-reveal wrapper
+const Rev = memo(function Rev({ children, delay = 0, className = '', stagger = false }:
+  { children: React.ReactNode; delay?: number; className?: string; stagger?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.12 });
+  return (
+    <motion.div ref={ref} variants={stagger ? STAGGER : FU}
+      initial="hidden" animate={inView ? 'show' : 'hidden'}
+      transition={{ delay }} className={className}>
+      {children}
+    </motion.div>
+  );
+});
+
+// ─── Main landing page ────────────────────────────────────────────────────────
 export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
-  const { lang } = useI18n();
   const pricingRef = useRef<HTMLDivElement>(null);
-  const demoRef = useRef<HTMLElement>(null);
-
-  const { ref: problemsRef, visible: problemsVisible } = useReveal();
-  const { ref: stepsRef, visible: stepsVisible } = useReveal();
-  const { ref: metricsRef, visible: metricsVisible } = useReveal();
-  const { ref: featuresRef, visible: featuresVisible } = useReveal();
-  const { ref: testimonialsRef, visible: testimonialsVisible } = useReveal();
+  const demoRef    = useRef<HTMLElement>(null);
 
   useEffect(() => { track('page_view', { page: 'landing' }); }, []);
 
-  const PROBLEMS = [
-    { icon: MessageSquare, color: 'rose', title: 'Pocas reseñas', desc: 'Google premia a los negocios con más y mejores reseñas. Sin ellas, la IA no te recomienda.' },
-    { icon: AlertCircle, color: 'amber', title: 'Perfil incompleto', desc: 'Un perfil incompleto pierde el 60% del potencial de visibilidad. Cada campo vacío es dinero perdido.' },
-    { icon: TrendingUp, color: 'blue', title: 'Competencia optimizada', desc: 'Tus rivales ya usan IA para optimizar su presencia. Cada día sin actuar es ventaja cedida.' },
-    { icon: FileText, color: 'violet', title: 'Sin publicaciones', desc: 'Google premia la actividad. Negocios que publican regularmente multiplican su visibilidad.' },
-  ];
-
-  const STEPS = [
-    { n: '01', icon: Search, title: 'Analizamos tu negocio', desc: 'Introduce el nombre de tu negocio. Nuestra IA escanea tu ficha de Google en segundos.' },
-    { n: '02', icon: Sparkles, title: 'La IA detecta oportunidades', desc: 'Detectamos fallos críticos, oportunidades de keywords y brechas frente a tus competidores.' },
-    { n: '03', icon: FileText, title: 'Recibes un plan accionable', desc: 'Un informe priorizado con los cambios exactos que debes hacer, con textos listos para copiar.' },
-    { n: '04', icon: TrendingUp, title: 'Más visibilidad real', desc: 'Aplica los cambios y empieza a aparecer antes que tu competencia en Maps y búsqueda local.' },
-  ];
-
-  const FEATURES = [
+  // ── Static data (memoized) ──────────────────────────────────────────────────
+  const BENEFITS = useMemo(() => [
     {
       icon: MapPinned, color: 'emerald',
-      name: 'Maps Scanner',
-      badge: 'Puntuación 0-100',
-      desc: 'Auditoría completa de tu Google Business Profile. Fallos críticos detectados automáticamente con textos optimizados listos para copiar.',
+      title: 'Sabe exactamente qué falla en tu ficha de Google',
+      desc: 'Auditoría automática con textos corregidos, listos para copiar.',
     },
     {
       icon: Brain, color: 'rose',
-      name: 'AI Business Advisor',
-      badge: 'Estrategia personalizada',
-      desc: 'Describe tu situación y recibe un plan de acción concreto, priorizado y adaptado a tu negocio y presupuesto real.',
+      title: 'Recibe un plan personalizado para conseguir más visibilidad',
+      desc: 'La IA analiza tu negocio y te dice los pasos exactos.',
     },
     {
       icon: Target, color: 'orange',
-      name: 'Radar de Competencia',
-      badge: 'Tiempo real',
-      desc: 'Analiza la estrategia de cualquier competidor y genera contramedidas automáticas para superarle en posicionamiento local.',
+      title: 'Descubre qué hace tu competencia y supérala',
+      desc: 'Análisis en tiempo real con contramedidas automáticas.',
     },
     {
       icon: FileText, color: 'teal',
-      name: 'Generador de Contenido SEO',
-      badge: '16+ plataformas',
-      desc: 'Títulos, descripciones y keywords para Google Business, Shopify, Amazon y 13 plataformas más en 30 segundos.',
+      title: 'Genera contenido optimizado en 30 segundos',
+      desc: 'Para Google Business, Shopify, Amazon y 13 plataformas más.',
     },
-  ];
+  ], []);
 
-  const FEATURE_COLORS: Record<string, string> = {
-    emerald: 'from-emerald-500/10 to-transparent border-emerald-500/20 text-emerald-400',
-    rose: 'from-rose-500/10 to-transparent border-rose-500/20 text-rose-400',
-    orange: 'from-orange-500/10 to-transparent border-orange-500/20 text-orange-400',
-    teal: 'from-teal-500/10 to-transparent border-teal-500/20 text-teal-400',
-  };
+  const STEPS = useMemo(() => [
+    { n: '1', icon: Search,    title: 'Introduce tu negocio',     desc: 'Nombre y ciudad. 10 segundos.' },
+    { n: '2', icon: Sparkles,  title: 'La IA analiza todo',       desc: 'Ficha, reseñas, competencia.' },
+    { n: '3', icon: TrendingUp,title: 'Recibe tu plan de acción', desc: 'Acciones concretas listas para aplicar.' },
+  ], []);
 
-  const PROBLEM_COLORS: Record<string, string> = {
-    rose: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
-    amber: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
-    blue: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
-    violet: 'bg-violet-500/10 border-violet-500/20 text-violet-400',
-  };
+  const METRICS = useMemo(() => [
+    { target: 38, label: 'Más llamadas',           sub: 'Media mensual tras optimizar',  color: 'emerald', icon: Globe },
+    { target: 24, label: 'Más clics al sitio web', sub: 'Tráfico orgánico desde Google', color: 'sky',     icon: TrendingUp },
+    { target: 17, label: 'Más solicitudes de ruta',sub: 'Usuarios que piden cómo llegar',color: 'violet',  icon: MapPin },
+  ], []);
+
+  const BENEFIT_COLORS: Record<string, { ring: string; icon: string; bg: string }> = useMemo(() => ({
+    emerald: { ring: 'border-emerald-500/20', icon: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    rose:    { ring: 'border-rose-500/20',    icon: 'text-rose-400',    bg: 'bg-rose-500/10'    },
+    orange:  { ring: 'border-orange-500/20',  icon: 'text-orange-400',  bg: 'bg-orange-500/10'  },
+    teal:    { ring: 'border-teal-500/20',    icon: 'text-teal-400',    bg: 'bg-teal-500/10'    },
+  }), []);
+
+  const METRIC_COLORS: Record<string, { text: string; bg: string; border: string }> = useMemo(() => ({
+    emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+    sky:     { text: 'text-sky-400',     bg: 'bg-sky-500/10',     border: 'border-sky-500/20'     },
+    violet:  { text: 'text-violet-400',  bg: 'bg-violet-500/10',  border: 'border-violet-500/20'  },
+  }), []);
+
+  const PrimaryBtn = memo(({ full = false }: { full?: boolean }) => (
+    <motion.button onClick={onSubscribeClick} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
+      className={`${full ? 'w-full' : ''} inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl
+        font-bold text-base bg-gradient-to-r from-emerald-500 to-teal-500
+        text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-shadow duration-200`}>
+      <Zap size={16} fill="currentColor" />
+      Analizar mi negocio gratis
+    </motion.button>
+  ));
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
 
-      {/* ═══════════════════════════════════════════════════════ HERO */}
-      <section className="relative overflow-hidden">
+      {/* ═══════════════════════════════════════════════════════════════ HERO */}
+      <section className="relative overflow-hidden pb-0">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-emerald-500/6 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-emerald-500/6 rounded-full blur-3xl" />
           <div className="absolute top-32 right-0 w-80 h-80 bg-teal-500/4 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-6xl mx-auto px-5 pt-16 pb-20 relative">
-          <div className="grid lg:grid-cols-[1fr_1.05fr] gap-12 lg:gap-16 items-center">
+        <div className="max-w-6xl mx-auto px-5 pt-16 pb-14 relative">
+          <div className="grid lg:grid-cols-[1fr_1.08fr] gap-12 lg:gap-16 items-center">
 
-            {/* Left: copy */}
-            <div className="space-y-7">
+            {/* Left copy */}
+            <motion.div initial="hidden" animate="show" variants={STAGGER} className="space-y-6">
+              <motion.div variants={FI}>
+                <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-2 text-xs font-semibold text-emerald-400">
+                  <Flame size={12} className="text-orange-400" />
+                  Para negocios locales y agencias
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+              </motion.div>
 
-              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-2 text-xs font-semibold text-emerald-400">
-                <Flame size={12} className="text-orange-400" />
-                Para negocios locales y agencias de marketing
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              </div>
+              <motion.h1 variants={FU}
+                className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-white leading-[1.08] tracking-tight">
+                Consigue más clientes desde{' '}
+                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                  Google Maps
+                </span>{' '}
+                gracias a la IA.
+              </motion.h1>
 
-              <div className="space-y-4">
-                <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-white leading-[1.08] tracking-tight">
-                  Consigue más clientes desde{' '}
-                  <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                    Google Maps
-                  </span>{' '}
-                  gracias a la IA.
-                </h1>
-                <p className="text-slate-400 text-lg leading-relaxed max-w-lg">
-                  Analizamos tu negocio, detectamos oportunidades y generamos un plan de acción personalizado para mejorar tu visibilidad local.
+              <motion.p variants={FU} className="text-slate-400 text-lg leading-relaxed max-w-md">
+                Analizamos tu ficha, detectamos lo que falla y generamos tu plan de acción.{' '}
+                <strong className="text-slate-300 font-semibold">En menos de 2 minutos.</strong>
+              </motion.p>
+
+              <motion.div variants={FU}>
+                <PrimaryBtn />
+                <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5">
+                  <Shield size={11} className="text-slate-600" />
+                  Sin tarjeta · Cancela cuando quieras
                 </p>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  'Análisis completo en menos de 60 segundos',
-                  'Plan de acción con textos listos para copiar',
-                  '7 días gratis — sin tarjeta de crédito',
-                ].map((t) => (
-                  <div key={t} className="flex items-center gap-2.5 text-sm text-slate-300">
-                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                    {t}
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap gap-3 pt-1">
-                <button onClick={onSubscribeClick}
-                  className="flex items-center gap-2.5 px-7 py-4 rounded-xl font-bold text-base
-                    bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                    text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50
-                    hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
-                  <Zap size={16} fill="currentColor" />
-                  Analizar mi negocio gratis
-                </button>
-                <button onClick={() => demoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm text-slate-300
-                    border border-slate-700/60 hover:border-slate-600 hover:bg-slate-800/40 transition-all duration-200">
-                  <Eye size={14} />
-                  Ver demo
-                </button>
-              </div>
-
-              {/* Proof bar */}
-              <div className="flex items-center gap-6 pt-2 border-t border-slate-800/60">
-                {[
-                  { v: '7', l: 'herramientas IA' },
-                  { v: '4.9★', l: 'valoración' },
-                  { v: '9,99€', l: '/mes todo incluido' },
-                ].map(({ v, l }) => (
-                  <div key={l} className="text-center">
-                    <p className="text-white font-extrabold text-base">{v}</p>
-                    <p className="text-slate-500 text-[10px]">{l}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Right: live dashboard */}
-            <div className="hidden sm:block">
+            <motion.div
+              initial={{ opacity: 0, x: 32, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="hidden sm:block">
               <HeroDashboard />
-            </div>
+            </motion.div>
+          </div>
+        </div>
 
+        {/* ── Trust bar ── */}
+        <div className="border-t border-slate-800/50 bg-slate-900/40">
+          <div className="max-w-4xl mx-auto px-5 py-4">
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
+              {[
+                { icon: Shield,      text: 'Sin tarjeta de crédito' },
+                { icon: Zap,         text: 'Informe en menos de 2 minutos' },
+                { icon: Brain,       text: 'IA especializada en SEO Local' },
+                { icon: BadgeCheck,  text: '9,99€/mes · Todo incluido' },
+              ].map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-center gap-2 text-sm text-slate-400">
+                  <Icon size={13} className="text-emerald-400 shrink-0" />
+                  {text}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════ PROBLEMAS */}
-      <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
+      {/* ════════════════════════════════════════ ¿POR QUÉ IMPORTA? */}
+      <section className="py-24 px-5">
         <div className="max-w-5xl mx-auto">
-          <div ref={problemsRef as React.RefObject<HTMLDivElement>} className={`reveal ${problemsVisible ? 'visible' : ''}`}>
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-amber-400 mb-5">
-                <AlertCircle size={11} />
-                El problema real
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 leading-tight tracking-tight">
-                ¿Por qué la mayoría de negocios<br className="hidden sm:block" /> no aparecen en Google Maps?
-              </h2>
-              <p className="text-slate-400 text-base max-w-xl mx-auto">
-                No es mala suerte. Es falta de optimización. Estos cuatro problemas afectan al 87% de los negocios locales.
-              </p>
-            </div>
+          <Rev className="text-center mb-14">
+            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">El problema</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Tu competencia ya te está adelantando.
+            </h2>
+            <p className="text-slate-400 text-base mt-4 max-w-lg mx-auto">
+              El 87% de los negocios locales pierde clientes por los mismos cuatro errores.
+            </p>
+          </Rev>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {PROBLEMS.map(({ icon: Icon, color, title, desc }, i) => (
-                <div key={title}
-                  className={`reveal reveal-delay-${i + 1} ${problemsVisible ? 'visible' : ''} group rounded-2xl border p-6 flex flex-col gap-4 hover:-translate-y-1 transition-all duration-300 cursor-default`}
-                  style={{ background: 'linear-gradient(145deg, rgba(15,23,42,0.92) 0%, rgba(8,14,26,0.97) 100%)', borderColor: 'rgba(255,255,255,0.07)' }}>
-                  <div className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 ${PROBLEM_COLORS[color]}`}>
-                    <Icon size={20} />
+          <Rev stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {BENEFITS.map(({ icon: Icon, color, title, desc }) => {
+              const c = BENEFIT_COLORS[color];
+              return (
+                <motion.div key={title} variants={FU} whileHover={HOVER_CARD}
+                  className={`rounded-2xl border ${c.ring} p-6 flex flex-col gap-4 cursor-default`}
+                  style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.92) 0%,rgba(8,14,26,0.97) 100%)' }}>
+                  <div className={`w-11 h-11 rounded-xl border ${c.ring} ${c.bg} flex items-center justify-center shrink-0`}>
+                    <Icon size={20} className={c.icon} />
                   </div>
                   <div>
-                    <p className="text-white font-bold text-base mb-1.5">{title}</p>
-                    <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+                    <p className="text-white font-bold text-sm mb-2 leading-snug">{title}</p>
+                    <p className="text-slate-500 text-xs leading-relaxed">{desc}</p>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                </motion.div>
+              );
+            })}
+          </Rev>
         </div>
       </section>
 
-      {/* ═════════════════════════════════════════ CÓMO FUNCIONA */}
-      <section className="py-24 px-5">
-        <div className="max-w-5xl mx-auto">
-          <div ref={stepsRef as React.RefObject<HTMLDivElement>} className={`reveal ${stepsVisible ? 'visible' : ''}`}>
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
-                <Sparkles size={11} />
-                Tan fácil como 1, 2, 3, 4
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">Cómo funciona</h2>
-              <p className="text-slate-400 text-base">En menos de 60 segundos tienes tu primer análisis.</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {STEPS.map(({ n, icon: Icon, title, desc }, i) => (
-                <div key={n}
-                  className={`reveal reveal-delay-${i + 1} ${stepsVisible ? 'visible' : ''} relative`}>
-                  {i < STEPS.length - 1 && (
-                    <div className="hidden lg:block absolute top-5 left-[calc(100%+0px)] w-full h-px bg-gradient-to-r from-slate-700/60 to-slate-800/30 -translate-x-5 z-10" />
-                  )}
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-5xl font-black text-slate-800 tabular-nums leading-none">{n}</span>
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                        <Icon size={18} className="text-emerald-400" />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-white font-bold text-base mb-2">{title}</p>
-                      <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════ DEMO INTERACTIVO */}
-      <section ref={demoRef as React.RefObject<HTMLElement>} id="demo-section" className="py-24 px-5 bg-slate-900/20 border-y border-slate-800/40">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-teal-400 mb-5">
-              <Zap size={11} fill="currentColor" />
-              Prueba gratuita — sin registro
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
-              Analiza tu negocio ahora
+      {/* ════════════════════════════════════════════ CÓMO FUNCIONA */}
+      <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
+        <div className="max-w-4xl mx-auto">
+          <Rev className="text-center mb-16">
+            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Proceso</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              En menos de 2 minutos.
             </h2>
-            <p className="text-slate-400 text-base max-w-lg mx-auto">
-              Elige una herramienta, escribe tu negocio y recibe un análisis real en segundos. Gratis, sin registro.
-            </p>
-          </div>
-          <ToolTrialSection onLoginClick={onLoginClick} />
-        </div>
-      </section>
+          </Rev>
 
-      {/* ═══════════════════════════════════════════════ MÉTRICAS */}
-      <section className="py-24 px-5">
-        <div className="max-w-5xl mx-auto">
-          <div ref={metricsRef as React.RefObject<HTMLDivElement>} className={`reveal ${metricsVisible ? 'visible' : ''}`}>
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
-                <BarChart3 size={11} />
-                Resultados reales
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
-                Lo que cambia cuando optimizas tu ficha
-              </h2>
-              <p className="text-slate-400 text-base max-w-xl mx-auto">
-                Métricas medias de negocios que aplicaron las recomendaciones de LocalSEOHub en los primeros 30 días.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {[
-                { target: 38, suffix: '%', label: 'Más llamadas', sub: 'Media mensual tras optimizar Maps', color: 'emerald', icon: Globe },
-                { target: 24, suffix: '%', label: 'Más clics al sitio web', sub: 'Tráfico orgánico desde Google', color: 'sky', icon: TrendingUp },
-                { target: 17, suffix: '%', label: 'Más solicitudes de ruta', sub: 'Usuarios que piden cómo llegar', color: 'violet', icon: MapPin },
-              ].map(({ target, suffix, label, sub, color, icon: Icon }, i) => (
-                <div key={label}
-                  className={`reveal reveal-delay-${i + 1} ${metricsVisible ? 'visible' : ''} rounded-2xl border p-8 text-center hover:-translate-y-1 transition-all duration-300 group`}
-                  style={{ background: 'linear-gradient(145deg, rgba(15,23,42,0.92) 0%, rgba(8,14,26,0.97) 100%)', borderColor: 'rgba(255,255,255,0.07)' }}>
-                  <div className={`w-12 h-12 rounded-2xl mb-5 flex items-center justify-center mx-auto ${
-                    color === 'emerald' ? 'bg-emerald-500/10 border border-emerald-500/20' :
-                    color === 'sky' ? 'bg-sky-500/10 border border-sky-500/20' :
-                    'bg-violet-500/10 border border-violet-500/20'
-                  }`}>
-                    <Icon size={20} className={
-                      color === 'emerald' ? 'text-emerald-400' :
-                      color === 'sky' ? 'text-sky-400' : 'text-violet-400'
-                    } />
-                  </div>
-                  <p className={`text-5xl font-black mb-2 tabular-nums ${
-                    color === 'emerald' ? 'text-emerald-400' :
-                    color === 'sky' ? 'text-sky-400' : 'text-violet-400'
-                  } ${metricsVisible ? 'counter-pop' : ''}`}>
-                    +<AnimatedCounter target={target} suffix={suffix} active={metricsVisible} />
-                  </p>
-                  <p className="text-white font-bold text-lg mb-1">{label}</p>
-                  <p className="text-slate-500 text-sm">{sub}</p>
+          <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-8 relative">
+            {/* Connecting line on desktop */}
+            <div className="hidden sm:block absolute top-8 left-[calc(16.66%+1rem)] right-[calc(16.66%+1rem)] h-px bg-gradient-to-r from-emerald-500/30 via-teal-500/30 to-emerald-500/30" />
+            {STEPS.map(({ n, icon: Icon, title, desc }) => (
+              <motion.div key={n} variants={FU} className="flex flex-col items-center text-center gap-4">
+                <motion.div whileHover={{ scale: 1.08 }}
+                  className="relative w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center z-10">
+                  <Icon size={22} className="text-emerald-400" />
+                  <span className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black flex items-center justify-center">
+                    {n}
+                  </span>
+                </motion.div>
+                <div>
+                  <p className="text-white font-bold text-base mb-1">{title}</p>
+                  <p className="text-slate-500 text-sm">{desc}</p>
                 </div>
-              ))}
-            </div>
-          </div>
+              </motion.div>
+            ))}
+          </Rev>
+
+          <Rev delay={0.2} className="text-center mt-12">
+            <PrimaryBtn />
+          </Rev>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════ FUNCIONALIDADES */}
+      {/* ════════════════════════════════════════ DEMO INTERACTIVA */}
+      <section ref={demoRef as React.RefObject<HTMLElement>} id="demo-section" className="py-24 px-5">
+        <div className="max-w-5xl mx-auto">
+          <Rev className="text-center mb-12">
+            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Demo</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+              Pruébalo ahora.
+            </h2>
+            <p className="text-slate-400 text-base">Sin registro. Resultado en segundos.</p>
+          </Rev>
+          <Rev>
+            <ToolTrialSection onLoginClick={onLoginClick} />
+          </Rev>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════ RESULTADOS */}
       <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
         <div className="max-w-5xl mx-auto">
-          <div ref={featuresRef as React.RefObject<HTMLDivElement>} className={`reveal ${featuresVisible ? 'visible' : ''}`}>
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
-                <Layers size={11} />
-                Herramientas incluidas
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
-                Todo lo que necesitas, en un solo sitio
-              </h2>
-              <p className="text-slate-400 text-base max-w-xl mx-auto">
-                Cuatro herramientas diseñadas específicamente para negocios locales y agencias. Sin curva de aprendizaje.
-              </p>
-            </div>
+          <Rev className="text-center mb-14">
+            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Resultados</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Lo que cambia en 30 días.
+            </h2>
+          </Rev>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {FEATURES.map(({ icon: Icon, color, name, badge, desc }, i) => {
-                const c = FEATURE_COLORS[color];
-                const [gradient, , border, iconColor] = c.split(' ');
-                return (
-                  <div key={name}
-                    className={`reveal reveal-delay-${i + 1} ${featuresVisible ? 'visible' : ''} group relative rounded-2xl border ${border} p-7 flex gap-5 hover:-translate-y-1 transition-all duration-300 bg-gradient-to-br ${gradient}`}
-                    style={{ background: `linear-gradient(145deg, rgba(15,23,42,0.92) 0%, rgba(8,14,26,0.97) 100%)`, borderColor: undefined }}>
-                    <div className={`w-12 h-12 rounded-xl border shrink-0 flex items-center justify-center bg-gradient-to-br ${gradient} ${border}`}>
-                      <Icon size={20} className={iconColor} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-white font-bold text-base">{name}</p>
-                        <span className={`shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${border} ${iconColor} opacity-80`}>
-                          {badge}
-                        </span>
-                      </div>
-                      <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
-                    </div>
+          <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {METRICS.map(({ target, label, sub, color, icon: Icon }) => {
+              const c = METRIC_COLORS[color];
+              return (
+                <motion.div key={label} variants={FU} whileHover={HOVER_CARD}
+                  className={`rounded-2xl border ${c.border} p-8 text-center cursor-default`}
+                  style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.92) 0%,rgba(8,14,26,0.97) 100%)' }}>
+                  <div className={`w-12 h-12 rounded-2xl ${c.bg} border ${c.border} flex items-center justify-center mx-auto mb-5`}>
+                    <Icon size={20} className={c.text} />
                   </div>
-                );
-              })}
-            </div>
-
-            <p className="text-center text-slate-500 text-sm mt-8">
-              + GEO Audit (visibilidad en ChatGPT / Gemini), AI Digital Twin, Voice & Campaign Simulator y más, todo incluido en tu plan.
-            </p>
-          </div>
+                  <MetricCounter target={target} colorClass={c.text} />
+                  <p className="text-white font-bold text-lg mb-1">{label}</p>
+                  <p className="text-slate-500 text-sm">{sub}</p>
+                </motion.div>
+              );
+            })}
+          </Rev>
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════ TESTIMONIOS */}
+      {/* ══════════════════════════════════════════════ TESTIMONIOS */}
       <section className="py-24 px-5">
         <div className="max-w-5xl mx-auto">
-          <div ref={testimonialsRef as React.RefObject<HTMLDivElement>} className={`reveal ${testimonialsVisible ? 'visible' : ''}`}>
-            <div className="text-center mb-14">
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
-                Negocios reales. Resultados reales.
-              </h2>
-              <p className="text-slate-400 text-base">Sin promesas vacías. Solo resultados medibles.</p>
-            </div>
+          <Rev className="text-center mb-14">
+            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Confianza</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Ellos ya lo usan.
+            </h2>
+          </Rev>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {TESTIMONIALS.map((t, i) => (
-                <div key={i}
-                  className={`reveal reveal-delay-${(i % 2) + 1} ${testimonialsVisible ? 'visible' : ''} rounded-2xl border border-slate-800/60 p-7 flex flex-col gap-5 hover:border-slate-700/60 transition-all duration-300`}
-                  style={{ background: 'linear-gradient(145deg, rgba(15,23,42,0.80) 0%, rgba(8,14,26,0.95) 100%)' }}>
-                  {/* Stars + metric */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex gap-0.5">
-                      {Array.from({ length: t.stars }).map((_, j) => (
-                        <Star key={j} size={13} className="text-amber-400 fill-amber-400" />
-                      ))}
-                    </div>
-                    <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400">
-                      {t.metric}
-                    </span>
+          <Rev stagger className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div key={i} variants={FU} whileHover={HOVER_CARD}
+                className="rounded-2xl border border-slate-800/60 p-7 flex flex-col gap-5 cursor-default"
+                style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.82) 0%,rgba(8,14,26,0.95) 100%)' }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: t.stars }).map((_, j) => (
+                      <Star key={j} size={13} className="text-amber-400 fill-amber-400" />
+                    ))}
                   </div>
-                  {/* Quote */}
-                  <p className="text-slate-200 text-base leading-relaxed flex-1">"{t.text}"</p>
-                  {/* Author */}
-                  <div className="flex items-center gap-3.5 pt-4 border-t border-slate-800/50">
-                    <img src={t.photo} alt={t.name} className="w-11 h-11 rounded-full object-cover border-2 border-slate-700/60" />
-                    <div>
-                      <p className="text-white font-bold text-sm">{t.name}</p>
-                      <p className="text-slate-500 text-xs mt-0.5">{t.role} · {t.city}</p>
-                    </div>
+                  <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400">
+                    {t.metric}
+                  </span>
+                </div>
+                <p className="text-slate-200 text-base leading-relaxed flex-1">"{t.text}"</p>
+                <div className="flex items-center gap-3.5 pt-4 border-t border-slate-800/50">
+                  <img src={t.photo} alt={t.name} loading="lazy"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-700/60" />
+                  <div>
+                    <p className="text-white font-bold text-sm">{t.name}</p>
+                    <p className="text-slate-500 text-xs">{t.role} · {t.city}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </motion.div>
+            ))}
+          </Rev>
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════ PRICING */}
+      {/* ════════════════════════════════════════════════════ PRECIO */}
       <section ref={pricingRef} id="pricing" className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
-        <div className="max-w-lg mx-auto">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
-              <Shield size={11} />
-              Sin sorpresas
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
-              Precio simple y transparente
+        <div className="max-w-md mx-auto">
+          <Rev className="text-center mb-10">
+            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Precio</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+              Un plan. Todo incluido.
             </h2>
-            <p className="text-slate-400 text-base">Acceso completo a todas las herramientas. Sin letra pequeña.</p>
-          </div>
+            <p className="text-slate-400 text-base">Sin letra pequeña.</p>
+          </Rev>
 
-          <div className="rounded-2xl border border-emerald-500/25 overflow-hidden"
-            style={{ background: 'linear-gradient(160deg, rgba(16,185,129,0.07) 0%, rgba(8,14,26,0.99) 55%)' }}>
-            <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
-            <div className="p-8">
-              <div className="flex items-center gap-2.5 mb-1">
+          <Rev>
+            <motion.div whileHover={{ scale: 1.01 }}
+              className="rounded-2xl border border-emerald-500/25 overflow-hidden"
+              style={{ background: 'linear-gradient(160deg,rgba(16,185,129,0.07) 0%,rgba(8,14,26,0.99) 55%)' }}>
+              <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+              <div className="p-8">
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
                   TODO INCLUIDO
                 </span>
-              </div>
-              <div className="flex items-end gap-2 mt-4 mb-1">
-                <span className="text-5xl font-extrabold text-white">9,99€</span>
-                <span className="text-slate-400 text-base mb-1.5">/mes</span>
-              </div>
-              <p className="text-slate-500 text-sm mb-8">7 días gratis · Cancela cuando quieras</p>
+                <div className="flex items-end gap-2 mt-5 mb-1">
+                  <span className="text-5xl font-extrabold text-white">9,99€</span>
+                  <span className="text-slate-400 mb-1.5">/mes</span>
+                </div>
+                <p className="text-slate-500 text-sm mb-7">7 días gratis · Cancela cuando quieras</p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-8">
-                {[
-                  'Generador SEO ilimitado (16+ plataformas)',
-                  'Escaner Google Maps + Score IA',
-                  'AI Digital Twin con mapa de calor',
-                  'Radar de Competencia en tiempo real',
-                  'GEO Audit — visibilidad en ChatGPT / Gemini',
-                  'AI Business Advisor personalizado',
-                  'Voice & Campaign Simulator',
-                  'Exportación CSV (Shopify, Etsy)',
-                  'Soporte prioritario en español',
-                  'Actualizaciones del motor IA incluidas',
-                ].map((f) => (
-                  <div key={f} className="flex items-start gap-2 text-sm text-slate-300">
-                    <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
-                    {f}
-                  </div>
-                ))}
-              </div>
+                <div className="grid grid-cols-1 gap-2 mb-7">
+                  {[
+                    'Generador SEO (16+ plataformas)',
+                    'Maps Scanner con puntuación IA',
+                    'AI Advisor personalizado',
+                    'Radar de Competencia en tiempo real',
+                    'GEO Audit — visibilidad en ChatGPT / Gemini',
+                    'AI Digital Twin + Voice Simulator',
+                    'Soporte prioritario en español',
+                  ].map((f) => (
+                    <div key={f} className="flex items-center gap-2 text-sm text-slate-300">
+                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                      {f}
+                    </div>
+                  ))}
+                </div>
 
-              <button onClick={onSubscribeClick}
-                className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
-                  bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45
-                  hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
-                <Zap size={16} fill="currentColor" />
-                Empezar 7 días gratis — sin tarjeta
-              </button>
-              <p className="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1.5">
-                <Shield size={10} className="text-slate-600" />
-                Pago seguro con Stripe · Sin permanencia · Cancela en cualquier momento
-              </p>
-            </div>
-          </div>
+                <PrimaryBtn full />
+                <p className="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1.5">
+                  <Shield size={10} className="text-slate-600" />
+                  Pago seguro con Stripe · Sin permanencia
+                </p>
+              </div>
+            </motion.div>
+          </Rev>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════ FAQ */}
       <section className="py-24 px-5">
         <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-white mb-3 tracking-tight">Preguntas frecuentes</h2>
-            <p className="text-slate-400 text-base">Todo lo que necesitas saber antes de empezar.</p>
-          </div>
-          <div className="space-y-2">
+          <Rev className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-white tracking-tight">Preguntas frecuentes</h2>
+          </Rev>
+          <Rev className="space-y-2">
             {FAQS.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)}
-          </div>
+          </Rev>
         </div>
       </section>
 
       {/* ════════════════════════════════════════════════ CTA FINAL */}
       <section className="py-28 px-5 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-slate-950" />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 to-slate-950" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/6 rounded-full blur-3xl" />
         </div>
-        <div className="max-w-2xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-orange-400 mb-7">
-            <Flame size={12} />
-            Tu competencia ya usa IA
-          </div>
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-white mb-5 leading-[1.1] tracking-tight">
-            Analiza gratis<br />tu negocio ahora.
-          </h2>
-          <p className="text-slate-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
-            Sin tarjeta. Sin configuraciones. En 60 segundos tienes tu informe de visibilidad y plan de acción.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button onClick={onSubscribeClick}
-              className="flex items-center gap-2.5 px-8 py-4.5 rounded-xl font-bold text-lg
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-2xl shadow-emerald-500/35 hover:shadow-emerald-500/55
-                hover:-translate-y-0.5 transition-all duration-200">
-              <Zap size={18} fill="currentColor" />
-              Empezar gratis — 7 días sin coste
-            </button>
-            <button onClick={() => onLoginClick()}
-              className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm text-slate-400
-                border border-slate-700/60 hover:border-slate-600 hover:text-slate-300 hover:bg-slate-800/40 transition-all duration-200">
-              Ya tengo cuenta — Iniciar sesión
-            </button>
-          </div>
-          <div className="flex items-center justify-center gap-6 mt-8">
-            {['Sin tarjeta para empezar', 'Cancela en cualquier momento', 'Soporte en español'].map((t) => (
-              <span key={t} className="flex items-center gap-1.5 text-xs text-slate-500">
-                <Check size={11} className="text-emerald-500" />{t}
-              </span>
-            ))}
-          </div>
+        <div className="max-w-xl mx-auto text-center relative">
+          <Rev className="space-y-6">
+            <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/25 rounded-full px-4 py-2 text-xs font-semibold text-orange-400">
+              <Flame size={12} />Tu competencia ya usa IA
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-[1.1] tracking-tight">
+              Empieza hoy.<br />Sin excusas.
+            </h2>
+            <p className="text-slate-400 text-lg">
+              60 segundos. Sin tarjeta. Tu primer análisis completamente gratis.
+            </p>
+            <PrimaryBtn />
+            <div className="flex items-center justify-center gap-5 pt-1">
+              {['Sin tarjeta', 'Cancela siempre', 'Soporte en español'].map((t) => (
+                <span key={t} className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <Check size={11} className="text-emerald-500" />{t}
+                </span>
+              ))}
+            </div>
+          </Rev>
         </div>
       </section>
 
@@ -1609,10 +1513,10 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           </div>
           <div className="flex items-center gap-6">
             {([
-              { label: 'Privacidad', modal: 'privacy' as LegalModal },
-              { label: 'Términos', modal: 'terms' as LegalModal },
-              { label: 'Contacto', modal: 'contact' as LegalModal },
-            ] as const).map(({ label, modal }) => (
+              { label: 'Privacidad', modal: 'privacy' as const },
+              { label: 'Términos',   modal: 'terms'   as const },
+              { label: 'Contacto',   modal: 'contact' as const },
+            ]).map(({ label, modal }) => (
               <button key={label} onClick={() => setLegalModal(modal)}
                 className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
                 {label}
@@ -1622,10 +1526,50 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </footer>
 
+      {/* ════════════════════════ MOBILE STICKY CTA (< sm) */}
+      <div className="fixed bottom-0 inset-x-0 z-50 sm:hidden safe-area-bottom">
+        <div className="px-4 pt-3 pb-4 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/60">
+          <motion.button onClick={onSubscribeClick} whileTap={{ scale: 0.97 }}
+            className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl
+              font-bold text-base bg-gradient-to-r from-emerald-500 to-teal-500
+              text-slate-950 shadow-lg shadow-emerald-500/25">
+            <Zap size={16} fill="currentColor" />
+            Analizar mi negocio gratis
+          </motion.button>
+          <p className="text-center text-xs text-slate-500 mt-2">Sin tarjeta · 7 días gratis</p>
+        </div>
+      </div>
+
       {/* Modals */}
       {legalModal === 'privacy' && <PrivacyModal onClose={() => setLegalModal(null)} />}
       {legalModal === 'terms'   && <TermsModal   onClose={() => setLegalModal(null)} />}
       {legalModal === 'contact' && <ContactModal onClose={() => setLegalModal(null)} />}
     </div>
+  );
+}
+
+// ─── Animated metric counter ─────────────────────────────────────────────────
+function MetricCounter({ target, colorClass }: { target: number; colorClass: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
+  const [val, setVal] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    const dur = 1600;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / dur, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(e * target));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [inView, target]);
+
+  return (
+    <p ref={ref} className={`text-5xl font-black mb-2 tabular-nums ${colorClass}`}>
+      +{val}%
+    </p>
   );
 }
