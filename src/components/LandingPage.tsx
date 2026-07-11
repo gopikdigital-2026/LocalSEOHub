@@ -4,7 +4,7 @@ import {
   Eye, Globe, Target, MapPinned, Lock, AlertCircle, ExternalLink,
   Mail, ChevronDown, Brain, FileText, BarChart3, Users, Award,
   BadgeCheck, Flame, TrendingUp, CheckCircle2, Building2, Mic,
-  MessageSquare, Clock, Radar, ChevronRight, Search,
+  MessageSquare, Clock, Radar, ChevronRight, Search, Layers,
 } from 'lucide-react';
 import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
 import { LogoIcon } from './Logo';
@@ -920,354 +920,608 @@ const TOOL_COLORS: Record<string, { bg: string; border: string; icon: string; ba
   violet:  { bg: 'bg-violet-500/10',  border: 'border-violet-500/20',  icon: 'text-violet-400',  badge: 'bg-violet-500/15 border-violet-500/25 text-violet-400' },
 };
 
-// ─── Main landing page ────────────────────────────────────────────────────────
-export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
-  const [legalModal, setLegalModal] = useState<LegalModal>(null);
-  const [selectedToolIdx, setSelectedToolIdx] = useState<number | undefined>(undefined);
-  const { lang } = useI18n();
-  const pricingRef = useRef<HTMLDivElement>(null);
-  const heroWidgetRef = useRef<HTMLDivElement>(null);
+// ─── Scroll-reveal hook ──────────────────────────────────────────────────────
+function useReveal<T extends HTMLElement = HTMLDivElement>(threshold = 0.12) {
+  const ref = useRef<T>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setVisible(true); obs.disconnect(); }
+    }, { threshold });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
 
-  useEffect(() => { track('page_view', { page: 'landing' }); }, []);
+// ─── Animated counter ────────────────────────────────────────────────────────
+function AnimatedCounter({ target, suffix = '', prefix = '', active }: {
+  target: number; suffix?: string; prefix?: string; active: boolean;
+}) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const dur = 1600;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / dur, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(e * target));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [active, target]);
+  return <>{prefix}{val}{suffix}</>;
+}
 
-  const handlePickTool = (trialIdx: number) => {
-    setSelectedToolIdx(trialIdx);
-    setTimeout(() => heroWidgetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-  };
+// ─── Hero dashboard preview ───────────────────────────────────────────────────
+function HeroDashboard() {
+  const [score, setScore] = useState(0);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 500);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    let n = 0;
+    const iv = setInterval(() => {
+      n = Math.min(n + 1, 74);
+      setScore(n);
+      if (n >= 74) clearInterval(iv);
+    }, 18);
+    return () => clearInterval(iv);
+  }, [ready]);
+
+  const barColor = score < 40 ? '#ef4444' : score < 70 ? '#f59e0b' : '#10b981';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="relative float-dash">
+      {/* Glow behind card */}
+      <div className="absolute -inset-6 bg-emerald-500/8 rounded-3xl blur-2xl -z-10 pointer-events-none" />
 
-      {/* ── HERO ─────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
-          <div className="absolute top-40 left-1/4 w-64 h-64 bg-teal-500/4 rounded-full blur-3xl" />
-          <div className="absolute top-20 right-1/4 w-72 h-72 bg-cyan-500/3 rounded-full blur-3xl" />
-        </div>
+      <div className="rounded-2xl overflow-hidden border border-slate-700/50 shadow-2xl shadow-black/60"
+        style={{ background: 'linear-gradient(160deg, rgba(15,23,42,0.99) 0%, rgba(6,11,20,1) 100%)' }}>
 
-        <div className="max-w-6xl mx-auto px-5 pt-12 pb-16 relative">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-
-            {/* ── Left: copy ── */}
-            <div>
-              <div className="mb-5">
-                <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400">
-                  <Flame size={12} className="text-orange-400" />
-                  Para negocios locales y agencias de marketing
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                </div>
-              </div>
-
-              <h1 className="text-3xl sm:text-4xl xl:text-5xl font-extrabold text-white leading-[1.1] mb-4 tracking-tight">
-                Más clientes locales con{' '}
-                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                  7 herramientas de IA
-                </span>
-              </h1>
-
-              <p className="text-slate-400 text-base sm:text-lg mb-3 leading-relaxed">
-                SEO local, Google Maps, análisis de competencia y visibilidad en IA generativa — sin saber de SEO.
-              </p>
-              <p className="text-slate-500 text-sm mb-8">
-                Introduce tu negocio y obtén tu primer análisis en segundos, completamente gratis.
-              </p>
-
-              <div className="space-y-2.5 mb-8">
-                {[
-                  '7 días gratis — sin tarjeta de crédito',
-                  'Resultados en segundos, sin configuraciones',
-                  'Agencias y autónomos en toda España',
-                ].map((text) => (
-                  <div key={text} className="flex items-center gap-2.5 text-sm text-slate-300">
-                    <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
-                    {text}
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { value: '7', label: 'Herramientas IA', icon: Sparkles },
-                  { value: '16+', label: 'Plataformas', icon: Globe },
-                  { value: '4.9★', label: 'Valoración', icon: Star },
-                  { value: '9,99€', label: '/mes todo incl.', icon: Shield },
-                ].map(({ value, label, icon: Icon }) => (
-                  <div key={label} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-900/50 border border-slate-800/60">
-                    <Icon size={13} className="text-emerald-400" />
-                    <span className="text-white font-extrabold text-base leading-none">{value}</span>
-                    <span className="text-slate-500 text-[10px] text-center">{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Right: interactive widget ── */}
-            <div ref={heroWidgetRef}>
-              <ToolTrialSection onLoginClick={onLoginClick} initialToolIdx={selectedToolIdx} />
-            </div>
-
+        {/* Browser chrome */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/60 bg-slate-900/70">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
           </div>
+          <div className="flex-1 mx-3 bg-slate-800/70 rounded-md px-3 py-1 text-[10px] text-slate-500 font-mono text-center">
+            localsenhub.io/dashboard
+          </div>
+          <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />Live
+          </span>
         </div>
-      </section>
 
-      {/* ── ELIGE TU HERRAMIENTA ────────────────────────────────────────────── */}
-      <section id="tool-picker" className="py-14 px-5 bg-slate-900/30 border-y border-slate-800/50">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-4">
-              <Sparkles size={11} />
-              7 herramientas — elige la que necesitas ahora
+        <div className="p-5 space-y-4">
+          {/* Biz header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white font-bold text-sm">Peluquería López</p>
+              <p className="text-slate-500 text-xs">Madrid · Peluquería</p>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
-              ¿Qué quieres mejorar de tu negocio hoy?
-            </h2>
-            <p className="text-slate-400 text-sm max-w-xl mx-auto">
-              Cada herramienta resuelve un problema concreto de visibilidad local. Elige una, pruébala gratis y ve los resultados en segundos.
+            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all duration-500 ${
+              score >= 74
+                ? 'bg-amber-500/15 border-amber-500/25 text-amber-400'
+                : 'bg-slate-700/40 border-slate-600/30 text-slate-500'
+            }`}>
+              {score >= 74 ? 'Mejorable' : 'Analizando…'}
+            </span>
+          </div>
+
+          {/* Score card */}
+          <div className="rounded-xl bg-slate-800/60 border border-slate-700/40 p-4">
+            <div className="flex items-end justify-between mb-3">
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Visibilidad Local</p>
+              <p className="text-3xl font-black tabular-nums text-white">
+                {score}<span className="text-slate-600 text-base font-normal">/100</span>
+              </p>
+            </div>
+            <div className="w-full h-2 bg-slate-700/60 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-none" style={{ width: `${score}%`, background: barColor }} />
+            </div>
+            <p className={`text-[10px] mt-2 flex items-center gap-1 font-medium transition-all duration-700 ${
+              score >= 74 ? 'text-emerald-400 opacity-100' : 'opacity-0'
+            }`}>
+              <Sparkles size={9} />Con optimización IA: estimado 91/100
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {TOOL_BENEFITS.map((tool) => {
-              const Icon = tool.icon;
-              const c = TOOL_COLORS[tool.color] ?? TOOL_COLORS.emerald;
-              const isTrial = tool.trialIdx !== undefined;
-              return (
-                <div key={tool.id}
-                  className={`group relative rounded-2xl border p-5 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${c.border}`}
-                  style={{ background: 'linear-gradient(145deg, rgba(15,23,42,0.92) 0%, rgba(8,14,26,0.97) 100%)' }}>
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { v: '+23%', label: 'Llamadas', tc: 'text-emerald-400' },
+              { v: '+14%', label: 'Clics web', tc: 'text-sky-400' },
+              { v: '+17%', label: 'Rutas', tc: 'text-violet-400' },
+            ].map(({ v, label, tc }) => (
+              <div key={label} className="rounded-xl bg-slate-800/40 border border-slate-700/30 p-3 text-center">
+                <p className={`text-lg font-black ${tc} transition-all duration-500 ${score >= 74 ? 'opacity-100' : 'opacity-0'}`}>{v}</p>
+                <p className="text-[9px] text-slate-500 mt-0.5">{label}</p>
+              </div>
+            ))}
+          </div>
 
-                  {isTrial && (
-                    <span className="absolute top-3.5 right-3.5 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/25 text-emerald-400">
-                      Gratis
-                    </span>
-                  )}
-
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${c.bg} ${c.border}`}>
-                      <Icon size={18} className={c.icon} />
-                    </div>
-                    <div>
-                      <p className="text-white font-bold text-sm leading-tight">{tool.name}</p>
-                      <span className={`inline-block mt-0.5 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${c.badge}`}>
-                        {tool.badge}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className={`text-xs font-semibold mb-3 leading-snug ${c.icon}`}>{tool.tagline}</p>
-
-                  <ul className="space-y-2 mb-5 flex-1">
-                    {tool.benefits.map((b, bi) => (
-                      <li key={bi} className="flex items-start gap-2 text-[11px] text-slate-400 leading-relaxed">
-                        <Check size={10} className={`${c.icon} shrink-0 mt-0.5`} />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {isTrial ? (
-                    <button
-                      onClick={() => handlePickTool(tool.trialIdx!)}
-                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-150
-                        bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                        text-slate-950 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/35`}>
-                      <Zap size={11} fill="currentColor" />
-                      Analizar mi negocio gratis
-                    </button>
-                  ) : (
-                    <button
-                      onClick={onSubscribeClick}
-                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-150
-                        border ${c.border} ${c.icon} hover:bg-slate-800/40`}>
-                      <ArrowRight size={11} />
-                      Incluida en la suscripción
-                    </button>
-                  )}
+          {/* Actions list */}
+          <div className="rounded-xl border border-slate-700/30 overflow-hidden">
+            <div className="px-3 py-2.5 bg-slate-800/40 border-b border-slate-700/30">
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Plan de acción IA</p>
+            </div>
+            {[
+              { t: 'Optimizar descripción con keywords locales', p: 'Alta', dot: 'bg-red-400' },
+              { t: 'Responder 3 reseñas sin contestar', p: 'Alta', dot: 'bg-red-400' },
+              { t: 'Publicar actualización semanal', p: 'Media', dot: 'bg-amber-400' },
+            ].map(({ t, p, dot }, i) => (
+              <div key={t} className="flex items-center justify-between px-3 py-2.5 gap-2 border-b border-slate-800/30 last:border-0"
+                style={{ opacity: score >= 74 ? 1 : 0, transform: score >= 74 ? 'none' : 'translateX(-6px)', transition: `opacity 0.4s ease ${0.5 + i * 0.12}s, transform 0.4s ease ${0.5 + i * 0.12}s` }}>
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
+                  <span className="text-xs text-slate-300">{t}</span>
                 </div>
-              );
-            })}
+                <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${p === 'Alta' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'}`}>{p}</span>
+              </div>
+            ))}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* ── PARA AGENCIAS ────────────────────────────────────────────────────── */}
-      <section className="py-14 px-5">
-        <div className="max-w-4xl mx-auto">
-          <div className="rounded-2xl border border-teal-500/25 overflow-hidden"
-            style={{ background: 'linear-gradient(145deg, rgba(20,184,166,0.07) 0%, rgba(8,14,26,0.98) 60%)' }}>
-            <div className="h-[2px] bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-500" />
-            <div className="p-6 sm:p-8">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center shrink-0">
-                  <Building2 size={18} className="text-teal-400" />
-                </div>
-                <div>
-                  <p className="text-teal-400 text-[11px] font-bold uppercase tracking-wider mb-1">Para agencias de marketing digital</p>
-                  <h3 className="text-white text-xl font-extrabold leading-tight">
-                    Multiplica tu capacidad sin aumentar tu equipo
-                  </h3>
-                </div>
+      {/* Floating badge */}
+      <div className={`absolute -top-4 -right-4 z-10 bg-emerald-500 rounded-xl px-3.5 py-2 shadow-lg shadow-emerald-500/40 text-[11px] font-bold text-slate-950 flex items-center gap-1.5 transition-all duration-500 ${score >= 74 ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
+        <Sparkles size={11} />5 oportunidades detectadas
+      </div>
+    </div>
+  );
+}
+
+// ─── Main landing page (redesigned) ──────────────────────────────────────────
+export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
+  const [legalModal, setLegalModal] = useState<LegalModal>(null);
+  const { lang } = useI18n();
+  const pricingRef = useRef<HTMLDivElement>(null);
+  const demoRef = useRef<HTMLElement>(null);
+
+  const { ref: problemsRef, visible: problemsVisible } = useReveal();
+  const { ref: stepsRef, visible: stepsVisible } = useReveal();
+  const { ref: metricsRef, visible: metricsVisible } = useReveal();
+  const { ref: featuresRef, visible: featuresVisible } = useReveal();
+  const { ref: testimonialsRef, visible: testimonialsVisible } = useReveal();
+
+  useEffect(() => { track('page_view', { page: 'landing' }); }, []);
+
+  const PROBLEMS = [
+    { icon: MessageSquare, color: 'rose', title: 'Pocas reseñas', desc: 'Google premia a los negocios con más y mejores reseñas. Sin ellas, la IA no te recomienda.' },
+    { icon: AlertCircle, color: 'amber', title: 'Perfil incompleto', desc: 'Un perfil incompleto pierde el 60% del potencial de visibilidad. Cada campo vacío es dinero perdido.' },
+    { icon: TrendingUp, color: 'blue', title: 'Competencia optimizada', desc: 'Tus rivales ya usan IA para optimizar su presencia. Cada día sin actuar es ventaja cedida.' },
+    { icon: FileText, color: 'violet', title: 'Sin publicaciones', desc: 'Google premia la actividad. Negocios que publican regularmente multiplican su visibilidad.' },
+  ];
+
+  const STEPS = [
+    { n: '01', icon: Search, title: 'Analizamos tu negocio', desc: 'Introduce el nombre de tu negocio. Nuestra IA escanea tu ficha de Google en segundos.' },
+    { n: '02', icon: Sparkles, title: 'La IA detecta oportunidades', desc: 'Detectamos fallos críticos, oportunidades de keywords y brechas frente a tus competidores.' },
+    { n: '03', icon: FileText, title: 'Recibes un plan accionable', desc: 'Un informe priorizado con los cambios exactos que debes hacer, con textos listos para copiar.' },
+    { n: '04', icon: TrendingUp, title: 'Más visibilidad real', desc: 'Aplica los cambios y empieza a aparecer antes que tu competencia en Maps y búsqueda local.' },
+  ];
+
+  const FEATURES = [
+    {
+      icon: MapPinned, color: 'emerald',
+      name: 'Maps Scanner',
+      badge: 'Puntuación 0-100',
+      desc: 'Auditoría completa de tu Google Business Profile. Fallos críticos detectados automáticamente con textos optimizados listos para copiar.',
+    },
+    {
+      icon: Brain, color: 'rose',
+      name: 'AI Business Advisor',
+      badge: 'Estrategia personalizada',
+      desc: 'Describe tu situación y recibe un plan de acción concreto, priorizado y adaptado a tu negocio y presupuesto real.',
+    },
+    {
+      icon: Target, color: 'orange',
+      name: 'Radar de Competencia',
+      badge: 'Tiempo real',
+      desc: 'Analiza la estrategia de cualquier competidor y genera contramedidas automáticas para superarle en posicionamiento local.',
+    },
+    {
+      icon: FileText, color: 'teal',
+      name: 'Generador de Contenido SEO',
+      badge: '16+ plataformas',
+      desc: 'Títulos, descripciones y keywords para Google Business, Shopify, Amazon y 13 plataformas más en 30 segundos.',
+    },
+  ];
+
+  const FEATURE_COLORS: Record<string, string> = {
+    emerald: 'from-emerald-500/10 to-transparent border-emerald-500/20 text-emerald-400',
+    rose: 'from-rose-500/10 to-transparent border-rose-500/20 text-rose-400',
+    orange: 'from-orange-500/10 to-transparent border-orange-500/20 text-orange-400',
+    teal: 'from-teal-500/10 to-transparent border-teal-500/20 text-teal-400',
+  };
+
+  const PROBLEM_COLORS: Record<string, string> = {
+    rose: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
+    amber: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+    blue: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    violet: 'bg-violet-500/10 border-violet-500/20 text-violet-400',
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
+
+      {/* ═══════════════════════════════════════════════════════ HERO */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-emerald-500/6 rounded-full blur-3xl" />
+          <div className="absolute top-32 right-0 w-80 h-80 bg-teal-500/4 rounded-full blur-3xl" />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-5 pt-16 pb-20 relative">
+          <div className="grid lg:grid-cols-[1fr_1.05fr] gap-12 lg:gap-16 items-center">
+
+            {/* Left: copy */}
+            <div className="space-y-7">
+
+              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-2 text-xs font-semibold text-emerald-400">
+                <Flame size={12} className="text-orange-400" />
+                Para negocios locales y agencias de marketing
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               </div>
-              <p className="text-slate-400 text-sm leading-relaxed mb-6 max-w-2xl">
-                Si gestionas el SEO local de varios clientes, LocalSEOHub te permite generar en minutos lo que antes te costaba horas. Análisis, reportes, contenido y estrategia para todos tus clientes desde un único panel.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+
+              <div className="space-y-4">
+                <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-white leading-[1.08] tracking-tight">
+                  Consigue más clientes desde{' '}
+                  <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                    Google Maps
+                  </span>{' '}
+                  gracias a la IA.
+                </h1>
+                <p className="text-slate-400 text-lg leading-relaxed max-w-lg">
+                  Analizamos tu negocio, detectamos oportunidades y generamos un plan de acción personalizado para mejorar tu visibilidad local.
+                </p>
+              </div>
+
+              <div className="space-y-3">
                 {[
-                  { icon: Clock, text: 'Genera contenido SEO para 10 clientes en menos de 30 minutos' },
-                  { icon: BarChart3, text: 'Reportes de competencia listos para presentar al cliente' },
-                  { icon: Target, text: 'Radar de competencia para cada negocio que gestiones' },
-                  { icon: FileText, text: 'Exportación a CSV compatible con Shopify, Etsy y GMB' },
-                ].map(({ icon: Icon, text }) => (
-                  <div key={text} className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">
-                    <Icon size={13} className="text-teal-400 shrink-0 mt-0.5" />
-                    <span className="text-slate-300 text-xs leading-relaxed">{text}</span>
+                  'Análisis completo en menos de 60 segundos',
+                  'Plan de acción con textos listos para copiar',
+                  '7 días gratis — sin tarjeta de crédito',
+                ].map((t) => (
+                  <div key={t} className="flex items-center gap-2.5 text-sm text-slate-300">
+                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                    {t}
                   </div>
                 ))}
               </div>
-              <button onClick={onSubscribeClick}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
-                  bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-lg shadow-teal-500/25 hover:-translate-y-0.5 transition-all duration-200">
-                <ArrowRight size={14} />
-                Probar para mi agencia — gratis 7 días
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ── CÓMO FUNCIONA ────────────────────────────────────────────────────── */}
-      <section className="py-14 px-5 bg-slate-900/20 border-y border-slate-800/40">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Tan fácil como 1, 2, 3</h2>
-            <p className="text-slate-400 text-sm">En menos de 60 segundos tienes tu primer análisis listo.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              { step: '01', icon: Search, title: 'Introduce tu negocio', desc: 'Escribe el nombre de tu negocio, tu ciudad y el servicio o producto que ofreces. Sin formularios largos ni configuraciones.' },
-              { step: '02', icon: Sparkles, title: 'La IA lo analiza todo', desc: 'En segundos recibes tu análisis SEO, puntuación de visibilidad, competidores y recomendaciones concretas y priorizadas.' },
-              { step: '03', icon: TrendingUp, title: 'Aplica y capta clientes', desc: 'Copia los textos con un clic, aplica los cambios en tu ficha y empieza a aparecer antes que tu competencia.' },
-            ].map(({ step, icon: Icon, title, desc }) => (
-              <div key={step} className="relative">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                    <Icon size={16} className="text-emerald-400" />
-                  </div>
-                  <span className="text-4xl font-black text-slate-800/80 tabular-nums">{step}</span>
-                </div>
-                <h3 className="text-white font-bold text-base mb-2">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+              <div className="flex flex-wrap gap-3 pt-1">
+                <button onClick={onSubscribeClick}
+                  className="flex items-center gap-2.5 px-7 py-4 rounded-xl font-bold text-base
+                    bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                    text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50
+                    hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                  <Zap size={16} fill="currentColor" />
+                  Analizar mi negocio gratis
+                </button>
+                <button onClick={() => demoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm text-slate-300
+                    border border-slate-700/60 hover:border-slate-600 hover:bg-slate-800/40 transition-all duration-200">
+                  <Eye size={14} />
+                  Ver demo
+                </button>
               </div>
-            ))}
+
+              {/* Proof bar */}
+              <div className="flex items-center gap-6 pt-2 border-t border-slate-800/60">
+                {[
+                  { v: '7', l: 'herramientas IA' },
+                  { v: '4.9★', l: 'valoración' },
+                  { v: '9,99€', l: '/mes todo incluido' },
+                ].map(({ v, l }) => (
+                  <div key={l} className="text-center">
+                    <p className="text-white font-extrabold text-base">{v}</p>
+                    <p className="text-slate-500 text-[10px]">{l}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: live dashboard */}
+            <div className="hidden sm:block">
+              <HeroDashboard />
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
-      <section className="py-14 px-5">
+      {/* ═══════════════════════════════════════════════ PROBLEMAS */}
+      <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Lo que dicen nuestros usuarios</h2>
-            <p className="text-slate-400 text-sm">Negocios reales, resultados reales.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-5 space-y-3">
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: t.stars }).map((_, j) => (
-                    <Star key={j} size={12} className="text-amber-400 fill-amber-400" />
-                  ))}
-                  <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/25 text-emerald-400">
-                    {t.metric}
-                  </span>
-                </div>
-                <p className="text-slate-300 text-sm leading-relaxed">"{t.text}"</p>
-                <div className="flex items-center gap-3 pt-1 border-t border-slate-800/60">
-                  <img src={t.photo} alt={t.name} className="w-9 h-9 rounded-full object-cover border border-slate-700/50" />
+          <div ref={problemsRef as React.RefObject<HTMLDivElement>} className={`reveal ${problemsVisible ? 'visible' : ''}`}>
+            <div className="text-center mb-14">
+              <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-amber-400 mb-5">
+                <AlertCircle size={11} />
+                El problema real
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 leading-tight tracking-tight">
+                ¿Por qué la mayoría de negocios<br className="hidden sm:block" /> no aparecen en Google Maps?
+              </h2>
+              <p className="text-slate-400 text-base max-w-xl mx-auto">
+                No es mala suerte. Es falta de optimización. Estos cuatro problemas afectan al 87% de los negocios locales.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {PROBLEMS.map(({ icon: Icon, color, title, desc }, i) => (
+                <div key={title}
+                  className={`reveal reveal-delay-${i + 1} ${problemsVisible ? 'visible' : ''} group rounded-2xl border p-6 flex flex-col gap-4 hover:-translate-y-1 transition-all duration-300 cursor-default`}
+                  style={{ background: 'linear-gradient(145deg, rgba(15,23,42,0.92) 0%, rgba(8,14,26,0.97) 100%)', borderColor: 'rgba(255,255,255,0.07)' }}>
+                  <div className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 ${PROBLEM_COLORS[color]}`}>
+                    <Icon size={20} />
+                  </div>
                   <div>
-                    <p className="text-white text-sm font-bold">{t.name}</p>
-                    <p className="text-slate-500 text-[11px]">{t.role} · {t.city}</p>
+                    <p className="text-white font-bold text-base mb-1.5">{title}</p>
+                    <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── COMPARATIVA ──────────────────────────────────────────────────────── */}
-      <section className="py-14 px-5 bg-slate-900/30 border-y border-slate-800/50">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-extrabold text-white mb-2">Con LocalSEOHub vs. sin él</h2>
-            <p className="text-slate-400 text-sm">La diferencia en posicionamiento es real y medible.</p>
-          </div>
-          <div className="rounded-2xl border border-slate-700/50 overflow-hidden">
-            <div className="grid grid-cols-3 text-center text-[11px] font-bold uppercase tracking-wider border-b border-slate-700/50">
-              <div className="py-3 px-4 text-slate-500">Situación</div>
-              <div className="py-3 px-4 text-red-400 bg-red-500/5 border-x border-slate-700/50">Sin LocalSEOHub</div>
-              <div className="py-3 px-4 text-emerald-400 bg-emerald-500/5">Con LocalSEOHub</div>
+              ))}
             </div>
-            {[
-              ['Tiempo para generar contenido SEO', '4-6 horas', '2 minutos'],
-              ['Análisis de competidores', 'Manual o imposible', 'Automático e instantáneo'],
-              ['Visibilidad en ChatGPT / Gemini', 'Desconocida', 'Medida y optimizada'],
-              ['Coste mensual', '300-600€/mes agencia', '9,99€/mes todo incluido'],
-              ['Conocimientos técnicos necesarios', 'Experto en SEO', 'Ninguno'],
-            ].map(([label, bad, good], i) => (
-              <div key={i} className={`grid grid-cols-3 text-sm border-b border-slate-800/40 ${i % 2 === 0 ? '' : 'bg-slate-900/20'}`}>
-                <div className="py-3 px-4 text-slate-400 text-xs flex items-center">{label}</div>
-                <div className="py-3 px-4 text-red-400/80 text-xs flex items-center justify-center bg-red-500/3 border-x border-slate-800/40">
-                  <span className="flex items-center gap-1"><span className="text-red-500">✗</span> {bad}</span>
-                </div>
-                <div className="py-3 px-4 text-emerald-400/90 text-xs flex items-center justify-center bg-emerald-500/3">
-                  <span className="flex items-center gap-1"><span className="text-emerald-500">✓</span> {good}</span>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* ── PRICING ──────────────────────────────────────────────────────────── */}
-      <section ref={pricingRef} className="py-16 px-5">
+      {/* ═════════════════════════════════════════ CÓMO FUNCIONA */}
+      <section className="py-24 px-5">
+        <div className="max-w-5xl mx-auto">
+          <div ref={stepsRef as React.RefObject<HTMLDivElement>} className={`reveal ${stepsVisible ? 'visible' : ''}`}>
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
+                <Sparkles size={11} />
+                Tan fácil como 1, 2, 3, 4
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">Cómo funciona</h2>
+              <p className="text-slate-400 text-base">En menos de 60 segundos tienes tu primer análisis.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {STEPS.map(({ n, icon: Icon, title, desc }, i) => (
+                <div key={n}
+                  className={`reveal reveal-delay-${i + 1} ${stepsVisible ? 'visible' : ''} relative`}>
+                  {i < STEPS.length - 1 && (
+                    <div className="hidden lg:block absolute top-5 left-[calc(100%+0px)] w-full h-px bg-gradient-to-r from-slate-700/60 to-slate-800/30 -translate-x-5 z-10" />
+                  )}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-5xl font-black text-slate-800 tabular-nums leading-none">{n}</span>
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                        <Icon size={18} className="text-emerald-400" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-base mb-2">{title}</p>
+                      <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════ DEMO INTERACTIVO */}
+      <section ref={demoRef as React.RefObject<HTMLElement>} id="demo-section" className="py-24 px-5 bg-slate-900/20 border-y border-slate-800/40">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-teal-400 mb-5">
+              <Zap size={11} fill="currentColor" />
+              Prueba gratuita — sin registro
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
+              Analiza tu negocio ahora
+            </h2>
+            <p className="text-slate-400 text-base max-w-lg mx-auto">
+              Elige una herramienta, escribe tu negocio y recibe un análisis real en segundos. Gratis, sin registro.
+            </p>
+          </div>
+          <ToolTrialSection onLoginClick={onLoginClick} />
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════ MÉTRICAS */}
+      <section className="py-24 px-5">
+        <div className="max-w-5xl mx-auto">
+          <div ref={metricsRef as React.RefObject<HTMLDivElement>} className={`reveal ${metricsVisible ? 'visible' : ''}`}>
+            <div className="text-center mb-14">
+              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
+                <BarChart3 size={11} />
+                Resultados reales
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
+                Lo que cambia cuando optimizas tu ficha
+              </h2>
+              <p className="text-slate-400 text-base max-w-xl mx-auto">
+                Métricas medias de negocios que aplicaron las recomendaciones de LocalSEOHub en los primeros 30 días.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {[
+                { target: 38, suffix: '%', label: 'Más llamadas', sub: 'Media mensual tras optimizar Maps', color: 'emerald', icon: Globe },
+                { target: 24, suffix: '%', label: 'Más clics al sitio web', sub: 'Tráfico orgánico desde Google', color: 'sky', icon: TrendingUp },
+                { target: 17, suffix: '%', label: 'Más solicitudes de ruta', sub: 'Usuarios que piden cómo llegar', color: 'violet', icon: MapPin },
+              ].map(({ target, suffix, label, sub, color, icon: Icon }, i) => (
+                <div key={label}
+                  className={`reveal reveal-delay-${i + 1} ${metricsVisible ? 'visible' : ''} rounded-2xl border p-8 text-center hover:-translate-y-1 transition-all duration-300 group`}
+                  style={{ background: 'linear-gradient(145deg, rgba(15,23,42,0.92) 0%, rgba(8,14,26,0.97) 100%)', borderColor: 'rgba(255,255,255,0.07)' }}>
+                  <div className={`w-12 h-12 rounded-2xl mb-5 flex items-center justify-center mx-auto ${
+                    color === 'emerald' ? 'bg-emerald-500/10 border border-emerald-500/20' :
+                    color === 'sky' ? 'bg-sky-500/10 border border-sky-500/20' :
+                    'bg-violet-500/10 border border-violet-500/20'
+                  }`}>
+                    <Icon size={20} className={
+                      color === 'emerald' ? 'text-emerald-400' :
+                      color === 'sky' ? 'text-sky-400' : 'text-violet-400'
+                    } />
+                  </div>
+                  <p className={`text-5xl font-black mb-2 tabular-nums ${
+                    color === 'emerald' ? 'text-emerald-400' :
+                    color === 'sky' ? 'text-sky-400' : 'text-violet-400'
+                  } ${metricsVisible ? 'counter-pop' : ''}`}>
+                    +<AnimatedCounter target={target} suffix={suffix} active={metricsVisible} />
+                  </p>
+                  <p className="text-white font-bold text-lg mb-1">{label}</p>
+                  <p className="text-slate-500 text-sm">{sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════ FUNCIONALIDADES */}
+      <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
+        <div className="max-w-5xl mx-auto">
+          <div ref={featuresRef as React.RefObject<HTMLDivElement>} className={`reveal ${featuresVisible ? 'visible' : ''}`}>
+            <div className="text-center mb-14">
+              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
+                <Layers size={11} />
+                Herramientas incluidas
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
+                Todo lo que necesitas, en un solo sitio
+              </h2>
+              <p className="text-slate-400 text-base max-w-xl mx-auto">
+                Cuatro herramientas diseñadas específicamente para negocios locales y agencias. Sin curva de aprendizaje.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {FEATURES.map(({ icon: Icon, color, name, badge, desc }, i) => {
+                const c = FEATURE_COLORS[color];
+                const [gradient, , border, iconColor] = c.split(' ');
+                return (
+                  <div key={name}
+                    className={`reveal reveal-delay-${i + 1} ${featuresVisible ? 'visible' : ''} group relative rounded-2xl border ${border} p-7 flex gap-5 hover:-translate-y-1 transition-all duration-300 bg-gradient-to-br ${gradient}`}
+                    style={{ background: `linear-gradient(145deg, rgba(15,23,42,0.92) 0%, rgba(8,14,26,0.97) 100%)`, borderColor: undefined }}>
+                    <div className={`w-12 h-12 rounded-xl border shrink-0 flex items-center justify-center bg-gradient-to-br ${gradient} ${border}`}>
+                      <Icon size={20} className={iconColor} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-white font-bold text-base">{name}</p>
+                        <span className={`shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${border} ${iconColor} opacity-80`}>
+                          {badge}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="text-center text-slate-500 text-sm mt-8">
+              + GEO Audit (visibilidad en ChatGPT / Gemini), AI Digital Twin, Voice & Campaign Simulator y más, todo incluido en tu plan.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════ TESTIMONIOS */}
+      <section className="py-24 px-5">
+        <div className="max-w-5xl mx-auto">
+          <div ref={testimonialsRef as React.RefObject<HTMLDivElement>} className={`reveal ${testimonialsVisible ? 'visible' : ''}`}>
+            <div className="text-center mb-14">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
+                Negocios reales. Resultados reales.
+              </h2>
+              <p className="text-slate-400 text-base">Sin promesas vacías. Solo resultados medibles.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {TESTIMONIALS.map((t, i) => (
+                <div key={i}
+                  className={`reveal reveal-delay-${(i % 2) + 1} ${testimonialsVisible ? 'visible' : ''} rounded-2xl border border-slate-800/60 p-7 flex flex-col gap-5 hover:border-slate-700/60 transition-all duration-300`}
+                  style={{ background: 'linear-gradient(145deg, rgba(15,23,42,0.80) 0%, rgba(8,14,26,0.95) 100%)' }}>
+                  {/* Stars + metric */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: t.stars }).map((_, j) => (
+                        <Star key={j} size={13} className="text-amber-400 fill-amber-400" />
+                      ))}
+                    </div>
+                    <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400">
+                      {t.metric}
+                    </span>
+                  </div>
+                  {/* Quote */}
+                  <p className="text-slate-200 text-base leading-relaxed flex-1">"{t.text}"</p>
+                  {/* Author */}
+                  <div className="flex items-center gap-3.5 pt-4 border-t border-slate-800/50">
+                    <img src={t.photo} alt={t.name} className="w-11 h-11 rounded-full object-cover border-2 border-slate-700/60" />
+                    <div>
+                      <p className="text-white font-bold text-sm">{t.name}</p>
+                      <p className="text-slate-500 text-xs mt-0.5">{t.role} · {t.city}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════ PRICING */}
+      <section ref={pricingRef} id="pricing" className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
         <div className="max-w-lg mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Precio simple y transparente</h2>
-            <p className="text-slate-400 text-sm">Acceso completo a todas las herramientas. Sin sorpresas ni letra pequeña.</p>
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-5">
+              <Shield size={11} />
+              Sin sorpresas
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
+              Precio simple y transparente
+            </h2>
+            <p className="text-slate-400 text-base">Acceso completo a todas las herramientas. Sin letra pequeña.</p>
           </div>
 
-          <div className="rounded-2xl border border-emerald-500/30 overflow-hidden"
-            style={{ background: 'linear-gradient(160deg, rgba(16,185,129,0.08) 0%, rgba(8,14,26,0.99) 55%)' }}>
+          <div className="rounded-2xl border border-emerald-500/25 overflow-hidden"
+            style={{ background: 'linear-gradient(160deg, rgba(16,185,129,0.07) 0%, rgba(8,14,26,0.99) 55%)' }}>
             <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
-            <div className="p-6 sm:p-8">
-              <div className="flex items-center gap-2 mb-1">
+            <div className="p-8">
+              <div className="flex items-center gap-2.5 mb-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
                   TODO INCLUIDO
                 </span>
               </div>
-              <div className="flex items-end gap-2 mb-1 mt-3">
-                <span className="text-4xl font-extrabold text-white">9,99€</span>
-                <span className="text-slate-400 text-sm mb-1">/mes</span>
+              <div className="flex items-end gap-2 mt-4 mb-1">
+                <span className="text-5xl font-extrabold text-white">9,99€</span>
+                <span className="text-slate-400 text-base mb-1.5">/mes</span>
               </div>
-              <p className="text-slate-500 text-[12px] mb-6">7 días gratis, después 9,99€/mes · Cancela cuando quieras</p>
+              <p className="text-slate-500 text-sm mb-8">7 días gratis · Cancela cuando quieras</p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-7">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-8">
                 {[
                   'Generador SEO ilimitado (16+ plataformas)',
-                  'Escaner de Ficha Google Maps + Score',
+                  'Escaner Google Maps + Score IA',
                   'AI Digital Twin con mapa de calor',
                   'Radar de Competencia en tiempo real',
-                  'GEO Audit — visibilidad en ChatGPT y Gemini',
+                  'GEO Audit — visibilidad en ChatGPT / Gemini',
                   'AI Business Advisor personalizado',
                   'Voice & Campaign Simulator',
-                  'Exportación a CSV (Shopify, Etsy)',
-                  'Soporte prioritario por email',
+                  'Exportación CSV (Shopify, Etsy)',
+                  'Soporte prioritario en español',
                   'Actualizaciones del motor IA incluidas',
                 ].map((f) => (
-                  <div key={f} className="flex items-start gap-2 text-xs text-slate-300">
-                    <CheckCircle2 size={13} className="text-emerald-400 shrink-0 mt-0.5" />
+                  <div key={f} className="flex items-start gap-2 text-sm text-slate-300">
+                    <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
                     {f}
                   </div>
                 ))}
@@ -1276,11 +1530,12 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
               <button onClick={onSubscribeClick}
                 className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
                   bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45
+                  hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
                 <Zap size={16} fill="currentColor" />
                 Empezar 7 días gratis — sin tarjeta
               </button>
-              <p className="text-center text-[11px] text-slate-500 mt-3 flex items-center justify-center gap-1.5">
+              <p className="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1.5">
                 <Shield size={10} className="text-slate-600" />
                 Pago seguro con Stripe · Sin permanencia · Cancela en cualquier momento
               </p>
@@ -1289,49 +1544,12 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
-      {/* ── CTA FINAL ────────────────────────────────────────────────────────── */}
-      <section className="py-14 px-5 bg-slate-900/40 border-y border-slate-800/50">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-orange-400 mb-5">
-            <Flame size={12} className="text-orange-400" />
-            Tu competencia ya usa IA
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 leading-tight">
-            Cada día sin LocalSEOHub es un día que tus competidores aparecen antes que tú
-          </h2>
-          <p className="text-slate-400 text-sm max-w-xl mx-auto mb-8 leading-relaxed">
-            Únete a los negocios locales y agencias que ya usan LocalSEOHub para captar más clientes, ahorrar tiempo y superar a su competencia en Google Maps e IA generativa.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button onClick={onSubscribeClick}
-              className="flex items-center gap-2.5 px-8 py-4 rounded-xl font-bold text-base
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-xl shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-200">
-              <Zap size={16} fill="currentColor" />
-              Empezar gratis ahora — 7 días sin coste
-            </button>
-            <button onClick={() => onLoginClick()}
-              className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm text-slate-400
-                border border-slate-700/60 hover:border-slate-600 hover:text-slate-300 hover:bg-slate-800/40 transition-all duration-200">
-              Ya tengo cuenta — Iniciar sesión
-            </button>
-          </div>
-          <div className="flex items-center justify-center gap-5 mt-6">
-            {['Sin tarjeta para empezar', 'Cancela en cualquier momento', 'Soporte en español'].map((t) => (
-              <span key={t} className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                <Check size={10} className="text-emerald-500" />{t}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ ──────────────────────────────────────────────────────────────── */}
-      <section className="py-14 px-5">
+      {/* ══════════════════════════════════════════════════════ FAQ */}
+      <section className="py-24 px-5">
         <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-extrabold text-white mb-2">Preguntas frecuentes</h2>
-            <p className="text-slate-400 text-sm">Todo lo que necesitas saber antes de empezar.</p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-white mb-3 tracking-tight">Preguntas frecuentes</h2>
+            <p className="text-slate-400 text-base">Todo lo que necesitas saber antes de empezar.</p>
           </div>
           <div className="space-y-2">
             {FAQS.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)}
@@ -1339,32 +1557,72 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-slate-800/60 py-8 px-5">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <LogoIcon size={20} />
-              <span className="text-white font-bold text-sm">LocalSEOHub.io</span>
-              <span className="text-slate-600 text-xs">© 2026</span>
-            </div>
-            <div className="flex items-center gap-5">
-              {[
-                { label: 'Privacidad', modal: 'privacy' as LegalModal },
-                { label: 'Términos', modal: 'terms' as LegalModal },
-                { label: 'Contacto', modal: 'contact' as LegalModal },
-              ].map(({ label, modal }) => (
-                <button key={label} onClick={() => setLegalModal(modal)}
-                  className="text-slate-500 hover:text-slate-300 text-xs transition-colors">
-                  {label}
-                </button>
-              ))}
-            </div>
+      {/* ════════════════════════════════════════════════ CTA FINAL */}
+      <section className="py-28 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-slate-950" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/6 rounded-full blur-3xl" />
+        </div>
+        <div className="max-w-2xl mx-auto text-center relative">
+          <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/25 rounded-full px-4 py-1.5 text-xs font-semibold text-orange-400 mb-7">
+            <Flame size={12} />
+            Tu competencia ya usa IA
+          </div>
+          <h2 className="text-4xl sm:text-5xl font-extrabold text-white mb-5 leading-[1.1] tracking-tight">
+            Analiza gratis<br />tu negocio ahora.
+          </h2>
+          <p className="text-slate-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
+            Sin tarjeta. Sin configuraciones. En 60 segundos tienes tu informe de visibilidad y plan de acción.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button onClick={onSubscribeClick}
+              className="flex items-center gap-2.5 px-8 py-4.5 rounded-xl font-bold text-lg
+                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                text-slate-950 shadow-2xl shadow-emerald-500/35 hover:shadow-emerald-500/55
+                hover:-translate-y-0.5 transition-all duration-200">
+              <Zap size={18} fill="currentColor" />
+              Empezar gratis — 7 días sin coste
+            </button>
+            <button onClick={() => onLoginClick()}
+              className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm text-slate-400
+                border border-slate-700/60 hover:border-slate-600 hover:text-slate-300 hover:bg-slate-800/40 transition-all duration-200">
+              Ya tengo cuenta — Iniciar sesión
+            </button>
+          </div>
+          <div className="flex items-center justify-center gap-6 mt-8">
+            {['Sin tarjeta para empezar', 'Cancela en cualquier momento', 'Soporte en español'].map((t) => (
+              <span key={t} className="flex items-center gap-1.5 text-xs text-slate-500">
+                <Check size={11} className="text-emerald-500" />{t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════ FOOTER */}
+      <footer className="border-t border-slate-800/50 py-10 px-5">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
+          <div className="flex items-center gap-2.5">
+            <LogoIcon size={20} />
+            <span className="text-white font-bold text-sm">LocalSEOHub.io</span>
+            <span className="text-slate-600 text-xs">© 2026</span>
+          </div>
+          <div className="flex items-center gap-6">
+            {([
+              { label: 'Privacidad', modal: 'privacy' as LegalModal },
+              { label: 'Términos', modal: 'terms' as LegalModal },
+              { label: 'Contacto', modal: 'contact' as LegalModal },
+            ] as const).map(({ label, modal }) => (
+              <button key={label} onClick={() => setLegalModal(modal)}
+                className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       </footer>
 
-      {/* ── LEGAL MODALS ─────────────────────────────────────────────────────── */}
+      {/* Modals */}
       {legalModal === 'privacy' && <PrivacyModal onClose={() => setLegalModal(null)} />}
       {legalModal === 'terms'   && <TermsModal   onClose={() => setLegalModal(null)} />}
       {legalModal === 'contact' && <ContactModal onClose={() => setLegalModal(null)} />}
