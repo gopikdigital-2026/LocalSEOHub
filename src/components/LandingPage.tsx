@@ -1083,24 +1083,19 @@ function HeroDashboard() {
 }
 
 // ─── Animation presets ───────────────────────────────────────────────────────
-const FU = {
-  hidden: { opacity: 0, y: 22 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } },
-};
-const FI = {
-  hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { duration: 0.45 } },
-};
-const STAGGER = { show: { transition: { staggerChildren: 0.09 } } };
-const HOVER_CARD = { scale: 1.02, y: -3, transition: { duration: 0.2 } };
+const FU   = { hidden: { opacity: 0, y: 20 },     show: { opacity: 1, y: 0,     transition: { duration: 0.5,  ease: [0.16,1,0.3,1] as const } } };
+const FI   = { hidden: { opacity: 0 },             show: { opacity: 1,           transition: { duration: 0.4 } } };
+const SCALE= { hidden: { opacity: 0, scale: 0.94}, show: { opacity: 1, scale: 1, transition: { duration: 0.45, ease: [0.16,1,0.3,1] as const } } };
+const STAG = { show: { transition: { staggerChildren: 0.1 } } };
+const HOVER= { y: -4, scale: 1.02, transition: { duration: 0.2 } };
 
-// Reusable scroll-reveal wrapper
-const Rev = memo(function Rev({ children, delay = 0, className = '', stagger = false }:
-  { children: React.ReactNode; delay?: number; className?: string; stagger?: boolean }) {
+const Rev = memo(function Rev({ children, delay = 0, stagger = false, className = '' }: {
+  children: React.ReactNode; delay?: number; stagger?: boolean; className?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.12 });
   return (
-    <motion.div ref={ref} variants={stagger ? STAGGER : FU}
+    <motion.div ref={ref} variants={stagger ? STAG : FU}
       initial="hidden" animate={inView ? 'show' : 'hidden'}
       transition={{ delay }} className={className}>
       {children}
@@ -1108,7 +1103,251 @@ const Rev = memo(function Rev({ children, delay = 0, className = '', stagger = f
   );
 });
 
-// ─── Main landing page ────────────────────────────────────────────────────────
+// ─── Metric counter ───────────────────────────────────────────────────────────
+function MetricCounter({ target, cls }: { target: number; cls: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!inView) return;
+    const dur = 1600, start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / dur, 1);
+      setVal(Math.round((1 - Math.pow(1 - p, 3)) * target));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [inView, target]);
+  return <span ref={ref} className={cls}>+{val}%</span>;
+}
+
+// ─── Hero animated demo ───────────────────────────────────────────────────────
+type HDPhase = 'typing' | 'scanning' | 'result';
+
+function HeroDemo({ onCta }: { onCta: () => void }) {
+  const [phase, setPhase]     = useState<HDPhase>('typing');
+  const [typed, setTyped]     = useState('');
+  const [scanIdx, setScanIdx] = useState(-1);
+  const [score, setScore]     = useState(0);
+  const TEXT = 'Peluquería López · Madrid';
+
+  // Typing
+  useEffect(() => {
+    if (phase !== 'typing') return;
+    setTyped(''); setScanIdx(-1); setScore(0);
+    let i = 0;
+    const iv = setInterval(() => {
+      i++;
+      setTyped(TEXT.slice(0, i));
+      if (i >= TEXT.length) { clearInterval(iv); setTimeout(() => setPhase('scanning'), 700); }
+    }, 48);
+    return () => clearInterval(iv);
+  }, [phase]);
+
+  // Scanning steps
+  useEffect(() => {
+    if (phase !== 'scanning') return;
+    const steps = [0, 1, 2];
+    let cur = -1;
+    const next = () => {
+      cur++;
+      setScanIdx(cur);
+      if (cur < steps.length - 1) setTimeout(next, 750);
+      else setTimeout(() => setPhase('result'), 700);
+    };
+    const t = setTimeout(next, 300);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  // Score counter
+  useEffect(() => {
+    if (phase !== 'result') return;
+    let n = 0;
+    const iv = setInterval(() => {
+      n = Math.min(n + 1, 74);
+      setScore(n);
+      if (n >= 74) clearInterval(iv);
+    }, 16);
+    return () => clearInterval(iv);
+  }, [phase]);
+
+  // Auto-loop
+  useEffect(() => {
+    if (phase !== 'result') return;
+    const t = setTimeout(() => setPhase('typing'), 9000);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  const scanLines = [
+    'Analizando tu ficha de Google…',
+    'Comparando con 3 competidores…',
+    'Generando plan de acción…',
+  ];
+
+  const actions = [
+    { t: 'Optimizar descripción con keywords locales', p: 'Alta', c: 'bg-red-500/15 text-red-400' },
+    { t: 'Responder 3 reseñas pendientes', p: 'Alta', c: 'bg-red-500/15 text-red-400' },
+    { t: 'Publicar actualización semanal', p: 'Media', c: 'bg-amber-500/15 text-amber-400' },
+  ];
+
+  const competitors = [
+    { name: 'Peluquería Ana', score: 91 },
+    { name: 'Salón Blanco', score: 85 },
+  ];
+
+  return (
+    <div className="relative select-none">
+      <div className="absolute -inset-8 bg-emerald-500/6 rounded-3xl blur-3xl pointer-events-none" />
+
+      <div className="rounded-2xl overflow-hidden border border-slate-700/50 shadow-2xl shadow-black/60"
+        style={{ background: 'linear-gradient(160deg,rgba(12,20,36,0.99) 0%,rgba(6,10,18,1) 100%)' }}>
+
+        {/* Browser chrome */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/60 bg-slate-900/60">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
+          </div>
+          <div className="flex-1 mx-3 bg-slate-800/70 rounded-md px-3 py-1 text-[10px] text-slate-500 font-mono text-center truncate">
+            localsenhub.io/analizar
+          </div>
+          <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold shrink-0">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />Live
+          </div>
+        </div>
+
+        <div className="p-5">
+          {/* Input row — always visible */}
+          <div className="mb-4">
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Tu negocio</p>
+            <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700/40 rounded-xl px-4 py-3">
+              <MapPin size={14} className="text-emerald-400 shrink-0" />
+              <span className="text-sm text-slate-200 font-medium flex-1 min-h-[1.25rem]">
+                {typed}
+                {phase === 'typing' && <span className="inline-block w-px h-4 bg-emerald-400 ml-0.5 animate-pulse align-middle" />}
+              </span>
+            </div>
+          </div>
+
+          {/* Phase: scanning */}
+          {phase === 'scanning' && (
+            <div className="space-y-3 py-2">
+              {scanLines.map((line, i) => (
+                <div key={line} className="flex items-center gap-3 text-sm"
+                  style={{ opacity: i <= scanIdx ? 1 : 0.25, transition: 'opacity 0.3s ease' }}>
+                  {i <= scanIdx
+                    ? <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                    : <div className="w-3.5 h-3.5 rounded-full border border-slate-600 shrink-0" />}
+                  <span className={i <= scanIdx ? 'text-slate-300' : 'text-slate-600'}>{line}</span>
+                </div>
+              ))}
+              <div className="mt-4 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+                  style={{ width: `${Math.round(((scanIdx + 2) / (scanLines.length + 1)) * 100)}%`, transition: 'width 0.6s ease' }} />
+              </div>
+            </div>
+          )}
+
+          {/* Phase: result */}
+          {phase === 'result' && (
+            <div className="space-y-4">
+              {/* Score */}
+              <div className="rounded-xl bg-slate-800/50 border border-slate-700/30 p-4">
+                <div className="flex items-end justify-between mb-2">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Puntuación de Visibilidad</p>
+                  <motion.p initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, ease: [0.34,1.56,0.64,1] }}
+                    className="text-3xl font-black text-white tabular-nums">
+                    {score}<span className="text-slate-600 text-sm font-normal">/100</span>
+                  </motion.p>
+                </div>
+                <div className="w-full h-2 bg-slate-700/60 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-amber-400 transition-none"
+                    style={{ width: `${score}%` }} />
+                </div>
+                <div className="flex justify-between mt-1.5 text-[10px]">
+                  <span className="text-amber-400 font-semibold">Mejorable</span>
+                  <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                    <Sparkles size={9} />Con IA: 91/100
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Acciones prioritarias</p>
+                <div className="space-y-1.5">
+                  {actions.map(({ t, p, c }, i) => (
+                    <motion.div key={t} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + i * 0.12 }}
+                      className="flex items-center justify-between gap-2 text-xs py-1.5 px-2.5 rounded-lg bg-slate-800/30">
+                      <span className="text-slate-300">{t}</span>
+                      <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${c}`}>{p}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Competitors */}
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Competidores</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {competitors.map(({ name, score: cs }, i) => (
+                    <motion.div key={name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 + i * 0.1 }}
+                      className="rounded-lg bg-slate-800/40 border border-slate-700/30 p-2.5 text-center">
+                      <p className="text-emerald-400 font-black text-base tabular-nums">{cs}</p>
+                      <p className="text-slate-500 text-[10px] truncate">{name}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <motion.button onClick={onCta} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.1 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl
+                  bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold text-sm
+                  shadow-lg shadow-emerald-500/30">
+                <Zap size={13} fill="currentColor" />
+                Ver mi informe completo
+              </motion.button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Floating badge */}
+      {phase === 'result' && score >= 74 && (
+        <motion.div initial={{ opacity: 0, scale: 0.8, y: 4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ delay: 0.5, type: 'spring', stiffness: 300 }}
+          className="absolute -top-4 -right-4 z-10 bg-emerald-500 rounded-xl px-3.5 py-2
+            shadow-lg shadow-emerald-500/40 text-[11px] font-bold text-slate-950 flex items-center gap-1.5">
+          <Sparkles size={10} />5 oportunidades detectadas
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+// ─── Primary CTA button ───────────────────────────────────────────────────────
+const PrimaryBtn = memo(function PrimaryBtn({
+  full = false, large = false, onClick,
+}: { full?: boolean; large?: boolean; onClick: () => void }) {
+  return (
+    <motion.button onClick={onClick} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
+      className={`${full ? 'w-full' : ''} inline-flex items-center justify-center gap-2.5
+        ${large ? 'px-10 py-5 text-lg' : 'px-8 py-4 text-base'} rounded-xl font-bold
+        bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
+        shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-shadow duration-200`}>
+      <Zap size={large ? 18 : 16} fill="currentColor" />
+      Analizar mi negocio gratis
+    </motion.button>
+  );
+});
+
+// ─── Main landing page ─────────────────────────────────────────────────────────
 export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
   const pricingRef = useRef<HTMLDivElement>(null);
@@ -1116,131 +1355,99 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
 
   useEffect(() => { track('page_view', { page: 'landing' }); }, []);
 
-  // ── Static data (memoized) ──────────────────────────────────────────────────
-  const BENEFITS = useMemo(() => [
-    {
-      icon: MapPinned, color: 'emerald',
-      title: 'Sabe exactamente qué falla en tu ficha de Google',
-      desc: 'Auditoría automática con textos corregidos, listos para copiar.',
-    },
-    {
-      icon: Brain, color: 'rose',
-      title: 'Recibe un plan personalizado para conseguir más visibilidad',
-      desc: 'La IA analiza tu negocio y te dice los pasos exactos.',
-    },
-    {
-      icon: Target, color: 'orange',
-      title: 'Descubre qué hace tu competencia y supérala',
-      desc: 'Análisis en tiempo real con contramedidas automáticas.',
-    },
-    {
-      icon: FileText, color: 'teal',
-      title: 'Genera contenido optimizado en 30 segundos',
-      desc: 'Para Google Business, Shopify, Amazon y 13 plataformas más.',
-    },
-  ], []);
-
   const STEPS = useMemo(() => [
-    { n: '1', icon: Search,    title: 'Introduce tu negocio',     desc: 'Nombre y ciudad. 10 segundos.' },
-    { n: '2', icon: Sparkles,  title: 'La IA analiza todo',       desc: 'Ficha, reseñas, competencia.' },
-    { n: '3', icon: TrendingUp,title: 'Recibe tu plan de acción', desc: 'Acciones concretas listas para aplicar.' },
+    { n: '01', icon: Search,     title: 'Dinos cuál es tu negocio',    desc: 'Nombre y ciudad. Nada más.' },
+    { n: '02', icon: Sparkles,   title: 'Nuestra IA lo analiza todo',  desc: 'Ficha, reseñas y competidores.' },
+    { n: '03', icon: TrendingUp, title: 'Recibes tu plan de clientes', desc: 'Acciones concretas para crecer.' },
   ], []);
 
   const METRICS = useMemo(() => [
-    { target: 38, label: 'Más llamadas',           sub: 'Media mensual tras optimizar',  color: 'emerald', icon: Globe },
-    { target: 24, label: 'Más clics al sitio web', sub: 'Tráfico orgánico desde Google', color: 'sky',     icon: TrendingUp },
-    { target: 17, label: 'Más solicitudes de ruta',sub: 'Usuarios que piden cómo llegar',color: 'violet',  icon: MapPin },
+    { target: 38, label: 'Más llamadas',        sub: 'Media mensual en los primeros 30 días',  color: 'emerald' as const, icon: Globe      },
+    { target: 24, label: 'Más visitas web',      sub: 'Clics desde Google a tu web o ficha',   color: 'sky'     as const, icon: TrendingUp },
+    { target: 17, label: 'Más "¿Cómo llegar?"', sub: 'Usuarios que piden ruta a tu negocio',   color: 'violet'  as const, icon: MapPin     },
   ], []);
 
-  const BENEFIT_COLORS: Record<string, { ring: string; icon: string; bg: string }> = useMemo(() => ({
-    emerald: { ring: 'border-emerald-500/20', icon: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    rose:    { ring: 'border-rose-500/20',    icon: 'text-rose-400',    bg: 'bg-rose-500/10'    },
-    orange:  { ring: 'border-orange-500/20',  icon: 'text-orange-400',  bg: 'bg-orange-500/10'  },
-    teal:    { ring: 'border-teal-500/20',    icon: 'text-teal-400',    bg: 'bg-teal-500/10'    },
+  const MCLS = useMemo(() => ({
+    emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/10', ring: 'border-emerald-500/20' },
+    sky:     { text: 'text-sky-400',     bg: 'bg-sky-500/10',     ring: 'border-sky-500/20'     },
+    violet:  { text: 'text-violet-400',  bg: 'bg-violet-500/10',  ring: 'border-violet-500/20'  },
   }), []);
-
-  const METRIC_COLORS: Record<string, { text: string; bg: string; border: string }> = useMemo(() => ({
-    emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-    sky:     { text: 'text-sky-400',     bg: 'bg-sky-500/10',     border: 'border-sky-500/20'     },
-    violet:  { text: 'text-violet-400',  bg: 'bg-violet-500/10',  border: 'border-violet-500/20'  },
-  }), []);
-
-  const PrimaryBtn = memo(({ full = false }: { full?: boolean }) => (
-    <motion.button onClick={onSubscribeClick} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
-      className={`${full ? 'w-full' : ''} inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl
-        font-bold text-base bg-gradient-to-r from-emerald-500 to-teal-500
-        text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-shadow duration-200`}>
-      <Zap size={16} fill="currentColor" />
-      Analizar mi negocio gratis
-    </motion.button>
-  ));
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden pb-20 sm:pb-0">
 
-      {/* ═══════════════════════════════════════════════════════════════ HERO */}
-      <section className="relative overflow-hidden pb-0">
+      {/* ═══════════════════════════════════════════════════════════ HERO */}
+      <section className="relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-emerald-500/6 rounded-full blur-3xl" />
-          <div className="absolute top-32 right-0 w-80 h-80 bg-teal-500/4 rounded-full blur-3xl" />
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[700px] bg-emerald-500/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 right-0 w-96 h-96 bg-teal-500/4 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-6xl mx-auto px-5 pt-16 pb-14 relative">
-          <div className="grid lg:grid-cols-[1fr_1.08fr] gap-12 lg:gap-16 items-center">
+        <div className="max-w-6xl mx-auto px-5 pt-16 pb-6 relative">
+          <div className="grid lg:grid-cols-[1fr_1.1fr] gap-14 lg:gap-20 items-center">
 
-            {/* Left copy */}
-            <motion.div initial="hidden" animate="show" variants={STAGGER} className="space-y-6">
+            {/* ── Left ── */}
+            <motion.div initial="hidden" animate="show" variants={STAG} className="space-y-7">
+
               <motion.div variants={FI}>
-                <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-4 py-2 text-xs font-semibold text-emerald-400">
-                  <Flame size={12} className="text-orange-400" />
-                  Para negocios locales y agencias
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-4 py-1.5 text-xs font-semibold text-emerald-400">
+                  <Sparkles size={11} className="text-orange-400" />
+                  AI Growth Copilot para negocios locales
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                </div>
+                </span>
               </motion.div>
 
               <motion.h1 variants={FU}
-                className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-white leading-[1.08] tracking-tight">
+                className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold text-white leading-[1.07] tracking-tight">
                 Consigue más clientes desde{' '}
-                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent whitespace-nowrap">
                   Google Maps
-                </span>{' '}
-                gracias a la IA.
+                </span>
+                {' '}gracias a la IA.
               </motion.h1>
 
-              <motion.p variants={FU} className="text-slate-400 text-lg leading-relaxed max-w-md">
-                Analizamos tu ficha, detectamos lo que falla y generamos tu plan de acción.{' '}
-                <strong className="text-slate-300 font-semibold">En menos de 2 minutos.</strong>
+              <motion.p variants={FU} className="text-slate-400 text-lg leading-relaxed max-w-[460px]">
+                Analizamos tu negocio, detectamos oportunidades y generamos un plan personalizado para mejorar tu visibilidad local.
               </motion.p>
 
-              <motion.div variants={FU}>
-                <PrimaryBtn />
-                <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5">
-                  <Shield size={11} className="text-slate-600" />
-                  Sin tarjeta · Cancela cuando quieras
-                </p>
+              <motion.div variants={FU} className="flex flex-col gap-3.5">
+                <PrimaryBtn onClick={onSubscribeClick} />
+
+                {/* Trust trio */}
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5 pt-1">
+                  {[
+                    { icon: Check, text: 'Informe gratuito' },
+                    { icon: Check, text: 'Menos de 2 minutos' },
+                    { icon: Check, text: 'Sin tarjeta de crédito' },
+                  ].map(({ icon: Icon, text }) => (
+                    <span key={text} className="flex items-center gap-1.5 text-sm text-slate-400">
+                      <Icon size={13} className="text-emerald-400" />{text}
+                    </span>
+                  ))}
+                </div>
               </motion.div>
             </motion.div>
 
-            {/* Right: live dashboard */}
+            {/* ── Right: animated demo ── */}
             <motion.div
-              initial={{ opacity: 0, x: 32, scale: 0.96 }}
+              initial={{ opacity: 0, x: 30, scale: 0.96 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.65, delay: 0.3, ease: [0.16,1,0.3,1] }}
               className="hidden sm:block">
-              <HeroDashboard />
+              <HeroDemo onCta={onSubscribeClick} />
             </motion.div>
           </div>
         </div>
 
-        {/* ── Trust bar ── */}
-        <div className="border-t border-slate-800/50 bg-slate-900/40">
-          <div className="max-w-4xl mx-auto px-5 py-4">
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
+        {/* ── Trust strip ── */}
+        <div className="border-t border-slate-800/40 bg-slate-900/30 mt-10">
+          <div className="max-w-5xl mx-auto px-5 py-5">
+            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-2">
               {[
-                { icon: Shield,      text: 'Sin tarjeta de crédito' },
-                { icon: Zap,         text: 'Informe en menos de 2 minutos' },
-                { icon: Brain,       text: 'IA especializada en SEO Local' },
-                { icon: BadgeCheck,  text: '9,99€/mes · Todo incluido' },
+                { icon: Shield,    text: 'Sin tarjeta de crédito' },
+                { icon: Zap,       text: 'Resultados en menos de 2 minutos' },
+                { icon: Brain,     text: 'IA especializada en negocios locales' },
+                { icon: BadgeCheck,text: '7 días gratis incluidos' },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-2 text-sm text-slate-400">
                   <Icon size={13} className="text-emerald-400 shrink-0" />
@@ -1252,85 +1459,54 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
-      {/* ════════════════════════════════════════ ¿POR QUÉ IMPORTA? */}
-      <section className="py-24 px-5">
-        <div className="max-w-5xl mx-auto">
-          <Rev className="text-center mb-14">
-            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">El problema</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Tu competencia ya te está adelantando.
-            </h2>
-            <p className="text-slate-400 text-base mt-4 max-w-lg mx-auto">
-              El 87% de los negocios locales pierde clientes por los mismos cuatro errores.
-            </p>
-          </Rev>
-
-          <Rev stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {BENEFITS.map(({ icon: Icon, color, title, desc }) => {
-              const c = BENEFIT_COLORS[color];
-              return (
-                <motion.div key={title} variants={FU} whileHover={HOVER_CARD}
-                  className={`rounded-2xl border ${c.ring} p-6 flex flex-col gap-4 cursor-default`}
-                  style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.92) 0%,rgba(8,14,26,0.97) 100%)' }}>
-                  <div className={`w-11 h-11 rounded-xl border ${c.ring} ${c.bg} flex items-center justify-center shrink-0`}>
-                    <Icon size={20} className={c.icon} />
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-sm mb-2 leading-snug">{title}</p>
-                    <p className="text-slate-500 text-xs leading-relaxed">{desc}</p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </Rev>
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════ CÓMO FUNCIONA */}
-      <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
+      {/* ══════════════════════════════════════════════ CÓMO FUNCIONA */}
+      <section className="py-28 px-5">
         <div className="max-w-4xl mx-auto">
           <Rev className="text-center mb-16">
-            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Proceso</p>
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Proceso</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              En menos de 2 minutos.
+              Tres pasos. Dos minutos.
             </h2>
+            <p className="text-slate-400 text-base mt-4">Más clientes.</p>
           </Rev>
 
-          <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-8 relative">
-            {/* Connecting line on desktop */}
-            <div className="hidden sm:block absolute top-8 left-[calc(16.66%+1rem)] right-[calc(16.66%+1rem)] h-px bg-gradient-to-r from-emerald-500/30 via-teal-500/30 to-emerald-500/30" />
-            {STEPS.map(({ n, icon: Icon, title, desc }) => (
-              <motion.div key={n} variants={FU} className="flex flex-col items-center text-center gap-4">
-                <motion.div whileHover={{ scale: 1.08 }}
-                  className="relative w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center z-10">
-                  <Icon size={22} className="text-emerald-400" />
-                  <span className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black flex items-center justify-center">
-                    {n}
+          <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-10">
+            {STEPS.map(({ n, icon: Icon, title, desc }, i) => (
+              <motion.div key={n} variants={FU} className="flex flex-col items-center text-center gap-5">
+                <motion.div whileHover={{ scale: 1.08 }} className="relative">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center z-10 relative">
+                    <Icon size={24} className="text-emerald-400" />
+                  </div>
+                  <span className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 text-xs font-black flex items-center justify-center">
+                    {i + 1}
                   </span>
                 </motion.div>
                 <div>
-                  <p className="text-white font-bold text-base mb-1">{title}</p>
+                  <p className="text-white font-bold text-lg mb-2">{title}</p>
                   <p className="text-slate-500 text-sm">{desc}</p>
                 </div>
               </motion.div>
             ))}
           </Rev>
 
-          <Rev delay={0.2} className="text-center mt-12">
-            <PrimaryBtn />
+          <Rev delay={0.2} className="text-center mt-14">
+            <PrimaryBtn onClick={onSubscribeClick} />
           </Rev>
         </div>
       </section>
 
-      {/* ════════════════════════════════════════ DEMO INTERACTIVA */}
-      <section ref={demoRef as React.RefObject<HTMLElement>} id="demo-section" className="py-24 px-5">
+      {/* ════════════════════════════════ DEMO INTERACTIVA */}
+      <section ref={demoRef as React.RefObject<HTMLElement>} id="demo-section"
+        className="py-28 px-5 bg-slate-900/30 border-y border-slate-800/40">
         <div className="max-w-5xl mx-auto">
           <Rev className="text-center mb-12">
-            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Demo</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
-              Pruébalo ahora.
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Pruébalo ahora</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+              Tu negocio. Tu análisis.
             </h2>
-            <p className="text-slate-400 text-base">Sin registro. Resultado en segundos.</p>
+            <p className="text-slate-400 text-base max-w-md mx-auto">
+              Sin registro. El resultado llega en segundos.
+            </p>
           </Rev>
           <Rev>
             <ToolTrialSection onLoginClick={onLoginClick} />
@@ -1338,11 +1514,11 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════ RESULTADOS */}
-      <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
+      {/* ═══════════════════════════════════════════════ RESULTADOS */}
+      <section className="py-28 px-5">
         <div className="max-w-5xl mx-auto">
           <Rev className="text-center mb-14">
-            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Resultados</p>
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Resultados</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               Lo que cambia en 30 días.
             </h2>
@@ -1350,17 +1526,17 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
 
           <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {METRICS.map(({ target, label, sub, color, icon: Icon }) => {
-              const c = METRIC_COLORS[color];
+              const c = MCLS[color];
               return (
-                <motion.div key={label} variants={FU} whileHover={HOVER_CARD}
-                  className={`rounded-2xl border ${c.border} p-8 text-center cursor-default`}
-                  style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.92) 0%,rgba(8,14,26,0.97) 100%)' }}>
-                  <div className={`w-12 h-12 rounded-2xl ${c.bg} border ${c.border} flex items-center justify-center mx-auto mb-5`}>
+                <motion.div key={label} variants={FU} whileHover={HOVER}
+                  className={`rounded-2xl border ${c.ring} p-8 text-center cursor-default`}
+                  style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.9) 0%,rgba(8,14,26,0.97) 100%)' }}>
+                  <div className={`w-12 h-12 rounded-2xl ${c.bg} border ${c.ring} flex items-center justify-center mx-auto mb-5`}>
                     <Icon size={20} className={c.text} />
                   </div>
-                  <MetricCounter target={target} colorClass={c.text} />
+                  <MetricCounter target={target} cls={`text-5xl font-black mb-2 block ${c.text}`} />
                   <p className="text-white font-bold text-lg mb-1">{label}</p>
-                  <p className="text-slate-500 text-sm">{sub}</p>
+                  <p className="text-slate-500 text-sm leading-snug">{sub}</p>
                 </motion.div>
               );
             })}
@@ -1369,18 +1545,18 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       </section>
 
       {/* ══════════════════════════════════════════════ TESTIMONIOS */}
-      <section className="py-24 px-5">
+      <section className="py-28 px-5 bg-slate-900/30 border-y border-slate-800/40">
         <div className="max-w-5xl mx-auto">
           <Rev className="text-center mb-14">
-            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Confianza</p>
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Confianza</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Ellos ya lo usan.
+              No lo decimos nosotros.
             </h2>
           </Rev>
 
           <Rev stagger className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {TESTIMONIALS.map((t, i) => (
-              <motion.div key={i} variants={FU} whileHover={HOVER_CARD}
+              <motion.div key={i} variants={FU} whileHover={HOVER}
                 className="rounded-2xl border border-slate-800/60 p-7 flex flex-col gap-5 cursor-default"
                 style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.82) 0%,rgba(8,14,26,0.95) 100%)' }}>
                 <div className="flex items-center justify-between">
@@ -1395,7 +1571,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                 </div>
                 <p className="text-slate-200 text-base leading-relaxed flex-1">"{t.text}"</p>
                 <div className="flex items-center gap-3.5 pt-4 border-t border-slate-800/50">
-                  <img src={t.photo} alt={t.name} loading="lazy"
+                  <img src={t.photo} alt={t.name} loading="lazy" width={40} height={40}
                     className="w-10 h-10 rounded-full object-cover border-2 border-slate-700/60" />
                   <div>
                     <p className="text-white font-bold text-sm">{t.name}</p>
@@ -1408,53 +1584,49 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════════ PRECIO */}
-      <section ref={pricingRef} id="pricing" className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
-        <div className="max-w-md mx-auto">
+      {/* ══════════════════════════════════════════════════ PRICING */}
+      <section ref={pricingRef} id="pricing" className="py-28 px-5">
+        <div className="max-w-sm mx-auto">
           <Rev className="text-center mb-10">
-            <p className="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Precio</p>
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Precio</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-              Un plan. Todo incluido.
+              Todo incluido.
             </h2>
-            <p className="text-slate-400 text-base">Sin letra pequeña.</p>
+            <p className="text-slate-400 text-base">Sin sorpresas. Sin letra pequeña.</p>
           </Rev>
 
           <Rev>
-            <motion.div whileHover={{ scale: 1.01 }}
+            <motion.div whileHover={{ scale: 1.01, y: -2 }}
               className="rounded-2xl border border-emerald-500/25 overflow-hidden"
-              style={{ background: 'linear-gradient(160deg,rgba(16,185,129,0.07) 0%,rgba(8,14,26,0.99) 55%)' }}>
-              <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+              style={{ background: 'linear-gradient(160deg,rgba(16,185,129,0.08) 0%,rgba(8,14,26,1) 60%)' }}>
+              <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400" />
               <div className="p-8">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
-                  TODO INCLUIDO
-                </span>
-                <div className="flex items-end gap-2 mt-5 mb-1">
+                <div className="flex items-end gap-2 mb-1">
                   <span className="text-5xl font-extrabold text-white">9,99€</span>
-                  <span className="text-slate-400 mb-1.5">/mes</span>
+                  <span className="text-slate-400 mb-2">/mes</span>
                 </div>
                 <p className="text-slate-500 text-sm mb-7">7 días gratis · Cancela cuando quieras</p>
 
-                <div className="grid grid-cols-1 gap-2 mb-7">
+                <div className="space-y-2.5 mb-8">
                   {[
-                    'Generador SEO (16+ plataformas)',
-                    'Maps Scanner con puntuación IA',
-                    'AI Advisor personalizado',
-                    'Radar de Competencia en tiempo real',
-                    'GEO Audit — visibilidad en ChatGPT / Gemini',
-                    'AI Digital Twin + Voice Simulator',
-                    'Soporte prioritario en español',
+                    'Plan de visibilidad local con IA',
+                    'Análisis completo de tu ficha de Google',
+                    'Seguimiento de competidores',
+                    'Visibilidad en ChatGPT y Gemini',
+                    'Generador de contenido para 16+ plataformas',
+                    'Soporte en español',
                   ].map((f) => (
-                    <div key={f} className="flex items-center gap-2 text-sm text-slate-300">
+                    <div key={f} className="flex items-center gap-2.5 text-sm text-slate-300">
                       <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
                       {f}
                     </div>
                   ))}
                 </div>
 
-                <PrimaryBtn full />
+                <PrimaryBtn onClick={onSubscribeClick} full />
                 <p className="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1.5">
                   <Shield size={10} className="text-slate-600" />
-                  Pago seguro con Stripe · Sin permanencia
+                  Pago seguro · Sin permanencia
                 </p>
               </div>
             </motion.div>
@@ -1462,8 +1634,8 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════ FAQ */}
-      <section className="py-24 px-5">
+      {/* ════════════════════════════════════════════════════ FAQ */}
+      <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
         <div className="max-w-2xl mx-auto">
           <Rev className="text-center mb-12">
             <h2 className="text-3xl font-extrabold text-white tracking-tight">Preguntas frecuentes</h2>
@@ -1474,25 +1646,25 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
-      {/* ════════════════════════════════════════════════ CTA FINAL */}
-      <section className="py-28 px-5 relative overflow-hidden">
+      {/* ═══════════════════════════════════════════════ CTA FINAL */}
+      <section className="py-32 px-5 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 to-slate-950" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/6 rounded-full blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/30 to-slate-950" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-emerald-500/6 rounded-full blur-3xl" />
         </div>
         <div className="max-w-xl mx-auto text-center relative">
-          <Rev className="space-y-6">
-            <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/25 rounded-full px-4 py-2 text-xs font-semibold text-orange-400">
+          <Rev className="space-y-7">
+            <span className="inline-flex items-center gap-2 rounded-full bg-orange-500/10 border border-orange-500/25 px-4 py-2 text-xs font-semibold text-orange-400">
               <Flame size={12} />Tu competencia ya usa IA
-            </div>
-            <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-[1.1] tracking-tight">
-              Empieza hoy.<br />Sin excusas.
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-[1.08] tracking-tight">
+              ¿Listo para recibir<br />más llamadas?
             </h2>
-            <p className="text-slate-400 text-lg">
-              60 segundos. Sin tarjeta. Tu primer análisis completamente gratis.
+            <p className="text-slate-400 text-lg max-w-md mx-auto">
+              Empieza gratis. Sin compromiso. Tu análisis en menos de 2 minutos.
             </p>
-            <PrimaryBtn />
-            <div className="flex items-center justify-center gap-5 pt-1">
+            <PrimaryBtn onClick={onSubscribeClick} large />
+            <div className="flex items-center justify-center gap-6 pt-1">
               {['Sin tarjeta', 'Cancela siempre', 'Soporte en español'].map((t) => (
                 <span key={t} className="flex items-center gap-1.5 text-xs text-slate-500">
                   <Check size={11} className="text-emerald-500" />{t}
@@ -1503,36 +1675,43 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════ FOOTER */}
+      {/* ═══════════════════════════════════════════════════ FOOTER */}
       <footer className="border-t border-slate-800/50 py-10 px-5">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
           <div className="flex items-center gap-2.5">
             <LogoIcon size={20} />
             <span className="text-white font-bold text-sm">LocalSEOHub.io</span>
-            <span className="text-slate-600 text-xs">© 2026</span>
+            <span className="text-slate-700 text-xs">© 2026</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-1">
+            <button onClick={() => onLoginClick()}
+              className="px-4 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
+              Iniciar sesión
+            </button>
+            <span className="text-slate-700">·</span>
             {([
               { label: 'Privacidad', modal: 'privacy' as const },
               { label: 'Términos',   modal: 'terms'   as const },
               { label: 'Contacto',   modal: 'contact' as const },
             ]).map(({ label, modal }) => (
-              <button key={label} onClick={() => setLegalModal(modal)}
-                className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
-                {label}
-              </button>
+              <React.Fragment key={label}>
+                <button onClick={() => setLegalModal(modal)}
+                  className="px-4 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
+                  {label}
+                </button>
+                {label !== 'Contacto' && <span className="text-slate-700">·</span>}
+              </React.Fragment>
             ))}
           </div>
         </div>
       </footer>
 
-      {/* ════════════════════════ MOBILE STICKY CTA (< sm) */}
-      <div className="fixed bottom-0 inset-x-0 z-50 sm:hidden safe-area-bottom">
-        <div className="px-4 pt-3 pb-4 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/60">
+      {/* ═══════════════════════════ MOBILE STICKY CTA */}
+      <div className="fixed bottom-0 inset-x-0 z-50 sm:hidden">
+        <div className="px-4 pt-3 pb-5 bg-slate-950/96 backdrop-blur-md border-t border-slate-800/70">
           <motion.button onClick={onSubscribeClick} whileTap={{ scale: 0.97 }}
-            className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl
-              font-bold text-base bg-gradient-to-r from-emerald-500 to-teal-500
-              text-slate-950 shadow-lg shadow-emerald-500/25">
+            className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
+              bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-xl shadow-emerald-500/25">
             <Zap size={16} fill="currentColor" />
             Analizar mi negocio gratis
           </motion.button>
@@ -1540,36 +1719,9 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </div>
 
-      {/* Modals */}
       {legalModal === 'privacy' && <PrivacyModal onClose={() => setLegalModal(null)} />}
       {legalModal === 'terms'   && <TermsModal   onClose={() => setLegalModal(null)} />}
       {legalModal === 'contact' && <ContactModal onClose={() => setLegalModal(null)} />}
     </div>
-  );
-}
-
-// ─── Animated metric counter ─────────────────────────────────────────────────
-function MetricCounter({ target, colorClass }: { target: number; colorClass: string }) {
-  const ref = useRef<HTMLParagraphElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.5 });
-  const [val, setVal] = useState(0);
-
-  useEffect(() => {
-    if (!inView) return;
-    const dur = 1600;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min((now - start) / dur, 1);
-      const e = 1 - Math.pow(1 - p, 3);
-      setVal(Math.round(e * target));
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [inView, target]);
-
-  return (
-    <p ref={ref} className={`text-5xl font-black mb-2 tabular-nums ${colorClass}`}>
-      +{val}%
-    </p>
   );
 }
