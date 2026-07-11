@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, memo, type FormEvent } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Zap, Shield, Star, Check, ArrowRight, Sparkles,
   Eye, Globe, Target, MapPinned, Lock, AlertCircle, ExternalLink,
@@ -1083,11 +1083,10 @@ function HeroDashboard() {
 }
 
 // ─── Animation presets ───────────────────────────────────────────────────────
-const FU   = { hidden: { opacity: 0, y: 20 },     show: { opacity: 1, y: 0,     transition: { duration: 0.5,  ease: [0.16,1,0.3,1] as const } } };
-const FI   = { hidden: { opacity: 0 },             show: { opacity: 1,           transition: { duration: 0.4 } } };
-const SCALE= { hidden: { opacity: 0, scale: 0.94}, show: { opacity: 1, scale: 1, transition: { duration: 0.45, ease: [0.16,1,0.3,1] as const } } };
+const FU   = { hidden: { opacity: 0, y: 20 },      show: { opacity: 1, y: 0,      transition: { duration: 0.5,  ease: [0.16,1,0.3,1] as const } } };
+const FI   = { hidden: { opacity: 0 },              show: { opacity: 1,            transition: { duration: 0.4 } } };
 const STAG = { show: { transition: { staggerChildren: 0.1 } } };
-const HOVER= { y: -4, scale: 1.02, transition: { duration: 0.2 } };
+const HCARD= { y: -4, scale: 1.02, transition: { duration: 0.2 } };
 
 const Rev = memo(function Rev({ children, delay = 0, stagger = false, className = '' }: {
   children: React.ReactNode; delay?: number; stagger?: boolean; className?: string;
@@ -1105,14 +1104,14 @@ const Rev = memo(function Rev({ children, delay = 0, stagger = false, className 
 
 // ─── Metric counter ───────────────────────────────────────────────────────────
 function MetricCounter({ target, cls }: { target: number; cls: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
+  const ref   = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
   const [val, setVal] = useState(0);
   useEffect(() => {
     if (!inView) return;
-    const dur = 1600, start = performance.now();
+    const dur = 1600, t0 = performance.now();
     const tick = (now: number) => {
-      const p = Math.min((now - start) / dur, 1);
+      const p = Math.min((now - t0) / dur, 1);
       setVal(Math.round((1 - Math.pow(1 - p, 3)) * target));
       if (p < 1) requestAnimationFrame(tick);
     };
@@ -1121,213 +1120,498 @@ function MetricCounter({ target, cls }: { target: number; cls: string }) {
   return <span ref={ref} className={cls}>+{val}%</span>;
 }
 
-// ─── Hero animated demo ───────────────────────────────────────────────────────
-type HDPhase = 'typing' | 'scanning' | 'result';
+// ═══════════════════════════════════════════════════════════════════════════════
+// VISIBILITY CHECKER — Google Maps Visibility interactive hero
+// ═══════════════════════════════════════════════════════════════════════════════
 
-function HeroDemo({ onCta }: { onCta: () => void }) {
-  const [phase, setPhase]     = useState<HDPhase>('typing');
-  const [typed, setTyped]     = useState('');
-  const [scanIdx, setScanIdx] = useState(-1);
-  const [score, setScore]     = useState(0);
-  const TEXT = 'Peluquería López · Madrid';
+type VPhase = 'idle' | 'loading' | 'result';
 
-  // Typing
+interface VResult {
+  name: string;
+  overall: number;
+  subs: { label: string; score: number; Icon: React.ElementType; clr: string }[];
+  actions: { title: string; impact: 'Alto' | 'Medio'; time: string; diff: 'Fácil' | 'Medio' }[];
+}
+
+// Deterministic result from business name (replace this fn with real API call later)
+function buildResult(name: string): VResult {
+  const h = Array.from(name.toLowerCase()).reduce((a, c) => a + c.charCodeAt(0), 0);
+  const j = (b: number, r: number) => Math.min(97, Math.max(28, b + (h % r) - Math.floor(r / 2)));
+  return {
+    name,
+    overall: j(70, 30),
+    subs: [
+      { label: 'Google Business', score: j(76, 22), Icon: Globe,     clr: 'sky'     },
+      { label: 'Reseñas',         score: j(62, 26), Icon: Star,      clr: 'amber'   },
+      { label: 'Competidores',    score: j(52, 24), Icon: Target,    clr: 'orange'  },
+      { label: 'SEO Técnico',     score: j(86, 16), Icon: BarChart3, clr: 'emerald' },
+    ],
+    actions: [
+      { title: 'Añadir más fotos al perfil',              impact: 'Alto',  time: '15 min', diff: 'Fácil'  },
+      { title: 'Responder reseñas pendientes',             impact: 'Alto',  time: '10 min', diff: 'Fácil'  },
+      { title: 'Publicar una actualización semanal',       impact: 'Medio', time: '20 min', diff: 'Fácil'  },
+      { title: 'Optimizar categorías principales',         impact: 'Alto',  time: '5 min',  diff: 'Fácil'  },
+      { title: 'Mejorar descripción con keywords locales', impact: 'Alto',  time: '30 min', diff: 'Medio'  },
+    ],
+  };
+}
+
+const CLR: Record<string, { text: string; bg: string; bar: string; ring: string }> = {
+  sky:     { text: 'text-sky-400',     bg: 'bg-sky-500/10',     bar: 'bg-sky-400',     ring: 'border-sky-500/25'     },
+  amber:   { text: 'text-amber-400',   bg: 'bg-amber-500/10',   bar: 'bg-amber-400',   ring: 'border-amber-500/25'   },
+  orange:  { text: 'text-orange-400',  bg: 'bg-orange-500/10',  bar: 'bg-orange-400',  ring: 'border-orange-500/25'  },
+  emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/10', bar: 'bg-emerald-400', ring: 'border-emerald-500/25' },
+};
+
+// ── Score ring (SVG circle) ──────────────────────────────────────────────────
+function ScoreRing({ score }: { score: number }) {
+  const [anim, setAnim] = useState(0);
+  const R = 70, C = 2 * Math.PI * R;
+  const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+  const tag   = score >= 80 ? 'Bueno'   : score >= 60 ? 'Mejorable' : 'Crítico';
+  const tagC  = score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400';
+
   useEffect(() => {
-    if (phase !== 'typing') return;
-    setTyped(''); setScanIdx(-1); setScore(0);
-    let i = 0;
-    const iv = setInterval(() => {
-      i++;
-      setTyped(TEXT.slice(0, i));
-      if (i >= TEXT.length) { clearInterval(iv); setTimeout(() => setPhase('scanning'), 700); }
-    }, 48);
-    return () => clearInterval(iv);
-  }, [phase]);
-
-  // Scanning steps
-  useEffect(() => {
-    if (phase !== 'scanning') return;
-    const steps = [0, 1, 2];
-    let cur = -1;
-    const next = () => {
-      cur++;
-      setScanIdx(cur);
-      if (cur < steps.length - 1) setTimeout(next, 750);
-      else setTimeout(() => setPhase('result'), 700);
-    };
-    const t = setTimeout(next, 300);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  // Score counter
-  useEffect(() => {
-    if (phase !== 'result') return;
     let n = 0;
     const iv = setInterval(() => {
-      n = Math.min(n + 1, 74);
-      setScore(n);
-      if (n >= 74) clearInterval(iv);
-    }, 16);
+      n = Math.min(n + 1, score);
+      setAnim(n);
+      if (n >= score) clearInterval(iv);
+    }, 14);
     return () => clearInterval(iv);
-  }, [phase]);
-
-  // Auto-loop
-  useEffect(() => {
-    if (phase !== 'result') return;
-    const t = setTimeout(() => setPhase('typing'), 9000);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  const scanLines = [
-    'Analizando tu ficha de Google…',
-    'Comparando con 3 competidores…',
-    'Generando plan de acción…',
-  ];
-
-  const actions = [
-    { t: 'Optimizar descripción con keywords locales', p: 'Alta', c: 'bg-red-500/15 text-red-400' },
-    { t: 'Responder 3 reseñas pendientes', p: 'Alta', c: 'bg-red-500/15 text-red-400' },
-    { t: 'Publicar actualización semanal', p: 'Media', c: 'bg-amber-500/15 text-amber-400' },
-  ];
-
-  const competitors = [
-    { name: 'Peluquería Ana', score: 91 },
-    { name: 'Salón Blanco', score: 85 },
-  ];
+  }, [score]);
 
   return (
-    <div className="relative select-none">
-      <div className="absolute -inset-8 bg-emerald-500/6 rounded-3xl blur-3xl pointer-events-none" />
+    <div className="relative inline-flex items-center justify-center w-[168px] h-[168px]">
+      <svg width={168} height={168} className="absolute inset-0 -rotate-90">
+        <circle cx={84} cy={84} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={10} />
+        <circle cx={84} cy={84} r={R} fill="none" stroke={color} strokeWidth={10}
+          strokeDasharray={`${(anim / 100) * C} ${C}`} strokeLinecap="round"
+          style={{ filter: `drop-shadow(0 0 8px ${color}55)` }} />
+      </svg>
+      <div className="flex flex-col items-center justify-center z-10">
+        <span className="text-[2.6rem] font-black text-white tabular-nums leading-none">{anim}</span>
+        <span className="text-slate-600 text-xs">/100</span>
+        <span className={`text-xs font-bold mt-1.5 ${tagC}`}>{tag}</span>
+      </div>
+    </div>
+  );
+}
 
-      <div className="rounded-2xl overflow-hidden border border-slate-700/50 shadow-2xl shadow-black/60"
-        style={{ background: 'linear-gradient(160deg,rgba(12,20,36,0.99) 0%,rgba(6,10,18,1) 100%)' }}>
-
-        {/* Browser chrome */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/60 bg-slate-900/60">
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
-          </div>
-          <div className="flex-1 mx-3 bg-slate-800/70 rounded-md px-3 py-1 text-[10px] text-slate-500 font-mono text-center truncate">
-            localsenhub.io/analizar
-          </div>
-          <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold shrink-0">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />Live
-          </div>
+// ── Sub-score card ────────────────────────────────────────────────────────────
+function SubScoreCard({ label, score, Icon, clr }: { label: string; score: number; Icon: React.ElementType; clr: string }) {
+  const [anim, setAnim] = useState(0);
+  const c = CLR[clr] ?? CLR.emerald;
+  useEffect(() => {
+    let n = 0;
+    const iv = setInterval(() => { n = Math.min(n + 1, score); setAnim(n); if (n >= score) clearInterval(iv); }, 18);
+    return () => clearInterval(iv);
+  }, [score]);
+  return (
+    <div className={`rounded-xl border ${c.ring} p-4 flex flex-col gap-3`}
+      style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.92) 0%,rgba(8,14,26,0.97) 100%)' }}>
+      <div className="flex items-center justify-between">
+        <div className={`w-8 h-8 rounded-lg ${c.bg} flex items-center justify-center`}>
+          <Icon size={14} className={c.text} />
         </div>
-
-        <div className="p-5">
-          {/* Input row — always visible */}
-          <div className="mb-4">
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Tu negocio</p>
-            <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700/40 rounded-xl px-4 py-3">
-              <MapPin size={14} className="text-emerald-400 shrink-0" />
-              <span className="text-sm text-slate-200 font-medium flex-1 min-h-[1.25rem]">
-                {typed}
-                {phase === 'typing' && <span className="inline-block w-px h-4 bg-emerald-400 ml-0.5 animate-pulse align-middle" />}
-              </span>
-            </div>
-          </div>
-
-          {/* Phase: scanning */}
-          {phase === 'scanning' && (
-            <div className="space-y-3 py-2">
-              {scanLines.map((line, i) => (
-                <div key={line} className="flex items-center gap-3 text-sm"
-                  style={{ opacity: i <= scanIdx ? 1 : 0.25, transition: 'opacity 0.3s ease' }}>
-                  {i <= scanIdx
-                    ? <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
-                    : <div className="w-3.5 h-3.5 rounded-full border border-slate-600 shrink-0" />}
-                  <span className={i <= scanIdx ? 'text-slate-300' : 'text-slate-600'}>{line}</span>
-                </div>
-              ))}
-              <div className="mt-4 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
-                  style={{ width: `${Math.round(((scanIdx + 2) / (scanLines.length + 1)) * 100)}%`, transition: 'width 0.6s ease' }} />
-              </div>
-            </div>
-          )}
-
-          {/* Phase: result */}
-          {phase === 'result' && (
-            <div className="space-y-4">
-              {/* Score */}
-              <div className="rounded-xl bg-slate-800/50 border border-slate-700/30 p-4">
-                <div className="flex items-end justify-between mb-2">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Puntuación de Visibilidad</p>
-                  <motion.p initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.5, ease: [0.34,1.56,0.64,1] }}
-                    className="text-3xl font-black text-white tabular-nums">
-                    {score}<span className="text-slate-600 text-sm font-normal">/100</span>
-                  </motion.p>
-                </div>
-                <div className="w-full h-2 bg-slate-700/60 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full bg-amber-400 transition-none"
-                    style={{ width: `${score}%` }} />
-                </div>
-                <div className="flex justify-between mt-1.5 text-[10px]">
-                  <span className="text-amber-400 font-semibold">Mejorable</span>
-                  <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                    <Sparkles size={9} />Con IA: 91/100
-                  </span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Acciones prioritarias</p>
-                <div className="space-y-1.5">
-                  {actions.map(({ t, p, c }, i) => (
-                    <motion.div key={t} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + i * 0.12 }}
-                      className="flex items-center justify-between gap-2 text-xs py-1.5 px-2.5 rounded-lg bg-slate-800/30">
-                      <span className="text-slate-300">{t}</span>
-                      <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${c}`}>{p}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Competitors */}
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">Competidores</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {competitors.map(({ name, score: cs }, i) => (
-                    <motion.div key={name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.7 + i * 0.1 }}
-                      className="rounded-lg bg-slate-800/40 border border-slate-700/30 p-2.5 text-center">
-                      <p className="text-emerald-400 font-black text-base tabular-nums">{cs}</p>
-                      <p className="text-slate-500 text-[10px] truncate">{name}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              {/* CTA */}
-              <motion.button onClick={onCta} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.1 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl
-                  bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold text-sm
-                  shadow-lg shadow-emerald-500/30">
-                <Zap size={13} fill="currentColor" />
-                Ver mi informe completo
-              </motion.button>
-            </div>
-          )}
+        <span className={`text-xl font-black tabular-nums ${c.text}`}>{anim}</span>
+      </div>
+      <div>
+        <p className="text-slate-400 text-[11px] mb-1.5">{label}</p>
+        <div className="w-full h-1.5 rounded-full bg-slate-800">
+          <div className={`h-full rounded-full ${c.bar} transition-none`} style={{ width: `${anim}%` }} />
         </div>
       </div>
-
-      {/* Floating badge */}
-      {phase === 'result' && score >= 74 && (
-        <motion.div initial={{ opacity: 0, scale: 0.8, y: 4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ delay: 0.5, type: 'spring', stiffness: 300 }}
-          className="absolute -top-4 -right-4 z-10 bg-emerald-500 rounded-xl px-3.5 py-2
-            shadow-lg shadow-emerald-500/40 text-[11px] font-bold text-slate-950 flex items-center gap-1.5">
-          <Sparkles size={10} />5 oportunidades detectadas
-        </motion.div>
-      )}
     </div>
+  );
+}
+
+// ── Loading messages + stages ─────────────────────────────────────────────────
+const LOAD_MSGS = [
+  'Buscando ficha de Google…',
+  'Verificando información del negocio…',
+  'Analizando reseñas…',
+  'Calculando Local Score…',
+  'Buscando competidores en tu zona…',
+  'Analizando categorías…',
+  'Detectando oportunidades de crecimiento…',
+  'Generando informe personalizado…',
+];
+
+const LOAD_STAGES = [
+  { pct:  0, msg: 0, ms:     0 },
+  { pct:  8, msg: 1, ms:  1800 },
+  { pct: 20, msg: 2, ms:  3600 },
+  { pct: 35, msg: 3, ms:  5500 },
+  { pct: 50, msg: 4, ms:  7500 },
+  { pct: 65, msg: 5, ms:  9500 },
+  { pct: 80, msg: 6, ms: 11500 },
+  { pct: 94, msg: 7, ms: 13500 },
+  { pct:100, msg: 7, ms: 15500 },
+];
+
+// ── Main VisibilityChecker ────────────────────────────────────────────────────
+function VisibilityChecker({ onUnlock }: { onUnlock: () => void }) {
+  const [phase,  setPhase]  = useState<VPhase>('idle');
+  const [name,   setName]   = useState('');
+  const [pct,    setPct]    = useState(0);
+  const [msgI,   setMsgI]   = useState(0);
+  const [result, setResult] = useState<VResult | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const n = name.trim();
+    if (!n) { inputRef.current?.focus(); return; }
+    track('hero_analysis_start', { name: n });
+    setPhase('loading');
+    setPct(0); setMsgI(0);
+  };
+
+  useEffect(() => {
+    if (phase !== 'loading') return;
+    const ts = LOAD_STAGES.map(({ pct: p, msg: m, ms }) =>
+      setTimeout(() => { setPct(p); setMsgI(m); }, ms)
+    );
+    const done = setTimeout(() => {
+      setResult(buildResult(name.trim()));
+      setPhase('result');
+    }, 16500);
+    return () => { ts.forEach(clearTimeout); clearTimeout(done); };
+  }, [phase, name]);
+
+  const reset = () => { setPhase('idle'); setPct(0); setMsgI(0); setResult(null); };
+
+  return (
+    <AnimatePresence mode="wait">
+
+      {/* ═══════════════════════════════════════ IDLE: search form */}
+      {phase === 'idle' && (
+        <motion.section key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -16 }}
+          transition={{ duration: 0.35 }}
+          className="relative min-h-[92vh] flex flex-col items-center justify-center px-5 py-20 overflow-hidden">
+
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[700px] bg-emerald-500/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-teal-500/3 rounded-full blur-3xl" />
+          </div>
+
+          <div className="relative w-full max-w-2xl mx-auto text-center">
+            <motion.div initial="hidden" animate="show" variants={STAG} className="space-y-7">
+
+              <motion.div variants={FI}>
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-4 py-1.5 text-xs font-semibold text-emerald-400">
+                  <Sparkles size={11} className="text-orange-400" />
+                  AI Growth Copilot · Google Maps Visibility Checker
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </span>
+              </motion.div>
+
+              <motion.h1 variants={FU}
+                className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold text-white leading-[1.07] tracking-tight">
+                ¿Cuántos clientes pierdes<br className="hidden sm:block" /> por no aparecer en{' '}
+                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                  Google Maps?
+                </span>
+              </motion.h1>
+
+              <motion.p variants={FU} className="text-slate-400 text-lg">
+                Descúbrelo ahora. Gratis. Sin registro.
+              </motion.p>
+
+              {/* ── Search bar ── */}
+              <motion.form onSubmit={handleSubmit} variants={FU}>
+                <div className="flex flex-col sm:flex-row gap-2.5 p-2 rounded-2xl border border-slate-700/50 bg-slate-900/60 backdrop-blur-sm shadow-2xl shadow-black/40">
+                  <div className="flex items-center gap-3 flex-1 px-4 py-2.5">
+                    <MapPin size={18} className="text-emerald-400 shrink-0" />
+                    <input ref={inputRef} value={name} onChange={(e) => setName(e.target.value)}
+                      placeholder="Escribe el nombre de tu negocio..."
+                      className="flex-1 bg-transparent text-white placeholder-slate-500 text-base focus:outline-none min-w-0"
+                      aria-label="Nombre del negocio"
+                      autoComplete="off"
+                    />
+                    {name && (
+                      <button type="button" onClick={() => { setName(''); inputRef.current?.focus(); }}
+                        className="text-slate-600 hover:text-slate-400 transition-colors text-sm leading-none px-1"
+                        aria-label="Limpiar">✕</button>
+                    )}
+                  </div>
+                  <motion.button type="submit" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                    className="flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-base
+                      bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
+                      shadow-lg shadow-emerald-500/30 shrink-0 whitespace-nowrap">
+                    <Zap size={15} fill="currentColor" />
+                    Analizar Gratis
+                  </motion.button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1.5 mt-3.5 text-xs text-slate-600">
+                  <span>Prueba con:</span>
+                  {['Peluquería', 'Restaurante', 'Dentista', 'Fontanero', 'Clínica'].map((s, i, a) => (
+                    <React.Fragment key={s}>
+                      <button type="button" onClick={() => { setName(s); inputRef.current?.focus(); }}
+                        className="text-slate-500 hover:text-emerald-400 transition-colors hover:underline underline-offset-2">
+                        {s}
+                      </button>
+                      {i < a.length - 1 && <span className="text-slate-700">·</span>}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </motion.form>
+
+              {/* Trust trio */}
+              <motion.div variants={FI} className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-1">
+                {[
+                  { text: 'Informe gratuito' },
+                  { text: 'Menos de 2 minutos' },
+                  { text: 'Sin tarjeta de crédito' },
+                ].map(({ text }) => (
+                  <span key={text} className="flex items-center gap-1.5 text-sm text-slate-400">
+                    <Check size={13} className="text-emerald-400" />{text}
+                  </span>
+                ))}
+              </motion.div>
+            </motion.div>
+          </div>
+
+          {/* Trust strip */}
+          <div className="absolute bottom-0 inset-x-0 border-t border-slate-800/40 bg-slate-900/30">
+            <div className="max-w-4xl mx-auto px-5 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
+              {[
+                { icon: Shield,     text: 'Sin tarjeta de crédito' },
+                { icon: Zap,        text: 'Resultados en 2 minutos' },
+                { icon: Brain,      text: 'IA para negocios locales' },
+                { icon: BadgeCheck, text: '7 días gratis incluidos' },
+              ].map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-center gap-2 text-sm text-slate-400">
+                  <Icon size={13} className="text-emerald-400 shrink-0" />{text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.section>
+      )}
+
+      {/* ═══════════════════════════════════════════ LOADING */}
+      {phase === 'loading' && (
+        <motion.section key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          className="relative min-h-screen flex flex-col items-center justify-center px-5 py-16 overflow-hidden">
+
+          {/* Animated radar rings */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+            {[0, 1, 2].map(i => (
+              <motion.div key={i}
+                className="absolute w-40 h-40 rounded-full border border-emerald-500/15"
+                initial={{ scale: 1, opacity: 0.5 }}
+                animate={{ scale: 3.5 + i * 0.7, opacity: 0 }}
+                transition={{ duration: 4, repeat: Infinity, delay: i * 1.3, ease: 'easeOut' }} />
+            ))}
+            <div className="absolute w-3 h-3 rounded-full bg-emerald-400/40 blur-sm" />
+          </div>
+
+          {/* Subtle grid overlay */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.025]"
+            style={{ backgroundImage: 'linear-gradient(rgba(16,185,129,1) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,1) 1px,transparent 1px)', backgroundSize: '40px 40px' }} />
+
+          <div className="relative z-10 w-full max-w-md mx-auto space-y-10">
+
+            {/* Icon + name */}
+            <div className="text-center space-y-4">
+              <div className="w-20 h-20 rounded-3xl bg-slate-900/80 border border-emerald-500/25 flex items-center justify-center mx-auto shadow-xl shadow-black/40">
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}>
+                  <Radar size={32} className="text-emerald-400" />
+                </motion.div>
+              </div>
+              <div>
+                <p className="text-slate-400 text-sm">Analizando</p>
+                <p className="text-white font-bold text-xl mt-1 px-4 break-words">"{name}"</p>
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <motion.span key={msgI} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                  className="text-slate-300 font-medium">
+                  {LOAD_MSGS[msgI]}
+                </motion.span>
+                <span className="text-slate-500 tabular-nums font-mono">{pct}%</span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden">
+                <motion.div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.9, ease: 'easeOut' }}
+                  style={{ boxShadow: '0 0 12px rgba(16,185,129,0.45)' }} />
+              </div>
+            </div>
+
+            {/* Checklist building up */}
+            <div className="space-y-3 glass-card rounded-2xl p-5">
+              {LOAD_MSGS.map((msg, i) => {
+                if (i > msgI) return null;
+                const done   = i < msgI;
+                const active = i === msgI;
+                return (
+                  <motion.div key={msg} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex items-center gap-3 text-sm">
+                    {done
+                      ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                      : <motion.div animate={{ opacity: [1, 0.35, 1] }} transition={{ duration: 1.1, repeat: Infinity }}
+                          className="w-3.5 h-3.5 rounded-full border-2 border-emerald-500/70 shrink-0" />
+                    }
+                    <span className={done ? 'text-slate-500' : active ? 'text-slate-200 font-medium' : 'text-slate-500'}>
+                      {msg}
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+          </div>
+        </motion.section>
+      )}
+
+      {/* ═══════════════════════════════════════════ RESULT */}
+      {phase === 'result' && result && (
+        <motion.section key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="relative px-5 py-16 pb-24 overflow-hidden">
+
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-emerald-500/4 rounded-full blur-3xl" />
+          </div>
+
+          <div className="relative max-w-2xl mx-auto">
+
+            {/* Back */}
+            <button onClick={reset}
+              className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm mb-8 transition-colors group">
+              <ChevronRight size={14} className="rotate-180 group-hover:-translate-x-0.5 transition-transform" />
+              Analizar otro negocio
+            </button>
+
+            {/* Result card */}
+            <motion.div initial={{ opacity: 0, y: 28, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.55, ease: [0.16,1,0.3,1] }}
+              className="rounded-3xl border border-slate-700/40 overflow-hidden"
+              style={{ background: 'linear-gradient(160deg,rgba(14,22,38,0.98) 0%,rgba(7,12,20,1) 100%)' }}>
+
+              {/* Card header */}
+              <div className="px-7 pt-6 pb-5 border-b border-slate-800/50 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-[0.18em] font-semibold mb-1">Informe de Visibilidad</p>
+                  <p className="text-white font-bold text-xl leading-snug">{result.name}</p>
+                  <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-1">
+                    <MapPin size={10} />Google Maps · España
+                  </p>
+                </div>
+                <span className="shrink-0 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 mt-1">
+                  Mejorable
+                </span>
+              </div>
+
+              <div className="p-7 space-y-8">
+
+                {/* Score + subs */}
+                <div className="flex flex-col sm:flex-row items-center gap-8">
+                  <div className="flex flex-col items-center gap-2.5 shrink-0">
+                    <ScoreRing score={result.overall} />
+                    <div className="text-center">
+                      <p className="text-white font-bold text-sm">Visibilidad Local</p>
+                      <p className="text-slate-500 text-xs mt-0.5">4 factores analizados</p>
+                    </div>
+                  </div>
+                  <div className="flex-1 grid grid-cols-2 gap-3 w-full">
+                    {result.subs.map(({ label, score, Icon, clr }) => (
+                      <SubScoreCard key={label} label={label} score={score} Icon={Icon} clr={clr} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div>
+                  <p className="text-white font-bold text-base mb-4 flex items-center gap-2">
+                    <Sparkles size={15} className="text-emerald-400" />
+                    Tu Plan de Acción
+                  </p>
+                  <div className="space-y-2">
+                    {result.actions.map(({ title, impact, time, diff }, i) => (
+                      <motion.div key={title}
+                        initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 + i * 0.08, duration: 0.35 }}
+                        className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-700/30 bg-slate-800/30">
+                        <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                        <span className="flex-1 text-slate-200 text-sm">{title}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            impact === 'Alto' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                          }`}>{impact}</span>
+                          <span className="text-[10px] text-slate-600 hidden sm:block">{time}</span>
+                          <span className={`text-[10px] hidden sm:block ${diff === 'Fácil' ? 'text-emerald-400/60' : 'text-amber-400/60'}`}>{diff}</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Locked: full report CTA */}
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}
+                  className="rounded-2xl border border-emerald-500/20 overflow-hidden relative">
+
+                  {/* Blurred preview rows */}
+                  <div className="px-6 pt-5 pb-2 space-y-2" aria-hidden="true">
+                    {[
+                      'Plan de contenido para los próximos 30 días',
+                      'Análisis de 87 keywords locales',
+                      'Estrategia de reseñas personalizada',
+                      'Comparativa detallada con 3 competidores',
+                    ].map((t) => (
+                      <div key={t} className="flex items-center gap-2.5 p-3 rounded-lg bg-slate-800/30">
+                        <Lock size={13} className="text-slate-700 shrink-0" />
+                        <span className="text-slate-500 text-sm select-none blur-[3px]">{t}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-transparent to-slate-950/80 pointer-events-none" />
+
+                  {/* CTA box */}
+                  <div className="px-6 pb-6 pt-4 relative z-10"
+                    style={{ background: 'linear-gradient(160deg,rgba(16,185,129,0.08) 0%,rgba(8,14,26,0.99) 60%)' }}>
+                    <div className="rounded-2xl border border-emerald-500/25 p-6 text-center space-y-4">
+                      <div className="flex items-center justify-center gap-2.5 mb-1">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+                          <Lock size={14} className="text-emerald-400" />
+                        </div>
+                        <p className="text-white font-bold text-lg">Desbloquea el informe completo</p>
+                      </div>
+                      <p className="text-slate-400 text-sm max-w-sm mx-auto">
+                        Accede a tu plan detallado con IA: keywords, estrategia de reseñas, comparativa de competidores y más.
+                      </p>
+                      <motion.button onClick={onUnlock} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
+                        className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
+                          bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
+                          shadow-xl shadow-emerald-500/35 hover:shadow-emerald-500/55 transition-shadow">
+                        <Zap size={16} fill="currentColor" />
+                        Analizar mi negocio gratis — 7 días
+                      </motion.button>
+                      <p className="text-xs text-slate-500 flex items-center justify-center gap-1.5">
+                        <Shield size={10} className="text-slate-600" />
+                        Sin tarjeta · Cancela cuando quieras · 9,99€/mes después
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+              </div>
+            </motion.div>
+          </div>
+        </motion.section>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -1376,105 +1660,26 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden pb-20 sm:pb-0">
 
-      {/* ═══════════════════════════════════════════════════════════ HERO */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[700px] bg-emerald-500/5 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-0 w-96 h-96 bg-teal-500/4 rounded-full blur-3xl" />
-        </div>
-
-        <div className="max-w-6xl mx-auto px-5 pt-16 pb-6 relative">
-          <div className="grid lg:grid-cols-[1fr_1.1fr] gap-14 lg:gap-20 items-center">
-
-            {/* ── Left ── */}
-            <motion.div initial="hidden" animate="show" variants={STAG} className="space-y-7">
-
-              <motion.div variants={FI}>
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-4 py-1.5 text-xs font-semibold text-emerald-400">
-                  <Sparkles size={11} className="text-orange-400" />
-                  AI Growth Copilot para negocios locales
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                </span>
-              </motion.div>
-
-              <motion.h1 variants={FU}
-                className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold text-white leading-[1.07] tracking-tight">
-                Consigue más clientes desde{' '}
-                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent whitespace-nowrap">
-                  Google Maps
-                </span>
-                {' '}gracias a la IA.
-              </motion.h1>
-
-              <motion.p variants={FU} className="text-slate-400 text-lg leading-relaxed max-w-[460px]">
-                Analizamos tu negocio, detectamos oportunidades y generamos un plan personalizado para mejorar tu visibilidad local.
-              </motion.p>
-
-              <motion.div variants={FU} className="flex flex-col gap-3.5">
-                <PrimaryBtn onClick={onSubscribeClick} />
-
-                {/* Trust trio */}
-                <div className="flex flex-wrap gap-x-5 gap-y-1.5 pt-1">
-                  {[
-                    { icon: Check, text: 'Informe gratuito' },
-                    { icon: Check, text: 'Menos de 2 minutos' },
-                    { icon: Check, text: 'Sin tarjeta de crédito' },
-                  ].map(({ icon: Icon, text }) => (
-                    <span key={text} className="flex items-center gap-1.5 text-sm text-slate-400">
-                      <Icon size={13} className="text-emerald-400" />{text}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            </motion.div>
-
-            {/* ── Right: animated demo ── */}
-            <motion.div
-              initial={{ opacity: 0, x: 30, scale: 0.96 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 0.65, delay: 0.3, ease: [0.16,1,0.3,1] }}
-              className="hidden sm:block">
-              <HeroDemo onCta={onSubscribeClick} />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* ── Trust strip ── */}
-        <div className="border-t border-slate-800/40 bg-slate-900/30 mt-10">
-          <div className="max-w-5xl mx-auto px-5 py-5">
-            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-2">
-              {[
-                { icon: Shield,    text: 'Sin tarjeta de crédito' },
-                { icon: Zap,       text: 'Resultados en menos de 2 minutos' },
-                { icon: Brain,     text: 'IA especializada en negocios locales' },
-                { icon: BadgeCheck,text: '7 días gratis incluidos' },
-              ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-2 text-sm text-slate-400">
-                  <Icon size={13} className="text-emerald-400 shrink-0" />
-                  {text}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ════════════════════════════ INTERACTIVE HERO (VisibilityChecker) */}
+      <VisibilityChecker onUnlock={onSubscribeClick} />
 
       {/* ══════════════════════════════════════════════ CÓMO FUNCIONA */}
-      <section className="py-28 px-5">
+      <section className="py-28 px-5 border-t border-slate-800/40">
         <div className="max-w-4xl mx-auto">
           <Rev className="text-center mb-16">
             <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Proceso</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               Tres pasos. Dos minutos.
             </h2>
-            <p className="text-slate-400 text-base mt-4">Más clientes.</p>
+            <p className="text-slate-400 text-base mt-3">Más clientes.</p>
           </Rev>
 
-          <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-10">
+          <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-10 relative">
+            <div className="hidden sm:block absolute top-8 left-[calc(16.66%+1.5rem)] right-[calc(16.66%+1.5rem)] h-px bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20" />
             {STEPS.map(({ n, icon: Icon, title, desc }, i) => (
               <motion.div key={n} variants={FU} className="flex flex-col items-center text-center gap-5">
                 <motion.div whileHover={{ scale: 1.08 }} className="relative">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center z-10 relative">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center">
                     <Icon size={24} className="text-emerald-400" />
                   </div>
                   <span className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 text-xs font-black flex items-center justify-center">
@@ -1528,7 +1733,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             {METRICS.map(({ target, label, sub, color, icon: Icon }) => {
               const c = MCLS[color];
               return (
-                <motion.div key={label} variants={FU} whileHover={HOVER}
+                <motion.div key={label} variants={FU} whileHover={HCARD}
                   className={`rounded-2xl border ${c.ring} p-8 text-center cursor-default`}
                   style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.9) 0%,rgba(8,14,26,0.97) 100%)' }}>
                   <div className={`w-12 h-12 rounded-2xl ${c.bg} border ${c.ring} flex items-center justify-center mx-auto mb-5`}>
@@ -1556,7 +1761,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
 
           <Rev stagger className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {TESTIMONIALS.map((t, i) => (
-              <motion.div key={i} variants={FU} whileHover={HOVER}
+              <motion.div key={i} variants={FU} whileHover={HCARD}
                 className="rounded-2xl border border-slate-800/60 p-7 flex flex-col gap-5 cursor-default"
                 style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.82) 0%,rgba(8,14,26,0.95) 100%)' }}>
                 <div className="flex items-center justify-between">
@@ -1606,7 +1811,6 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                   <span className="text-slate-400 mb-2">/mes</span>
                 </div>
                 <p className="text-slate-500 text-sm mb-7">7 días gratis · Cancela cuando quieras</p>
-
                 <div className="space-y-2.5 mb-8">
                   {[
                     'Plan de visibilidad local con IA',
@@ -1617,16 +1821,13 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                     'Soporte en español',
                   ].map((f) => (
                     <div key={f} className="flex items-center gap-2.5 text-sm text-slate-300">
-                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
-                      {f}
+                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />{f}
                     </div>
                   ))}
                 </div>
-
                 <PrimaryBtn onClick={onSubscribeClick} full />
                 <p className="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1.5">
-                  <Shield size={10} className="text-slate-600" />
-                  Pago seguro · Sin permanencia
+                  <Shield size={10} className="text-slate-600" />Pago seguro · Sin permanencia
                 </p>
               </div>
             </motion.div>
@@ -1683,7 +1884,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             <span className="text-white font-bold text-sm">LocalSEOHub.io</span>
             <span className="text-slate-700 text-xs">© 2026</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center justify-center gap-1">
             <button onClick={() => onLoginClick()}
               className="px-4 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
               Iniciar sesión
@@ -1693,13 +1894,13 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
               { label: 'Privacidad', modal: 'privacy' as const },
               { label: 'Términos',   modal: 'terms'   as const },
               { label: 'Contacto',   modal: 'contact' as const },
-            ]).map(({ label, modal }) => (
+            ]).map(({ label, modal }, i, a) => (
               <React.Fragment key={label}>
                 <button onClick={() => setLegalModal(modal)}
                   className="px-4 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
                   {label}
                 </button>
-                {label !== 'Contacto' && <span className="text-slate-700">·</span>}
+                {i < a.length - 1 && <span className="text-slate-700">·</span>}
               </React.Fragment>
             ))}
           </div>
