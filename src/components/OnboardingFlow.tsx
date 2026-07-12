@@ -584,6 +584,7 @@ export default function OnboardingFlow({ userEmail, onComplete }: OnboardingFlow
   const { t } = useI18n();
   const [step, setStep] = useState<Step>(1);
   const next = useCallback(() => setStep(s => Math.min(s + 1, 5) as Step), []);
+  const handleSkip = useCallback(() => { setTimeout(onComplete, 0); }, [onComplete]);
 
   // Map step → title shown above dots
   const STEP_LABELS: Record<Step, string> = {
@@ -627,7 +628,7 @@ export default function OnboardingFlow({ userEmail, onComplete }: OnboardingFlow
       {/* Skip — only steps 1, 3, 4 */}
       {(step === 1 || step === 3 || step === 4) && (
         <motion.button
-          onClick={onComplete}
+          onClick={handleSkip}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }}
           className="mt-8 text-xs text-slate-700 hover:text-slate-400 transition-colors"
         >
