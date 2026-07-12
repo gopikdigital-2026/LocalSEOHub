@@ -5,6 +5,7 @@ import {
   Check, Sparkles, TrendingUp, Target, Zap, ArrowRight,
   ChevronRight, Trophy, Flame,
 } from 'lucide-react';
+import { useI18n } from '../lib/i18n';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -15,15 +16,19 @@ export interface OnboardingFlowProps {
 }
 
 // ─── Static data ──────────────────────────────────────────────────────────────
-const CHECKLIST_ITEMS = [
-  { id: 'gbp',        label: 'Google Business Profile',  Icon: MapPin,   ms: 400  },
-  { id: 'competitors',label: 'Competidores locales',     Icon: Users,    ms: 950  },
-  { id: 'reviews',    label: 'Reseñas y valoraciones',   Icon: Star,     ms: 1500 },
-  { id: 'seo',        label: 'SEO Local',                Icon: Search,   ms: 2050 },
-  { id: 'content',    label: 'Contenido publicado',      Icon: FileText, ms: 2600 },
-  { id: 'categories', label: 'Categorías y atributos',   Icon: Tag,      ms: 3150 },
-  { id: 'posts',      label: 'Publicaciones recientes',  Icon: BookOpen, ms: 3700 },
-];
+type TFn = (key: string) => string;
+
+function getChecklistItems(t: TFn) {
+  return [
+    { id: 'gbp',        label: t('onb_chk_gbp'),          Icon: MapPin,   ms: 400  },
+    { id: 'competitors',label: t('onb_chk_competitors'),  Icon: Users,    ms: 950  },
+    { id: 'reviews',    label: t('onb_chk_reviews'),      Icon: Star,     ms: 1500 },
+    { id: 'seo',        label: t('onb_chk_seo'),          Icon: Search,   ms: 2050 },
+    { id: 'content',    label: t('onb_chk_content'),      Icon: FileText, ms: 2600 },
+    { id: 'categories', label: t('onb_chk_categories'),   Icon: Tag,      ms: 3150 },
+    { id: 'posts',      label: t('onb_chk_posts'),        Icon: BookOpen, ms: 3700 },
+  ];
+}
 
 const ANALYSIS_DURATION = 4600; // total ms before auto-advance
 
@@ -141,6 +146,7 @@ function StepWrap({ children, stepKey }: { children: React.ReactNode; stepKey: s
 
 // ─── Step 1: Welcome ─────────────────────────────────────────────────────────
 function Step1Welcome({ onNext, userEmail }: { onNext: () => void; userEmail?: string }) {
+  const { t } = useI18n();
   const name = (() => {
     if (!userEmail) return '';
     const local = (userEmail.split('@')[0] ?? '').split(/[._]/)[0] ?? '';
@@ -163,17 +169,17 @@ function Step1Welcome({ onNext, userEmail }: { onNext: () => void; userEmail?: s
 
         <motion.div variants={FU} className="space-y-3">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-            {name ? <>Hola, <span className="text-emerald-400">{name}</span> 👋</> : '¡Bienvenido! 👋'}
+            {name ? <>{t('onb_welcome_hello')}, <span className="text-emerald-400">{name}</span> 👋</> : `${t('onb_welcome_generic')} 👋`}
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed max-w-sm mx-auto">
-            Vamos a analizar tu negocio y crear tu plan de visibilidad local.
+            {t('onb_welcome_sub')}
           </p>
         </motion.div>
 
         <motion.div variants={FU} className="space-y-3">
           <div className="inline-flex items-center gap-6 text-sm text-slate-500 border border-slate-800 rounded-2xl px-6 py-3"
             style={{ background: 'rgba(12,18,32,0.8)' }}>
-            {[['60 s', 'Análisis'], ['Gratis', 'Sin tarjeta'], ['IA', 'Asistida']].map(([val, lbl]) => (
+            {([[t('onb_welcome_stat1_val'), t('onb_welcome_stat1_lbl')], [t('onb_welcome_stat2_val'), t('onb_welcome_stat2_lbl')], [t('onb_welcome_stat3_val'), t('onb_welcome_stat3_lbl')]] as [string,string][]).map(([val, lbl]) => (
               <div key={lbl} className="text-center">
                 <p className="text-white font-bold text-base leading-none">{val}</p>
                 <p className="text-slate-600 text-[10px] mt-0.5">{lbl}</p>
@@ -191,7 +197,7 @@ function Step1Welcome({ onNext, userEmail }: { onNext: () => void; userEmail?: s
               shadow-xl shadow-emerald-500/30"
           >
             <Flame size={17} fill="currentColor" />
-            Comenzar análisis
+            {t('onb_welcome_cta')}
             <ArrowRight size={16} />
           </motion.button>
         </motion.div>
@@ -202,6 +208,8 @@ function Step1Welcome({ onNext, userEmail }: { onNext: () => void; userEmail?: s
 
 // ─── Step 2: Animated checklist ───────────────────────────────────────────────
 function Step2Analysis({ onNext }: { onNext: () => void }) {
+  const { t } = useI18n();
+  const CHECKLIST_ITEMS = getChecklistItems(t);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [barPct,  setBarPct]  = useState(0);
   const done = checked.size === CHECKLIST_ITEMS.length;
@@ -231,10 +239,10 @@ function Step2Analysis({ onNext }: { onNext: () => void }) {
               transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
               className="w-5 h-5 rounded-full border-2 border-emerald-400 border-t-transparent"
             />
-            <span className="text-emerald-400 text-sm font-bold uppercase tracking-widest">Analizando</span>
+            <span className="text-emerald-400 text-sm font-bold uppercase tracking-widest">{t('onb_scan_label')}</span>
           </div>
-          <h2 className="text-2xl font-extrabold text-white">Escaneando tu presencia local</h2>
-          <p className="text-slate-500 text-sm">La IA está revisando todos los aspectos de tu negocio.</p>
+          <h2 className="text-2xl font-extrabold text-white">{t('onb_scan_title')}</h2>
+          <p className="text-slate-500 text-sm">{t('onb_scan_sub')}</p>
         </div>
 
         {/* Progress bar */}
@@ -294,7 +302,7 @@ function Step2Analysis({ onNext }: { onNext: () => void }) {
 
         {done && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-            <p className="text-emerald-400 text-sm font-bold">¡Análisis completado!</p>
+            <p className="text-emerald-400 text-sm font-bold">{t('onb_scan_done')}</p>
           </motion.div>
         )}
       </div>
@@ -304,6 +312,7 @@ function Step2Analysis({ onNext }: { onNext: () => void }) {
 
 // ─── Step 3: Executive Summary ────────────────────────────────────────────────
 function Step3Summary({ onNext, userEmail }: { onNext: () => void; userEmail?: string }) {
+  const { t } = useI18n();
   const [loaded, setLoaded] = useState(false);
   const r = getResults(userEmail);
 
@@ -316,10 +325,10 @@ function Step3Summary({ onNext, userEmail }: { onNext: () => void; userEmail?: s
         <motion.div variants={FU} className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Check size={14} className="text-emerald-400" />
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Análisis completado</span>
+            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">{t('onb_summary_done_label')}</span>
           </div>
-          <h2 className="text-2xl font-extrabold text-white">Tu informe de visibilidad local</h2>
-          <p className="text-slate-400 text-sm">Hemos analizado tu presencia frente a 47 competidores en tu zona.</p>
+          <h2 className="text-2xl font-extrabold text-white">{t('onb_summary_title')}</h2>
+          <p className="text-slate-400 text-sm">{t('onb_summary_sub')}</p>
         </motion.div>
 
         {/* Score hero */}
@@ -329,9 +338,9 @@ function Step3Summary({ onNext, userEmail }: { onNext: () => void; userEmail?: s
         >
           <ScoreRing target={r.score} size={130} />
           <div className="text-center">
-            <p className="text-[11px] text-slate-500 uppercase tracking-widest font-semibold mb-1">Puntuación actual</p>
+            <p className="text-[11px] text-slate-500 uppercase tracking-widest font-semibold mb-1">{t('onb_score_current')}</p>
             <p className={`text-sm font-bold ${r.score >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {r.score >= 80 ? 'Buen perfil' : r.score >= 65 ? 'Margen de mejora' : 'Necesita atención'}
+              {r.score >= 80 ? t('onb_score_good') : r.score >= 65 ? t('onb_score_medium') : t('onb_score_low')}
             </p>
           </div>
         </motion.div>
@@ -339,9 +348,9 @@ function Step3Summary({ onNext, userEmail }: { onNext: () => void; userEmail?: s
         {/* 3 metric cards */}
         <motion.div variants={FU} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { Icon: Target,     label: 'Mayor oportunidad',   value: r.opp,        sub: 'Detectada por IA',          color: 'emerald' },
-            { Icon: Users,      label: 'Competidor más fuerte', value: r.competitor, sub: 'Mayor visibilidad en zona', color: 'amber'   },
-            { Icon: TrendingUp, label: 'Potencial de mejora',  value: `+${r.gain}%`, sub: 'Estimado en 30 días',      color: 'sky'     },
+            { Icon: Target,     label: t('onb_metric_opp'),        value: r.opp,        sub: t('onb_metric_opp_sub'),   color: 'emerald' },
+            { Icon: Users,      label: t('onb_metric_competitor'), value: r.competitor, sub: t('onb_metric_comp_sub'),  color: 'amber'   },
+            { Icon: TrendingUp, label: t('onb_metric_potential'),  value: `+${r.gain}%`, sub: t('onb_metric_pot_sub'), color: 'sky'     },
           ].map(({ Icon, label, value, sub, color }) => (
             <div key={label}
               className={`rounded-xl border p-4 ${
@@ -370,7 +379,7 @@ function Step3Summary({ onNext, userEmail }: { onNext: () => void; userEmail?: s
               shadow-xl shadow-emerald-500/25"
           >
             <Zap size={16} fill="currentColor" />
-            Quiero mejorar mi puntuación
+            {t('onb_summary_cta')}
             <ArrowRight size={15} />
           </motion.button>
         </motion.div>
@@ -381,6 +390,7 @@ function Step3Summary({ onNext, userEmail }: { onNext: () => void; userEmail?: s
 
 // ─── Step 4: First Mission ────────────────────────────────────────────────────
 function Step4Mission({ onNext, userEmail }: { onNext: () => void; userEmail?: string }) {
+  const { t } = useI18n();
   const [loaded, setLoaded] = useState(false);
   const r = getResults(userEmail);
 
@@ -393,10 +403,10 @@ function Step4Mission({ onNext, userEmail }: { onNext: () => void; userEmail?: s
         <motion.div variants={FU} className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Sparkles size={13} className="text-emerald-400" />
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">IA ha preparado</span>
+            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">{t('onb_mission_ai_label')}</span>
           </div>
-          <h2 className="text-2xl font-extrabold text-white">Tu primera misión</h2>
-          <p className="text-slate-400 text-sm">Esta acción tiene el mayor impacto en tu puntuación ahora mismo.</p>
+          <h2 className="text-2xl font-extrabold text-white">{t('onb_mission_title')}</h2>
+          <p className="text-slate-400 text-sm">{t('onb_mission_sub')}</p>
         </motion.div>
 
         {/* Mission card */}
@@ -409,19 +419,19 @@ function Step4Mission({ onNext, userEmail }: { onNext: () => void; userEmail?: s
               <Star size={20} className="text-emerald-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-emerald-400/70 font-bold uppercase tracking-widest mb-1">Misión #1</p>
+              <p className="text-[10px] text-emerald-400/70 font-bold uppercase tracking-widest mb-1">{t('onb_mission_badge')}</p>
               <h3 className="text-white font-bold text-lg leading-snug">{r.opp}</h3>
               <p className="text-slate-400 text-sm mt-2 leading-relaxed">
-                Tu perfil lleva varios días sin actividad en reseñas. Responder aumenta tu puntuación y la confianza de futuros clientes.
+                {t('onb_mission_desc')}
               </p>
             </div>
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-3">
             {[
-              { label: 'Tiempo estimado', value: '3 minutos', Icon: Zap },
-              { label: 'Impacto',         value: `+${Math.min(r.gain, 9)}% puntuación`, Icon: TrendingUp },
-              { label: 'Dificultad',      value: 'Muy fácil', Icon: Target },
+              { label: t('onb_mission_time_label'),       value: t('onb_mission_time_val'),   Icon: Zap },
+              { label: t('onb_mission_impact_label'),     value: `+${Math.min(r.gain, 9)}% ${t('onb_mission_impact_suffix')}`, Icon: TrendingUp },
+              { label: t('onb_mission_difficulty_label'), value: t('onb_mission_difficulty_val'), Icon: Target },
             ].map(({ label, value, Icon }) => (
               <div key={label} className="bg-slate-900/60 rounded-xl p-3 border border-slate-800/50">
                 <Icon size={12} className="text-emerald-400 mb-1.5" />
@@ -441,13 +451,13 @@ function Step4Mission({ onNext, userEmail }: { onNext: () => void; userEmail?: s
               shadow-xl shadow-emerald-500/25"
           >
             <Flame size={16} fill="currentColor" />
-            Comenzar misión ahora
+            {t('onb_mission_cta')}
           </motion.button>
           <button
             onClick={onNext}
             className="w-full py-3 text-sm text-slate-500 hover:text-slate-300 transition-colors font-medium"
           >
-            Explorar el panel primero
+            {t('onb_mission_skip')}
           </button>
         </motion.div>
       </motion.div>
@@ -457,6 +467,7 @@ function Step4Mission({ onNext, userEmail }: { onNext: () => void; userEmail?: s
 
 // ─── Step 5: Celebration ──────────────────────────────────────────────────────
 function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; userEmail?: string }) {
+  const { t } = useI18n();
   const [showConfetti, setShowConfetti] = useState(false);
   const [loaded,       setLoaded]       = useState(false);
   const [completing,   setCompleting]   = useState(false);
@@ -500,9 +511,9 @@ function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; use
         </motion.div>
 
         <motion.div variants={FU} className="space-y-2">
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">¡Primera misión completada!</h2>
+          <h2 className="text-3xl font-extrabold text-white tracking-tight">{t('onb_done_title')}</h2>
           <p className="text-slate-400 text-base leading-relaxed">
-            Has dado el primer paso. Tu puntuación ha aumentado.
+            {t('onb_done_sub')}
           </p>
         </motion.div>
 
@@ -512,7 +523,7 @@ function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; use
           style={{ background: 'linear-gradient(135deg,rgba(245,158,11,0.06) 0%,rgba(7,10,18,0.99) 100%)' }}
         >
           <div className="text-center">
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Antes</p>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">{t('onb_done_before')}</p>
             <p className="text-2xl font-black text-slate-500 tabular-nums">{r.score}</p>
           </div>
           <div className="flex flex-col items-center gap-1">
@@ -520,7 +531,7 @@ function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; use
             <span className="text-emerald-400 text-xs font-bold">+{Math.min(r.gain, 9)} pts</span>
           </div>
           <div className="text-center">
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Ahora</p>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">{t('onb_done_after')}</p>
             <motion.p
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -537,14 +548,14 @@ function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; use
           className="rounded-xl border border-slate-800/50 p-4 text-left"
           style={{ background: 'rgba(12,18,32,0.8)' }}
         >
-          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-3">Tu próxima misión</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-3">{t('onb_done_next_label')}</p>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
               <FileText size={13} className="text-sky-400" />
             </div>
             <div>
-              <p className="text-slate-200 text-sm font-medium">Optimizar descripción del negocio</p>
-              <p className="text-slate-600 text-[10px] mt-0.5">IA ha preparado una versión mejorada · 2 min · +5%</p>
+              <p className="text-slate-200 text-sm font-medium">{t('onb_done_next_title')}</p>
+              <p className="text-slate-600 text-[10px] mt-0.5">{t('onb_done_next_sub')}</p>
             </div>
             <ChevronRight size={15} className="text-slate-600 ml-auto shrink-0" />
           </div>
@@ -559,7 +570,7 @@ function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; use
               bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
               shadow-xl shadow-emerald-500/25 transition-opacity ${completing ? 'opacity-70' : ''}`}
           >
-            {completing ? 'Abriendo panel...' : 'Ver mi panel de control'}
+            {completing ? t('onb_done_opening') : t('onb_done_cta')}
             <ArrowRight size={15} />
           </motion.button>
         </motion.div>
@@ -570,16 +581,17 @@ function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; use
 
 // ─── Main OnboardingFlow ──────────────────────────────────────────────────────
 export default function OnboardingFlow({ userEmail, onComplete }: OnboardingFlowProps) {
+  const { t } = useI18n();
   const [step, setStep] = useState<Step>(1);
   const next = useCallback(() => setStep(s => Math.min(s + 1, 5) as Step), []);
 
   // Map step → title shown above dots
   const STEP_LABELS: Record<Step, string> = {
-    1: 'Bienvenida',
-    2: 'Analizando',
-    3: 'Resumen',
-    4: 'Primera misión',
-    5: 'Completado',
+    1: t('onb_step_welcome'),
+    2: t('onb_step_scanning'),
+    3: t('onb_step_summary'),
+    4: t('onb_step_mission'),
+    5: t('onb_step_done'),
   };
 
   return (
@@ -619,7 +631,7 @@ export default function OnboardingFlow({ userEmail, onComplete }: OnboardingFlow
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }}
           className="mt-8 text-xs text-slate-700 hover:text-slate-400 transition-colors"
         >
-          Saltar y ir al panel →
+          {t('onb_skip')}
         </motion.button>
       )}
     </div>

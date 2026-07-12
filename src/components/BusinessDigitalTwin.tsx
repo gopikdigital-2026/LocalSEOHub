@@ -7,81 +7,97 @@ import {
   Building2, Tag, Wifi, Users, Award, Target,
   AlertCircle, CheckCircle2, ChevronDown,
 } from 'lucide-react';
+import { useI18n } from '../lib/i18n';
 
 // ─── Architecture-ready data layer ───────────────────────────────────────────
 // Replace these with Supabase queries when real data is available
+type TFn = (key: string) => string;
 
-const BUSINESS = {
-  name:     'Restaurante La Bodega Sur',
-  category: 'Restaurante Mediterráneo',
-  hours:    'Lun–Dom 12:00–16:00 · 20:00–24:00',
-  services: ['Cocina mediterránea', 'Menú del día', 'Terraza exterior', 'Eventos privados', 'Bodega propia'],
-  zone:     'Barrio de Salamanca, Madrid',
-  phone:    '+34 91 234 56 78',
-  web:      'labodegasur.es',
-  google:   '4.7 ★  ·  284 reseñas',
-  instagram:'@labodegasur',
-  facebook: 'fb.com/labodegasur',
-  status:   'Activo',
-  since:    '2019',
-};
+function getBusiness(t: TFn) {
+  return {
+    name:     'Restaurante La Bodega Sur',
+    category: 'Restaurante Mediterráneo',
+    hours:    'Lun–Dom 12:00–16:00 · 20:00–24:00',
+    services: ['Cocina mediterránea', 'Menú del día', 'Terraza exterior', 'Eventos privados', 'Bodega propia'],
+    zone:     'Barrio de Salamanca, Madrid',
+    phone:    '+34 91 234 56 78',
+    web:      'labodegasur.es',
+    google:   '4.7 ★  ·  284 reseñas',
+    instagram:'@labodegasur',
+    facebook: 'fb.com/labodegasur',
+    status:   t('bdt_biz_status_val'),
+    since:    '2019',
+  };
+}
 
-const METRICS = [
-  { id: 'seo',         label: 'Nivel SEO',              value: 72, Icon: Search2,  color: 'sky'     },
-  { id: 'reputation',  label: 'Reputación',              value: 86, Icon: Star,     color: 'emerald' },
-  { id: 'competitive', label: 'Nivel competitivo',       value: 61, Icon: Target,   color: 'amber'   },
-  { id: 'frequency',   label: 'Frecuencia publicaciones',value: 45, Icon: Zap,      color: 'red'     },
-  { id: 'optimization',label: 'Optimización',            value: 78, Icon: BarChart2,color: 'violet'  },
-  { id: 'photos',      label: 'Calidad fotografías',     value: 55, Icon: Camera,   color: 'pink'    },
-  { id: 'popularity',  label: 'Popularidad local',       value: 70, Icon: Users,    color: 'teal'    },
-  { id: 'trust',       label: 'Confianza',               value: 83, Icon: Shield,   color: 'emerald' },
-  { id: 'tone',        label: 'Tono de comunicación',    value: 68, Icon: MessageSquare, color: 'sky' },
-];
+function getMetrics(t: TFn) {
+  return [
+    { id: 'seo',         label: t('bdt_metric_seo'),    value: 72, Icon: Search2,        color: 'sky'     },
+    { id: 'reputation',  label: t('bdt_metric_rep'),    value: 86, Icon: Star,           color: 'emerald' },
+    { id: 'competitive', label: t('bdt_metric_comp'),   value: 61, Icon: Target,         color: 'amber'   },
+    { id: 'frequency',   label: t('bdt_metric_freq'),   value: 45, Icon: Zap,            color: 'red'     },
+    { id: 'optimization',label: t('bdt_metric_opt'),    value: 78, Icon: BarChart2,      color: 'violet'  },
+    { id: 'photos',      label: t('bdt_metric_photos'), value: 55, Icon: Camera,         color: 'pink'    },
+    { id: 'popularity',  label: t('bdt_metric_pop'),    value: 70, Icon: Users,          color: 'teal'    },
+    { id: 'trust',       label: t('bdt_metric_trust'),  value: 83, Icon: Shield,         color: 'emerald' },
+    { id: 'tone',        label: t('bdt_metric_tone'),   value: 68, Icon: MessageSquare,  color: 'sky'     },
+  ];
+}
 
-// Placeholder icon — real one assigned below
+function getPersonality(t: TFn) {
+  return [
+    { id: 'p1', text: t('bdt_p1'), accent: 'emerald', Icon: Sparkles },
+    { id: 'p2', text: t('bdt_p2'), accent: 'sky',     Icon: MessageSquare },
+    { id: 'p3', text: t('bdt_p3'), accent: 'violet',  Icon: Zap },
+    { id: 'p4', text: t('bdt_p4'), accent: 'amber',   Icon: Star },
+    { id: 'p5', text: t('bdt_p5'), accent: 'red',     Icon: Brain },
+  ];
+}
+
+function getStrengths(t: TFn) {
+  return [
+    { id: 's1', title: t('bdt_s1_title'), desc: t('bdt_s1_desc') },
+    { id: 's2', title: t('bdt_s2_title'), desc: t('bdt_s2_desc') },
+    { id: 's3', title: t('bdt_s3_title'), desc: t('bdt_s3_desc') },
+    { id: 's4', title: t('bdt_s4_title'), desc: t('bdt_s4_desc') },
+    { id: 's5', title: t('bdt_s5_title'), desc: t('bdt_s5_desc') },
+  ];
+}
+
+function getOpportunities(t: TFn) {
+  return [
+    { id: 'o1', title: t('bdt_o1_title'), desc: t('bdt_o1_desc'), impact: t('bdt_opp_impact_high'), time: '10 min', color: 'amber',   tab: 'generator'    },
+    { id: 'o2', title: t('bdt_o2_title'), desc: t('bdt_o2_desc'), impact: t('bdt_opp_impact_high'), time: '5 min',  color: 'red',     tab: 'generator'    },
+    { id: 'o3', title: t('bdt_o3_title'), desc: t('bdt_o3_desc'), impact: t('bdt_opp_impact_med'),  time: '15 min', color: 'sky',     tab: 'generator'    },
+    { id: 'o4', title: t('bdt_o4_title'), desc: t('bdt_o4_desc'), impact: t('bdt_opp_impact_high'), time: '4 min',  color: 'emerald', tab: 'maps-scanner' },
+    { id: 'o5', title: t('bdt_o5_title'), desc: t('bdt_o5_desc'), impact: t('bdt_opp_impact_med'),  time: '20 min', color: 'violet',  tab: 'geo-audit'    },
+  ];
+}
+
+function getExecActions(t: TFn) {
+  return [
+    { num: '01', title: t('bdt_exec_a1_title'), impact: t('bdt_exec_a1_impact'), color: 'emerald', tab: 'maps-scanner' },
+    { num: '02', title: t('bdt_exec_a2_title'), impact: t('bdt_exec_a2_impact'), color: 'sky',     tab: 'generator'    },
+    { num: '03', title: t('bdt_exec_a3_title'), impact: t('bdt_exec_a3_impact'), color: 'violet',  tab: 'generator'    },
+  ];
+}
+
+function getEvolution(t: TFn) {
+  return [
+    { month: t('bdt_evo_jan'), score: 54 },
+    { month: t('bdt_evo_feb'), score: 58 },
+    { month: t('bdt_evo_mar'), score: 61 },
+    { month: t('bdt_evo_apr'), score: 65 },
+    { month: t('bdt_evo_may'), score: 63 },
+    { month: t('bdt_evo_jun'), score: 70 },
+    { month: t('bdt_evo_jul'), score: 78 },
+  ];
+}
+
+// Placeholder icon
 function Search2({ size, className }: { size: number; className?: string }) {
   return <Target size={size} className={className} />;
 }
-
-const PERSONALITY = [
-  { id: 'p1', text: 'Tu negocio transmite cercanía y autenticidad local.', accent: 'emerald', Icon: Sparkles },
-  { id: 'p2', text: 'El lenguaje en tus publicaciones es directo y cercano al cliente.', accent: 'sky', Icon: MessageSquare },
-  { id: 'p3', text: 'Tus clientes valoran especialmente la rapidez del servicio.', accent: 'violet', Icon: Zap },
-  { id: 'p4', text: 'Las reseñas reflejan una satisfacción alta, especialmente en ambiente y producto.', accent: 'amber', Icon: Star },
-  { id: 'p5', text: 'La competencia comunica de forma más emocional y visual que tú.', accent: 'red', Icon: Brain },
-];
-
-const STRENGTHS = [
-  { id: 's1', title: 'Reputación online sólida',     desc: 'Con 4.7★ y 284 reseñas superás al 85% de competidores en tu zona.' },
-  { id: 's2', title: 'Alta tasa de respuesta',        desc: 'Respondes al 76% de las reseñas. La media del sector es solo 34%.'  },
-  { id: 's3', title: 'Fotografías destacadas',        desc: 'Tus fotos de platos tienen un engagement 2× superior a la media.'   },
-  { id: 's4', title: 'Horario completo y actualizado', desc: 'Horario publicado con festivos y temporadas. Genera un 18% más de visitas.' },
-  { id: 's5', title: 'Categorías bien asignadas',     desc: '3 categorías secundarias que amplían tu alcance de búsqueda local.' },
-];
-
-const OPPORTUNITIES = [
-  { id: 'o1', title: 'Añadir menú digital al perfil', desc: 'Solo el 12% de perfiles de tu zona tienen menú digital activo. Es una ventaja clara.',  impact: 'Alta', time: '10 min', color: 'amber',   tab: 'generator'    },
-  { id: 'o2', title: 'Aumentar frecuencia de publicaciones', desc: 'Lleva 9 días sin publicar. La frecuencia óptima es 2–3 veces por semana.',          impact: 'Alta', time: '5 min',  color: 'red',     tab: 'generator'    },
-  { id: 'o3', title: 'Enriquecer descripción de servicios', desc: 'Tus servicios no tienen descripción detallada. Esto penaliza el SEO local.',          impact: 'Media', time: '15 min', color: 'sky',    tab: 'generator'    },
-  { id: 'o4', title: 'Responder 8 reseñas pendientes', desc: '8 reseñas sin responder en 14 días. Cada respuesta suma puntos de posición.',              impact: 'Alta', time: '4 min',  color: 'emerald', tab: 'maps-scanner' },
-  { id: 'o5', title: 'Renovar fotos del interior', desc: 'Las fotos del interior tienen más de 6 meses. Actualizarlas genera un +22% de clics.',         impact: 'Media', time: '20 min', color: 'violet', tab: 'geo-audit'    },
-];
-
-const EXEC_ACTIONS = [
-  { num: '01', title: 'Responder las 8 reseñas pendientes',     impact: '+6% Reputación', color: 'emerald', tab: 'maps-scanner' },
-  { num: '02', title: 'Publicar 3 contenidos esta semana',       impact: '+8% Visibilidad', color: 'sky',    tab: 'generator'    },
-  { num: '03', title: 'Optimizar descripción del perfil GBP',    impact: '+5% SEO',         color: 'violet', tab: 'generator'    },
-];
-
-const EVOLUTION = [
-  { month: 'Ene', score: 54 },
-  { month: 'Feb', score: 58 },
-  { month: 'Mar', score: 61 },
-  { month: 'Abr', score: 65 },
-  { month: 'May', score: 63 },
-  { month: 'Jun', score: 70 },
-  { month: 'Jul', score: 78 },
-];
 
 // ─── Color map ────────────────────────────────────────────────────────────────
 const CLR: Record<string, { text: string; bg: string; border: string; bar: string; soft: string }> = {
@@ -94,11 +110,9 @@ const CLR: Record<string, { text: string; bg: string; border: string; bar: strin
   pink:    { text: 'text-pink-400',    bg: 'bg-pink-500/10',    border: 'border-pink-500/25',    bar: 'from-pink-500 to-rose-400',     soft: 'rgba(236,72,153,0.07)'  },
 };
 
-const IMPACT_CLR: Record<string, string> = {
-  Alta:  'text-red-400 bg-red-500/10 border-red-500/25',
-  Media: 'text-amber-400 bg-amber-500/10 border-amber-500/25',
-  Baja:  'text-slate-400 bg-slate-700/30 border-slate-700/40',
-};
+const IMPACT_HIGH_CLR = 'text-red-400 bg-red-500/10 border-red-500/25';
+const IMPACT_MED_CLR  = 'text-amber-400 bg-amber-500/10 border-amber-500/25';
+const IMPACT_LOW_CLR  = 'text-slate-400 bg-slate-700/30 border-slate-700/40';
 
 // ─── Animations ───────────────────────────────────────────────────────────────
 const FU   = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16,1,0.3,1] as const } } };
@@ -299,15 +313,17 @@ function EvolutionChart({ data }: { data: typeof EVOLUTION }) {
 
 // ─── Business profile card ────────────────────────────────────────────────────
 function ProfileCard() {
+  const { t } = useI18n();
+  const BUSINESS = getBusiness(t);
   const INFO = [
-    { Icon: Building2,      label: 'Categoría',     value: BUSINESS.category },
-    { Icon: MapPin,         label: 'Zona',          value: BUSINESS.zone     },
-    { Icon: Clock,          label: 'Horario',       value: BUSINESS.hours    },
-    { Icon: Phone,          label: 'Teléfono',      value: BUSINESS.phone    },
-    { Icon: Globe,          label: 'Web',           value: BUSINESS.web      },
-    { Icon: Star,           label: 'Google',        value: BUSINESS.google   },
-    { Icon: Instagram,      label: 'Instagram',     value: BUSINESS.instagram},
-    { Icon: Wifi,           label: 'Estado',        value: BUSINESS.status,   special: 'status' },
+    { Icon: Building2,      label: t('bdt_biz_category'), value: BUSINESS.category },
+    { Icon: MapPin,         label: t('bdt_biz_zone'),     value: BUSINESS.zone     },
+    { Icon: Clock,          label: t('bdt_biz_hours'),    value: BUSINESS.hours    },
+    { Icon: Phone,          label: t('bdt_biz_phone'),    value: BUSINESS.phone    },
+    { Icon: Globe,          label: t('bdt_biz_web'),      value: BUSINESS.web      },
+    { Icon: Star,           label: t('bdt_biz_google'),   value: BUSINESS.google   },
+    { Icon: Instagram,      label: t('bdt_biz_instagram'),value: BUSINESS.instagram},
+    { Icon: Wifi,           label: t('bdt_biz_status'),   value: BUSINESS.status, special: 'status' },
   ];
 
   return (
@@ -325,7 +341,7 @@ function ProfileCard() {
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 uppercase tracking-wide">
                 {BUSINESS.category}
               </span>
-              <span className="text-slate-600 text-xs">desde {BUSINESS.since}</span>
+              <span className="text-slate-600 text-xs">{t('bdt_biz_since')} {BUSINESS.since}</span>
             </div>
           </div>
         </div>
@@ -350,7 +366,7 @@ function ProfileCard() {
 
       {/* Services */}
       <div className="px-5 py-4 border-t border-slate-800/40">
-        <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mb-2.5">Servicios</p>
+        <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mb-2.5">{t('bdt_biz_services')}</p>
         <div className="flex flex-wrap gap-2">
           {BUSINESS.services.map(s => (
             <span key={s} className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-slate-700/50 bg-slate-800/40 text-slate-300">
@@ -365,6 +381,8 @@ function ProfileCard() {
 
 // ─── AI Intelligence metrics ──────────────────────────────────────────────────
 function MetricsPanel() {
+  const { t } = useI18n();
+  const METRICS = getMetrics(t);
   const avgScore = Math.round(METRICS.reduce((a, m) => a + m.value, 0) / METRICS.length);
 
   return (
@@ -373,11 +391,11 @@ function MetricsPanel() {
       <div className="px-5 py-4 border-b border-slate-800/40 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Brain size={14} className="text-emerald-400" />
-          <span className="text-xs font-bold text-slate-300">La IA conoce tu negocio</span>
+          <span className="text-xs font-bold text-slate-300">{t('bdt_ai_label')}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className={`text-[11px] font-black tabular-nums ${avgScore >= 70 ? 'text-emerald-400' : 'text-amber-400'}`}>{avgScore}</span>
-          <span className="text-[10px] text-slate-600">/100 medio</span>
+          <span className="text-[10px] text-slate-600">/100 {t('bdt_ai_avg_label')}</span>
         </div>
       </div>
 
@@ -391,7 +409,7 @@ function MetricsPanel() {
         <div className="px-5 py-5 space-y-4">
           {METRICS.map((m, i) => {
             const c = CLR[m.color] ?? CLR.emerald;
-            const label = m.value >= 80 ? 'Excelente' : m.value >= 65 ? 'Bueno' : m.value >= 50 ? 'Mejorable' : 'Bajo';
+            const label = m.value >= 80 ? t('bdt_score_excellent') : m.value >= 65 ? t('bdt_score_good') : m.value >= 50 ? t('bdt_score_improvable') : t('bdt_score_low');
             return (
               <div key={m.id}>
                 <div className="flex items-center justify-between mb-1.5">
@@ -413,13 +431,15 @@ function MetricsPanel() {
 
 // ─── AI Personality ───────────────────────────────────────────────────────────
 function PersonalityPanel() {
+  const { t } = useI18n();
+  const PERSONALITY = getPersonality(t);
   return (
     <div className="rounded-2xl border border-slate-700/40 p-5"
       style={{ background: 'linear-gradient(135deg,rgba(12,18,32,0.98) 0%,rgba(7,10,18,0.99) 100%)' }}>
       <div className="flex items-center gap-2 mb-4">
         <Sparkles size={14} className="text-emerald-400" />
-        <span className="text-xs font-bold text-slate-300">Perfil de personalidad del negocio</span>
-        <span className="ml-auto text-[10px] font-semibold text-emerald-400/70 bg-emerald-500/8 border border-emerald-500/20 px-2 py-0.5 rounded-full">IA Generado</span>
+        <span className="text-xs font-bold text-slate-300">{t('bdt_personality_label')}</span>
+        <span className="ml-auto text-[10px] font-semibold text-emerald-400/70 bg-emerald-500/8 border border-emerald-500/20 px-2 py-0.5 rounded-full">{t('bdt_personality_badge')}</span>
       </div>
       <div className="space-y-3">
         {PERSONALITY.map(({ id, text, accent, Icon }) => {
@@ -446,9 +466,11 @@ function PersonalityPanel() {
 
 // ─── Strengths ────────────────────────────────────────────────────────────────
 function StrengthsPanel() {
+  const { t } = useI18n();
+  const STRENGTHS = getStrengths(t);
   return (
     <div>
-      <SectionLabel dot="bg-emerald-400">Lo estás haciendo muy bien</SectionLabel>
+      <SectionLabel dot="bg-emerald-400">{t('bdt_strengths_label')}</SectionLabel>
       <div className="space-y-2.5">
         {STRENGTHS.map((s, i) => (
           <motion.div key={s.id}
@@ -473,11 +495,14 @@ function StrengthsPanel() {
 
 // ─── Opportunities ────────────────────────────────────────────────────────────
 function OpportunitiesPanel({ onNavigate }: { onNavigate: (tab: string) => void }) {
+  const { t } = useI18n();
+  const OPPORTUNITIES = getOpportunities(t);
+  const HIGH_LABEL = t('bdt_opp_impact_high');
   const [applied, setApplied] = useState<Set<string>>(new Set());
 
   return (
     <div>
-      <SectionLabel dot="bg-amber-400">Oportunidades de mejora</SectionLabel>
+      <SectionLabel dot="bg-amber-400">{t('bdt_opp_label')}</SectionLabel>
       <div className="space-y-3">
         {OPPORTUNITIES.map((o, i) => {
           const done = applied.has(o.id);
@@ -501,7 +526,7 @@ function OpportunitiesPanel({ onNavigate }: { onNavigate: (tab: string) => void 
                   <p className={`text-sm font-semibold leading-snug ${done ? 'line-through text-slate-500' : 'text-white'}`}>{o.title}</p>
                   <p className="text-slate-500 text-xs mt-1 leading-relaxed">{o.desc}</p>
                   <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${IMPACT_CLR[o.impact]}`}>{o.impact}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${o.impact === HIGH_LABEL ? IMPACT_HIGH_CLR : IMPACT_MED_CLR}`}>{o.impact}</span>
                     <span className="text-[10px] text-slate-600">· {o.time}</span>
                   </div>
                 </div>
@@ -515,7 +540,7 @@ function OpportunitiesPanel({ onNavigate }: { onNavigate: (tab: string) => void 
                       bg-gradient-to-r ${c.bar} text-slate-950 shadow-sm`}
                   >
                     <Zap size={11} fill="currentColor" />
-                    Aplicar mejora
+                    {t('bdt_apply')}
                   </motion.button>
                   <motion.button
                     onClick={() => onNavigate(o.tab)}
@@ -523,7 +548,7 @@ function OpportunitiesPanel({ onNavigate }: { onNavigate: (tab: string) => void 
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold
                       bg-slate-800/50 border border-slate-700/40 text-slate-400 hover:text-white transition-colors"
                   >
-                    Ver herramienta <ChevronRight size={10} />
+                    {t('bdt_view_tool')} <ChevronRight size={10} />
                   </motion.button>
                 </div>
               )}
@@ -537,16 +562,18 @@ function OpportunitiesPanel({ onNavigate }: { onNavigate: (tab: string) => void 
 
 // ─── Executive Summary ────────────────────────────────────────────────────────
 function ExecutiveSummary({ onNavigate }: { onNavigate: (tab: string) => void }) {
+  const { t } = useI18n();
+  const EXEC_ACTIONS = getExecActions(t);
   return (
     <div className="rounded-2xl border border-violet-500/20 overflow-hidden"
       style={{ background: 'linear-gradient(135deg,rgba(139,92,246,0.06) 0%,rgba(7,10,18,0.99) 100%)' }}>
       <div className="px-5 py-4 border-b border-violet-500/15 flex items-center gap-2">
         <Award size={14} className="text-violet-400" />
-        <span className="text-xs font-bold text-slate-300">Resumen ejecutivo del consultor IA</span>
+        <span className="text-xs font-bold text-slate-300">{t('bdt_exec_label')}</span>
       </div>
       <div className="px-5 py-5">
         <p className="text-slate-300 text-sm leading-relaxed mb-5">
-          Si únicamente realizaras estas <strong className="text-white">3 acciones este mes</strong>, podrías mejorar tu visibilidad local de forma significativa y superar a tus principales competidores en posicionamiento Maps.
+          {t('bdt_exec_desc')}
         </p>
         <div className="space-y-3">
           {EXEC_ACTIONS.map(({ num, title, impact, color, tab }) => {
@@ -577,6 +604,8 @@ function ExecutiveSummary({ onNavigate }: { onNavigate: (tab: string) => void })
 
 // ─── Evolution timeline ───────────────────────────────────────────────────────
 function EvolutionPanel() {
+  const { t } = useI18n();
+  const EVOLUTION = getEvolution(t);
   const first = EVOLUTION[0].score;
   const last  = EVOLUTION[EVOLUTION.length - 1].score;
   const delta = last - first;
@@ -587,12 +616,12 @@ function EvolutionPanel() {
       <div className="px-5 py-4 border-b border-slate-800/40 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <TrendingUp size={13} className="text-emerald-400" />
-          <span className="text-xs font-bold text-slate-300">Evolución del negocio</span>
+          <span className="text-xs font-bold text-slate-300">{t('bdt_evo_label')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <TrendingUp size={11} className="text-emerald-400" />
           <span className="text-xs font-bold text-emerald-400">+{delta} pts</span>
-          <span className="text-xs text-slate-600">en 7 meses</span>
+          <span className="text-xs text-slate-600">{t('bdt_evo_delta_label')}</span>
         </div>
       </div>
       <div className="px-5 py-5">
@@ -601,9 +630,9 @@ function EvolutionPanel() {
       {/* Milestones */}
       <div className="px-5 pb-5 flex flex-wrap gap-3">
         {[
-          { month: 'Mar', event: 'Primera optimización SEO', color: 'sky' },
-          { month: 'May', event: 'Campaña de reseñas activa', color: 'amber' },
-          { month: 'Jul', event: 'Perfil completamente optimizado', color: 'emerald' },
+          { month: t('bdt_evo_mar'), event: t('bdt_evo_milestone_1'), color: 'sky' },
+          { month: t('bdt_evo_may'), event: t('bdt_evo_milestone_2'), color: 'amber' },
+          { month: t('bdt_evo_jul'), event: t('bdt_evo_milestone_3'), color: 'emerald' },
         ].map(({ month, event, color }) => {
           const c = CLR[color] ?? CLR.sky;
           return (
@@ -626,8 +655,9 @@ export interface BusinessDigitalTwinProps {
 }
 
 export default function BusinessDigitalTwin({ onNavigate, userEmail }: BusinessDigitalTwinProps) {
+  const { t } = useI18n();
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setLoaded(true), 200); return () => clearTimeout(t); }, []);
+  useEffect(() => { const timer = setTimeout(() => setLoaded(true), 200); return () => clearTimeout(timer); }, []);
 
   const handleNavigate = (tab: string) => {
     if (onNavigate) onNavigate(tab);
@@ -643,33 +673,33 @@ export default function BusinessDigitalTwin({ onNavigate, userEmail }: BusinessD
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">Perfil activo</span>
+                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">{t('bdt_active_badge')}</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Mi Negocio</h1>
-              <p className="text-slate-400 text-sm mt-1">Representación inteligente de tu presencia local generada por IA.</p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{t('bdt_title')}</h1>
+              <p className="text-slate-400 text-sm mt-1">{t('bdt_sub')}</p>
             </div>
             <div className="shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
               <Brain size={13} className="text-emerald-400" />
-              <span className="text-xs font-bold text-emerald-400 hidden sm:block">Digital Twin</span>
+              <span className="text-xs font-bold text-emerald-400 hidden sm:block">{t('bdt_twin_badge')}</span>
             </div>
           </div>
         </motion.div>
 
         {/* ── Business profile card ── */}
         <motion.div variants={FU}>
-          <SectionLabel dot="bg-sky-400">Ficha de negocio</SectionLabel>
+          <SectionLabel dot="bg-sky-400">{t('bdt_profile_label')}</SectionLabel>
           <ProfileCard />
         </motion.div>
 
         {/* ── AI Metrics ── */}
         <motion.div variants={FU}>
-          <SectionLabel dot="bg-emerald-400 animate-pulse">Inteligencia IA</SectionLabel>
+          <SectionLabel dot="bg-emerald-400 animate-pulse">{t('bdt_ai_label')}</SectionLabel>
           <MetricsPanel />
         </motion.div>
 
         {/* ── Personality ── */}
         <motion.div variants={FU}>
-          <SectionLabel dot="bg-violet-400">Personalidad del negocio</SectionLabel>
+          <SectionLabel dot="bg-violet-400">{t('bdt_personality_label')}</SectionLabel>
           <PersonalityPanel />
         </motion.div>
 
@@ -685,13 +715,13 @@ export default function BusinessDigitalTwin({ onNavigate, userEmail }: BusinessD
 
         {/* ── Executive Summary ── */}
         <motion.div variants={FU}>
-          <SectionLabel dot="bg-violet-400">Consultor IA</SectionLabel>
+          <SectionLabel dot="bg-violet-400">{t('bdt_exec_label')}</SectionLabel>
           <ExecutiveSummary onNavigate={handleNavigate} />
         </motion.div>
 
         {/* ── Evolution ── */}
         <motion.div variants={FU}>
-          <SectionLabel dot="bg-teal-400">Evolución histórica</SectionLabel>
+          <SectionLabel dot="bg-teal-400">{t('bdt_evo_label')}</SectionLabel>
           <EvolutionPanel />
         </motion.div>
 

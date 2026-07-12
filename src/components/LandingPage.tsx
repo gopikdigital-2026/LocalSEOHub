@@ -22,8 +22,9 @@ interface LandingPageProps {
 // ─── Tool trial config ────────────────────────────────────────────────────────
 type TrialToolId = 'seo' | 'maps' | 'twin' | 'radar' | 'advisor';
 type DemoPhase = 'idle' | 'scanning' | 'result';
+type TFn = (key: string) => string;
 
-const TRIAL_TOOLS: Array<{
+function getTrialTools(t: TFn): Array<{
   id: TrialToolId;
   label: string;
   shortLabel: string;
@@ -35,191 +36,88 @@ const TRIAL_TOOLS: Array<{
   ph2: string;
   btn: string;
   scanMsg: string;
-}> = [
-  {
-    id: 'seo',
-    label: 'Generador SEO',
-    shortLabel: 'SEO',
-    IconComponent: FileText,
-    gradient: 'from-emerald-500/15 to-teal-500/8',
-    border: 'border-emerald-500/30',
-    iconBg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-    ph1: 'Tu negocio o producto (ej: peluquería, fontanero…)',
-    ph2: 'Tu ciudad',
-    btn: 'Generar mi SEO gratis',
-    scanMsg: 'Generando contenido SEO optimizado…',
-  },
-  {
-    id: 'maps',
-    label: 'Escaner Maps',
-    shortLabel: 'Maps',
-    IconComponent: MapPinned,
-    gradient: 'from-blue-500/15 to-sky-500/8',
-    border: 'border-blue-500/30',
-    iconBg: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
-    ph1: 'Nombre de tu negocio en Google Maps',
-    ph2: 'Tu ciudad',
-    btn: 'Escanear mi ficha gratis',
-    scanMsg: 'Analizando tu ficha de Google Maps…',
-  },
-  {
-    id: 'twin',
-    label: 'AI Digital Twin',
-    shortLabel: 'Twin',
-    IconComponent: Eye,
-    gradient: 'from-cyan-500/15 to-sky-500/8',
-    border: 'border-cyan-500/30',
-    iconBg: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/25',
-    ph1: 'Nombre de tu negocio',
-    ph2: 'Categoría (ej: restaurante, clínica, tienda…)',
-    btn: 'Crear mi Digital Twin gratis',
-    scanMsg: 'Construyendo tu gemelo digital…',
-  },
-  {
-    id: 'radar',
-    label: 'Radar de Competencia',
-    shortLabel: 'Radar',
-    IconComponent: Target,
-    gradient: 'from-orange-500/15 to-amber-500/8',
-    border: 'border-orange-500/30',
-    iconBg: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
-    ph1: 'Nombre de tu negocio',
-    ph2: 'Tu ciudad',
-    btn: 'Analizar mis competidores gratis',
-    scanMsg: 'Escaneando competidores en tu zona…',
-  },
-  {
-    id: 'advisor',
-    label: 'AI Advisor',
-    shortLabel: 'Advisor',
-    IconComponent: Brain,
-    gradient: 'from-rose-500/15 to-pink-500/8',
-    border: 'border-rose-500/30',
-    iconBg: 'bg-rose-500/15 text-rose-400 border-rose-500/25',
-    ph1: 'Nombre de tu negocio',
-    ph2: 'Tu mayor reto de captación ahora mismo',
-    btn: 'Obtener consejo gratis',
-    scanMsg: 'Analizando tu situación con IA…',
-  },
-];
+}> {
+  return [
+    {
+      id: 'seo',
+      label: t('trial_seo_label'),
+      shortLabel: 'SEO',
+      IconComponent: FileText,
+      gradient: 'from-emerald-500/15 to-teal-500/8',
+      border: 'border-emerald-500/30',
+      iconBg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+      ph1: t('trial_seo_ph1'),
+      ph2: t('trial_seo_ph2'),
+      btn: t('trial_seo_btn'),
+      scanMsg: t('trial_seo_scan'),
+    },
+    {
+      id: 'maps',
+      label: t('trial_maps_label'),
+      shortLabel: 'Maps',
+      IconComponent: MapPinned,
+      gradient: 'from-blue-500/15 to-sky-500/8',
+      border: 'border-blue-500/30',
+      iconBg: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
+      ph1: t('trial_maps_ph1'),
+      ph2: t('trial_maps_ph2'),
+      btn: t('trial_maps_btn'),
+      scanMsg: t('trial_maps_scan'),
+    },
+    {
+      id: 'twin',
+      label: t('trial_twin_label'),
+      shortLabel: 'Twin',
+      IconComponent: Eye,
+      gradient: 'from-cyan-500/15 to-sky-500/8',
+      border: 'border-cyan-500/30',
+      iconBg: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/25',
+      ph1: t('trial_twin_ph1'),
+      ph2: t('trial_twin_ph2'),
+      btn: t('trial_twin_btn'),
+      scanMsg: t('trial_twin_scan'),
+    },
+    {
+      id: 'radar',
+      label: t('trial_radar_label'),
+      shortLabel: 'Radar',
+      IconComponent: Target,
+      gradient: 'from-orange-500/15 to-amber-500/8',
+      border: 'border-orange-500/30',
+      iconBg: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
+      ph1: t('trial_radar_ph1'),
+      ph2: t('trial_radar_ph2'),
+      btn: t('trial_radar_btn'),
+      scanMsg: t('trial_radar_scan'),
+    },
+    {
+      id: 'advisor',
+      label: t('trial_advisor_label'),
+      shortLabel: 'Advisor',
+      IconComponent: Brain,
+      gradient: 'from-rose-500/15 to-pink-500/8',
+      border: 'border-rose-500/30',
+      iconBg: 'bg-rose-500/15 text-rose-400 border-rose-500/25',
+      ph1: t('trial_advisor_ph1'),
+      ph2: t('trial_advisor_ph2'),
+      btn: t('trial_advisor_btn'),
+      scanMsg: t('trial_advisor_scan'),
+    },
+  ];
+}
 
-const TOOLS_SHOWCASE = [
-  {
-    icon: FileText,
-    name: 'Generador de Contenido SEO',
-    desc: 'Genera títulos, descripciones y keywords optimizadas para Google Business, Etsy, Shopify, Amazon y 13 plataformas más. La IA adapta el copy a tu categoría, ciudad y algoritmo específico.',
-    badge: '16+ plataformas',
-    color: 'emerald',
-  },
-  {
-    icon: MapPinned,
-    name: 'Escaner de Fichas de Maps',
-    desc: 'Audita tu Google Business Profile con IA. Puntuación de optimización 0-100, fallos críticos detectados automáticamente y plan de acción con los cambios exactos que debes aplicar.',
-    badge: 'Puntuación 0-100',
-    color: 'blue',
-  },
-  {
-    icon: Eye,
-    name: 'AI Digital Twin',
-    desc: 'Crea un gemelo digital de tu negocio y visualiza cómo te perciben los buscadores. Mapa de calor de visibilidad por zonas de tu ciudad para detectar dónde pierdes clientes.',
-    badge: 'Mapa de calor local',
-    color: 'cyan',
-  },
-  {
-    icon: Target,
-    name: 'Radar de Competencia',
-    desc: 'Pega la URL de cualquier competidor y obtén un análisis completo de sus keywords, puntuación SEO y estrategia. Genera contramedidas automáticas personalizadas para superarle.',
-    badge: 'Análisis en tiempo real',
-    color: 'orange',
-  },
-  {
-    icon: Globe,
-    name: 'GEO Audit — Visibilidad en IA',
-    desc: 'Mide si ChatGPT, Gemini o Perplexity recomiendan tu negocio. El 30% de las búsquedas ya pasan por IA — asegúrate de que te mencionan cuando alguien pregunta por tu servicio.',
-    badge: 'ChatGPT · Gemini',
-    color: 'teal',
-  },
-  {
-    icon: Brain,
-    name: 'AI Business Advisor',
-    desc: 'Consejero de marketing digital disponible 24/7. Describe tu situación y recibe un plan de acción concreto, priorizado y adaptado a tu tipo de negocio y presupuesto real.',
-    badge: 'Estrategia personalizada',
-    color: 'rose',
-  },
-  {
-    icon: Mic,
-    name: 'Voice & Campaign Simulator',
-    desc: 'Simula cómo suena tu negocio en búsquedas por voz (Siri, Alexa, Google Assistant) y previsualiza el rendimiento de campañas antes de invertir un solo euro en publicidad.',
-    badge: 'Voz + Campañas',
-    color: 'violet',
-  },
-];
+function getToolsShowcase(t: TFn) {
+  return [
+    { icon: FileText,  name: t('ts_1_name'), desc: t('ts_1_desc'), badge: t('ts_1_badge'), color: 'emerald' },
+    { icon: MapPinned, name: t('ts_2_name'), desc: t('ts_2_desc'), badge: t('ts_2_badge'), color: 'blue'    },
+    { icon: Eye,       name: t('ts_3_name'), desc: t('ts_3_desc'), badge: t('ts_3_badge'), color: 'cyan'    },
+    { icon: Target,    name: t('ts_4_name'), desc: t('ts_4_desc'), badge: t('ts_4_badge'), color: 'orange'  },
+    { icon: Globe,     name: t('ts_5_name'), desc: t('ts_5_desc'), badge: t('ts_5_badge'), color: 'teal'    },
+    { icon: Brain,     name: t('ts_6_name'), desc: t('ts_6_desc'), badge: t('ts_6_badge'), color: 'rose'    },
+    { icon: Mic,       name: t('ts_7_name'), desc: t('ts_7_desc'), badge: t('ts_7_badge'), color: 'violet'  },
+  ];
+}
 
-const TESTIMONIALS = [
-  {
-    name: 'Javier Medina',
-    role: 'Fontanero autónomo',
-    city: 'Zaragoza',
-    stars: 5,
-    metric: '+3 llamadas en 48h',
-    text: 'Llevaba 3 años con mi negocio en Google Maps sin conseguir que me llamasen. Con el Escaner me di cuenta de que mi ficha tenía 6 fallos críticos. Los corregí un martes y ese mismo viernes tuve 3 llamadas nuevas.',
-    photo: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop',
-    initials: 'JM',
-  },
-  {
-    name: 'Ana Climent',
-    role: 'Directora, Agencia Digital Spark',
-    city: 'Valencia',
-    stars: 5,
-    metric: '10 horas/semana ahorradas',
-    text: 'Gestionamos SEO local para 12 pequeños negocios. LocalSEOHub nos ahorra entre 8 y 10 horas semanales de trabajo manual. El Generador SEO solo ya justifica con creces la suscripción.',
-    photo: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop',
-    initials: 'AC',
-  },
-  {
-    name: 'David Ramos',
-    role: 'Fisioterapeuta, Clínica FisioRDR',
-    city: 'Málaga',
-    stars: 5,
-    metric: '4 de cada 5 respuestas de ChatGPT',
-    text: 'El GEO Audit me mostró que ChatGPT no me recomendaba cuando alguien preguntaba por fisioterapeutas en Málaga. Apliqué los cambios y ahora aparezco en 4 de cada 5 consultas de IA.',
-    photo: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop',
-    initials: 'DR',
-  },
-  {
-    name: 'Marta Iglesias',
-    role: 'Propietaria, Peluquería Éclat',
-    city: 'Madrid',
-    stars: 5,
-    metric: 'Del puesto 8 al 2 en Maps',
-    text: 'Nunca había entendido de SEO. Con el Generador metí mi nombre y mi barrio y en 30 segundos tuve el texto perfecto para mi ficha. Pasé del puesto 8 al 2 en búsquedas de peluquería en mi zona.',
-    photo: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop',
-    initials: 'MI',
-  },
-];
-
-const FAQS = [
-  {
-    q: '¿Necesito saber de SEO para usar LocalSEOHub?',
-    a: 'No. Está diseñado para propietarios de negocios sin conocimientos técnicos. Introduces el nombre de tu negocio y tu ciudad — la IA hace el resto. Sin jerga, sin configuraciones complejas.',
-  },
-  {
-    q: '¿Funciona para cualquier tipo de negocio local?',
-    a: 'Sí. Fontaneros, peluquerías, restaurantes, clínicas, tiendas de ropa, academias, abogados, talleres mecánicos… Cualquier negocio que quiera aparecer en búsquedas locales se beneficia de LocalSEOHub.',
-  },
-  {
-    q: '¿Qué pasa cuando terminan los 7 días de prueba?',
-    a: 'Si decides continuar, se activa tu suscripción mensual. Si no, puedes cancelar en cualquier momento antes del día 7 sin que se te cobre nada. No pedimos tarjeta para empezar.',
-  },
-  {
-    q: '¿Puedo usar LocalSEOHub para varios negocios o clientes?',
-    a: 'Sí. Muchos de nuestros usuarios son agencias de marketing digital que gestionan varios clientes. Con una sola suscripción puedes analizar y generar contenido para todos.',
-  },
-  {
-    q: '¿Los textos generados son únicos o plantillas genéricas?',
-    a: 'Cada texto se genera en el momento con IA adaptada a tu negocio, tu ciudad, tu categoría y la plataforma elegida. Nunca recibirás el mismo texto que otro usuario.',
-  },
-];
 
 // ─── Google icon ──────────────────────────────────────────────────────────────
 function GoogleIconSm() {
@@ -248,6 +146,7 @@ function RegistrationGate({
   businessName?: string;
   toolLabel: string;
 }) {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const inApp = isInAppBrowser();
@@ -275,7 +174,7 @@ function RegistrationGate({
         <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mx-auto">
           <Check size={18} className="text-emerald-400" />
         </div>
-        <p className="text-white font-bold text-sm">Abriendo tu informe completo…</p>
+        <p className="text-white font-bold text-sm">{t('gate_opening')}</p>
       </div>
     );
   }
@@ -289,16 +188,16 @@ function RegistrationGate({
         <div className="text-center space-y-1">
           <p className="text-white font-extrabold text-base leading-tight">
             {businessName
-              ? `Tu análisis de "${businessName}" está listo`
-              : `Tu ${toolLabel} está listo`}
+              ? `${t('gate_unlock_title').replace('{name}', businessName)}`
+              : `${t('gate_unlock_title_generic').replace('{tool}', toolLabel)}`}
           </p>
           <p className="text-emerald-400 text-[12px]">
-            Regístrate gratis para ver el informe completo — 7 días sin coste, sin tarjeta
+            {t('gate_register_sub')}
           </p>
         </div>
 
         <div className="grid grid-cols-3 gap-2 py-1">
-          {['Informe completo', 'Todas las keywords', 'Plan de acción'].map((item) => (
+          {[t('gate_feature_1'), t('gate_feature_2'), t('gate_feature_3')].map((item) => (
             <div key={item} className="flex flex-col items-center gap-1 rounded-xl bg-slate-800/40 border border-slate-700/40 p-2">
               <Check size={11} className="text-emerald-400" />
               <span className="text-[10px] text-slate-400 text-center leading-tight">{item}</span>
@@ -323,7 +222,7 @@ function RegistrationGate({
                 text-slate-950 shadow-[0_4px_20px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 active:translate-y-0
                 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0">
               <ArrowRight size={14} />
-              Ver mi informe completo — gratis
+              {t('gate_cta_view')}
             </button>
           </form>
 
@@ -339,27 +238,27 @@ function RegistrationGate({
               onClick={() => { track('gate_register_click', { context, method: 'inapp_open' }); }}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-[12px]
                 border border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-800/40 transition-all no-underline">
-              <ExternalLink size={12} />Abrir en navegador para continuar
+              <ExternalLink size={12} />{t('gate_open_browser')}
             </a>
           ) : (
             <button type="button" onClick={handleGoogle}
               className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl font-semibold text-[12px]
                 border border-slate-700/60 hover:border-slate-600/80 text-slate-300 hover:bg-slate-800/40 transition-all">
               <GoogleIconSm />
-              Continuar con Google
+              {t('gate_google')}
             </button>
           )}
 
           <div className="flex items-center justify-center gap-3 pt-0.5">
-            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />7 días gratis</span>
+            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />{t('gate_7days')}</span>
             <span className="text-slate-700 text-[9px]">·</span>
-            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />Sin tarjeta</span>
+            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />{t('gate_no_card')}</span>
             <span className="text-slate-700 text-[9px]">·</span>
             <span className="text-[9px] text-slate-600">
-              ¿Ya tienes cuenta?{' '}
+              {t('gate_have_account')}{' '}
               <button type="button" onClick={() => { track('gate_register_click', { context, method: 'login_link' }); onLoginClick(); }}
                 className="text-emerald-400 hover:text-emerald-300 transition-colors">
-                Inicia sesión
+                {t('gate_sign_in')}
               </button>
             </span>
           </div>
@@ -636,6 +535,8 @@ function AdvisorResult({ input1, input2 }: { input1: string; input2: string }) {
 
 // ─── Main tool trial widget ───────────────────────────────────────────────────
 function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (email?: string) => void; initialToolIdx?: number }) {
+  const { t } = useI18n();
+  const TRIAL_TOOLS = getTrialTools(t as TFn);
   const [activeTool, setActiveTool] = useState(initialToolIdx ?? 0);
   const [input1, setInput1] = useState('');
   const [input2, setInput2] = useState('');
@@ -693,21 +594,21 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
         {/* Tool picker */}
         <div className="px-5 pt-5 pb-3">
           <p className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold mb-3 text-center">
-            Elige una herramienta y pruébala gratis ahora
+            {t('trial_pick')}
           </p>
           <div className="grid grid-cols-5 gap-1">
-            {TRIAL_TOOLS.map((t, i) => {
-              const Icon = t.IconComponent;
+            {TRIAL_TOOLS.map((tool_item, i) => {
+              const Icon = tool_item.IconComponent;
               const isActive = activeTool === i;
               return (
-                <button key={t.id} onClick={() => switchTool(i)}
+                <button key={tool_item.id} onClick={() => switchTool(i)}
                   className={`flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl text-[10px] font-semibold transition-all duration-200 ${
                     isActive
                       ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
                       : 'text-slate-500 hover:text-slate-300 border border-transparent hover:bg-slate-800/40'
                   }`}>
                   <Icon size={14} className={isActive ? 'text-emerald-400' : 'text-slate-500'} />
-                  <span className="hidden sm:block truncate w-full text-center">{t.shortLabel}</span>
+                  <span className="hidden sm:block truncate w-full text-center">{tool_item.shortLabel}</span>
                 </button>
               );
             })}
@@ -722,7 +623,7 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
             </div>
             <div>
               <p className="text-white text-sm font-bold leading-tight">{tool.label}</p>
-              <p className="text-slate-500 text-[11px]">Análisis gratuito — sin registro</p>
+              <p className="text-slate-500 text-[11px]">{t('trial_free_label')}</p>
             </div>
           </div>
 
@@ -780,7 +681,7 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
               <button onClick={() => { setPhase('idle'); setInput1(''); setInput2(''); setShowGate(false); }}
                 className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-300 transition-colors mb-1">
                 <ChevronRight size={11} className="rotate-180" />
-                Analizar otro negocio
+                {t('trial_analyze_other')}
               </button>
 
               {activeTool === 0 && <SeoResult input1={lockedInput1} input2={lockedInput2} />}
@@ -825,90 +726,6 @@ function FAQItem({ q, a }: { q: string; a: string }) {
     </button>
   );
 }
-
-// ─── Color map for tool cards ─────────────────────────────────────────────────
-// ─── Per-tool benefits for the picker section ────────────────────────────────
-const TOOL_BENEFITS: Array<{
-  id: string;
-  trialIdx?: number;
-  icon: React.ElementType;
-  name: string;
-  badge: string;
-  color: string;
-  tagline: string;
-  benefits: string[];
-}> = [
-  {
-    id: 'seo', trialIdx: 0, icon: FileText, name: 'Generador SEO',
-    badge: '16+ plataformas', color: 'emerald',
-    tagline: 'Contenido SEO listo para copiar en 30 segundos',
-    benefits: [
-      'Títulos y descripciones optimizados para Google, Shopify, Amazon y 13 plataformas más',
-      'Keywords de alta intención de compra adaptadas a tu ciudad y categoría',
-      'Schema estructurado y versión extendida para máximo impacto en buscadores',
-    ],
-  },
-  {
-    id: 'maps', trialIdx: 1, icon: MapPinned, name: 'Escaner Maps',
-    badge: 'Puntuación 0-100', color: 'blue',
-    tagline: 'Descubre por qué tu ficha no aparece en los primeros resultados',
-    benefits: [
-      'Score de optimización 0-100 con fallos críticos detectados automáticamente',
-      'Plan de acción exacto: qué cambiar, cómo y en qué orden',
-      'Comparativa con los competidores mejor posicionados en tu zona',
-    ],
-  },
-  {
-    id: 'twin', trialIdx: 2, icon: Eye, name: 'AI Digital Twin',
-    badge: 'Mapa de calor local', color: 'cyan',
-    tagline: 'Ve tu negocio tal y como lo ven los buscadores',
-    benefits: [
-      'Mapa de calor de visibilidad por zonas de tu ciudad',
-      'Señales de presencia digital auditadas en tiempo real',
-      'Identifica los barrios donde pierdes clientes frente a la competencia',
-    ],
-  },
-  {
-    id: 'radar', trialIdx: 3, icon: Target, name: 'Radar de Competencia',
-    badge: 'Análisis en tiempo real', color: 'orange',
-    tagline: 'Conoce la estrategia exacta de tus competidores',
-    benefits: [
-      'Analiza keywords, score SEO y estrategia de cualquier competidor',
-      'Contramedidas automáticas y personalizadas para superarles',
-      'Detecta las brechas de posicionamiento que puedes explotar hoy',
-    ],
-  },
-  {
-    id: 'geo', trialIdx: undefined, icon: Globe, name: 'GEO Audit — IA',
-    badge: 'ChatGPT · Gemini', color: 'teal',
-    tagline: 'Aparece cuando la IA responde a tus clientes potenciales',
-    benefits: [
-      'Mide si ChatGPT, Gemini o Perplexity te recomiendan cuando alguien pregunta por tu servicio',
-      'El 30% de las búsquedas ya pasan por IA — optimiza antes que tu competencia',
-      'Informe de visibilidad comparado con los negocios líderes de tu sector',
-    ],
-  },
-  {
-    id: 'advisor', trialIdx: 4, icon: Brain, name: 'AI Business Advisor',
-    badge: 'Estrategia personalizada', color: 'rose',
-    tagline: 'Tu consejero de marketing digital disponible 24/7',
-    benefits: [
-      'Describe tu situación y recibe un plan de acción concreto y priorizado',
-      'Adaptado a tu tipo de negocio, tu ciudad y tu presupuesto real',
-      'Estrategias probadas que otros negocios locales ya están aplicando',
-    ],
-  },
-  {
-    id: 'voice', trialIdx: undefined, icon: Mic, name: 'Voice & Campañas',
-    badge: 'Voz + Publicidad', color: 'violet',
-    tagline: 'Domina la búsqueda por voz y optimiza tu publicidad',
-    benefits: [
-      'Simula cómo suenas en Siri, Alexa y Google Assistant antes de publicar',
-      'Previsualiza el rendimiento de campañas antes de invertir un solo euro',
-      'Optimiza tu presencia en el canal de búsqueda de mayor crecimiento',
-    ],
-  },
-];
 
 // ─── Color map for tool cards ─────────────────────────────────────────────────
 const TOOL_COLORS: Record<string, { bg: string; border: string; icon: string; badge: string }> = {
@@ -1619,6 +1436,7 @@ function VisibilityChecker({ onUnlock }: { onUnlock: () => void }) {
 const PrimaryBtn = memo(function PrimaryBtn({
   full = false, large = false, onClick,
 }: { full?: boolean; large?: boolean; onClick: () => void }) {
+  const { t } = useI18n();
   return (
     <motion.button onClick={onClick} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
       className={`${full ? 'w-full' : ''} inline-flex items-center justify-center gap-2.5
@@ -1626,13 +1444,14 @@ const PrimaryBtn = memo(function PrimaryBtn({
         bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
         shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-shadow duration-200`}>
       <Zap size={large ? 18 : 16} fill="currentColor" />
-      Analizar mi negocio gratis
+      {t('lp_cta_analyze')}
     </motion.button>
   );
 });
 
 // ─── Main landing page ─────────────────────────────────────────────────────────
 export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
+  const { t } = useI18n();
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
   const pricingRef = useRef<HTMLDivElement>(null);
   const demoRef    = useRef<HTMLElement>(null);
@@ -1640,22 +1459,41 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
   useEffect(() => { track('page_view', { page: 'landing' }); }, []);
 
   const STEPS = useMemo(() => [
-    { n: '01', icon: Search,     title: 'Dinos cuál es tu negocio',    desc: 'Nombre y ciudad. Nada más.' },
-    { n: '02', icon: Sparkles,   title: 'Nuestra IA lo analiza todo',  desc: 'Ficha, reseñas y competidores.' },
-    { n: '03', icon: TrendingUp, title: 'Recibes tu plan de clientes', desc: 'Acciones concretas para crecer.' },
-  ], []);
+    { n: '01', icon: Search,     title: t('landing_step_1_title'), desc: t('landing_step_1_desc') },
+    { n: '02', icon: Sparkles,   title: t('landing_step_2_title'), desc: t('landing_step_2_desc') },
+    { n: '03', icon: TrendingUp, title: t('landing_step_3_title'), desc: t('landing_step_3_desc') },
+  ], [t]);
 
   const METRICS = useMemo(() => [
-    { target: 38, label: 'Más llamadas',        sub: 'Media mensual en los primeros 30 días',  color: 'emerald' as const, icon: Globe      },
-    { target: 24, label: 'Más visitas web',      sub: 'Clics desde Google a tu web o ficha',   color: 'sky'     as const, icon: TrendingUp },
-    { target: 17, label: 'Más "¿Cómo llegar?"', sub: 'Usuarios que piden ruta a tu negocio',   color: 'violet'  as const, icon: MapPin     },
-  ], []);
+    { target: 38, label: t('landing_metric_calls'),   sub: t('landing_metric_calls_sub'),   color: 'emerald' as const, icon: Globe      },
+    { target: 24, label: t('landing_metric_visits'),  sub: t('landing_metric_visits_sub'),  color: 'sky'     as const, icon: TrendingUp },
+    { target: 17, label: t('landing_metric_routes'),  sub: t('landing_metric_routes_sub'),  color: 'violet'  as const, icon: MapPin     },
+  ], [t]);
 
   const MCLS = useMemo(() => ({
     emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/10', ring: 'border-emerald-500/20' },
     sky:     { text: 'text-sky-400',     bg: 'bg-sky-500/10',     ring: 'border-sky-500/20'     },
     violet:  { text: 'text-violet-400',  bg: 'bg-violet-500/10',  ring: 'border-violet-500/20'  },
   }), []);
+
+  const testimonials = useMemo(() => [
+    { name: t('t1_name'), role: t('t1_role'), city: t('t1_city'), stars: 5, metric: t('t1_metric'), text: t('t1_text'),
+      photo: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop', initials: 'JM' },
+    { name: t('t2_name'), role: t('t2_role'), city: t('t2_city'), stars: 5, metric: t('t2_metric'), text: t('t2_text'),
+      photo: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop', initials: 'AC' },
+    { name: t('t3_name'), role: t('t3_role'), city: t('t3_city'), stars: 5, metric: t('t3_metric'), text: t('t3_text'),
+      photo: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop', initials: 'DR' },
+    { name: t('t4_name'), role: t('t4_role'), city: t('t4_city'), stars: 5, metric: t('t4_metric'), text: t('t4_text'),
+      photo: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop', initials: 'MI' },
+  ], [t]);
+
+  const faqs = useMemo(() => [
+    { q: t('lp_faq1_q'), a: t('lp_faq1_a') },
+    { q: t('lp_faq2_q'), a: t('lp_faq2_a') },
+    { q: t('lp_faq3_q'), a: t('lp_faq3_a') },
+    { q: t('lp_faq4_q'), a: t('lp_faq4_a') },
+    { q: t('lp_faq5_q'), a: t('lp_faq5_a') },
+  ], [t]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden pb-20 sm:pb-0">
@@ -1667,11 +1505,11 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <section className="py-28 px-5 border-t border-slate-800/40">
         <div className="max-w-4xl mx-auto">
           <Rev className="text-center mb-16">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Proceso</p>
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_section_process')}</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Tres pasos. Dos minutos.
+              {t('lp_howto_title')}
             </h2>
-            <p className="text-slate-400 text-base mt-3">Más clientes.</p>
+            <p className="text-slate-400 text-base mt-3">{t('lp_howto_more')}</p>
           </Rev>
 
           <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-10 relative">
@@ -1705,12 +1543,12 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         className="py-28 px-5 bg-slate-900/30 border-y border-slate-800/40">
         <div className="max-w-5xl mx-auto">
           <Rev className="text-center mb-12">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Pruébalo ahora</p>
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_demo_badge')}</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-              Tu negocio. Tu análisis.
+              {t('lp_demo_title')}
             </h2>
             <p className="text-slate-400 text-base max-w-md mx-auto">
-              Sin registro. El resultado llega en segundos.
+              {t('lp_demo_sub')}
             </p>
           </Rev>
           <Rev>
@@ -1723,9 +1561,9 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <section className="py-28 px-5">
         <div className="max-w-5xl mx-auto">
           <Rev className="text-center mb-14">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Resultados</p>
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_results_badge')}</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Lo que cambia en 30 días.
+              {t('lp_results_title')}
             </h2>
           </Rev>
 
@@ -1753,34 +1591,34 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <section className="py-28 px-5 bg-slate-900/30 border-y border-slate-800/40">
         <div className="max-w-5xl mx-auto">
           <Rev className="text-center mb-14">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Confianza</p>
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_trust_badge')}</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              No lo decimos nosotros.
+              {t('lp_trust_title')}
             </h2>
           </Rev>
 
           <Rev stagger className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {TESTIMONIALS.map((t, i) => (
+            {testimonials.map((testimonial, i) => (
               <motion.div key={i} variants={FU} whileHover={HCARD}
                 className="rounded-2xl border border-slate-800/60 p-7 flex flex-col gap-5 cursor-default"
                 style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.82) 0%,rgba(8,14,26,0.95) 100%)' }}>
                 <div className="flex items-center justify-between">
                   <div className="flex gap-0.5">
-                    {Array.from({ length: t.stars }).map((_, j) => (
+                    {Array.from({ length: testimonial.stars }).map((_, j) => (
                       <Star key={j} size={13} className="text-amber-400 fill-amber-400" />
                     ))}
                   </div>
                   <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400">
-                    {t.metric}
+                    {testimonial.metric}
                   </span>
                 </div>
-                <p className="text-slate-200 text-base leading-relaxed flex-1">"{t.text}"</p>
+                <p className="text-slate-200 text-base leading-relaxed flex-1">"{testimonial.text}"</p>
                 <div className="flex items-center gap-3.5 pt-4 border-t border-slate-800/50">
-                  <img src={t.photo} alt={t.name} loading="lazy" width={40} height={40}
+                  <img src={testimonial.photo} alt={testimonial.name} loading="lazy" width={40} height={40}
                     className="w-10 h-10 rounded-full object-cover border-2 border-slate-700/60" />
                   <div>
-                    <p className="text-white font-bold text-sm">{t.name}</p>
-                    <p className="text-slate-500 text-xs">{t.role} · {t.city}</p>
+                    <p className="text-white font-bold text-sm">{testimonial.name}</p>
+                    <p className="text-slate-500 text-xs">{testimonial.role} · {testimonial.city}</p>
                   </div>
                 </div>
               </motion.div>
@@ -1793,11 +1631,11 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <section ref={pricingRef} id="pricing" className="py-28 px-5">
         <div className="max-w-sm mx-auto">
           <Rev className="text-center mb-10">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">Precio</p>
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_pricing_badge')}</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-              Todo incluido.
+              {t('lp_pricing_title')}
             </h2>
-            <p className="text-slate-400 text-base">Sin sorpresas. Sin letra pequeña.</p>
+            <p className="text-slate-400 text-base">{t('lp_pricing_sub')}</p>
           </Rev>
 
           <Rev>
@@ -1807,18 +1645,18 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
               <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400" />
               <div className="p-8">
                 <div className="flex items-end gap-2 mb-1">
-                  <span className="text-5xl font-extrabold text-white">9,99€</span>
-                  <span className="text-slate-400 mb-2">/mes</span>
+                  <span className="text-5xl font-extrabold text-white">{t('lp_pricing_price')}</span>
+                  <span className="text-slate-400 mb-2">{t('lp_pricing_per_mo')}</span>
                 </div>
-                <p className="text-slate-500 text-sm mb-7">7 días gratis · Cancela cuando quieras</p>
+                <p className="text-slate-500 text-sm mb-7">{t('lp_pricing_plan_sub')}</p>
                 <div className="space-y-2.5 mb-8">
                   {[
-                    'Plan de visibilidad local con IA',
-                    'Análisis completo de tu ficha de Google',
-                    'Seguimiento de competidores',
-                    'Visibilidad en ChatGPT y Gemini',
-                    'Generador de contenido para 16+ plataformas',
-                    'Soporte en español',
+                    t('lp_pricing_f1'),
+                    t('lp_pricing_f2'),
+                    t('lp_pricing_f3'),
+                    t('lp_pricing_f4'),
+                    t('lp_pricing_f5'),
+                    t('lp_pricing_f6'),
                   ].map((f) => (
                     <div key={f} className="flex items-center gap-2.5 text-sm text-slate-300">
                       <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />{f}
@@ -1827,7 +1665,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                 </div>
                 <PrimaryBtn onClick={onSubscribeClick} full />
                 <p className="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1.5">
-                  <Shield size={10} className="text-slate-600" />Pago seguro · Sin permanencia
+                  <Shield size={10} className="text-slate-600" />{t('lp_pricing_secure')}
                 </p>
               </div>
             </motion.div>
@@ -1839,10 +1677,10 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
         <div className="max-w-2xl mx-auto">
           <Rev className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">Preguntas frecuentes</h2>
+            <h2 className="text-3xl font-extrabold text-white tracking-tight">{t('lp_faq_title_new')}</h2>
           </Rev>
           <Rev className="space-y-2">
-            {FAQS.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)}
+            {faqs.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)}
           </Rev>
         </div>
       </section>
@@ -1856,19 +1694,19 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         <div className="max-w-xl mx-auto text-center relative">
           <Rev className="space-y-7">
             <span className="inline-flex items-center gap-2 rounded-full bg-orange-500/10 border border-orange-500/25 px-4 py-2 text-xs font-semibold text-orange-400">
-              <Flame size={12} />Tu competencia ya usa IA
+              <Flame size={12} />{t('lp_cta_badge')}
             </span>
             <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-[1.08] tracking-tight">
-              ¿Listo para recibir<br />más llamadas?
+              {t('lp_cta_title')}
             </h2>
             <p className="text-slate-400 text-lg max-w-md mx-auto">
-              Empieza gratis. Sin compromiso. Tu análisis en menos de 2 minutos.
+              {t('lp_cta_sub')}
             </p>
             <PrimaryBtn onClick={onSubscribeClick} large />
             <div className="flex items-center justify-center gap-6 pt-1">
-              {['Sin tarjeta', 'Cancela siempre', 'Soporte en español'].map((t) => (
-                <span key={t} className="flex items-center gap-1.5 text-xs text-slate-500">
-                  <Check size={11} className="text-emerald-500" />{t}
+              {[t('lp_cta_trust1'), t('lp_cta_trust2'), t('lp_cta_trust3')].map((item) => (
+                <span key={item} className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <Check size={11} className="text-emerald-500" />{item}
                 </span>
               ))}
             </div>
@@ -1887,13 +1725,13 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <div className="flex flex-wrap items-center justify-center gap-1">
             <button onClick={() => onLoginClick()}
               className="px-4 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
-              Iniciar sesión
+              {t('lp_footer_login')}
             </button>
             <span className="text-slate-700">·</span>
             {([
-              { label: 'Privacidad', modal: 'privacy' as const },
-              { label: 'Términos',   modal: 'terms'   as const },
-              { label: 'Contacto',   modal: 'contact' as const },
+              { label: t('lp_footer_privacy'), modal: 'privacy' as const },
+              { label: t('lp_footer_terms'),   modal: 'terms'   as const },
+              { label: t('lp_footer_contact'),  modal: 'contact' as const },
             ]).map(({ label, modal }, i, a) => (
               <React.Fragment key={label}>
                 <button onClick={() => setLegalModal(modal)}
@@ -1914,9 +1752,9 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
               bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-xl shadow-emerald-500/25">
             <Zap size={16} fill="currentColor" />
-            Analizar mi negocio gratis
+            {t('lp_cta_analyze')}
           </motion.button>
-          <p className="text-center text-xs text-slate-500 mt-2">Sin tarjeta · 7 días gratis</p>
+          <p className="text-center text-xs text-slate-500 mt-2">{t('lp_cta_mobile_sub')}</p>
         </div>
       </div>
 

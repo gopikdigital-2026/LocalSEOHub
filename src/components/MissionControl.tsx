@@ -6,10 +6,11 @@ import {
   BrainCircuit, TrendingUp, CheckCircle2, Sparkles, AlertCircle,
   ChevronRight, Trophy, ArrowRight, Check, Lock, Star,
   Clock, Activity, MessageSquare, Camera, PenLine, Search,
-  Flame, RefreshCw, ChevronUp, Bot,
+  Flame, RefreshCw, ChevronUp, Bot, ArrowUpRight,
 } from 'lucide-react';
 import { track } from '../lib/analytics';
 import AiAutopilot from './AiAutopilot';
+import { useI18n } from '../lib/i18n';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type MCView = 'home' | 'autopilot' | 'tool';
@@ -25,159 +26,166 @@ export interface MissionControlProps {
 }
 
 // ─── Static data ──────────────────────────────────────────────────────────────
-const SECTIONS: Record<string, { label: string; tools: { tab: string; label: string; Icon: React.ElementType }[] }> = {
-  negocio: {
-    label: 'Mi Negocio',
-    tools: [
-      { tab: 'generator',  label: 'Generador SEO', Icon: FileText     },
-      { tab: 'saved',      label: 'Guardados',     Icon: History      },
-      { tab: 'ai-twin',    label: 'Digital Twin',  Icon: BrainCircuit },
-      { tab: 'geo-audit',  label: 'GEO Audit',     Icon: ScanSearch   },
-    ],
-  },
-  competidores: {
-    label: 'Competidores',
-    tools: [{ tab: 'radar', label: 'Radar de Competencia', Icon: Radar }],
-  },
-  ia: {
-    label: 'IA',
-    tools: [
-      { tab: 'ai-advisor', label: 'AI Advisor',      Icon: BarChart2 },
-      { tab: 'voice-sim',  label: 'Voice Simulator', Icon: Mic       },
-    ],
-  },
-  automatizaciones: {
-    label: 'Automatizaciones',
-    tools: [{ tab: 'maps-scanner', label: 'Maps Scanner', Icon: MapPinned }],
-  },
-};
+type TFn = (key: string) => string;
 
-const NAV: { id: SectionId; label: string; Icon: React.ElementType; tab?: string; divider?: boolean; badge?: string }[] = [
-  { id: 'home',             label: 'Dashboard',        Icon: LayoutDashboard },
-  { id: 'autopilot',        label: 'AI Autopilot',     Icon: Bot,            badge: 'Nuevo' },
-  { id: 'negocio',          label: 'Mi Negocio',       Icon: Building2,  tab: 'generator'    },
-  { id: 'competidores',     label: 'Competidores',     Icon: Target,     tab: 'radar'        },
-  { id: 'ia',               label: 'IA',               Icon: Brain,      tab: 'ai-advisor'   },
-  { id: 'automatizaciones', label: 'Automatizaciones', Icon: Zap,        tab: 'maps-scanner' },
-  { id: 'configuracion',    label: 'Configuración',    Icon: Settings,   tab: 'saved', divider: true },
-];
-const MOBILE_NAV = NAV.slice(0, 5);
+function getSections(t: TFn): Record<string, { label: string; tools: { tab: string; label: string; Icon: React.ElementType }[] }> {
+  return {
+    negocio: {
+      label: t('mc_sec_negocio'),
+      tools: [
+        { tab: 'generator',  label: t('mc_tool_generator'), Icon: FileText     },
+        { tab: 'saved',      label: t('mc_tool_saved'),     Icon: History      },
+        { tab: 'ai-twin',    label: t('mc_tool_twin'),      Icon: BrainCircuit },
+        { tab: 'geo-audit',  label: t('mc_tool_geo'),       Icon: ScanSearch   },
+      ],
+    },
+    competidores: {
+      label: t('mc_sec_competidores'),
+      tools: [{ tab: 'radar', label: t('mc_tool_radar'), Icon: Radar }],
+    },
+    ia: {
+      label: t('mc_sec_ia'),
+      tools: [
+        { tab: 'ai-advisor', label: t('mc_tool_advisor'),  Icon: BarChart2 },
+        { tab: 'voice-sim',  label: t('mc_tool_voice'),    Icon: Mic       },
+      ],
+    },
+    automatizaciones: {
+      label: t('mc_sec_automatizaciones'),
+      tools: [{ tab: 'maps-scanner', label: t('mc_tool_maps'), Icon: MapPinned }],
+    },
+  };
+}
 
-// Daily mission
-const MISSION = {
-  id: 'mission-reviews',
-  title: 'Responder las últimas 8 reseñas',
-  desc: 'Tu perfil lleva 12 días sin responder reseñas. Google premia la actividad reciente.',
-  impact: '+6% Visibilidad',
-  time: '4 minutos',
-  tab: 'maps-scanner',
-  section: 'automatizaciones' as SectionId,
-};
+function getNav(t: TFn): { id: SectionId; label: string; Icon: React.ElementType; tab?: string; divider?: boolean; badge?: string }[] {
+  return [
+    { id: 'home',             label: t('mc_nav_dashboard'),        Icon: LayoutDashboard },
+    { id: 'autopilot',        label: t('mc_nav_autopilot'),        Icon: Bot,            badge: t('mc_badge_new') },
+    { id: 'negocio',          label: t('mc_nav_negocio'),          Icon: Building2,  tab: 'generator'    },
+    { id: 'competidores',     label: t('mc_nav_competidores'),     Icon: Target,     tab: 'radar'        },
+    { id: 'ia',               label: t('mc_nav_ia'),               Icon: Brain,      tab: 'ai-advisor'   },
+    { id: 'automatizaciones', label: t('mc_nav_automatizaciones'), Icon: Zap,        tab: 'maps-scanner' },
+    { id: 'configuracion',    label: t('mc_nav_configuracion'),    Icon: Settings,   tab: 'saved', divider: true },
+  ];
+}
 
-// Priority actions (max 3)
-const PRIORITIES = [
-  {
-    id: 'photos',
-    title: 'Añadir 8 fotos al perfil',
-    desc: 'Los perfiles con más de 100 fotos reciben un 42% más de clics.',
-    impact: '+6%',
-    time: '15 min',
-    tab: 'generator',
-    section: 'negocio' as SectionId,
-    Icon: Camera,
-    color: 'sky',
-  },
-  {
-    id: 'desc',
-    title: 'Optimizar descripción local',
-    desc: 'Incluir palabras clave de tu zona aumenta la visibilidad en Maps.',
-    impact: '+5%',
-    time: '20 min',
-    tab: 'generator',
-    section: 'negocio' as SectionId,
-    Icon: PenLine,
-    color: 'violet',
-  },
-  {
-    id: 'keywords',
-    title: 'Analizar palabras clave locales',
-    desc: 'Detectamos 3 búsquedas de alta intención sin optimizar.',
-    impact: '+4%',
-    time: '10 min',
-    tab: 'geo-audit',
-    section: 'negocio' as SectionId,
-    Icon: Search,
-    color: 'amber',
-  },
-];
-
-// AI activity timeline
-const AI_ACTIVITY = [
-  {
-    id: 'a1',
-    time: 'Hace 3 horas',
-    text: 'La IA ha detectado que un competidor ha cambiado su categoría principal.',
-    tab: 'radar',
-    section: 'competidores' as SectionId,
-    icon: AlertCircle,
-    accent: 'amber',
-  },
-  {
-    id: 'a2',
-    time: 'Hace 1 hora',
-    text: 'Se ha encontrado una nueva oportunidad de contenido para "restaurante cerca de mí".',
-    tab: 'ai-advisor',
-    section: 'ia' as SectionId,
-    icon: Sparkles,
-    accent: 'emerald',
-  },
-  {
-    id: 'a3',
-    time: 'Hace 20 minutos',
-    text: 'Se detectaron 8 reseñas nuevas sin responder. Responder mejora tu posición.',
+function getMission(t: TFn) {
+  return {
+    id: 'mission-reviews',
+    title: t('mc_mission_title'),
+    desc: t('mc_mission_desc'),
+    impact: t('mc_mission_impact'),
+    time: t('mc_mission_time'),
     tab: 'maps-scanner',
     section: 'automatizaciones' as SectionId,
-    icon: MessageSquare,
-    accent: 'sky',
-  },
-];
+  };
+}
 
-// AI insights
-const AI_INSIGHTS = [
-  {
-    id: 'i1',
-    text: 'Hemos detectado una caída del 7% en visibilidad esta semana.',
-    tab: 'geo-audit',
-    section: 'negocio' as SectionId,
-    accent: 'red',
-    Icon: TrendingUp,
-  },
-  {
-    id: 'i2',
-    text: 'Tu competidor principal ha conseguido 15 nuevas reseñas en 7 días.',
-    tab: 'radar',
-    section: 'competidores' as SectionId,
-    accent: 'amber',
-    Icon: Star,
-  },
-  {
-    id: 'i3',
-    text: 'Tu perfil lleva 12 días sin publicar contenido nuevo.',
-    tab: 'generator',
-    section: 'negocio' as SectionId,
-    accent: 'violet',
-    Icon: RefreshCw,
-  },
-];
+function getTodayMissions(t: TFn) {
+  return [
+    {
+      id: 'tm1',
+      title: t('mc_mission_title'),
+      impact: 5,
+      time: t('mc_mission_time'),
+      tab: 'maps-scanner',
+      section: 'automatizaciones' as SectionId,
+      Icon: MessageSquare,
+      color: 'emerald',
+    },
+    {
+      id: 'tm2',
+      title: t('mc_pri1_title'),
+      impact: 4,
+      time: '15 min',
+      tab: 'generator',
+      section: 'negocio' as SectionId,
+      Icon: Camera,
+      color: 'sky',
+    },
+    {
+      id: 'tm3',
+      title: t('mc_pri2_title'),
+      impact: 3,
+      time: '20 min',
+      tab: 'generator',
+      section: 'negocio' as SectionId,
+      Icon: PenLine,
+      color: 'violet',
+    },
+  ];
+}
 
-// Permanent setup checklist
-const SETUP_CHECKLIST = [
-  { id: 'ch1', label: 'Completa tu perfil de negocio',   done: true  },
-  { id: 'ch2', label: 'Conecta Google Business',          done: false },
-  { id: 'ch3', label: 'Completa la primera misión',       done: true  },
-  { id: 'ch4', label: 'Obtén tu primer +5% de visibilidad', done: true  },
-  { id: 'ch5', label: 'Invita a un colaborador',          done: false },
-];
+function getAiActivity(t: TFn) {
+  return [
+    {
+      id: 'a1',
+      time: t('mc_act1_time'),
+      text: t('mc_act1_text'),
+      tab: 'radar',
+      section: 'competidores' as SectionId,
+      icon: AlertCircle,
+      accent: 'amber',
+    },
+    {
+      id: 'a2',
+      time: t('mc_act2_time'),
+      text: t('mc_act2_text'),
+      tab: 'ai-advisor',
+      section: 'ia' as SectionId,
+      icon: Sparkles,
+      accent: 'emerald',
+    },
+    {
+      id: 'a3',
+      time: t('mc_act3_time'),
+      text: t('mc_act3_text'),
+      tab: 'maps-scanner',
+      section: 'automatizaciones' as SectionId,
+      icon: MessageSquare,
+      accent: 'sky',
+    },
+  ];
+}
+
+function getAiInsights(t: TFn) {
+  return [
+    {
+      id: 'i1',
+      text: t('mc_ins1_text'),
+      tab: 'geo-audit',
+      section: 'negocio' as SectionId,
+      accent: 'red',
+      Icon: TrendingUp,
+    },
+    {
+      id: 'i2',
+      text: t('mc_ins2_text'),
+      tab: 'radar',
+      section: 'competidores' as SectionId,
+      accent: 'amber',
+      Icon: Star,
+    },
+    {
+      id: 'i3',
+      text: t('mc_ins3_text'),
+      tab: 'generator',
+      section: 'negocio' as SectionId,
+      accent: 'violet',
+      Icon: RefreshCw,
+    },
+  ];
+}
+
+function getSetupChecklist(t: TFn) {
+  return [
+    { id: 'ch1', label: t('mc_setup_1'), done: true  },
+    { id: 'ch2', label: t('mc_setup_2'), done: false },
+    { id: 'ch3', label: t('mc_setup_3'), done: true  },
+    { id: 'ch4', label: t('mc_setup_4'), done: true  },
+    { id: 'ch5', label: t('mc_setup_5'), done: false },
+  ];
+}
 
 const CLR_MAP: Record<string, { dot: string; bg: string; border: string; text: string; badge: string }> = {
   emerald: { dot: 'bg-emerald-400', bg: 'bg-emerald-500/8',  border: 'border-emerald-500/20', text: 'text-emerald-400', badge: 'bg-emerald-500/12 text-emerald-400 border-emerald-500/25' },
@@ -200,11 +208,18 @@ function getName(email?: string): string {
   return local.charAt(0).toUpperCase() + local.slice(1).toLowerCase();
 }
 
-function getGreeting(): string {
+function getGreeting(t: TFn): string {
   const h = new Date().getHours();
-  if (h < 12) return 'Buenos días';
-  if (h < 19) return 'Buenas tardes';
-  return 'Buenas noches';
+  if (h < 12) return t('mc_greeting_morning');
+  if (h < 19) return t('mc_greeting_afternoon');
+  return t('mc_greeting_evening');
+}
+
+function getScoreLevel(score: number, t: TFn): { label: string; next: number; color: string } {
+  if (score >= 90) return { label: t('mc_score_level_pro'),      next: 100, color: 'text-emerald-400' };
+  if (score >= 80) return { label: t('mc_score_level_advanced'), next: 90,  color: 'text-teal-400'    };
+  if (score >= 65) return { label: t('mc_score_level_growing'),  next: 80,  color: 'text-sky-400'     };
+  return                  { label: t('mc_score_level_beginner'), next: 65,  color: 'text-amber-400'   };
 }
 
 function getSectionId(t: string): SectionId {
@@ -313,6 +328,8 @@ function Card({ children, className = '', accent }: { children: React.ReactNode;
 
 // ─── Setup checklist ──────────────────────────────────────────────────────────
 function SetupChecklist() {
+  const { t } = useI18n();
+  const SETUP_CHECKLIST = getSetupChecklist(t);
   const done  = SETUP_CHECKLIST.filter(i => i.done).length;
   const total = SETUP_CHECKLIST.length;
   const pct   = Math.round((done / total) * 100);
@@ -326,8 +343,8 @@ function SetupChecklist() {
         className="w-full px-5 py-4 flex items-center gap-3"
       >
         <div className="flex-1 text-left">
-          <p className="text-xs font-bold text-slate-300">Completa tu perfil</p>
-          <p className="text-[10px] text-slate-500 mt-0.5">{done}/{total} completados · {pct}%</p>
+          <p className="text-xs font-bold text-slate-300">{t('mc_setup_header')}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">{done}/{total} {t('mc_setup_done')} · {pct}%</p>
         </div>
         <div className="w-20 h-1 rounded-full bg-slate-800 overflow-hidden shrink-0">
           <motion.div
@@ -373,7 +390,25 @@ function SetupChecklist() {
   );
 }
 
-// ─── MCHome ───────────────────────────────────────────────────────────────────
+// ─── Large animated score number ─────────────────────────────────────────────
+function LargeScoreNumber({ score }: { score: number }) {
+  const [anim, setAnim] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true });
+  useEffect(() => {
+    if (!inView) return;
+    let n = 0;
+    const iv = setInterval(() => { n = Math.min(n + 1, score); setAnim(n); if (n >= score) clearInterval(iv); }, 14);
+    return () => clearInterval(iv);
+  }, [inView, score]);
+  return (
+    <div ref={ref}>
+      <span className="text-[3.5rem] sm:text-[4rem] font-black text-white tabular-nums leading-none">{anim}</span>
+    </div>
+  );
+}
+
+// ─── MCHome — AI Command Center ───────────────────────────────────────────────
 function MCHome({
   score, userEmail, missionDone, prioritiesDone,
   onStartMission, onCompleteMission,
@@ -391,320 +426,319 @@ function MCHome({
   isActive: boolean;
   onSubscribe: () => void;
 }) {
+  const { t } = useI18n();
+  const TODAY_MISSIONS = getTodayMissions(t);
+  const AI_ACTIVITY = getAiActivity(t);
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setLoaded(true), 600); return () => clearTimeout(t); }, []);
+  const [doneMissions, setDoneMissions] = useState<Set<string>>(new Set(prioritiesDone));
+  useEffect(() => { const timer = setTimeout(() => setLoaded(true), 400); return () => clearTimeout(timer); }, []);
 
-  const name      = getName(userEmail);
-  const greeting  = getGreeting();
-  const completed = prioritiesDone.size + (missionDone ? 1 : 0);
-  const total     = PRIORITIES.length + 1;
-  const weeklyPct = Math.min(100, Math.round((completed / total) * 100));
-  const goalPct   = Math.min(100, Math.round(((score - 60) / 30) * 100));
+  const name     = getName(userEmail);
+  const greeting = getGreeting(t);
+  const level    = getScoreLevel(score, t);
+  const nextPct  = Math.min(100, Math.round(((score - (level.next - 15)) / 15) * 100));
+
+  const insights = [
+    t('mc_home_insight_visibility'),
+    t('mc_home_insight_rivals'),
+    t('mc_home_insight_opps'),
+  ];
+  const [insightIdx, setInsightIdx] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setInsightIdx(i => (i + 1) % insights.length), 4000);
+    return () => clearInterval(iv);
+  }, [insights.length]);
+
+  const activeMissions = TODAY_MISSIONS.filter(m => !doneMissions.has(m.id));
+
+  const handleCompleteMission = (id: string) => {
+    setDoneMissions(prev => new Set([...prev, id]));
+    onCompleteMission();
+  };
 
   return (
-    <div className="max-w-[720px] mx-auto px-5 sm:px-8 py-8 sm:py-10 space-y-6 pb-24 sm:pb-10">
+    <div className="max-w-[680px] mx-auto px-4 sm:px-8 py-8 space-y-5 pb-24 sm:pb-12">
       <motion.div initial="hidden" animate={loaded ? 'show' : 'hidden'} variants={STAG} className="space-y-5">
 
-        {/* ─── 1. Day Summary ─── */}
+        {/* ══════════════════════════════════ 1. HERO */}
         <motion.div variants={FU}>
-          <Card className="p-6 sm:p-7">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-              <div className="space-y-1.5">
-                <p className="text-slate-400 text-sm font-medium">{greeting}{name ? `, ${name}` : ''} 👋</p>
-                <h1 className="text-2xl sm:text-[1.7rem] font-extrabold text-white tracking-tight leading-tight">
-                  Hoy hemos detectado{' '}
-                  <span className="text-emerald-400">{total - completed}</span>
-                  {' '}oportunidades para mejorar tu visibilidad.
-                </h1>
-                <p className="text-slate-500 text-sm pt-0.5">
-                  La IA está monitorizando tu presencia en tiempo real.
-                </p>
-              </div>
-              <motion.button
-                onClick={onStartMission}
-                whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.96 }}
-                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm shrink-0
-                  bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
-                  shadow-lg shadow-emerald-500/25 self-start sm:self-auto"
-              >
-                <Flame size={15} fill="currentColor" />
-                Comenzar misión
-              </motion.button>
+          <div className="space-y-1 mb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-slate-300 text-[15px] font-semibold">
+                {greeting}{name ? `, ${name}` : ''} 👋
+              </p>
             </div>
-          </Card>
+            <div className="overflow-hidden h-6">
+              <AnimatePresence mode="wait">
+                <motion.p key={insightIdx}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.35, ease: [0.16,1,0.3,1] }}
+                  className="text-slate-500 text-sm"
+                >
+                  {insights[insightIdx]}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Last analysis indicator */}
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] text-slate-600 font-medium">
+              {t('mc_home_last_analysis')}: <span className="text-emerald-400/70">{t('mc_home_last_analysis_val')}</span>
+            </span>
+          </div>
         </motion.div>
 
-        {/* ─── 2. Mission of the Day ─── */}
+        {/* ══════════════════════════════════ 2. LOCAL GROWTH SCORE™ */}
         <motion.div variants={FU}>
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.14em]">Misión del día</span>
+          <div
+            className="rounded-2xl border border-slate-700/50 overflow-hidden"
+            style={{ background: 'linear-gradient(145deg,rgba(11,17,29,0.98) 0%,rgba(7,10,18,1) 100%)' }}
+          >
+            <div className="h-[1px] bg-gradient-to-r from-emerald-500/60 via-teal-400/40 to-transparent" />
+            <div className="p-6 sm:p-7">
+
+              {/* Label row */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/12 border border-emerald-500/25 flex items-center justify-center">
+                    <TrendingUp size={13} className="text-emerald-400" />
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.14em]">{t('mc_score_label')}</span>
+                </div>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+                  level.color === 'text-emerald-400' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
+                  : level.color === 'text-teal-400'  ? 'bg-teal-500/10 border-teal-500/25 text-teal-400'
+                  : level.color === 'text-sky-400'   ? 'bg-sky-500/10 border-sky-500/25 text-sky-400'
+                  :                                    'bg-amber-500/10 border-amber-500/25 text-amber-400'
+                }`}>{level.label}</span>
+              </div>
+
+              {/* Score + evolution */}
+              <div className="flex items-end gap-4 mb-5">
+                <div className="flex items-baseline gap-1.5">
+                  <LargeScoreNumber score={score} />
+                  <span className="text-slate-600 text-lg font-medium">/100</span>
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <TrendingUp size={13} className="text-emerald-400" />
+                  <span className="text-emerald-400 text-sm font-bold">{t('mc_score_week')}</span>
+                </div>
+              </div>
+
+              {/* Progress to next level */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">{score}</span>
+                  <span className="text-slate-600">{t('mc_score_next_target')} {level.next}</span>
+                </div>
+                <ProgressBar pct={nextPct} delay={0.3} />
+                <p className="text-[10px] text-slate-600">
+                  {level.next - score > 0
+                    ? `${level.next - score} ${t('mc_score_next_points')}`
+                    : t('mc_progress_pro_level')}
+                </p>
+              </div>
+            </div>
           </div>
-          <AnimatePresence mode="wait">
-            {missionDone ? (
-              <motion.div key="done"
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="rounded-2xl border border-emerald-500/25 p-5 flex items-center gap-4"
-                style={{ background: 'linear-gradient(135deg,rgba(16,185,129,0.07) 0%,rgba(7,10,18,0.99) 100%)' }}
+        </motion.div>
+
+        {/* ══════════════════════════════════ 3. TODAY'S MISSIONS */}
+        <motion.div variants={FU}>
+          {/* Section header */}
+          <div className="flex items-center justify-between mb-3 px-0.5">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.14em]">{t('mc_today_mission_label')}</span>
+            </div>
+            <span className="text-[10px] text-slate-600">{t('mc_today_mission_sub')}</span>
+          </div>
+
+          <div
+            className="rounded-2xl border border-slate-700/50 overflow-hidden divide-y divide-slate-800/60"
+            style={{ background: 'linear-gradient(145deg,rgba(11,17,29,0.98) 0%,rgba(7,10,18,1) 100%)' }}
+          >
+            {activeMissions.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="p-6 flex items-center gap-4"
               >
-                <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/12 border border-emerald-500/25 flex items-center justify-center shrink-0">
                   <CheckCircle2 size={18} className="text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-emerald-400 font-bold text-sm">¡Misión completada!</p>
-                  <p className="text-slate-500 text-xs mt-0.5">Excelente trabajo. Vuelve mañana para la próxima misión.</p>
+                  <p className="text-emerald-400 font-bold text-sm">{t('mc_mission_done_title')}</p>
+                  <p className="text-slate-500 text-xs mt-0.5">{t('mc_mission_done_sub')}</p>
                 </div>
               </motion.div>
             ) : (
-              <motion.div key="active"
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              >
-                <Card className="p-5 sm:p-6" accent="emerald">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/12 border border-emerald-500/25 flex items-center justify-center shrink-0 mt-0.5">
-                        <MessageSquare size={17} className="text-emerald-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-bold text-[15px] leading-snug">{MISSION.title}</h3>
-                        <p className="text-slate-400 text-xs mt-1 leading-relaxed">{MISSION.desc}</p>
-                        <div className="flex flex-wrap items-center gap-2 mt-3">
-                          <span className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border
-                            bg-emerald-500/10 text-emerald-400 border-emerald-500/25">
-                            <TrendingUp size={9} />{MISSION.impact}
-                          </span>
-                          <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                            <Clock size={9} />{MISSION.time}
-                          </span>
+              <AnimatePresence>
+                {activeMissions.map((mission, i) => {
+                  const c = CLR_MAP[mission.color] ?? CLR_MAP.emerald;
+                  const stars = Array.from({ length: 5 });
+                  return (
+                    <motion.div key={mission.id}
+                      layout
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                      transition={{ duration: 0.35, ease: [0.16,1,0.3,1] }}
+                    >
+                      <div className="p-5 sm:p-6">
+                        <div className="flex items-start gap-4">
+                          {/* Number badge */}
+                          <div className="w-7 h-7 rounded-lg bg-slate-800/70 border border-slate-700/50 flex items-center justify-center shrink-0 text-[11px] font-black text-slate-500 mt-0.5">
+                            {i + 1}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-white font-bold text-[14px] leading-snug mb-2">{mission.title}</h3>
+
+                            {/* Impact + time row */}
+                            <div className="flex flex-wrap items-center gap-4 text-[11px]">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-slate-600 font-medium">{t('mc_mission_impact_label')}</span>
+                                <div className="flex gap-0.5">
+                                  {stars.map((_, si) => (
+                                    <Star key={si} size={10}
+                                      className={si < mission.impact ? 'text-amber-400 fill-amber-400' : 'text-slate-700 fill-slate-700'} />
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-slate-600 font-medium">{t('mc_mission_time_label2')}</span>
+                                <span className="text-slate-400 font-semibold flex items-center gap-0.5">
+                                  <Clock size={9} />{mission.time}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Resolve button */}
+                          <motion.button
+                            onClick={() => { track('tool_open', { tool: mission.tab }); onNavigate(mission.section, mission.tab); handleCompleteMission(mission.id); }}
+                            whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.96 }}
+                            className={`shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs
+                              ${i === 0
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                                : `border ${c.border} ${c.text} ${c.bg}`
+                              }`}
+                          >
+                            {t('mc_resolve')}
+                            <ArrowRight size={10} />
+                          </motion.button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="mt-5 flex gap-2.5">
-                    <motion.button
-                      onClick={() => { track('tool_open', { tool: MISSION.tab }); onNavigate(MISSION.section, MISSION.tab); }}
-                      whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.97 }}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm
-                        bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
-                        shadow-md shadow-emerald-500/20"
-                    >
-                      Realizar ahora
-                      <ArrowRight size={13} />
-                    </motion.button>
-                    <motion.button
-                      onClick={onCompleteMission}
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm
-                        bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-400 hover:text-emerald-400
-                        transition-colors"
-                    >
-                      <Check size={13} />
-                      Marcar hecho
-                    </motion.button>
-                  </div>
-                </Card>
-              </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             )}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* ─── 3. High Priority (max 3) ─── */}
-        <motion.div variants={FU}>
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.14em]">Prioridad alta</span>
-          </div>
-          <div className="space-y-3">
-            {PRIORITIES.map((p) => {
-              const done = prioritiesDone.has(p.id);
-              const c = CLR_MAP[p.color] ?? CLR_MAP.emerald;
-              return (
-                <motion.div key={p.id} layout
-                  animate={{ opacity: done ? 0.45 : 1 }}
-                  className={`rounded-2xl border ${c.border} p-4 flex items-center gap-4 ${done ? 'pointer-events-none' : ''}`}
-                  style={{ background: 'linear-gradient(135deg,rgba(12,18,32,0.97) 0%,rgba(7,10,18,0.99) 100%)' }}
-                >
-                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${c.bg} ${c.border}`}>
-                    {done
-                      ? <Check size={15} className={c.text} />
-                      : <p.Icon size={15} className={c.text} />
-                    }
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-semibold leading-snug ${done ? 'line-through text-slate-500' : 'text-white'}`}>
-                      {p.title}
-                    </p>
-                    <p className="text-slate-500 text-xs mt-0.5 truncate">{p.desc}</p>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${c.badge}`}>{p.impact} Visibilidad</span>
-                      <span className="text-[10px] text-slate-600 flex items-center gap-0.5"><Clock size={8} />{p.time}</span>
-                    </div>
-                  </div>
-                  {!done && (
-                    <motion.button
-                      onClick={() => onCompletePriority(p.id, p.tab, p.section)}
-                      whileHover={{ scale: 1.04, x: 1 }} whileTap={{ scale: 0.95 }}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs shrink-0
-                        bg-slate-800/70 hover:bg-slate-700/70 border border-slate-700/50 text-slate-300 hover:text-white
-                        transition-colors"
-                    >
-                      Resolver
-                      <ArrowRight size={10} />
-                    </motion.button>
-                  )}
-                </motion.div>
-              );
-            })}
           </div>
         </motion.div>
 
-        {/* ─── Progress System ─── */}
+        {/* ══════════════════════════════════ 4. AI ACTIVITY FEED */}
         <motion.div variants={FU}>
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.14em]">Tu progreso</span>
-          </div>
-          <Card className="p-5 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {/* Score ring */}
-              <div className="flex flex-col items-center gap-2 sm:border-r sm:border-slate-800/60 sm:pr-5">
-                <ScoreRing score={score} />
-                <div className="text-center">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Visibilidad local</p>
-                  <p className={`text-xs font-bold mt-0.5 ${score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
-                    {score >= 80 ? 'Bien optimizado' : score >= 60 ? 'Puede mejorar' : 'Necesita atención'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Goal + weekly progress */}
-              <div className="sm:col-span-2 space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-slate-400 font-medium">Objetivo semanal</span>
-                    <span className="text-xs font-bold text-slate-300">80 / 100</span>
-                  </div>
-                  <ProgressBar pct={goalPct} delay={0.4} />
-                  <p className="text-[10px] text-slate-600 mt-1">
-                    {score < 80 ? `Faltan ${80 - score} puntos para el objetivo` : '¡Objetivo semanal alcanzado!'}
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-slate-400 font-medium">Acciones completadas</span>
-                    <span className="text-xs font-bold text-slate-300">{completed}/{total}</span>
-                  </div>
-                  <ProgressBar pct={weeklyPct} delay={0.55} />
-                  <p className="text-[10px] text-slate-600 mt-1">Evolución esta semana</p>
-                </div>
-
-                <div className="pt-1 border-t border-slate-800/50 flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <TrendingUp size={12} className="text-emerald-400" />
-                    <span className="text-xs text-emerald-400 font-bold">+5 pts</span>
-                    <span className="text-xs text-slate-600">esta semana</span>
-                  </div>
-                  {score >= 80 && (
-                    <div className="flex items-center gap-1.5">
-                      <Trophy size={12} className="text-amber-400" />
-                      <span className="text-xs text-amber-400 font-semibold">Nivel Pro</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* ─── 4. AI Activity Timeline ─── */}
-        <motion.div variants={FU}>
-          <div className="flex items-center gap-2 mb-3 px-1">
+          <div className="flex items-center gap-2 mb-3 px-0.5">
             <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.14em]">Actividad IA</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.14em]">{t('mc_activity_label')}</span>
           </div>
-          <Card className="p-5 divide-y divide-slate-800/50">
+
+          <div
+            className="rounded-2xl border border-slate-700/50 overflow-hidden"
+            style={{ background: 'linear-gradient(145deg,rgba(11,17,29,0.98) 0%,rgba(7,10,18,1) 100%)' }}
+          >
             {AI_ACTIVITY.map((item, i) => {
               const c = CLR_MAP[item.accent] ?? CLR_MAP.emerald;
               return (
-                <div key={item.id} className={`flex items-start gap-4 ${i > 0 ? 'pt-4' : ''} ${i < AI_ACTIVITY.length - 1 ? 'pb-4' : ''}`}>
-                  <div className="relative shrink-0 flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-xl border flex items-center justify-center ${c.bg} ${c.border}`}>
-                      <item.icon size={14} className={c.text} />
+                <div key={item.id}
+                  className={`flex items-start gap-4 px-5 py-4 ${i < AI_ACTIVITY.length - 1 ? 'border-b border-slate-800/50' : ''}`}
+                >
+                  {/* Timeline dot + icon */}
+                  <div className="flex flex-col items-center gap-1 shrink-0 mt-0.5">
+                    <div className={`w-7 h-7 rounded-lg border flex items-center justify-center ${c.bg} ${c.border}`}>
+                      <item.icon size={13} className={c.text} />
                     </div>
-                    {i < AI_ACTIVITY.length - 1 && (
-                      <div className="w-px flex-1 bg-slate-800/60 mt-2 min-h-[12px]" />
-                    )}
                   </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <p className="text-[10px] text-slate-600 mb-1 flex items-center gap-1">
-                      <Activity size={8} />{item.time}
-                    </p>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <CheckCircle2 size={10} className="text-emerald-400 shrink-0" />
+                      <p className="text-[10px] text-slate-600 font-medium">{item.time}</p>
+                    </div>
                     <p className="text-slate-300 text-sm leading-relaxed">{item.text}</p>
-                    <motion.button
-                      onClick={() => onNavigate(item.section, item.tab)}
-                      whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
-                      className={`mt-2 flex items-center gap-1 text-xs font-semibold ${c.text} opacity-80 hover:opacity-100 transition-opacity`}
-                    >
-                      Ver solución <ChevronRight size={11} />
-                    </motion.button>
                   </div>
+
+                  <motion.button
+                    onClick={() => onNavigate(item.section, item.tab)}
+                    whileHover={{ scale: 1.08, x: 1 }} whileTap={{ scale: 0.95 }}
+                    className="shrink-0 mt-1 w-7 h-7 rounded-lg border border-slate-700/50 bg-slate-800/60 flex items-center justify-center text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    <ArrowUpRight size={12} />
+                  </motion.button>
                 </div>
               );
             })}
-          </Card>
-        </motion.div>
-
-        {/* ─── AI Insights ─── */}
-        <motion.div variants={FU}>
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.14em]">AI Insights</span>
-          </div>
-          <div className="space-y-2.5">
-            {AI_INSIGHTS.map((ins) => {
-              const c = CLR_MAP[ins.accent] ?? CLR_MAP.emerald;
-              return (
-                <Card key={ins.id} className="p-4 flex items-center gap-4" accent={ins.accent}>
-                  <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${c.bg} ${c.border}`}>
-                    <ins.Icon size={14} className={c.text} />
-                  </div>
-                  <p className="text-slate-300 text-sm leading-relaxed flex-1">{ins.text}</p>
-                  <motion.button
-                    onClick={() => onNavigate(ins.section, ins.tab)}
-                    whileHover={{ scale: 1.04, x: 1 }} whileTap={{ scale: 0.96 }}
-                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold
-                      border ${c.border} ${c.text} ${c.bg} hover:opacity-90 transition-opacity`}
-                  >
-                    Ver solución <ChevronRight size={11} />
-                  </motion.button>
-                </Card>
-              );
-            })}
           </div>
         </motion.div>
 
-        {/* ─── Setup checklist ─── */}
+        {/* ══════════════════════════════════ 5. NEXT GOAL */}
         <motion.div variants={FU}>
-          <SetupChecklist />
+          <div className="flex items-center gap-2 mb-3 px-0.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.14em]">{t('mc_next_goal_label')}</span>
+          </div>
+
+          <div
+            className="rounded-2xl border border-sky-500/15 overflow-hidden"
+            style={{ background: 'linear-gradient(145deg,rgba(14,24,42,0.98) 0%,rgba(7,10,18,1) 100%)' }}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
+                  <Trophy size={16} className="text-sky-400" />
+                </div>
+                <div>
+                  <p className="text-white font-bold text-[15px]">
+                    {t('mc_score_next_target')} {level.next} {t('mc_score_label').replace('™','').trim()}
+                  </p>
+                  <p className="text-sky-400/70 text-xs mt-0.5">
+                    {t('mc_next_goal_missing')} {level.next - score} {t('mc_next_goal_points')}
+                  </p>
+                </div>
+              </div>
+
+              <ProgressBar pct={nextPct} delay={0.2} />
+
+              <div className="flex items-center justify-between mt-2.5">
+                <span className="text-[11px] text-slate-600">{score}</span>
+                <span className="text-[11px] text-slate-500 font-medium">{level.next}</span>
+              </div>
+
+              <p className="text-slate-500 text-xs mt-4 leading-relaxed">{t('mc_next_goal_desc')}</p>
+            </div>
+          </div>
         </motion.div>
 
-        {/* ─── Subscription gate ─── */}
-        {!isActive && (          <motion.div
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }}
+        {/* ══════════════════════════════════ SUBSCRIPTION GATE */}
+        {!isActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }}
             className="rounded-2xl border border-emerald-500/20 p-6 text-center"
             style={{ background: 'linear-gradient(160deg,rgba(16,185,129,0.07) 0%,rgba(8,14,26,0.99) 100%)' }}
           >
             <Lock size={18} className="text-emerald-400 mx-auto mb-3" />
-            <p className="text-white font-bold text-base mb-1">Activa el plan para el análisis completo</p>
-            <p className="text-slate-400 text-sm mb-4">7 días gratis · Sin tarjeta · Cancela cuando quieras</p>
+            <p className="text-white font-bold text-base mb-1">{t('mc_sub_gate_title')}</p>
+            <p className="text-slate-400 text-sm mb-4">{t('mc_sub_gate_sub')}</p>
             <motion.button onClick={onSubscribe} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm
                 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/25"
             >
-              <Zap size={14} fill="currentColor" />Comenzar gratis
+              <Zap size={14} fill="currentColor" />{t('mc_sub_gate_cta')}
             </motion.button>
           </motion.div>
         )}
@@ -724,6 +758,8 @@ const Sidebar = memo(function Sidebar({
   isActive: boolean;
   score: number;
 }) {
+  const { t } = useI18n();
+  const NAV = getNav(t);
   const goalPct = Math.min(100, Math.round(((score - 60) / 30) * 100));
 
   return (
@@ -747,7 +783,7 @@ const Sidebar = memo(function Sidebar({
       {/* Progress mini */}
       <div className="px-5 py-4 border-b border-slate-800/30">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Visibilidad</span>
+          <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{t('mc_visibility_label')}</span>
           <span className={`text-[11px] font-bold ${score >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>{score}/100</span>
         </div>
         <ProgressBar pct={goalPct} />
@@ -789,9 +825,9 @@ const Sidebar = memo(function Sidebar({
             {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-slate-300 text-xs font-medium truncate">{userEmail ?? 'Usuario'}</p>
+            <p className="text-slate-300 text-xs font-medium truncate">{userEmail ?? t('mc_user_label')}</p>
             <p className={`text-[10px] font-semibold ${isActive ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {isActive ? '● Pro activo' : '● Prueba gratuita'}
+              {isActive ? `● ${t('mc_pro_active')}` : `● ${t('mc_trial_active')}`}
             </p>
           </div>
         </div>
@@ -807,6 +843,9 @@ const MobileNav = memo(function MobileNav({
   activeSection: SectionId;
   onNavigate: (id: SectionId, tab?: string) => void;
 }) {
+  const { t } = useI18n();
+  const NAV = getNav(t);
+  const MOBILE_NAV = NAV.slice(0, 5);
   return (
     <div
       className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-800/60"
@@ -847,6 +886,8 @@ const SubToolNav = memo(function SubToolNav({
   onSetTab: (tab: string) => void;
   onBack: () => void;
 }) {
+  const { t } = useI18n();
+  const SECTIONS = getSections(t);
   const section = SECTIONS[sectionId];
 
   return (
@@ -857,7 +898,7 @@ const SubToolNav = memo(function SubToolNav({
         className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-xs font-medium transition-colors shrink-0"
       >
         <ChevronUp size={13} className="rotate-[-90deg]" />
-        Dashboard
+        {t('mc_nav_dashboard')}
       </motion.button>
       {section && section.tools.length > 1 && (
         <>
@@ -917,7 +958,7 @@ export default function MissionControl({
   }, [setTab]);
 
   const handleStartMission = useCallback(() => {
-    navigate(MISSION.section, MISSION.tab);
+    navigate('automatizaciones', 'maps-scanner');
   }, [navigate]);
 
   const handleCompleteMission = useCallback(() => {
