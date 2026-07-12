@@ -1456,7 +1456,19 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
   const pricingRef = useRef<HTMLDivElement>(null);
   const demoRef    = useRef<HTMLElement>(null);
 
-  useEffect(() => { track('page_view', { page: 'landing' }); }, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    track('page_view', {
+      page: 'landing',
+      path: window.location.pathname,
+      referrer: document.referrer || null,
+      utm_source: params.get('utm_source'),
+      utm_medium: params.get('utm_medium'),
+      utm_campaign: params.get('utm_campaign'),
+      utm_content: params.get('utm_content'),
+      utm_term: params.get('utm_term'),
+    });
+  }, []);
 
   const STEPS = useMemo(() => [
     { n: '01', icon: Search,     title: t('landing_step_1_title'), desc: t('landing_step_1_desc') },
