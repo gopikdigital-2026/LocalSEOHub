@@ -53,10 +53,16 @@ Deno.serve(async (req: Request) => {
         (u) => u.email?.toLowerCase() === email.toLowerCase()
       );
       if (existing && !existing.email_confirmed_at) {
-        await adminClient.auth.admin.updateUserById(existing.id, {
+        const { error: updateError } = await adminClient.auth.admin.updateUserById(existing.id, {
           email_confirm: true,
           password,
         });
+        if (updateError) {
+          return new Response(JSON.stringify({ error: updateError.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
       return new Response(JSON.stringify({ exists: true }), {
         status: 200,

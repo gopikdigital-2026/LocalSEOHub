@@ -29,11 +29,12 @@ export function useAuth() {
 
         const createdAt = new Date(newSession.user.created_at).getTime();
         const lastSignIn = new Date(newSession.user.last_sign_in_at ?? newSession.user.created_at).getTime();
-        const isNewUser = Math.abs(lastSignIn - createdAt) < 5000;
+        // 10s window to account for edge-function create → signIn latency
+        const isNewUser = Math.abs(lastSignIn - createdAt) < 10000;
+        const method = newSession.user.app_metadata?.provider ?? 'email';
 
-        track(isNewUser ? 'signup_complete' : 'login_success', {
-          method: newSession.user.app_metadata?.provider ?? 'unknown',
-        });
+        // register_success is the canonical funnel event for both email and Google signups
+        track(isNewUser ? 'register_success' : 'login_success', { method });
       }
     });
 

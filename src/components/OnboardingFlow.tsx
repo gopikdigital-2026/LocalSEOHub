@@ -6,6 +6,7 @@ import {
   ChevronRight, Trophy, Flame,
 } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
+import { track } from '../lib/analytics';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -316,7 +317,7 @@ function Step3Summary({ onNext, userEmail }: { onNext: () => void; userEmail?: s
   const [loaded, setLoaded] = useState(false);
   const r = getResults(userEmail);
 
-  useEffect(() => { const t = setTimeout(() => setLoaded(true), 100); return () => clearTimeout(t); }, []);
+  useEffect(() => { const timer = setTimeout(() => setLoaded(true), 100); return () => clearTimeout(timer); }, []);
 
   return (
     <StepWrap stepKey="s3">
@@ -389,12 +390,12 @@ function Step3Summary({ onNext, userEmail }: { onNext: () => void; userEmail?: s
 }
 
 // ─── Step 4: First Mission ────────────────────────────────────────────────────
-function Step4Mission({ onNext, userEmail }: { onNext: () => void; userEmail?: string }) {
+function Step4Mission({ onAccept, onSkip, userEmail }: { onAccept: () => void; onSkip: () => void; userEmail?: string }) {
   const { t } = useI18n();
   const [loaded, setLoaded] = useState(false);
   const r = getResults(userEmail);
 
-  useEffect(() => { const t = setTimeout(() => setLoaded(true), 200); return () => clearTimeout(t); }, []);
+  useEffect(() => { const timer = setTimeout(() => setLoaded(true), 200); return () => clearTimeout(timer); }, []);
 
   return (
     <StepWrap stepKey="s4">
@@ -444,7 +445,7 @@ function Step4Mission({ onNext, userEmail }: { onNext: () => void; userEmail?: s
 
         <motion.div variants={FU} className="space-y-2.5">
           <motion.button
-            onClick={onNext}
+            onClick={onAccept}
             whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.97 }}
             className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl font-bold text-base
               bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
@@ -454,7 +455,7 @@ function Step4Mission({ onNext, userEmail }: { onNext: () => void; userEmail?: s
             {t('onb_mission_cta')}
           </motion.button>
           <button
-            onClick={onNext}
+            onClick={onSkip}
             className="w-full py-3 text-sm text-slate-500 hover:text-slate-300 transition-colors font-medium"
           >
             {t('onb_mission_skip')}
@@ -481,14 +482,15 @@ function Step5Celebrate({ onComplete, userEmail }: { onComplete: () => void; use
   useEffect(() => {
     if (!mounted.current) return;
     setShowConfetti(true);
-    const t    = setTimeout(() => { if (mounted.current) setLoaded(true);         }, 200);
-    const stop = setTimeout(() => { if (mounted.current) setShowConfetti(false); }, 3200);
-    return () => { clearTimeout(t); clearTimeout(stop); };
+    const tLoaded = setTimeout(() => { if (mounted.current) setLoaded(true);         }, 200);
+    const stop    = setTimeout(() => { if (mounted.current) setShowConfetti(false); }, 3200);
+    return () => { clearTimeout(tLoaded); clearTimeout(stop); };
   }, []);
 
   const handleComplete = useCallback(() => {
     if (completing) return;
     setCompleting(true);
+    track('onboarding_completed');
     // Let the whileTap animation and any pending Framer Motion callbacks fully settle
     setTimeout(() => { if (mounted.current) onComplete(); }, 350);
   }, [completing, onComplete]);
@@ -584,7 +586,25 @@ export default function OnboardingFlow({ userEmail, onComplete }: OnboardingFlow
   const { t } = useI18n();
   const [step, setStep] = useState<Step>(1);
   const next = useCallback(() => setStep(s => Math.min(s + 1, 5) as Step), []);
-  const handleSkip = useCallback(() => { setTimeout(onComplete, 0); }, [onComplete]);
+
+  const handleSkip = useCallback(() => {
+    track('onboarding_skipped', { from_step: step });
+    setTimeout(onComplete, 0);
+  }, [onComplete, step]);
+
+  const handleMissionAccepted = useCallback(() => {
+    track('onboarding_mission_accepted');
+    next();
+  }, [next]);
+
+  const handleMissionSkipped = useCallback(() => {
+    track('onboarding_mission_skipped');
+    next();
+  }, [next]);
+
+  // Fire once on mount and once per step change
+  useEffect(() => { track('onboarding_started'); }, []);
+  useEffect(() => { track('onboarding_step_viewed', { step }); }, [step]);
 
   // Map step → title shown above dots
   const STEP_LABELS: Record<Step, string> = {
@@ -620,7 +640,7 @@ export default function OnboardingFlow({ userEmail, onComplete }: OnboardingFlow
           {step === 1 && <Step1Welcome key="s1" onNext={next} userEmail={userEmail} />}
           {step === 2 && <Step2Analysis key="s2" onNext={next} />}
           {step === 3 && <Step3Summary  key="s3" onNext={next} userEmail={userEmail} />}
-          {step === 4 && <Step4Mission  key="s4" onNext={next} userEmail={userEmail} />}
+          {step === 4 && <Step4Mission  key="s4" onAccept={handleMissionAccepted} onSkip={handleMissionSkipped} userEmail={userEmail} />}
           {step === 5 && <Step5Celebrate key="s5" onComplete={onComplete} userEmail={userEmail} />}
         </AnimatePresence>
       </div>

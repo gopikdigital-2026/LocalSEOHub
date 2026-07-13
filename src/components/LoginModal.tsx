@@ -93,13 +93,15 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
       if (authError) {
         setError(translateError(authError.message));
       } else {
-        track('login_success', { method: 'email' });
+        // login_success fired by useAuth onAuthStateChange
         onClose();
       }
     } else {
       // Use signup-instant to create a pre-confirmed account, bypassing email verification
+      track('register_attempt', { method: 'email' });
       const res = await supabase.functions.invoke('signup-instant', { body: { email, password } });
       if (res.error) {
+        track('register_failed', { method: 'email', error: res.error.message });
         setError(translateError(res.error.message));
         setLoading(false);
         return;
@@ -107,9 +109,10 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
       const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
       if (!loginErr) {
         trackCompleteRegistration();
-        track('register_success', { method: 'email' });
+        // register_success fired by useAuth onAuthStateChange
         onClose();
       } else {
+        track('register_partial_failure', { step: 'auto_login', error: loginErr.message });
         setError(translateError(loginErr.message));
       }
     }
