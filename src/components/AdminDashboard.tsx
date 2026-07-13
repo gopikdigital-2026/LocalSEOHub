@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
   Users,
@@ -22,6 +22,7 @@ import {
   MousePointerClick,
   Zap,
   BarChart3,
+  CalendarDays,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -67,6 +68,7 @@ interface AdminFunnel {
 }
 
 type FilterKey = 'all' | 'active' | 'trial' | 'free';
+type FunnelRange = 'today' | '7d' | '30d' | 'custom';
 
 const PAGE_SIZE = 15;
 
@@ -97,6 +99,100 @@ function downloadCSV(rows: string[][], filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function computeRange(range: FunnelRange, customFrom: string, customTo: string): { since: string | null; until: string | null } {
+  const now = new Date();
+  if (range === 'today') {
+    const s = new Date(now);
+    s.setHours(0, 0, 0, 0);
+    return { since: s.toISOString(), until: now.toISOString() };
+  }
+  if (range === '7d') {
+    const s = new Date(now);
+    s.setDate(s.getDate() - 7);
+    return { since: s.toISOString(), until: now.toISOString() };
+  }
+  if (range === '30d') {
+    const s = new Date(now);
+    s.setDate(s.getDate() - 30);
+    return { since: s.toISOString(), until: now.toISOString() };
+  }
+  // custom
+  const since = customFrom ? new Date(customFrom + 'T00:00:00').toISOString() : null;
+  const until = customTo ? new Date(customTo + 'T23:59:59').toISOString() : now.toISOString();
+  return { since, until };
+}
+
+// ─── Funnel Date Bar ──────────────────────────────────────────────────────────
+
+function FunnelDateBar({
+  range, customFrom, customTo, loading,
+  onRange, onCustomFrom, onCustomTo,
+}: {
+  range: FunnelRange;
+  customFrom: string;
+  customTo: string;
+  loading: boolean;
+  onRange: (r: FunnelRange) => void;
+  onCustomFrom: (v: string) => void;
+  onCustomTo: (v: string) => void;
+}) {
+  const presets: { key: FunnelRange; label: string }[] = [
+    { key: 'today', label: 'Hoy' },
+    { key: '7d',    label: '7 días' },
+    { key: '30d',   label: '30 días' },
+    { key: 'custom', label: 'Personalizado' },
+  ];
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+      <div className="flex items-center gap-1.5">
+        <CalendarDays size={13} className="text-slate-500 shrink-0" />
+        <span className="text-xs text-slate-500 font-medium">Período:</span>
+      </div>
+
+      <div className="flex items-center gap-1 flex-wrap">
+        {presets.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => onRange(key)}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors ${
+              range === key
+                ? 'bg-violet-600 border-violet-500 text-white'
+                : 'bg-slate-900 border-slate-700/60 text-slate-400 hover:text-slate-200 hover:border-slate-600'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        {loading && <Loader2 size={12} className="text-slate-500 animate-spin ml-1" />}
+      </div>
+
+      {range === 'custom' && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-slate-500">Desde</span>
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => onCustomFrom(e.target.value)}
+              className="px-2 py-1 rounded-lg bg-slate-950/60 border border-slate-800/80 text-slate-200 text-xs focus:outline-none focus:border-violet-500/50 transition-colors"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-slate-500">hasta</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => onCustomTo(e.target.value)}
+              className="px-2 py-1 rounded-lg bg-slate-950/60 border border-slate-800/80 text-slate-200 text-xs focus:outline-none focus:border-violet-500/50 transition-colors"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Funnel Panel ─────────────────────────────────────────────────────────────
@@ -133,7 +229,16 @@ function FunnelStep({
   );
 }
 
-function FunnelPanel({ funnel }: { funnel: AdminFunnel }) {
+function FunnelPanel({ funnel, funnelLoading, range, customFrom, customTo, onRange, onCustomFrom, onCustomTo }: {
+  funnel: AdminFunnel;
+  funnelLoading: boolean;
+  range: FunnelRange;
+  customFrom: string;
+  customTo: string;
+  onRange: (r: FunnelRange) => void;
+  onCustomFrom: (v: string) => void;
+  onCustomTo: (v: string) => void;
+}) {
   const steps: { label: string; value: number; prev?: number; icon: React.ReactNode; color: string }[] = [
     { label: 'Sesiones únicas',       value: funnel.unique_sessions,  prev: undefined,                 icon: <Eye size={15} className="text-slate-300" />,              color: 'bg-slate-500/10 text-slate-300' },
     { label: 'Vistas de landing',     value: funnel.page_views,       prev: funnel.unique_sessions,    icon: <BarChart3 size={15} className="text-blue-400" />,          color: 'bg-blue-500/10 text-blue-400' },
@@ -148,10 +253,23 @@ function FunnelPanel({ funnel }: { funnel: AdminFunnel }) {
 
   return (
     <section>
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">
-        Embudo de conversión
-      </h2>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          Embudo de conversión
+        </h2>
+      </div>
+
+      <FunnelDateBar
+        range={range}
+        customFrom={customFrom}
+        customTo={customTo}
+        loading={funnelLoading}
+        onRange={onRange}
+        onCustomFrom={onCustomFrom}
+        onCustomTo={onCustomTo}
+      />
+
+      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-4 transition-opacity duration-200 ${funnelLoading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
         <div className="lg:col-span-2 rounded-2xl border border-slate-800/80 p-5 space-y-4"
           style={{ background: 'rgba(10,13,24,0.7)', backdropFilter: 'blur(12px)' }}>
           {steps.map((s) => (
@@ -187,7 +305,7 @@ function FunnelPanel({ funnel }: { funnel: AdminFunnel }) {
           ) : (
             <div className="flex flex-col items-center justify-center h-32 text-center">
               <Zap size={20} className="text-slate-700 mb-2" />
-              <p className="text-slate-600 text-xs">Aún no hay generaciones registradas</p>
+              <p className="text-slate-600 text-xs">Sin generaciones en este período</p>
             </div>
           )}
         </div>
@@ -199,11 +317,7 @@ function FunnelPanel({ funnel }: { funnel: AdminFunnel }) {
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function KPICard({
-  label,
-  value,
-  sub,
-  icon,
-  color,
+  label, value, sub, icon, color,
 }: {
   label: string;
   value: string;
@@ -252,21 +366,48 @@ export default function AdminDashboard({ session }: { session: Session | null })
   const [funnel, setFunnel] = useState<AdminFunnel | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [funnelLoading, setFunnelLoading] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
   const [page, setPage] = useState(1);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  const fetchData = async () => {
+  // Funnel date range state
+  const [funnelRange, setFunnelRange] = useState<FunnelRange>('7d');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+
+  const edgeUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-stats`;
+
+  const fetchFunnel = useCallback(async (range: FunnelRange, from: string, to: string) => {
+    if (!session?.access_token) return;
+    setFunnelLoading(true);
+    const { since, until } = computeRange(range, from, to);
+    try {
+      const res = await fetch(edgeUrl, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ funnelOnly: true, since, until }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setFunnel(data.funnel ?? null);
+    } catch { /* ignore */ }
+    finally { setFunnelLoading(false); }
+  }, [session?.access_token, edgeUrl]);
+
+  const fetchData = useCallback(async () => {
     if (!session?.access_token) { setError('Sin sesión activa.'); setLoading(false); return; }
     setLoading(true);
     setError('');
+    const { since, until } = computeRange(funnelRange, customFrom, customTo);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-stats`,
-        { headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' } }
-      );
+      const res = await fetch(edgeUrl, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ since, until }),
+      });
       if (res.status === 403) { setError('Acceso denegado. Solo administradores.'); setLoading(false); return; }
       if (!res.ok) throw new Error(`Error ${res.status}`);
       const data = await res.json();
@@ -279,9 +420,26 @@ export default function AdminDashboard({ session }: { session: Session | null })
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.access_token, edgeUrl, funnelRange, customFrom, customTo]);
 
   useEffect(() => { fetchData(); }, [session?.access_token]);
+
+  const handleRangeChange = (newRange: FunnelRange) => {
+    setFunnelRange(newRange);
+    if (newRange !== 'custom') {
+      fetchFunnel(newRange, customFrom, customTo);
+    }
+  };
+
+  const handleCustomFrom = (v: string) => {
+    setCustomFrom(v);
+    if (customTo) fetchFunnel('custom', v, customTo);
+  };
+
+  const handleCustomTo = (v: string) => {
+    setCustomTo(v);
+    fetchFunnel('custom', customFrom, v);
+  };
 
   // ── Filtered + searched list
   const filtered = useMemo(() => {
@@ -301,10 +459,8 @@ export default function AdminDashboard({ session }: { session: Session | null })
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Reset to page 1 when filter/search changes
   useEffect(() => { setPage(1); }, [filter, search]);
 
-  // ── CSV export: full list (no filter)
   const exportLeads = () => {
     const today = new Date().toISOString().slice(0, 10);
     const headers = ['ID', 'Email', 'Nombre', 'Fecha de Registro', 'Estado de Suscripción', 'Total de Usos'];
@@ -313,19 +469,11 @@ export default function AdminDashboard({ session }: { session: Session | null })
         (u.usage?.total_seo_generations ?? 0) +
         (u.usage?.total_images_optimized ?? 0) +
         (u.usage?.total_leads_scanned ?? 0);
-      return [
-        u.id,
-        u.email,
-        u.full_name,
-        formatDate(u.created_at),
-        u.stripe_status,
-        String(totalUsos),
-      ];
+      return [u.id, u.email, u.full_name, formatDate(u.created_at), u.stripe_status, String(totalUsos)];
     });
     downloadCSV([headers, ...rows], `localseohub_leads_${today}.csv`);
   };
 
-  // ── Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -337,7 +485,6 @@ export default function AdminDashboard({ session }: { session: Session | null })
     );
   }
 
-  // ── Error state
   if (error) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
@@ -440,7 +587,18 @@ export default function AdminDashboard({ session }: { session: Session | null })
         )}
 
         {/* ── Funnel */}
-        {funnel && <FunnelPanel funnel={funnel} />}
+        {funnel && (
+          <FunnelPanel
+            funnel={funnel}
+            funnelLoading={funnelLoading}
+            range={funnelRange}
+            customFrom={customFrom}
+            customTo={customTo}
+            onRange={handleRangeChange}
+            onCustomFrom={handleCustomFrom}
+            onCustomTo={handleCustomTo}
+          />
+        )}
 
         {/* ── User Table */}
         <section>
@@ -449,7 +607,6 @@ export default function AdminDashboard({ session }: { session: Session | null })
               Usuarios — {filtered.length.toLocaleString('es-ES')} resultados
             </h2>
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Search */}
               <div className="relative">
                 <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
@@ -460,7 +617,6 @@ export default function AdminDashboard({ session }: { session: Session | null })
                   className="pl-7 pr-3 py-1.5 rounded-lg bg-slate-950/60 border border-slate-800/80 text-slate-200 text-xs placeholder-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors w-48"
                 />
               </div>
-              {/* Filter buttons */}
               {(['all', 'active', 'trial', 'free'] as FilterKey[]).map((f) => {
                 const labels: Record<FilterKey, string> = {
                   all: 'Todos', active: 'Suscritos', trial: 'Prueba', free: 'Gratuitos',
@@ -486,43 +642,26 @@ export default function AdminDashboard({ session }: { session: Session | null })
             className="rounded-2xl border border-slate-800/80 overflow-hidden"
             style={{ background: 'rgba(10,13,24,0.6)', backdropFilter: 'blur(12px)' }}
           >
-            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-800/80 bg-slate-900/80">
-                    <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-4 py-3">
-                      Usuario
-                    </th>
-                    <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-4 py-3 hidden md:table-cell">
-                      Registro
-                    </th>
-                    <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-4 py-3">
-                      Estado
+                    <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-4 py-3">Usuario</th>
+                    <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-4 py-3 hidden md:table-cell">Registro</th>
+                    <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-4 py-3">Estado</th>
+                    <th className="text-center text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 py-3 hidden lg:table-cell">
+                      <span className="flex items-center justify-center gap-1"><Sparkles size={10} /> SEO</span>
                     </th>
                     <th className="text-center text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 py-3 hidden lg:table-cell">
-                      <span className="flex items-center justify-center gap-1">
-                        <Sparkles size={10} /> SEO
-                      </span>
+                      <span className="flex items-center justify-center gap-1"><Image size={10} /> Imágenes</span>
                     </th>
                     <th className="text-center text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 py-3 hidden lg:table-cell">
-                      <span className="flex items-center justify-center gap-1">
-                        <Image size={10} /> Imágenes
-                      </span>
-                    </th>
-                    <th className="text-center text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 py-3 hidden lg:table-cell">
-                      <span className="flex items-center justify-center gap-1">
-                        <ScanSearch size={10} /> Leads
-                      </span>
+                      <span className="flex items-center justify-center gap-1"><ScanSearch size={10} /> Leads</span>
                     </th>
                     <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-4 py-3 hidden xl:table-cell">
-                      <span className="flex items-center gap-1">
-                        <Clock size={10} /> Última act.
-                      </span>
+                      <span className="flex items-center gap-1"><Clock size={10} /> Última act.</span>
                     </th>
-                    <th className="text-center text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-4 py-3">
-                      Acción
-                    </th>
+                    <th className="text-center text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-4 py-3">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -542,9 +681,7 @@ export default function AdminDashboard({ session }: { session: Session | null })
                             </div>
                             <div className="min-w-0">
                               {u.full_name && (
-                                <p className="text-xs font-semibold text-slate-200 truncate max-w-[160px]">
-                                  {u.full_name}
-                                </p>
+                                <p className="text-xs font-semibold text-slate-200 truncate max-w-[160px]">{u.full_name}</p>
                               )}
                               <p className="text-xs text-slate-400 truncate max-w-[200px]">{u.email}</p>
                             </div>
@@ -591,7 +728,6 @@ export default function AdminDashboard({ session }: { session: Session | null })
               </table>
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800/80 bg-slate-900/60">
                 <p className="text-xs text-slate-500">
@@ -634,7 +770,6 @@ export default function AdminDashboard({ session }: { session: Session | null })
           </div>
         </section>
 
-        {/* ── Footer */}
         <footer className="text-center py-4">
           <p className="text-[11px] text-slate-600">
             Panel de administración · Acceso restringido

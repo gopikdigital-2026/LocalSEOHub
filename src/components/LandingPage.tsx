@@ -1106,7 +1106,7 @@ function VisibilityChecker({ onUnlock }: { onUnlock: () => void }) {
       {phase === 'idle' && (
         <motion.section key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -16 }}
           transition={{ duration: 0.35 }}
-          className="relative min-h-[92vh] flex flex-col items-center justify-center px-5 py-20 overflow-hidden">
+          className="relative min-h-[92vh] flex flex-col items-center justify-center px-5 pt-16 pb-40 sm:py-20 overflow-hidden">
 
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[700px] bg-emerald-500/5 rounded-full blur-3xl" />
@@ -1177,7 +1177,7 @@ function VisibilityChecker({ onUnlock }: { onUnlock: () => void }) {
               </motion.form>
 
               {/* Trust trio */}
-              <motion.div variants={FI} className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-1">
+              <motion.div variants={FI} className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-y-2 gap-x-6 pt-1">
                 {[
                   { text: 'Informe gratuito' },
                   { text: 'Menos de 2 minutos' },
@@ -1191,8 +1191,8 @@ function VisibilityChecker({ onUnlock }: { onUnlock: () => void }) {
             </motion.div>
           </div>
 
-          {/* Trust strip */}
-          <div className="absolute bottom-0 inset-x-0 border-t border-slate-800/40 bg-slate-900/30">
+          {/* Trust strip — desktop only; on mobile the trust trio + sticky CTA cover this */}
+          <div className="absolute bottom-0 inset-x-0 border-t border-slate-800/40 bg-slate-900/30 hidden sm:block">
             <div className="max-w-4xl mx-auto px-5 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
               {[
                 { icon: Shield,     text: 'Sin tarjeta de crédito' },

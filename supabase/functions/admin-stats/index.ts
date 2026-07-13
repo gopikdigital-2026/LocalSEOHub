@@ -36,7 +36,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // If ADMIN_EMAIL secret is configured, restrict access to that email only
     const adminEmail = Deno.env.get("ADMIN_EMAIL");
     if (adminEmail && user.email !== adminEmail) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
@@ -45,12 +44,35 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Parse optional date range and funnelOnly flag from request body
+    let since: string | null = null;
+    let until: string | null = null;
+    let funnelOnly = false;
+
+    if (req.method === "POST") {
+      try {
+        const body = await req.json();
+        since = body.since ?? null;
+        until = body.until ?? null;
+        funnelOnly = body.funnelOnly === true;
+      } catch { /* no body or invalid JSON */ }
+    }
+
     const serviceSupabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Fetch all data in parallel
+    // Funnel-only mode: skip expensive user queries
+    if (funnelOnly) {
+      const funnelRes = await serviceSupabase.rpc("get_funnel_stats", { since, until });
+      return new Response(
+        JSON.stringify({ funnel: funnelRes.data ?? {} }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Full mode: fetch all data in parallel
     const [profilesRes, customersRes, subscriptionsRes, funnelRes] = await Promise.all([
       serviceSupabase
         .from("profiles")
@@ -63,7 +85,7 @@ Deno.serve(async (req: Request) => {
       serviceSupabase
         .from("stripe_subscriptions")
         .select("customer_id, status"),
-      serviceSupabase.rpc("get_funnel_stats"),
+      serviceSupabase.rpc("get_funnel_stats", { since, until }),
     ]);
 
     const profiles = profilesRes.data ?? [];
