@@ -1055,49 +1055,92 @@ const LOAD_MSGS = [
   'Generando informe personalizado…',
 ];
 
+// 3.5 s total — gives credibility without killing conversion
 const LOAD_STAGES = [
-  { pct:  0, msg: 0, ms:     0 },
-  { pct:  8, msg: 1, ms:  1800 },
-  { pct: 20, msg: 2, ms:  3600 },
-  { pct: 35, msg: 3, ms:  5500 },
-  { pct: 50, msg: 4, ms:  7500 },
-  { pct: 65, msg: 5, ms:  9500 },
-  { pct: 80, msg: 6, ms: 11500 },
-  { pct: 94, msg: 7, ms: 13500 },
-  { pct:100, msg: 7, ms: 15500 },
+  { pct:  0, msg: 0, ms:    0 },
+  { pct: 15, msg: 1, ms:  450 },
+  { pct: 30, msg: 2, ms:  900 },
+  { pct: 48, msg: 3, ms: 1400 },
+  { pct: 64, msg: 4, ms: 1900 },
+  { pct: 78, msg: 5, ms: 2400 },
+  { pct: 91, msg: 6, ms: 2900 },
+  { pct:100, msg: 7, ms: 3350 },
 ];
 
 // ── Main VisibilityChecker ────────────────────────────────────────────────────
-function VisibilityChecker({ onUnlock }: { onUnlock: () => void }) {
-  const [phase,  setPhase]  = useState<VPhase>('idle');
-  const [name,   setName]   = useState('');
-  const [pct,    setPct]    = useState(0);
-  const [msgI,   setMsgI]   = useState(0);
-  const [result, setResult] = useState<VResult | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; onPhaseChange?: (phase: VPhase) => void }) {
+  const [phase,       setPhase]       = useState<VPhase>('idle');
+  const [name,        setName]        = useState('');
+  const [pct,         setPct]         = useState(0);
+  const [msgI,        setMsgI]        = useState(0);
+  const [result,      setResult]      = useState<VResult | null>(null);
+  const [earlyResult, setEarlyResult] = useState<VResult | null>(null);
+  const inputRef    = useRef<HTMLInputElement>(null);
+  const startTimeRef = useRef<number>(0);
+  const pctRef       = useRef<number>(0);
+
+  const changePhase = (next: VPhase) => {
+    setPhase(next);
+    onPhaseChange?.(next);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const n = name.trim();
     if (!n) { inputRef.current?.focus(); return; }
+    startTimeRef.current = Date.now();
     track('hero_analysis_start', { name: n });
-    setPhase('loading');
+    changePhase('loading');
     setPct(0); setMsgI(0);
+    setEarlyResult(null);
   };
 
   useEffect(() => {
     if (phase !== 'loading') return;
     const ts = LOAD_STAGES.map(({ pct: p, msg: m, ms }) =>
-      setTimeout(() => { setPct(p); setMsgI(m); }, ms)
+      setTimeout(() => {
+        setPct(p);
+        pctRef.current = p;
+        setMsgI(m);
+        // At 64% show partial result — score + subs visible while bar finishes
+        if (p >= 64 && !earlyResult) {
+          setEarlyResult(buildResult(name.trim()));
+        }
+      }, ms)
     );
     const done = setTimeout(() => {
-      setResult(buildResult(name.trim()));
-      setPhase('result');
-    }, 16500);
+      const r = buildResult(name.trim());
+      setResult(r);
+      changePhase('result');
+      track('analysis_completed', {
+        name: name.trim(),
+        duration_ms: Date.now() - startTimeRef.current,
+      });
+    }, 3500);
     return () => { ts.forEach(clearTimeout); clearTimeout(done); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, name]);
 
-  const reset = () => { setPhase('idle'); setPct(0); setMsgI(0); setResult(null); };
+  // Track abandonment when user navigates away during loading
+  useEffect(() => {
+    if (phase !== 'loading') return;
+    return () => {
+      if (pctRef.current < 100) {
+        track('analysis_abandoned', {
+          name: name.trim(),
+          progress_pct: pctRef.current,
+          duration_ms: Date.now() - startTimeRef.current,
+        });
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  const reset = () => {
+    changePhase('idle');
+    setPct(0); setMsgI(0); setResult(null); setEarlyResult(null);
+    pctRef.current = 0;
+  };
 
   return (
     <AnimatePresence mode="wait">
@@ -1286,6 +1329,23 @@ function VisibilityChecker({ onUnlock }: { onUnlock: () => void }) {
               })}
             </div>
 
+            {/* Partial result — score appears early while bar finishes */}
+            {earlyResult && (
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.16,1,0.3,1] }}
+                className="glass-card rounded-2xl p-5">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-3">Vista previa — puntuación detectada</p>
+                <div className="flex items-center gap-5">
+                  <ScoreRing score={earlyResult.overall} />
+                  <div className="flex-1 space-y-2">
+                    {earlyResult.subs.slice(0, 2).map(({ label, score, Icon, clr }) => (
+                      <SubScoreCard key={label} label={label} score={score} Icon={Icon} clr={clr} />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
           </div>
         </motion.section>
       )}
@@ -1294,7 +1354,7 @@ function VisibilityChecker({ onUnlock }: { onUnlock: () => void }) {
       {phase === 'result' && result && (
         <motion.section key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="relative px-5 py-16 pb-24 overflow-hidden">
+          className="relative px-5 py-16 pb-28 sm:pb-24 overflow-hidden">
 
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-emerald-500/4 rounded-full blur-3xl" />
@@ -1453,6 +1513,7 @@ const PrimaryBtn = memo(function PrimaryBtn({
 export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
   const { t } = useI18n();
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
+  const [analysisPhase, setAnalysisPhase] = useState<VPhase>('idle');
   const pricingRef = useRef<HTMLDivElement>(null);
   const demoRef    = useRef<HTMLElement>(null);
 
@@ -1511,7 +1572,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
     <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden pb-20 sm:pb-0">
 
       {/* ════════════════════════════ INTERACTIVE HERO (VisibilityChecker) */}
-      <VisibilityChecker onUnlock={onSubscribeClick} />
+      <VisibilityChecker onUnlock={onSubscribeClick} onPhaseChange={setAnalysisPhase} />
 
       {/* ══════════════════════════════════════════════ CÓMO FUNCIONA */}
       <section className="py-28 px-5 border-t border-slate-800/40">
@@ -1757,7 +1818,8 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
         </div>
       </footer>
 
-      {/* ═══════════════════════════ MOBILE STICKY CTA */}
+      {/* ═══════════════════════════ MOBILE STICKY CTA — hidden during analysis */}
+      {analysisPhase === 'idle' && (
       <div className="fixed bottom-0 inset-x-0 z-50 sm:hidden">
         <div className="px-4 pt-3 pb-5 bg-slate-950/96 backdrop-blur-md border-t border-slate-800/70">
           <motion.button onClick={onSubscribeClick} whileTap={{ scale: 0.97 }}
@@ -1769,6 +1831,7 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <p className="text-center text-xs text-slate-500 mt-2">{t('lp_cta_mobile_sub')}</p>
         </div>
       </div>
+      )}
 
       {legalModal === 'privacy' && <PrivacyModal onClose={() => setLegalModal(null)} />}
       {legalModal === 'terms'   && <TermsModal   onClose={() => setLegalModal(null)} />}

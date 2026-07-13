@@ -23,6 +23,11 @@ import {
   Zap,
   BarChart3,
   CalendarDays,
+  Smartphone,
+  Monitor,
+  Globe2,
+  Timer,
+  XCircle,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -69,6 +74,18 @@ interface AdminFunnel {
 
 type FilterKey = 'all' | 'active' | 'trial' | 'free';
 type FunnelRange = 'today' | '7d' | '30d' | 'custom';
+
+interface BreakdownEntry { starts: number; conversions: number; }
+
+interface AdminPerformanceMetrics {
+  avg_analysis_ms: number | null;
+  analysis_started: number;
+  analysis_completed: number;
+  analysis_abandoned: number;
+  abandonment_rate: number;
+  by_device: Record<string, BreakdownEntry>;
+  by_browser: Record<string, BreakdownEntry>;
+}
 
 const PAGE_SIZE = 15;
 
@@ -314,6 +331,153 @@ function FunnelPanel({ funnel, funnelLoading, range, customFrom, customTo, onRan
   );
 }
 
+// ─── Performance Panel ────────────────────────────────────────────────────────
+
+function BreakdownBar({ label, entry, max, icon }: {
+  label: string;
+  entry: BreakdownEntry;
+  max: number;
+  icon?: React.ReactNode;
+}) {
+  const pct = max > 0 ? Math.round((entry.starts / max) * 100) : 0;
+  const convRate = entry.starts > 0 ? ((entry.conversions / entry.starts) * 100).toFixed(1) : '0.0';
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium capitalize">
+          {icon}
+          {label}
+        </span>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-[10px] text-slate-500 tabular-nums">{entry.starts} análisis</span>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums ${
+            Number(convRate) >= 10 ? 'bg-emerald-500/15 text-emerald-400' :
+            Number(convRate) >= 3  ? 'bg-amber-500/15 text-amber-400' :
+                                     'bg-red-500/15 text-red-400'
+          }`}>{convRate}% conv.</span>
+        </div>
+      </div>
+      <div className="h-1.5 bg-slate-800/80 rounded-full overflow-hidden">
+        <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500 transition-all duration-700"
+          style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function PerformancePanel({ metrics }: { metrics: AdminPerformanceMetrics }) {
+  const deviceIcon = (d: string) => {
+    if (d === 'mobile') return <Smartphone size={11} className="text-slate-500" />;
+    if (d === 'tablet') return <Monitor size={11} className="text-slate-500" />;
+    return <Monitor size={11} className="text-slate-500" />;
+  };
+
+  const maxDevice  = Math.max(...Object.values(metrics.by_device).map((e) => e.starts), 1);
+  const maxBrowser = Math.max(...Object.values(metrics.by_browser).map((e) => e.starts), 1);
+
+  const avgSec = metrics.avg_analysis_ms != null
+    ? (metrics.avg_analysis_ms / 1000).toFixed(1)
+    : null;
+
+  return (
+    <section>
+      <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">
+        Rendimiento del análisis
+      </h2>
+
+      {/* KPI row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div className="rounded-2xl border border-slate-800/80 p-4"
+          style={{ background: 'rgba(10,13,24,0.7)' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <Timer size={13} className="text-sky-400" />
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Tiempo medio</span>
+          </div>
+          <p className="text-2xl font-bold text-white">
+            {avgSec != null ? `${avgSec}s` : '—'}
+          </p>
+          <p className="text-[10px] text-slate-500 mt-0.5">por análisis</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-800/80 p-4"
+          style={{ background: 'rgba(10,13,24,0.7)' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <XCircle size={13} className="text-red-400" />
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Abandono</span>
+          </div>
+          <p className={`text-2xl font-bold ${metrics.abandonment_rate > 30 ? 'text-red-400' : metrics.abandonment_rate > 15 ? 'text-amber-400' : 'text-emerald-400'}`}>
+            {metrics.abandonment_rate}%
+          </p>
+          <p className="text-[10px] text-slate-500 mt-0.5">{metrics.analysis_abandoned} de {metrics.analysis_started}</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-800/80 p-4"
+          style={{ background: 'rgba(10,13,24,0.7)' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <Activity size={13} className="text-teal-400" />
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Completados</span>
+          </div>
+          <p className="text-2xl font-bold text-white">{metrics.analysis_completed}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">análisis terminados</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-800/80 p-4"
+          style={{ background: 'rgba(10,13,24,0.7)' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp size={13} className="text-emerald-400" />
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Tasa finalización</span>
+          </div>
+          <p className="text-2xl font-bold text-emerald-400">
+            {metrics.analysis_started > 0
+              ? `${((metrics.analysis_completed / metrics.analysis_started) * 100).toFixed(1)}%`
+              : '—'}
+          </p>
+          <p className="text-[10px] text-slate-500 mt-0.5">completados / iniciados</p>
+        </div>
+      </div>
+
+      {/* Device + Browser breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-2xl border border-slate-800/80 p-5"
+          style={{ background: 'rgba(10,13,24,0.7)' }}>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-1.5">
+            <Smartphone size={11} />Conversión por dispositivo
+          </p>
+          {Object.keys(metrics.by_device).length > 0 ? (
+            <div className="space-y-3">
+              {Object.entries(metrics.by_device)
+                .sort(([, a], [, b]) => b.starts - a.starts)
+                .map(([device, entry]) => (
+                  <BreakdownBar key={device} label={device} entry={entry} max={maxDevice} icon={deviceIcon(device)} />
+                ))}
+            </div>
+          ) : (
+            <p className="text-slate-600 text-xs text-center py-4">Sin datos aún</p>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-slate-800/80 p-5"
+          style={{ background: 'rgba(10,13,24,0.7)' }}>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-1.5">
+            <Globe2 size={11} />Conversión por navegador
+          </p>
+          {Object.keys(metrics.by_browser).length > 0 ? (
+            <div className="space-y-3">
+              {Object.entries(metrics.by_browser)
+                .sort(([, a], [, b]) => b.starts - a.starts)
+                .map(([browser, entry]) => (
+                  <BreakdownBar key={browser} label={browser} entry={entry} max={maxBrowser} />
+                ))}
+            </div>
+          ) : (
+            <p className="text-slate-600 text-xs text-center py-4">Sin datos aún</p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function KPICard({
@@ -364,6 +528,7 @@ function StatusBadge({ status }: { status: AdminUser['stripe_status'] }) {
 export default function AdminDashboard({ session }: { session: Session | null }) {
   const [kpis, setKpis] = useState<AdminKPIs | null>(null);
   const [funnel, setFunnel] = useState<AdminFunnel | null>(null);
+  const [performanceMetrics, setPerformanceMetrics] = useState<AdminPerformanceMetrics | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [funnelLoading, setFunnelLoading] = useState(false);
@@ -413,6 +578,7 @@ export default function AdminDashboard({ session }: { session: Session | null })
       const data = await res.json();
       setKpis(data.kpis);
       setFunnel(data.funnel ?? null);
+      setPerformanceMetrics(data.performanceMetrics ?? null);
       setUsers(data.users ?? []);
       setLastRefresh(new Date());
     } catch (e: unknown) {
@@ -598,6 +764,11 @@ export default function AdminDashboard({ session }: { session: Session | null })
             onCustomFrom={handleCustomFrom}
             onCustomTo={handleCustomTo}
           />
+        )}
+
+        {/* ── Performance metrics */}
+        {performanceMetrics && (
+          <PerformancePanel metrics={performanceMetrics} />
         )}
 
         {/* ── User Table */}

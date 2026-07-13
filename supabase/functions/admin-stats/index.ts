@@ -73,7 +73,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Full mode: fetch all data in parallel
-    const [profilesRes, customersRes, subscriptionsRes, funnelRes] = await Promise.all([
+    const [profilesRes, customersRes, subscriptionsRes, funnelRes, perfEventsRes] = await Promise.all([
       serviceSupabase
         .from("profiles")
         .select("id, email, full_name, created_at, user_usage(total_seo_generations, total_images_optimized, total_leads_scanned, last_active)")
@@ -86,12 +86,73 @@ Deno.serve(async (req: Request) => {
         .from("stripe_subscriptions")
         .select("customer_id, status"),
       serviceSupabase.rpc("get_funnel_stats", { since, until }),
+      // Performance events: analysis timing + device/browser breakdown
+      serviceSupabase
+        .from("analytics_events")
+        .select("event_name, session_id, properties")
+        .in("event_name", ["hero_analysis_start", "analysis_completed", "analysis_abandoned", "register_success"])
+        .gte("created_at", since ?? "2020-01-01T00:00:00Z")
+        .lte("created_at", until ?? new Date().toISOString()),
     ]);
 
     const profiles = profilesRes.data ?? [];
     const customers = customersRes.data ?? [];
     const subscriptions = subscriptionsRes.data ?? [];
     const funnel = funnelRes.data ?? {};
+    const perfEvents: Array<{ event_name: string; session_id: string; properties: Record<string, unknown> }> =
+      perfEventsRes.data ?? [];
+
+    // ── Performance metrics ───────────────────────────────────────────────────
+    const completedEvents = perfEvents.filter((e) => e.event_name === "analysis_completed");
+    const abandonedEvents = perfEvents.filter((e) => e.event_name === "analysis_abandoned");
+    const startedEvents   = perfEvents.filter((e) => e.event_name === "hero_analysis_start");
+    const registerEvents  = perfEvents.filter((e) => e.event_name === "register_success");
+
+    const durations = completedEvents
+      .map((e) => Number(e.properties?.duration_ms))
+      .filter((n) => !isNaN(n) && n > 0);
+    const avgAnalysisMs = durations.length > 0
+      ? Math.round(durations.reduce((s, n) => s + n, 0) / durations.length)
+      : null;
+    const abandonmentRate = startedEvents.length > 0
+      ? parseFloat(((abandonedEvents.length / startedEvents.length) * 100).toFixed(1))
+      : 0;
+
+    // Device breakdown: starts vs conversions
+    const deviceMap: Record<string, { starts: number; conversions: number }> = {};
+    for (const e of startedEvents) {
+      const d = String(e.properties?.device_type ?? "unknown");
+      if (!deviceMap[d]) deviceMap[d] = { starts: 0, conversions: 0 };
+      deviceMap[d].starts++;
+    }
+    for (const e of registerEvents) {
+      const d = String(e.properties?.device_type ?? "unknown");
+      if (!deviceMap[d]) deviceMap[d] = { starts: 0, conversions: 0 };
+      deviceMap[d].conversions++;
+    }
+
+    // Browser breakdown
+    const browserMap: Record<string, { starts: number; conversions: number }> = {};
+    for (const e of startedEvents) {
+      const b = String(e.properties?.browser ?? "Other");
+      if (!browserMap[b]) browserMap[b] = { starts: 0, conversions: 0 };
+      browserMap[b].starts++;
+    }
+    for (const e of registerEvents) {
+      const b = String(e.properties?.browser ?? "Other");
+      if (!browserMap[b]) browserMap[b] = { starts: 0, conversions: 0 };
+      browserMap[b].conversions++;
+    }
+
+    const performanceMetrics = {
+      avg_analysis_ms: avgAnalysisMs,
+      analysis_started: startedEvents.length,
+      analysis_completed: completedEvents.length,
+      analysis_abandoned: abandonedEvents.length,
+      abandonment_rate: abandonmentRate,
+      by_device: deviceMap,
+      by_browser: browserMap,
+    };
 
     const customerMap = new Map<string, string>(
       customers.map((c: { user_id: string; customer_id: string }) => [c.user_id, c.customer_id])
@@ -151,6 +212,7 @@ Deno.serve(async (req: Request) => {
         kpis: { totalUsers, activeSubscriptions, trialUsers, estimatedMRR, conversionRate },
         users: enriched,
         funnel,
+        performanceMetrics,
       }),
       {
         status: 200,

@@ -25,6 +25,32 @@ function getStoredUserId(): string | null {
   }
 }
 
+function detectDevice(): 'mobile' | 'tablet' | 'desktop' {
+  const ua = navigator.userAgent;
+  if (/tablet|ipad|playbook|silk/i.test(ua)) return 'tablet';
+  if (/mobile|iphone|ipod|android.*mobile|blackberry|windows phone/i.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
+function detectBrowser(): string {
+  const ua = navigator.userAgent;
+  if (ua.includes('Edg/')) return 'Edge';
+  if (ua.includes('OPR/') || ua.includes('Opera')) return 'Opera';
+  if (ua.includes('Chrome/')) return 'Chrome';
+  if (ua.includes('Firefox/')) return 'Firefox';
+  if (ua.includes('Safari/') && !ua.includes('Chrome')) return 'Safari';
+  return 'Other';
+}
+
+// Lazily cached so UA parsing runs once per session
+let _device: ReturnType<typeof detectDevice> | null = null;
+let _browser: string | null = null;
+function getDeviceInfo() {
+  if (!_device) _device = detectDevice();
+  if (!_browser) _browser = detectBrowser();
+  return { device_type: _device, browser: _browser };
+}
+
 // Uses fetch with keepalive:true so the request survives page unloads (e.g.
 // when a Google OAuth redirect fires immediately after the click event).
 export function track(eventName: string, properties: Record<string, unknown> = {}) {
@@ -44,7 +70,7 @@ export function track(eventName: string, properties: Record<string, unknown> = {
       session_id: getSessionId(),
       user_id: getStoredUserId(),
       event_name: eventName,
-      properties,
+      properties: { ...getDeviceInfo(), ...properties },
     }),
   }).catch(() => {});
 }
