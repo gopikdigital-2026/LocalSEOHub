@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Informe de Sesión — LocalSEOHub</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --emerald: #10b981;
+      --teal: #14b8a6;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-400: #94a3b8;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --sky: #0ea5e9;
+      --violet: #8b5cf6;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+      color: #1e293b;
+      background: #f8fafc;
+      padding: 0;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      background: white;
+      padding: 56px 64px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding-bottom: 28px;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 40px;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #10b981, #14b8a6);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brand-icon svg { width: 22px; height: 22px; fill: white; }
+    .brand-name { font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+    .brand-sub { font-size: 12px; color: #64748b; font-weight: 500; }
+    .header-meta { text-align: right; }
+    .meta-date { font-size: 12px; color: #64748b; }
+    .meta-label {
+      display: inline-block;
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* ── Title ── */
+    .report-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.8px;
+      margin-bottom: 6px;
+    }
+    .report-sub {
+      font-size: 15px;
+      color: #64748b;
+      margin-bottom: 40px;
+      line-height: 1.5;
+    }
+
+    /* ── Section ── */
+    .section { margin-bottom: 44px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .section-num {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #10b981, #14b8a6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.3px;
+    }
+
+    /* ── Sub-sections ── */
+    h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 20px 0 10px;
+    }
+
+    p { color: #334155; margin-bottom: 10px; }
+
+    /* ── Cards ── */
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .card-body { font-size: 13px; color: #475569; line-height: 1.6; }
+    .card.danger  { background: #fff5f5; border-color: #fecaca; }
+    .card.warning { background: #fffbeb; border-color: #fde68a; }
+    .card.success { background: #f0fdf4; border-color: #bbf7d0; }
+    .card.info    { background: #f0f9ff; border-color: #bae6fd; }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-radius: 5px;
+      padding: 2px 8px;
+      margin-bottom: 6px;
+    }
+    .badge-red    { background: #fee2e2; color: #b91c1c; }
+    .badge-green  { background: #dcfce7; color: #15803d; }
+    .badge-amber  { background: #fef3c7; color: #92400e; }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-purple { background: #ede9fe; color: #6d28d9; }
+
+    /* ── Table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 12px 0 20px;
+    }
+    th {
+      background: #f1f5f9;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #475569;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+
+    /* ── Code ── */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: #0f172a;
+    }
+    pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 18px 20px;
+      overflow-x: auto;
+      line-height: 1.7;
+      margin: 12px 0;
+    }
+    pre .c  { color: #64748b; }
+    pre .k  { color: #14b8a6; }
+    pre .s  { color: #86efac; }
+    pre .fn { color: #93c5fd; }
+    pre .ev { color: #fde68a; }
+
+    /* ── Events list ── */
+    .events-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .event-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .event-pill.new  { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+    .event-pill.fix  { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+    .event-pill.drop { background: #fff7ed; border: 1px solid #fed7aa; color: #c2410c; text-decoration: line-through; }
+    .event-pill .dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-green  { background: #10b981; }
+    .dot-blue   { background: #3b82f6; }
+    .dot-orange { background: #f97316; }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 36px 0;
+    }
+
+    /* ── File list ── */
+    .files-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #334155;
+    }
+    .file-item .ftype {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .ftype-tsx  { background: #dbeafe; color: #1d4ed8; }
+    .ftype-ts   { background: #ede9fe; color: #6d28d9; }
+    .ftype-sql  { background: #fef3c7; color: #92400e; }
+    .ftype-fn   { background: #dcfce7; color: #15803d; }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 60px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    /* ── Print ── */
+    @media print {
+      body { background: white; }
+      .page { padding: 32px 40px; }
+      pre { break-inside: avoid; }
+      .section { break-inside: avoid; }
+    }
+
+    /* ── Print button ── */
+    .print-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: #0f172a;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-between;
+      gap: 16px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+    }
+    .print-bar span { flex: 1; color: #94a3b8; }
+    .btn-print {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 18px;
+      background: linear-gradient(135deg, #10b981, #14b8a6);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-print:hover { opacity: 0.9; }
+    @media print {
+      .print-bar { display: none; }
+      body { padding-top: 0; }
+    }
+    body { padding-top: 46px; }
+  </style>
+</head>
+<body>
+
+<div class="print-bar">
+  <span>Informe de sesión — LocalSEOHub · 13 julio 2026</span>
+  <button class="btn-print" onclick="window.print()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Guardar como PDF
+  </button>
+</div>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">LocalSEOHub</div>
+        <div class="brand-sub">Panel de administración y flujo de conversión</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-date">13 de julio de 2026</div>
+      <div class="meta-label">Informe técnico</div>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <div class="report-title">Informe de Sesión de Desarrollo</div>
+  <p class="report-sub">
+    Resumen de los cambios implementados en la sesión: filtro de período en el embudo de conversión,
+    auditoría completa del flujo de registro y corrección de fallos silenciosos, eventos de onboarding
+    y consolidación de analytics.
+  </p>
+
+  <!-- ─── SECCIÓN 1 ─────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-title">Selector de período en el embudo de conversión</div>
+    </div>
+
+    <p>
+      El embudo de conversión del panel de administración mostraba siempre datos históricos totales,
+      sin posibilidad de acotar el análisis a un intervalo de tiempo concreto.
+      Se ha implementado un selector con cuatro modos de filtrado.
+    </p>
+
+    <h3>Opciones disponibles</h3>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 18px">
+      <div class="card" style="text-align:center;padding:12px 8px">
+        <div class="card-title">Hoy</div>
+        <div class="card-body">00:00 → ahora</div>
+      </div>
+      <div class="card" style="text-align:center;padding:12px 8px">
+        <div class="card-title">7 días</div>
+        <div class="card-body">Default · últimos 7d</div>
+      </div>
+      <div class="card" style="text-align:center;padding:12px 8px">
+        <div class="card-title">30 días</div>
+        <div class="card-body">Último mes</div>
+      </div>
+      <div class="card success" style="text-align:center;padding:12px 8px">
+        <div class="card-title">Personalizado</div>
+        <div class="card-body">Desde / hasta (datepickers)</div>
+      </div>
+    </div>
+
+    <h3>Arquitectura de la solución</h3>
+
+    <div class="card info">
+      <div class="card-badge badge-blue">Base de datos</div>
+      <div class="card-title">Migración SQL — <code>get_funnel_stats(since, until)</code></div>
+      <div class="card-body">
+        La función PostgreSQL acepta ahora dos parámetros opcionales <code>timestamptz</code>.
+        Todos los contadores del embudo, la agregación <code>by_tool</code> y la serie
+        temporal <code>daily</code> filtran por el rango si se proporcionan.
+      </div>
+    </div>
+
+    <div class="card info">
+      <div class="card-badge badge-blue">Edge Function — admin-stats</div>
+      <div class="card-title">Soporte de <code>since</code>, <code>until</code> y <code>funnelOnly</code></div>
+      <div class="card-body">
+        Acepta POST body con los tres parámetros. El modo <code>funnelOnly: true</code>
+        omite las queries de usuarios y KPIs, devolviendo solo el embudo.
+        Esto hace que el cambio de período sea instantáneo sin recargar toda la tabla de usuarios.
+      </div>
+    </div>
+
+    <div class="card info">
+      <div class="card-badge badge-blue">Frontend — AdminDashboard</div>
+      <div class="card-title">Componente <code>FunnelDateBar</code> + <code>fetchFunnel()</code></div>
+      <div class="card-body">
+        Al cambiar de período, <code>fetchFunnel()</code> llama al edge function con
+        <code>funnelOnly: true</code>. El panel se atenúa con opacidad durante la carga.
+        <code>fetchData()</code> (recarga completa vía botón Refresh) también usa el período activo.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECCIÓN 2 ─────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div class="section-title">Auditoría del flujo de conversión</div>
+    </div>
+
+    <p>
+      Se realizó un análisis exhaustivo del flujo completo desde que el usuario pulsa
+      <strong>"Analizar Gratis"</strong> hasta completar el registro, revisando todos los
+      estados, llamadas a la API, eventos de analytics y posibles puntos de bloqueo.
+    </p>
+
+    <h3>Fallos silenciosos críticos encontrados y corregidos</h3>
+
+    <div class="card danger">
+      <div class="card-badge badge-red">Crítico · Corregido</div>
+      <div class="card-title">Edge function devuelve error → usuario bloqueado sin evento</div>
+      <div class="card-body">
+        Si <code>signup-instant</code> devolvía un error, el modal quedaba bloqueado mostrando
+        el mensaje de error, pero no se registraba ningún evento de analytics.
+        Era imposible saber cuántos intentos de registro fallaban ni por qué.<br><br>
+        <strong>Fix:</strong> Añadido <code>register_failed { method, error }</code>
+        inmediatamente antes del <code>return</code> de error.
+      </div>
+    </div>
+
+    <div class="card danger">
+      <div class="card-badge badge-red">Crítico · Corregido</div>
+      <div class="card-title">Login post-signup falla → usuario creado en DB pero sin sesión</div>
+      <div class="card-body">
+        El edge function creaba el usuario correctamente (<code>{ created: true }</code>),
+        pero el <code>signInWithPassword</code> posterior podía fallar por latencia o
+        condición de carrera. El usuario quedaba registrado en la base de datos pero
+        incapaz de iniciar sesión, sin ningún evento que reflejase el estado parcial.<br><br>
+        <strong>Fix:</strong> Añadido <code>register_partial_failure { step: 'auto_login' }</code>
+        en el <code>catch</code> de ese login.
+      </div>
+    </div>
+
+    <div class="card danger">
+      <div class="card-badge badge-red">Crítico · Corregido</div>
+      <div class="card-title">signup-instant — updateUserById fallaba silenciosamente</div>
+      <div class="card-body">
+        Cuando un usuario existente no confirmado intentaba registrarse, la función
+        llamaba a <code>updateUserById()</code> para confirmarlo. Si esa llamada fallaba,
+        se ignoraba el error y se devolvía <code>{ exists: true }</code> igualmente.
+        El <code>signInWithPassword</code> posterior entonces fallaba sin razón aparente.<br><br>
+        <strong>Fix:</strong> El error de <code>updateUserById</code> ahora se propaga
+        al cliente como <code>{ error: message }</code> con HTTP 400.
+      </div>
+    </div>
+
+    <h3>Eventos duplicados / inconsistentes corregidos</h3>
+
+    <div class="card warning">
+      <div class="card-badge badge-amber">Doble conteo · Corregido</div>
+      <div class="card-title">register_success (LoginModal) + signup_complete (useAuth) → mismo registro</div>
+      <div class="card-body">
+        Para registros por email se disparaban dos eventos distintos para el mismo acto.
+        Además, para registros por Google OAuth no se disparaba ningún evento
+        que el embudo SQL contabilizase, por lo que los registros por Google eran invisibles.<br><br>
+        <strong>Fix:</strong> <code>useAuth</code> es la única fuente de verdad.
+        Emite <code>register_success</code> (el evento del embudo) tanto para email como Google.
+        <code>LoginModal</code> ya no duplica. Ventana de detección de usuario nuevo
+        ampliada de 5 s a 10 s.
+      </div>
+    </div>
+
+    <h3>Nuevo evento de intento de registro</h3>
+    <div class="card success">
+      <div class="card-badge badge-green">Nuevo</div>
+      <div class="card-title">register_attempt { method: 'email' }</div>
+      <div class="card-body">
+        Se dispara antes de llamar al edge function. Permite calcular la tasa de conversión
+        real entre intentos y registros completados, y detectar si hay un problema
+        sistémico (muchos intentos sin éxito).
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECCIÓN 3 ─────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div class="section-title">Tracking completo del onboarding</div>
+    </div>
+
+    <p>
+      El flujo de onboarding de 5 pasos no disparaba <strong>ningún evento</strong>.
+      Era imposible saber cuántos usuarios completaban cada paso, cuándo abandonaban
+      o si aceptaban la misión propuesta. Se ha implementado cobertura total.
+    </p>
+
+    <h3>Eventos añadidos</h3>
+    <div class="events-grid">
+      <div class="event-pill new"><div class="dot dot-green"></div><code>onboarding_started</code></div>
+      <div class="event-pill new"><div class="dot dot-green"></div><code>onboarding_step_viewed { step: 1–5 }</code></div>
+      <div class="event-pill new"><div class="dot dot-green"></div><code>onboarding_mission_accepted</code></div>
+      <div class="event-pill new"><div class="dot dot-green"></div><code>onboarding_mission_skipped</code></div>
+      <div class="event-pill new"><div class="dot dot-green"></div><code>onboarding_completed</code></div>
+      <div class="event-pill new"><div class="dot dot-green"></div><code>onboarding_skipped { from_step }</code></div>
+    </div>
+
+    <p style="margin-top:12px">
+      El botón "Omitir" dentro del paso 4 y el botón "Empezar misión" ahora llaman a
+      callbacks diferenciados (<code>onAccept</code> / <code>onSkip</code>), lo que permite
+      medir la tasa de aceptación de la primera misión propuesta por la IA.
+    </p>
+
+    <p>
+      El skip global del onboarding también incluye <code>from_step</code> para saber
+      en qué punto exacto abandona cada usuario.
+    </p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECCIÓN 4 ─────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <div class="section-title">Mapa de eventos del embudo (estado final)</div>
+    </div>
+
+    <pre><span class="c">──── LANDING ────────────────────────────────────────────────────</span>
+<span class="ev">hero_analysis_start</span>     <span class="c">← usuario pulsa "Analizar Gratis"</span>
+  <span class="c">[16.5 s animación de carga]</span>
+<span class="ev">gate_shown</span>              <span class="c">← aparece la puerta de registro</span>
+<span class="ev">gate_register_click</span>     <span class="c">← clic en "Registrarse" o "Registrarse con Google"</span>
+
+<span class="c">──── REGISTRO (EMAIL) ───────────────────────────────────────────</span>
+<span class="ev">register_attempt</span>        <span class="c">← NUEVO · antes de llamar al edge function</span>
+  <span class="c">[edge function signup-instant]</span>
+<span class="ev">register_failed</span>         <span class="c">← NUEVO · si el edge function devuelve error</span>
+<span class="ev">register_partial_failure</span><span class="c">← NUEVO · si el login post-signup falla</span>
+<span class="ev">register_success</span>        <span class="c">← cuenta creada + sesión iniciada (via useAuth)</span>
+
+<span class="c">──── REGISTRO (GOOGLE) ──────────────────────────────────────────</span>
+<span class="ev">gate_register_click</span>     <span class="c">← { method: 'google_modal' }</span>
+  <span class="c">[OAuth redirect → regreso a la app]</span>
+<span class="ev">register_success</span>        <span class="c">← NUEVO · antes era invisible al embudo (via useAuth)</span>
+
+<span class="c">──── LOGIN (USUARIO EXISTENTE) ──────────────────────────────────</span>
+<span class="ev">login_success</span>           <span class="c">← via useAuth · para email y Google</span>
+
+<span class="c">──── ONBOARDING (5 PASOS) ───────────────────────────────────────</span>
+<span class="ev">onboarding_started</span>      <span class="c">← NUEVO</span>
+<span class="ev">onboarding_step_viewed</span>  <span class="c">← NUEVO · { step: 1 } a { step: 5 }</span>
+<span class="ev">onboarding_mission_accepted</span> <span class="c">← NUEVO · paso 4</span>
+<span class="ev">onboarding_mission_skipped</span>  <span class="c">← NUEVO · paso 4</span>
+<span class="ev">onboarding_completed</span>    <span class="c">← NUEVO · paso 5 "Abrir panel"</span>
+<span class="ev">onboarding_skipped</span>      <span class="c">← NUEVO · { from_step } skip global</span></pre>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECCIÓN 5 ─────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <div class="section-title">Resumen de cambios por severidad</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Severidad</th>
+          <th>Problema</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="card-badge badge-red">Crítico</span></td>
+          <td>Edge function error deja al usuario bloqueado sin evento</td>
+          <td><span class="card-badge badge-green">Corregido</span></td>
+        </tr>
+        <tr>
+          <td><span class="card-badge badge-red">Crítico</span></td>
+          <td>Login post-signup falla silenciosamente (usuario en DB sin sesión)</td>
+          <td><span class="card-badge badge-green">Corregido</span></td>
+        </tr>
+        <tr>
+          <td><span class="card-badge badge-red">Crítico</span></td>
+          <td>updateUserById en signup-instant ignora su propio error</td>
+          <td><span class="card-badge badge-green">Corregido</span></td>
+        </tr>
+        <tr>
+          <td><span class="card-badge badge-amber">Alto</span></td>
+          <td>Cero eventos en onboarding (5 pasos completamente opacos)</td>
+          <td><span class="card-badge badge-green">Corregido</span></td>
+        </tr>
+        <tr>
+          <td><span class="card-badge badge-amber">Alto</span></td>
+          <td>Registros por Google OAuth invisibles en el embudo</td>
+          <td><span class="card-badge badge-green">Corregido</span></td>
+        </tr>
+        <tr>
+          <td><span class="card-badge badge-blue">Medio</span></td>
+          <td>Doble evento (register_success + signup_complete) para email</td>
+          <td><span class="card-badge badge-green">Corregido</span></td>
+        </tr>
+        <tr>
+          <td><span class="card-badge badge-blue">Medio</span></td>
+          <td>Sin selector de período en el embudo de conversión</td>
+          <td><span class="card-badge badge-green">Implementado</span></td>
+        </tr>
+        <tr>
+          <td><span class="card-badge badge-blue">Medio</span></td>
+          <td>Ventana de detección de usuario nuevo demasiado estrecha (5 s)</td>
+          <td><span class="card-badge badge-green">Ampliada a 10 s</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ─── Archivos ── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <div class="section-title">Archivos modificados</div>
+    </div>
+    <div class="files-list">
+      <div class="file-item"><span class="ftype ftype-tsx">TSX</span>src/components/AdminDashboard.tsx</div>
+      <div class="file-item"><span class="ftype ftype-tsx">TSX</span>src/components/LoginModal.tsx</div>
+      <div class="file-item"><span class="ftype ftype-tsx">TSX</span>src/components/OnboardingFlow.tsx</div>
+      <div class="file-item"><span class="ftype ftype-ts">TS</span>src/hooks/useAuth.ts</div>
+      <div class="file-item"><span class="ftype ftype-fn">FN</span>supabase/functions/admin-stats/index.ts</div>
+      <div class="file-item"><span class="ftype ftype-fn">FN</span>supabase/functions/signup-instant/index.ts</div>
+      <div class="file-item"><span class="ftype ftype-sql">SQL</span>migrations/..._update_funnel_stats_date_params.sql</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>LocalSEOHub — Informe técnico de sesión</span>
+    <span>Generado el 13 de julio de 2026</span>
+  </div>
+
+</div>
+</body>
+</html>
