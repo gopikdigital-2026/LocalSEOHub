@@ -74,6 +74,7 @@ import { LogoIcon } from './components/Logo';
 const UrlAnalysisPanel  = lazy(() => import('./components/UrlAnalysisPanel'));
 const Navbar            = lazy(() => import('./components/Navbar'));
 const LandingPage       = lazy(() => import('./components/LandingPage'));
+const MetaAdsLanding    = lazy(() => import('./components/MetaAdsLanding'));
 const LoginModal        = lazy(() => import('./components/LoginModal'));
 const AdminDashboard    = lazy(() => import('./components/AdminDashboard'));
 const AIBusinessAdvisor = lazy(() => import('./components/AIBusinessAdvisor'));
@@ -4490,6 +4491,22 @@ export default function App() {
   }
 
   if (!DEV_PREVIEW && !user) {
+    // Meta Ads landing page — no navbar, no pricing, single CTA
+    if (window.location.pathname === '/analisis-google-maps') {
+      return (
+        <Suspense fallback={null}>
+          <MetaAdsLanding
+            onUnlock={() => {
+              try { sessionStorage.setItem('postAuthAction', 'checkout'); } catch { /* sandboxed */ }
+              setPendingCheckout(true);
+              setLoginInitialMode('signup');
+              setShowLogin(true);
+            }}
+          />
+          {showLogin && <LoginModal onClose={() => { setShowLogin(false); setOauthErrorMsg(''); setLoginInitialEmail(''); }} initialMode={loginInitialMode} initialError={oauthErrorMsg} initialEmail={loginInitialEmail} />}
+        </Suspense>
+      );
+    }
     // If user navigates to /admin while logged out, show login modal directly
     if (window.location.pathname === '/admin') {
       return (
