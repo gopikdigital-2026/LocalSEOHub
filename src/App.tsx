@@ -347,7 +347,14 @@ async function callGenerateContentPlan(
   const timeout = setTimeout(() => controller.abort(), 45000);
   track('tool_generate', { tool: 'generate-content-plan' });
   try {
-    const res = await fetch(url, {
+    const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-content-plan`;
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ product, city, platform, description }),
       signal: controller.signal,
     });
     const data = await res.json();

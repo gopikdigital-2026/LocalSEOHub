@@ -146,7 +146,10 @@ function MetricBar({ value, barClass, delay = 0 }: { value: number; barClass: st
 }
 
 // ─── SVG Radar chart ──────────────────────────────────────────────────────────
-function RadarChart({ metrics }: { metrics: typeof METRICS }) {
+type MetricItem = ReturnType<typeof getMetrics>;
+type EvolutionItem = ReturnType<typeof getEvolution>;
+
+function RadarChart({ metrics }: { metrics: MetricItem }) {
   const ref    = useRef<SVGSVGElement>(null);
   const inView = useInView(ref, { once: true });
   const [progress, setProgress] = useState(0);
@@ -221,7 +224,7 @@ function RadarChart({ metrics }: { metrics: typeof METRICS }) {
 }
 
 // ─── Evolution SVG chart ──────────────────────────────────────────────────────
-function EvolutionChart({ data }: { data: typeof EVOLUTION }) {
+function EvolutionChart({ data }: { data: EvolutionItem[] }) {
   const ref    = useRef<SVGSVGElement>(null);
   const inView = useInView(ref, { once: true });
   const [progress, setProgress] = useState(0);
