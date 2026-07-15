@@ -76,6 +76,7 @@ const Navbar            = lazy(() => import('./components/Navbar'));
 const LandingPage       = lazy(() => import('./components/LandingPage'));
 const MetaAdsLanding             = lazy(() => import('./components/MetaAdsLanding'));
 const ContentGeneratorLanding    = lazy(() => import('./components/ContentGeneratorLanding'));
+const BusinessAuditLanding       = lazy(() => import('./components/BusinessAuditLanding'));
 const LoginModal        = lazy(() => import('./components/LoginModal'));
 const AdminDashboard    = lazy(() => import('./components/AdminDashboard'));
 const AIBusinessAdvisor = lazy(() => import('./components/AIBusinessAdvisor'));
@@ -4496,6 +4497,15 @@ export default function App() {
     return (
       <Suspense fallback={null}>
         <ContentGeneratorLanding />
+      </Suspense>
+    );
+  }
+
+  // Business audit landing — fully public, no auth required
+  if (window.location.pathname === '/mas-clientes-google') {
+    return (
+      <Suspense fallback={null}>
+        <BusinessAuditLanding />
       </Suspense>
     );
   }
