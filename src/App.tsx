@@ -74,7 +74,8 @@ import { LogoIcon } from './components/Logo';
 const UrlAnalysisPanel  = lazy(() => import('./components/UrlAnalysisPanel'));
 const Navbar            = lazy(() => import('./components/Navbar'));
 const LandingPage       = lazy(() => import('./components/LandingPage'));
-const MetaAdsLanding    = lazy(() => import('./components/MetaAdsLanding'));
+const MetaAdsLanding             = lazy(() => import('./components/MetaAdsLanding'));
+const ContentGeneratorLanding    = lazy(() => import('./components/ContentGeneratorLanding'));
 const LoginModal        = lazy(() => import('./components/LoginModal'));
 const AdminDashboard    = lazy(() => import('./components/AdminDashboard'));
 const AIBusinessAdvisor = lazy(() => import('./components/AIBusinessAdvisor'));
@@ -4487,6 +4488,15 @@ export default function App() {
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
       </div>
+    );
+  }
+
+  // Content generator landing — fully public, no auth required
+  if (window.location.pathname === '/generador-contenido-seo') {
+    return (
+      <Suspense fallback={null}>
+        <ContentGeneratorLanding />
+      </Suspense>
     );
   }
 
