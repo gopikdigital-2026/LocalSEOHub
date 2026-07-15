@@ -77,6 +77,7 @@ const LandingPage       = lazy(() => import('./components/LandingPage'));
 const MetaAdsLanding             = lazy(() => import('./components/MetaAdsLanding'));
 const ContentGeneratorLanding    = lazy(() => import('./components/ContentGeneratorLanding'));
 const BusinessAuditLanding       = lazy(() => import('./components/BusinessAuditLanding'));
+const DiagnosticLanding          = lazy(() => import('./components/DiagnosticLanding'));
 const LoginModal        = lazy(() => import('./components/LoginModal'));
 const AdminDashboard    = lazy(() => import('./components/AdminDashboard'));
 const AIBusinessAdvisor = lazy(() => import('./components/AIBusinessAdvisor'));
@@ -4506,6 +4507,15 @@ export default function App() {
     return (
       <Suspense fallback={null}>
         <BusinessAuditLanding />
+      </Suspense>
+    );
+  }
+
+  // Diagnostic landing — fully public, no auth required
+  if (window.location.pathname === '/diagnostico-negocio') {
+    return (
+      <Suspense fallback={null}>
+        <DiagnosticLanding />
       </Suspense>
     );
   }
