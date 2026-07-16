@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowRight, Check, Copy, Mail, Eye, Calendar, Zap } from 'lucide-react';
+import { ArrowRight, Check, Copy, Mail, Lock, Eye, EyeOff, Calendar, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/analytics';
 import { trackLead, trackCompleteRegistration } from '../lib/pixel';
@@ -388,10 +388,12 @@ function ResultView({ business, plan, onRegister }: {
 
 // ─── Registration overlay ─────────────────────────────────────────────────────
 
-type RegState = 'form' | 'sending' | 'sent' | 'error';
+type RegState = 'form' | 'sending' | 'error';
 
 function RegisterOverlay({ business, onClose }: { business: string; onClose: () => void }) {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const [state, setState] = useState<RegState>('form');
   const [err, setErr] = useState('');
   const utm = useRef(getUtm());
@@ -402,31 +404,40 @@ function RegisterOverlay({ business, onClose }: { business: string; onClose: () 
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || password.length < 6) {
+      setErr(password.length < 6 ? 'La contraseña debe tener al menos 6 caracteres.' : '');
+      return;
+    }
     setState('sending');
     setErr('');
 
-    localStorage.setItem('_gp_name', business);
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-        emailRedirectTo: window.location.origin + '/plan-crecimiento-gratis',
-        shouldCreateUser: true,
-      },
+    const res = await supabase.functions.invoke('signup-instant', {
+      body: { email: email.trim(), password },
     });
 
-    if (error) {
+    if (res.error) {
       setState('error');
-      setErr('No pudimos enviar el enlace. Inténtalo de nuevo.');
-      track('register_failed', { business, error: error.message, ...utm.current });
+      setErr('No pudimos crear la cuenta. Inténtalo de nuevo.');
+      track('register_failed', { business, error: res.error.message, ...utm.current });
+      return;
+    }
+
+    const { error: loginErr } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (loginErr) {
+      setState('error');
+      setErr('Cuenta creada pero no pudimos iniciar sesión. Prueba a entrar con tu email y contraseña.');
+      track('register_failed', { business, error: loginErr.message, step: 'auto_login', ...utm.current });
       return;
     }
 
     trackLead();
     trackCompleteRegistration();
-    track('register_success', { business, method: 'magic_link', ...utm.current });
-    setState('sent');
+    track('register_success', { business, method: 'email', ...utm.current });
+    window.location.href = '/';
   };
 
   return (
@@ -443,46 +454,48 @@ function RegisterOverlay({ business, onClose }: { business: string; onClose: () 
         </div>
 
         <div className="px-6 py-5">
-          {state === 'sent' ? (
-            <div className="text-center py-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4"
-                style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}>
-                <Mail size={20} className="text-emerald-400" />
-              </div>
-              <p className="text-white font-bold text-[15px] mb-1">Revisa tu email</p>
-              <p className="text-slate-500 text-[13px] leading-relaxed">
-                Hemos enviado un enlace a <span className="text-slate-300">{email}</span>.
-                <br />Al hacer clic accederás a tu plan completo.
-              </p>
+          <form onSubmit={submit} className="space-y-3">
+            <p className="text-white font-bold text-[15px] mb-1">Crea tu cuenta gratuita</p>
+            <p className="text-slate-500 text-[12px] mb-3">Accede inmediatamente a tu plan completo.</p>
+            <div className="relative">
+              <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+              <input
+                type="email" required autoComplete="email"
+                value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="Tu email"
+                className="w-full rounded-xl pl-10 pr-4 py-4 text-sm text-white placeholder-slate-600 outline-none"
+                style={{ background: 'rgba(3,8,16,0.88)', border: '1px solid rgba(255,255,255,0.09)' }}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
+              />
             </div>
-          ) : (
-            <form onSubmit={submit} className="space-y-3">
-              <p className="text-white font-bold text-[15px] mb-1">Continúa con tu plan</p>
-              <p className="text-slate-500 text-[12px] mb-3">Introduce tu email para guardar el plan y acceder cuando quieras.</p>
-              <div className="relative">
-                <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
-                <input
-                  type="email" required autoComplete="email"
-                  value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="Tu email"
-                  className="w-full rounded-xl pl-10 pr-4 py-4 text-sm text-white placeholder-slate-600 outline-none"
-                  style={{ background: 'rgba(3,8,16,0.88)', border: '1px solid rgba(255,255,255,0.09)' }}
-                  onFocus={e => (e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)')}
-                  onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
-                />
-              </div>
-              {err && <p className="text-red-400 text-xs">{err}</p>}
-              <button type="submit" disabled={state === 'sending'}
-                className="w-full font-bold text-[14px] py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-60"
-                style={{ background: '#10b981', color: '#fff', boxShadow: '0 0 0 1px rgba(16,185,129,0.3), 0 6px 20px rgba(16,185,129,0.2)' }}>
-                {state === 'sending'
-                  ? <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Enviando...</>
-                  : <>Continuar con mi plan <ArrowRight size={14} /></>
-                }
+            <div className="relative">
+              <Lock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+              <input
+                type={showPwd ? 'text' : 'password'} required minLength={6} autoComplete="new-password"
+                value={password} onChange={e => setPassword(e.target.value)}
+                placeholder="Contraseña (mín. 6 caracteres)"
+                className="w-full rounded-xl pl-10 pr-12 py-4 text-sm text-white placeholder-slate-600 outline-none"
+                style={{ background: 'rgba(3,8,16,0.88)', border: '1px solid rgba(255,255,255,0.09)' }}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
+              />
+              <button type="button" onClick={() => setShowPwd(!showPwd)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors">
+                {showPwd ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
-              <p className="text-center text-slate-700 text-[11px]">Sin tarjeta · Sin compromiso</p>
-            </form>
-          )}
+            </div>
+            {err && <p className="text-red-400 text-xs">{err}</p>}
+            <button type="submit" disabled={state === 'sending'}
+              className="w-full font-bold text-[14px] py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-60"
+              style={{ background: '#10b981', color: '#fff', boxShadow: '0 0 0 1px rgba(16,185,129,0.3), 0 6px 20px rgba(16,185,129,0.2)' }}>
+              {state === 'sending'
+                ? <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Creando cuenta...</>
+                : <>Guardar y desbloquear mi plan <ArrowRight size={14} /></>
+              }
+            </button>
+            <p className="text-center text-slate-700 text-[11px]">Sin tarjeta. Acceso inmediato.</p>
+          </form>
         </div>
       </div>
     </div>
@@ -507,24 +520,6 @@ export default function GrowthPlanLanding() {
   const typedOnce = useRef(false);
   const scrollTracked = useRef(false);
   const loadTs = useRef(Date.now());
-
-  // ── Magic-link return ──────────────────────────────────────
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const saved = localStorage.getItem('_gp_name');
-        if (saved) {
-          setName(saved);
-          setPlan(getPlan(saved));
-          setStage('result');
-          setShowRegister(false);
-          trackCompleteRegistration();
-          track('register_success', { business: saved, method: 'magic_link_return', ...utm.current });
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   // ── Page tracking ──────────────────────────────────────────
   useEffect(() => {
