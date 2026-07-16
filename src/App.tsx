@@ -79,6 +79,7 @@ const ContentGeneratorLanding    = lazy(() => import('./components/ContentGenera
 const BusinessAuditLanding       = lazy(() => import('./components/BusinessAuditLanding'));
 const DiagnosticLanding          = lazy(() => import('./components/DiagnosticLanding'));
 const PotentialLanding           = lazy(() => import('./components/PotentialLanding'));
+const GrowthPlanLanding          = lazy(() => import('./components/GrowthPlanLanding'));
 const LoginModal        = lazy(() => import('./components/LoginModal'));
 const AdminDashboard    = lazy(() => import('./components/AdminDashboard'));
 const AIBusinessAdvisor = lazy(() => import('./components/AIBusinessAdvisor'));
@@ -4526,6 +4527,15 @@ export default function App() {
     return (
       <Suspense fallback={null}>
         <PotentialLanding />
+      </Suspense>
+    );
+  }
+
+  // Growth plan landing — fully public, no auth required
+  if (window.location.pathname === '/plan-crecimiento-gratis') {
+    return (
+      <Suspense fallback={null}>
+        <GrowthPlanLanding />
       </Suspense>
     );
   }
