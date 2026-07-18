@@ -80,6 +80,7 @@ const BusinessAuditLanding       = lazy(() => import('./components/BusinessAudit
 const DiagnosticLanding          = lazy(() => import('./components/DiagnosticLanding'));
 const PotentialLanding           = lazy(() => import('./components/PotentialLanding'));
 const GrowthPlanLanding          = lazy(() => import('./components/GrowthPlanLanding'));
+const CopilotLanding             = lazy(() => import('./components/CopilotLanding'));
 const LoginModal        = lazy(() => import('./components/LoginModal'));
 const AdminDashboard    = lazy(() => import('./components/AdminDashboard'));
 const AIBusinessAdvisor = lazy(() => import('./components/AIBusinessAdvisor'));
@@ -4536,6 +4537,15 @@ export default function App() {
     return (
       <Suspense fallback={null}>
         <GrowthPlanLanding />
+      </Suspense>
+    );
+  }
+
+  // Copilot landing — fully public, no auth required
+  if (window.location.pathname === '/copiloto-ia') {
+    return (
+      <Suspense fallback={null}>
+        <CopilotLanding />
       </Suspense>
     );
   }
