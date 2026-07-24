@@ -4496,6 +4496,16 @@ export default function App() {
     );
   }
 
+  // LocalSEOHub V2 — served under /app-v2/*
+  if (window.location.pathname.startsWith('/app-v2')) {
+    const AppV2 = React.lazy(() => import('./app-v2/AppV2'));
+    return (
+      <Suspense fallback={null}>
+        <AppV2 />
+      </Suspense>
+    );
+  }
+
   // Content generator landing — fully public, no auth required
   if (window.location.pathname === '/generador-contenido-seo') {
     return (
