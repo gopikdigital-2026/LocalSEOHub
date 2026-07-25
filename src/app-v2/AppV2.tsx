@@ -6,6 +6,7 @@ import { LoadingState } from '../components/ui';
 
 const TodayPage = lazy(() => import('./routes/TodayPage'));
 const PlaceholderPage = lazy(() => import('./routes/PlaceholderPage'));
+const ExecutionPage = lazy(() => import('../features/execution/ExecutionPage'));
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -62,6 +63,13 @@ export default function AppV2() {
             <Route path="visibilidad" element={<PlaceholderPage title="Visibilidad" description="Analiza como apareces en buscadores y mapas." />} />
             <Route path="informes" element={<PlaceholderPage title="Informes" description="Consulta el progreso semanal y mensual de tu negocio." />} />
           </Route>
+          <Route path="/app-v2/ejecutar/:recommendationId" element={
+            <div className="min-h-screen bg-v2-bg-primary font-v2">
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+                <ExecutionPage />
+              </div>
+            </div>
+          } />
         </Routes>
       </Suspense>
     </AuthGate>

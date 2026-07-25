@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { DataStatusBadge } from '../../components/data-status';
 import { Badge, Button } from '../../components/ui';
@@ -6,7 +7,6 @@ import {
   trackDailyBriefingView,
   trackRecommendationExecute,
   trackQuickActionClick,
-  trackTaskCompleted,
   trackTomorrowPreviewView,
 } from '../../services/analytics/v2Analytics';
 import { getDailyGoal, getDailyActions } from './engine';
@@ -23,7 +23,6 @@ import {
   Target,
   TrendingUp,
   Calendar,
-  ChevronRight,
 } from 'lucide-react';
 
 // ─── Quick Action Bar ───────────────────────────────────────────────────────
@@ -240,25 +239,6 @@ function CompletedTodayCard({ count, timeMinutes }: { count: number; timeMinutes
   );
 }
 
-// ─── Task Completed Feedback ────────────────────────────────────────────────
-
-function TaskCompletedFeedback({ onNext }: { onNext: () => void }) {
-  return (
-    <div className="rounded-v2-xl border border-v2-success-200 bg-white p-6 text-center">
-      <div className="w-12 h-12 rounded-full bg-v2-success-50 border border-v2-success-200 flex items-center justify-center mx-auto mb-3">
-        <Check size={20} className="text-v2-success-600" />
-      </div>
-      <p className="text-v2-base font-semibold text-v2-text-primary mb-1">Accion completada</p>
-      <p className="text-v2-sm text-v2-text-secondary mb-4">
-        Esta mejora ayudara a mantener activo tu perfil.
-      </p>
-      <Button size="sm" variant="secondary" onClick={onNext} icon={<ChevronRight size={14} />}>
-        Ver siguiente accion
-      </Button>
-    </div>
-  );
-}
-
 // ─── Tomorrow Preview Card ──────────────────────────────────────────────────
 
 function TomorrowPreviewCard({ topics }: { topics: string[] }) {
@@ -285,20 +265,12 @@ function TomorrowPreviewCard({ topics }: { topics: string[] }) {
 
 export default function DailyBriefingPage() {
   const { session } = useAuth();
+  const navigate = useNavigate();
   const userName = session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'Usuario';
-
-  const [completedIds, setCompletedIds] = useState<string[]>([]);
-  const [lastCompleted, setLastCompleted] = useState<string | null>(null);
 
   const dailyGoal = getDailyGoal(demoRecommendations);
   const dailyActions = getDailyActions(demoRecommendations, 3);
-  const { weeklyProgress, tomorrowTopics } = demoDailyBriefing;
-
-  const completedToday = completedIds.length;
-  const timeInvested = completedIds.reduce((sum, id) => {
-    const rec = demoRecommendations.find((r) => r.id === id);
-    return sum + (rec?.estimatedTimeMinutes ?? 0);
-  }, 0);
+  const { weeklyProgress, tomorrowTopics, completedToday, timeInvestedMinutes } = demoDailyBriefing;
 
   useEffect(() => {
     trackDailyBriefingView();
@@ -313,17 +285,8 @@ export default function DailyBriefingPage() {
 
   function handleExecute(id: string) {
     trackRecommendationExecute(id, 'demo');
-    setCompletedIds((prev) => [...prev, id]);
-    setLastCompleted(id);
-    trackTaskCompleted(id, demoRecommendations.find((r) => r.id === id)?.estimatedTimeMinutes ?? 0);
+    navigate(`/app-v2/ejecutar/${id}`);
   }
-
-  function handleNextAfterComplete() {
-    setLastCompleted(null);
-  }
-
-  const activeActions = dailyActions.filter((a) => !completedIds.includes(a.id));
-  const lastCompletedRec = demoRecommendations.find((r) => r.id === lastCompleted);
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-8">
@@ -343,31 +306,24 @@ export default function DailyBriefingPage() {
       {/* Daily Goal */}
       {dailyGoal && <DailyGoalCard goal={dailyGoal} />}
 
-      {/* Task completed feedback */}
-      {lastCompletedRec && (
-        <TaskCompletedFeedback onNext={handleNextAfterComplete} />
-      )}
-
       {/* Completed today */}
-      <CompletedTodayCard count={completedToday} timeMinutes={timeInvested} />
+      <CompletedTodayCard count={completedToday} timeMinutes={timeInvestedMinutes} />
 
       {/* Priority Actions */}
-      {activeActions.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-v2-base font-semibold text-v2-text-primary">Acciones prioritarias</h2>
-            <DataStatusBadge confidence="demo" />
-          </div>
-          <div className="space-y-3">
-            {activeActions.map((rec) => (
-              <RecommendationCard key={rec.id} rec={rec} onExecute={handleExecute} />
-            ))}
-          </div>
-        </section>
-      )}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-v2-base font-semibold text-v2-text-primary">Acciones prioritarias</h2>
+          <DataStatusBadge confidence="demo" />
+        </div>
+        <div className="space-y-3">
+          {dailyActions.map((rec) => (
+            <RecommendationCard key={rec.id} rec={rec} onExecute={handleExecute} />
+          ))}
+        </div>
+      </section>
 
       {/* Weekly Progress */}
-      <WeeklyProgressCard completed={weeklyProgress.completed + completedToday} total={weeklyProgress.total} />
+      <WeeklyProgressCard completed={weeklyProgress.completed} total={weeklyProgress.total} />
 
       {/* Tomorrow Preview */}
       <TomorrowPreviewCard topics={tomorrowTopics} />

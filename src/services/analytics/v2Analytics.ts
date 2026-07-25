@@ -100,3 +100,33 @@ export function trackWeeklyProgressView() {
 export function trackTomorrowPreviewView() {
   trackV2('tomorrow_preview_view');
 }
+
+// ─── Execution/Workspace Events ─────────────────────────────────────────────
+
+export function trackWorkspaceOpen(recommendationId: string, workspaceType: string) {
+  trackV2('workspace_open', { recommendation_id: recommendationId, route: workspaceType });
+}
+
+export function trackWorkspaceClose(recommendationId: string) {
+  trackV2('workspace_close', { recommendation_id: recommendationId });
+}
+
+export function trackWorkspaceComplete(recommendationId: string) {
+  trackV2('workspace_complete', { recommendation_id: recommendationId });
+}
+
+export function trackContentCopy() {
+  trackV2('content_copy');
+}
+
+export function trackContentEdit() {
+  trackV2('content_edit');
+}
+
+export function trackRecommendationVerified(recommendationId: string) {
+  trackV2('recommendation_verified', { recommendation_id: recommendationId });
+}
+
+export function trackExecutionFinished(recommendationId: string) {
+  trackV2('execution_finished', { recommendation_id: recommendationId });
+}
