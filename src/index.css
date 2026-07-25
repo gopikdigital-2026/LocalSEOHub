@@ -184,3 +184,18 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes animateIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-in {
+  animation: animateIn 0.2s ease-out both;
+}
