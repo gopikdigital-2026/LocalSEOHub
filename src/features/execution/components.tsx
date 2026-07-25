@@ -35,24 +35,16 @@ export function WorkspaceLayout({
 }: WorkspaceLayoutProps) {
   return (
     <div className="min-h-[calc(100vh-4rem)] lg:min-h-screen flex flex-col">
-      {/* Header */}
       <WorkspaceHeader recommendation={recommendation} onBack={onBack} />
-
-      {/* Content */}
       <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8">
-        {/* Left: Info / Sidebar */}
         <div className="w-full lg:w-80 xl:w-96 shrink-0 space-y-5 order-2 lg:order-1">
           {sidebar}
           <HistoryTimeline entries={executionState.history} />
         </div>
-
-        {/* Right: Action area */}
         <div className="flex-1 order-1 lg:order-2">
           {children}
         </div>
       </div>
-
-      {/* Mobile bottom action */}
       {executionState.status !== 'completed' && executionState.status !== 'verified' && (
         <div className="lg:hidden fixed bottom-0 inset-x-0 p-4 bg-white border-t border-v2-border-light safe-area-pb z-20">
           <Button className="w-full" onClick={onComplete} icon={<Check size={16} />}>
@@ -105,7 +97,6 @@ export function RecommendationSummary({ recommendation }: { recommendation: Reco
           {recommendation.explanation}
         </p>
       </div>
-
       <div className="pt-3 border-t border-v2-border-light space-y-2">
         <InfoRow label="Fuente" value={recommendation.source} />
         <InfoRow label="Impacto" value={impactLabels[recommendation.impact]} />
@@ -120,7 +111,6 @@ export function RecommendationSummary({ recommendation }: { recommendation: Reco
 
 export function HistoryTimeline({ entries }: { entries: ExecutionHistoryEntry[] }) {
   if (entries.length === 0) return null;
-
   return (
     <div className="rounded-v2-xl border border-v2-border-light bg-white p-5">
       <p className="text-v2-xs font-semibold text-v2-text-tertiary uppercase tracking-wider mb-4">
@@ -140,10 +130,7 @@ export function HistoryTimeline({ entries }: { entries: ExecutionHistoryEntry[] 
               <p className="text-v2-sm text-v2-text-primary">{entry.label}</p>
               <p className="text-v2-xs text-v2-text-tertiary">
                 {new Date(entry.timestamp).toLocaleString('es-ES', {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit',
+                  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                 })}
               </p>
             </div>
@@ -196,7 +183,6 @@ export function PreparedContentBlock({ title, content, editable = true, onCopy }
           </button>
         </div>
       </div>
-
       {editing ? (
         <textarea
           value={value}

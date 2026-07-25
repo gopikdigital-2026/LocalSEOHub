@@ -24,7 +24,7 @@ import {
   Send,
 } from 'lucide-react';
 
-// ─── Review Workspace ───────────────────────────────────────────────────────
+// ─── Shared Props ───────────────────────────────────────────────────────────
 
 interface WorkspaceProps {
   recommendation: Recommendation;
@@ -32,6 +32,8 @@ interface WorkspaceProps {
   onStateChange: (state: ExecutionState) => void;
   onBack: () => void;
 }
+
+// ─── Review Workspace ───────────────────────────────────────────────────────
 
 export function ReviewWorkspace({ recommendation, executionState, onStateChange, onBack }: WorkspaceProps) {
   const [respondedIds, setRespondedIds] = useState<string[]>([]);
@@ -42,18 +44,8 @@ export function ReviewWorkspace({ recommendation, executionState, onStateChange,
 
   if (isCompleted) {
     return (
-      <WorkspaceLayout
-        recommendation={recommendation}
-        executionState={executionState}
-        sidebar={<RecommendationSummary recommendation={recommendation} />}
-        onBack={onBack}
-        onComplete={() => {}}
-      >
-        <CompletionCard
-          title="Resenas respondidas"
-          message="Has respondido las resenas pendientes. Esto mejora la confianza de nuevos clientes y senala actividad a Google."
-          onBack={onBack}
-        />
+      <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={<RecommendationSummary recommendation={recommendation} />} onBack={onBack} onComplete={() => {}}>
+        <CompletionCard title="Resenas respondidas" message="Has respondido las resenas pendientes. Esto mejora la confianza de nuevos clientes y senala actividad a Google." onBack={onBack} />
       </WorkspaceLayout>
     );
   }
@@ -66,10 +58,7 @@ export function ReviewWorkspace({ recommendation, executionState, onStateChange,
   }
 
   function handleComplete() {
-    const newState = advanceExecution(
-      advanceExecution(executionState, 'running'),
-      'completed'
-    );
+    const newState = advanceExecution(advanceExecution(executionState, 'running'), 'completed');
     onStateChange(newState);
     trackWorkspaceComplete(recommendation.id);
   }
@@ -80,13 +69,7 @@ export function ReviewWorkspace({ recommendation, executionState, onStateChange,
   }
 
   return (
-    <WorkspaceLayout
-      recommendation={recommendation}
-      executionState={executionState}
-      sidebar={<RecommendationSummary recommendation={recommendation} />}
-      onBack={onBack}
-      onComplete={handleComplete}
-    >
+    <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={<RecommendationSummary recommendation={recommendation} />} onBack={onBack} onComplete={handleComplete}>
       <div className="space-y-4">
         {demoReviews.map((review) => {
           const isResponded = respondedIds.includes(review.id);
@@ -94,13 +77,7 @@ export function ReviewWorkspace({ recommendation, executionState, onStateChange,
           const response = editedResponses[review.id] ?? review.suggestedResponse;
 
           return (
-            <div
-              key={review.id}
-              className={`rounded-v2-xl border bg-white p-5 transition-all ${
-                isResponded ? 'border-v2-success-200 opacity-60' : 'border-v2-border-light'
-              }`}
-            >
-              {/* Review header */}
+            <div key={review.id} className={`rounded-v2-xl border bg-white p-5 transition-all ${isResponded ? 'border-v2-success-200 opacity-60' : 'border-v2-border-light'}`}>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <p className="text-v2-sm font-semibold text-v2-text-primary">{review.author}</p>
@@ -108,65 +85,33 @@ export function ReviewWorkspace({ recommendation, executionState, onStateChange,
                 </div>
                 <div className="flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      size={12}
-                      className={i < review.rating ? 'text-v2-warning-400 fill-v2-warning-400' : 'text-v2-neutral-200'}
-                    />
+                    <Star key={i} size={12} className={i < review.rating ? 'text-v2-warning-400 fill-v2-warning-400' : 'text-v2-neutral-200'} />
                   ))}
                 </div>
               </div>
 
-              {/* Review text */}
-              <p className="text-v2-sm text-v2-text-secondary leading-relaxed mb-4">
-                "{review.text}"
-              </p>
+              <p className="text-v2-sm text-v2-text-secondary leading-relaxed mb-4">"{review.text}"</p>
 
-              {/* Response section */}
               {!isResponded && (
                 <div className="pt-4 border-t border-v2-border-light space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-v2-xs font-medium text-v2-text-tertiary flex items-center gap-1.5">
-                      <MessageSquare size={12} />
-                      Respuesta sugerida
+                      <MessageSquare size={12} /> Respuesta sugerida
                     </p>
-                    <button
-                      onClick={() => setEditingId(isEditing ? null : review.id)}
-                      className="text-v2-xs text-v2-primary-600 hover:text-v2-primary-700 font-medium"
-                    >
+                    <button onClick={() => setEditingId(isEditing ? null : review.id)} className="text-v2-xs text-v2-primary-600 hover:text-v2-primary-700 font-medium">
                       {isEditing ? 'Vista previa' : 'Editar'}
                     </button>
                   </div>
 
                   {isEditing ? (
-                    <textarea
-                      value={response}
-                      onChange={(e) => handleEdit(review.id, e.target.value)}
-                      className="w-full rounded-v2-lg border border-v2-border-light bg-v2-neutral-50 px-4 py-3 text-v2-sm
-                        text-v2-text-primary leading-relaxed focus:outline-none focus:border-v2-primary-500
-                        focus:ring-2 focus:ring-v2-primary-500/10 resize-y min-h-[80px] transition-all"
-                    />
+                    <textarea value={response} onChange={(e) => handleEdit(review.id, e.target.value)} className="w-full rounded-v2-lg border border-v2-border-light bg-v2-neutral-50 px-4 py-3 text-v2-sm text-v2-text-primary leading-relaxed focus:outline-none focus:border-v2-primary-500 focus:ring-2 focus:ring-v2-primary-500/10 resize-y min-h-[80px] transition-all" />
                   ) : (
-                    <p className="text-v2-sm text-v2-text-secondary leading-relaxed bg-v2-neutral-50 rounded-v2-lg px-4 py-3">
-                      {response}
-                    </p>
+                    <p className="text-v2-sm text-v2-text-secondary leading-relaxed bg-v2-neutral-50 rounded-v2-lg px-4 py-3">{response}</p>
                   )}
 
                   <div className="flex items-center gap-2">
-                    <Button size="sm" onClick={() => handleRespond(review.id)} icon={<Send size={13} />}>
-                      Enviar respuesta
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        navigator.clipboard.writeText(response);
-                        trackContentCopy();
-                      }}
-                      icon={<Copy size={13} />}
-                    >
-                      Copiar
-                    </Button>
+                    <Button size="sm" onClick={() => handleRespond(review.id)} icon={<Send size={13} />}>Enviar respuesta</Button>
+                    <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(response); trackContentCopy(); }} icon={<Copy size={13} />}>Copiar</Button>
                   </div>
                 </div>
               )}
@@ -181,11 +126,8 @@ export function ReviewWorkspace({ recommendation, executionState, onStateChange,
           );
         })}
 
-        {/* Complete all button */}
         <div className="hidden lg:block pt-4">
-          <Button onClick={handleComplete} icon={<Check size={16} />}>
-            Marcar todas como respondidas
-          </Button>
+          <Button onClick={handleComplete} icon={<Check size={16} />}>Marcar todas como respondidas</Button>
         </div>
       </div>
     </WorkspaceLayout>
@@ -200,51 +142,24 @@ export function PostWorkspace({ recommendation, executionState, onStateChange, o
 
   if (isCompleted || published) {
     return (
-      <WorkspaceLayout
-        recommendation={recommendation}
-        executionState={executionState}
-        sidebar={<RecommendationSummary recommendation={recommendation} />}
-        onBack={onBack}
-        onComplete={() => {}}
-      >
-        <CompletionCard
-          title="Publicacion lista"
-          message="El contenido esta preparado. Publicalo en tu perfil de Google Business para mantener tu perfil activo y visible."
-          onBack={onBack}
-        />
+      <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={<RecommendationSummary recommendation={recommendation} />} onBack={onBack} onComplete={() => {}}>
+        <CompletionCard title="Publicacion lista" message="El contenido esta preparado. Publicalo en tu perfil de Google Business para mantener tu perfil activo y visible." onBack={onBack} />
       </WorkspaceLayout>
     );
   }
 
   function handlePublish() {
-    const newState = advanceExecution(
-      advanceExecution(executionState, 'running'),
-      'completed'
-    );
+    const newState = advanceExecution(advanceExecution(executionState, 'running'), 'completed');
     onStateChange(newState);
     setPublished(true);
     trackWorkspaceComplete(recommendation.id);
   }
 
   return (
-    <WorkspaceLayout
-      recommendation={recommendation}
-      executionState={executionState}
-      sidebar={<RecommendationSummary recommendation={recommendation} />}
-      onBack={onBack}
-      onComplete={handlePublish}
-    >
+    <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={<RecommendationSummary recommendation={recommendation} />} onBack={onBack} onComplete={handlePublish}>
       <div className="space-y-5">
-        <PreparedContentBlock
-          title="Titulo de la publicacion"
-          content={demoPostDraft.title}
-          onCopy={() => trackContentCopy()}
-        />
-        <PreparedContentBlock
-          title="Contenido"
-          content={demoPostDraft.body}
-          onCopy={() => trackContentCopy()}
-        />
+        <PreparedContentBlock title="Titulo de la publicacion" content={demoPostDraft.title} onCopy={() => trackContentCopy()} />
+        <PreparedContentBlock title="Contenido" content={demoPostDraft.body} onCopy={() => trackContentCopy()} />
         {demoPostDraft.callToAction && (
           <div className="rounded-v2-xl border border-v2-border-light bg-white p-5">
             <p className="text-v2-xs font-medium text-v2-text-tertiary mb-2">Llamada a la accion</p>
@@ -252,9 +167,7 @@ export function PostWorkspace({ recommendation, executionState, onStateChange, o
           </div>
         )}
         <div className="hidden lg:block pt-4">
-          <Button onClick={handlePublish} icon={<Check size={16} />}>
-            Marcar como publicada
-          </Button>
+          <Button onClick={handlePublish} icon={<Check size={16} />}>Marcar como publicada</Button>
         </div>
       </div>
     </WorkspaceLayout>
@@ -269,18 +182,8 @@ export function ProfileWorkspace({ recommendation, executionState, onStateChange
 
   if (isCompleted) {
     return (
-      <WorkspaceLayout
-        recommendation={recommendation}
-        executionState={executionState}
-        sidebar={<RecommendationSummary recommendation={recommendation} />}
-        onBack={onBack}
-        onComplete={() => {}}
-      >
-        <CompletionCard
-          title="Perfil optimizado"
-          message="Los cambios propuestos estan listos para aplicar en tu perfil de Google Business. La optimizacion ayudara a mejorar tu posicionamiento local."
-          onBack={onBack}
-        />
+      <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={<RecommendationSummary recommendation={recommendation} />} onBack={onBack} onComplete={() => {}}>
+        <CompletionCard title="Perfil optimizado" message="Los cambios propuestos estan listos para aplicar en tu perfil de Google Business. La optimizacion ayudara a mejorar tu posicionamiento local." onBack={onBack} />
       </WorkspaceLayout>
     );
   }
@@ -290,37 +193,21 @@ export function ProfileWorkspace({ recommendation, executionState, onStateChange
   }
 
   function handleComplete() {
-    const newState = advanceExecution(
-      advanceExecution(executionState, 'running'),
-      'completed'
-    );
+    const newState = advanceExecution(advanceExecution(executionState, 'running'), 'completed');
     onStateChange(newState);
     trackWorkspaceComplete(recommendation.id);
   }
 
   return (
-    <WorkspaceLayout
-      recommendation={recommendation}
-      executionState={executionState}
-      sidebar={<RecommendationSummary recommendation={recommendation} />}
-      onBack={onBack}
-      onComplete={handleComplete}
-    >
+    <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={<RecommendationSummary recommendation={recommendation} />} onBack={onBack} onComplete={handleComplete}>
       <div className="space-y-5">
         {demoProfileOptimizations.map((opt) => (
           <div key={opt.field}>
             <DiffBlock label={opt.field} current={opt.current} proposed={opt.proposed} />
             {!acceptedFields.includes(opt.field) ? (
               <div className="mt-3 flex gap-2">
-                <Button size="sm" onClick={() => handleAccept(opt.field)} icon={<Check size={13} />}>
-                  Aceptar cambio
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => {
-                  navigator.clipboard.writeText(opt.proposed);
-                  trackContentCopy();
-                }} icon={<Copy size={13} />}>
-                  Copiar
-                </Button>
+                <Button size="sm" onClick={() => handleAccept(opt.field)} icon={<Check size={13} />}>Aceptar cambio</Button>
+                <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(opt.proposed); trackContentCopy(); }} icon={<Copy size={13} />}>Copiar</Button>
               </div>
             ) : (
               <div className="mt-3 flex items-center gap-2">
@@ -331,9 +218,7 @@ export function ProfileWorkspace({ recommendation, executionState, onStateChange
           </div>
         ))}
         <div className="hidden lg:block pt-4">
-          <Button onClick={handleComplete} icon={<Check size={16} />}>
-            Aplicar cambios al perfil
-          </Button>
+          <Button onClick={handleComplete} icon={<Check size={16} />}>Aplicar cambios al perfil</Button>
         </div>
       </div>
     </WorkspaceLayout>
@@ -348,27 +233,14 @@ export function ContentWorkspace({ recommendation, executionState, onStateChange
 
   if (isCompleted) {
     return (
-      <WorkspaceLayout
-        recommendation={recommendation}
-        executionState={executionState}
-        sidebar={<RecommendationSummary recommendation={recommendation} />}
-        onBack={onBack}
-        onComplete={() => {}}
-      >
-        <CompletionCard
-          title="Contenido preparado"
-          message="El contenido esta listo para publicar. Mantener una cadencia de publicacion constante mejora tu visibilidad online."
-          onBack={onBack}
-        />
+      <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={<RecommendationSummary recommendation={recommendation} />} onBack={onBack} onComplete={() => {}}>
+        <CompletionCard title="Contenido preparado" message="El contenido esta listo para publicar. Mantener una cadencia de publicacion constante mejora tu visibilidad online." onBack={onBack} />
       </WorkspaceLayout>
     );
   }
 
   function handleComplete() {
-    const newState = advanceExecution(
-      advanceExecution(executionState, 'running'),
-      'completed'
-    );
+    const newState = advanceExecution(advanceExecution(executionState, 'running'), 'completed');
     onStateChange(newState);
     trackWorkspaceComplete(recommendation.id);
   }
@@ -376,25 +248,13 @@ export function ContentWorkspace({ recommendation, executionState, onStateChange
   const selected = demoContentIdeas.find((c) => c.id === selectedId);
 
   return (
-    <WorkspaceLayout
-      recommendation={recommendation}
-      executionState={executionState}
-      sidebar={<RecommendationSummary recommendation={recommendation} />}
-      onBack={onBack}
-      onComplete={handleComplete}
-    >
+    <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={<RecommendationSummary recommendation={recommendation} />} onBack={onBack} onComplete={handleComplete}>
       <div className="space-y-5">
         {!selected ? (
           <>
-            <p className="text-v2-sm text-v2-text-secondary">
-              Selecciona una idea de contenido para desarrollar:
-            </p>
+            <p className="text-v2-sm text-v2-text-secondary">Selecciona una idea de contenido para desarrollar:</p>
             {demoContentIdeas.map((idea) => (
-              <button
-                key={idea.id}
-                onClick={() => setSelectedId(idea.id)}
-                className="w-full text-left rounded-v2-xl border border-v2-border-light bg-white p-5 hover:border-v2-primary-200 transition-all"
-              >
+              <button key={idea.id} onClick={() => setSelectedId(idea.id)} className="w-full text-left rounded-v2-xl border border-v2-border-light bg-white p-5 hover:border-v2-primary-200 transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-v2-sm font-semibold text-v2-text-primary">{idea.title}</h3>
                   <span className="text-v2-xs text-v2-text-tertiary">{idea.type}</span>
@@ -419,9 +279,7 @@ export function ContentWorkspace({ recommendation, executionState, onStateChange
               </ol>
             </div>
             <div className="hidden lg:block pt-2">
-              <Button onClick={handleComplete} icon={<Check size={16} />}>
-                Marcar como completado
-              </Button>
+              <Button onClick={handleComplete} icon={<Check size={16} />}>Marcar como completado</Button>
             </div>
           </>
         )}
