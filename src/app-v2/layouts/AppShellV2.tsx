@@ -12,7 +12,7 @@ import {
   Building2,
   LogOut,
   ChevronDown,
-
+  Wifi,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { trackNavigationClick } from '../../services/analytics/v2Analytics';
@@ -32,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'visibilidad', label: 'Visibilidad', path: '/app-v2/visibilidad', icon: <Eye size={18} /> },
   { id: 'informes', label: 'Resumen', path: '/app-v2/informes', icon: <BarChart2 size={18} /> },
   { id: 'negocio', label: 'Mi negocio', path: '/app-v2/negocio', icon: <Building2 size={18} /> },
+  { id: 'fuentes', label: 'Fuentes', path: '/app-v2/fuentes', icon: <Wifi size={18} /> },
 ];
 
 function SidebarNav() {

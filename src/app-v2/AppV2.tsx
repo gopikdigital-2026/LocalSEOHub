@@ -11,6 +11,7 @@ const BusinessProfilePage = lazy(() => import('../features/business-memory/Busin
 const BusinessGoalsPage = lazy(() => import('../features/business-memory/BusinessGoalsPage'));
 const BusinessMemoryPage = lazy(() => import('../features/business-memory/BusinessMemoryPage'));
 const WeeklySummaryPage = lazy(() => import('../features/business-memory/WeeklySummaryPage'));
+const SourceManagerPage = lazy(() => import('../features/reality-engine/SourceManager'));
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -69,6 +70,7 @@ export default function AppV2() {
             <Route path="negocio" element={<BusinessProfilePage />} />
             <Route path="negocio/objetivos" element={<BusinessGoalsPage />} />
             <Route path="negocio/memoria" element={<BusinessMemoryPage />} />
+            <Route path="fuentes" element={<SourceManagerPage />} />
           </Route>
           <Route path="/app-v2/ejecutar/:recommendationId" element={
             <div className="min-h-screen bg-v2-bg-primary font-v2">

@@ -160,3 +160,21 @@ export function trackMemoryUpdated() {
 export function trackRecommendationPersonalized(recommendationId: string) {
   trackV2('recommendation_personalized', { recommendation_id: recommendationId });
 }
+
+// ─── Reality Engine / Source Events ─────────────────────────────────────────
+
+export function trackSourceConnected(sourceId: string) {
+  trackV2('source_connected', { route: sourceId });
+}
+
+export function trackSourceSync(sourceId: string) {
+  trackV2('source_sync', { route: sourceId });
+}
+
+export function trackSourceError(sourceId: string) {
+  trackV2('source_error', { route: sourceId });
+}
+
+export function trackSourceDisconnected(sourceId: string) {
+  trackV2('source_disconnected', { route: sourceId });
+}
