@@ -130,3 +130,33 @@ export function trackRecommendationVerified(recommendationId: string) {
 export function trackExecutionFinished(recommendationId: string) {
   trackV2('execution_finished', { recommendation_id: recommendationId });
 }
+
+// ─── Business Memory Events ─────────────────────────────────────────────────
+
+export function trackBusinessProfileUpdated() {
+  trackV2('business_profile_updated');
+}
+
+export function trackGoalCreated(goalId: string) {
+  trackV2('goal_created', { route: goalId });
+}
+
+export function trackGoalCompleted(goalId: string) {
+  trackV2('goal_completed', { route: goalId });
+}
+
+export function trackTimelineView() {
+  trackV2('timeline_view');
+}
+
+export function trackWeeklySummaryView() {
+  trackV2('weekly_summary_view');
+}
+
+export function trackMemoryUpdated() {
+  trackV2('memory_updated');
+}
+
+export function trackRecommendationPersonalized(recommendationId: string) {
+  trackV2('recommendation_personalized', { recommendation_id: recommendationId });
+}

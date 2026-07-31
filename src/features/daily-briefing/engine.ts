@@ -1,4 +1,7 @@
 import type { Recommendation, ImpactLevel } from '../../domain/types';
+import { personalizedScore } from '../business-memory/engine';
+import { createLocalRepository } from '../business-memory/repository';
+import type { BusinessMemoryState } from '../business-memory/types';
 
 const IMPACT_WEIGHT: Record<ImpactLevel, number> = {
   high: 30,
@@ -25,7 +28,7 @@ function timeEfficiencyScore(rec: Recommendation): number {
   return 0;
 }
 
-function computeScore(rec: Recommendation): number {
+function computeBaseScore(rec: Recommendation): number {
   return (
     IMPACT_WEIGHT[rec.impact] +
     urgencyScore(rec) +
@@ -33,10 +36,21 @@ function computeScore(rec: Recommendation): number {
   );
 }
 
+function getMemoryState(): BusinessMemoryState {
+  const repo = createLocalRepository();
+  return repo.load();
+}
+
+function computePersonalizedScore(rec: Recommendation, memoryState: BusinessMemoryState): number {
+  return computeBaseScore(rec) + personalizedScore(rec, memoryState);
+}
+
 export function prioritizeRecommendations(recs: Recommendation[]): Recommendation[] {
+  const memoryState = getMemoryState();
+
   return [...recs]
     .filter((r) => r.status !== 'completed' && r.status !== 'dismissed' && r.status !== 'expired')
-    .sort((a, b) => computeScore(b) - computeScore(a));
+    .sort((a, b) => computePersonalizedScore(b, memoryState) - computePersonalizedScore(a, memoryState));
 }
 
 export function getDailyGoal(recs: Recommendation[]): Recommendation | null {

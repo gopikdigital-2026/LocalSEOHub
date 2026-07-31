@@ -30,7 +30,8 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'contenido', label: 'Contenido', path: '/app-v2/contenido', icon: <FileText size={18} /> },
   { id: 'reputacion', label: 'Reputacion', path: '/app-v2/reputacion', icon: <Star size={18} /> },
   { id: 'visibilidad', label: 'Visibilidad', path: '/app-v2/visibilidad', icon: <Eye size={18} /> },
-  { id: 'informes', label: 'Informes', path: '/app-v2/informes', icon: <BarChart2 size={18} /> },
+  { id: 'informes', label: 'Resumen', path: '/app-v2/informes', icon: <BarChart2 size={18} /> },
+  { id: 'negocio', label: 'Mi negocio', path: '/app-v2/negocio', icon: <Building2 size={18} /> },
 ];
 
 function SidebarNav() {
