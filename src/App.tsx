@@ -4496,8 +4496,8 @@ export default function App() {
     );
   }
 
-  // LocalSEOHub V2 — served under /app-v2/*
-  if (window.location.pathname.startsWith('/app-v2')) {
+  // LocalSEOHub V2 — served under /app-v2/* and /beta
+  if (window.location.pathname.startsWith('/app-v2') || window.location.pathname === '/beta') {
     const AppV2 = React.lazy(() => import('./app-v2/AppV2'));
     return (
       <Suspense fallback={null}>
