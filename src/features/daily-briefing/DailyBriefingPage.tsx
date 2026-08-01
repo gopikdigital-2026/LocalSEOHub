@@ -17,38 +17,80 @@ import {
   Check,
   Clock,
   FileText,
+  Info,
   MessageSquare,
   Search,
   Sparkles,
   Target,
   TrendingUp,
   Calendar,
+  Wifi,
 } from 'lucide-react';
+
+// ─── Demo Mode Banner ───────────────────────────────────────────────────────
+
+function DemoModeBanner() {
+  return (
+    <div className="flex items-start gap-3 rounded-v2-xl border border-v2-warning-200 bg-v2-warning-50/50 px-4 py-3">
+      <Info size={15} className="text-v2-warning-500 mt-0.5 shrink-0" />
+      <div>
+        <p className="text-v2-sm font-medium text-v2-text-primary">Modo demostracion</p>
+        <p className="text-v2-xs text-v2-text-secondary leading-relaxed mt-0.5">
+          Estas viendo datos de ejemplo. Completa acciones reales o conecta fuentes para ver recomendaciones basadas en tu negocio.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 // ─── Quick Action Bar ───────────────────────────────────────────────────────
 
 const QUICK_ACTIONS = [
-  { id: 'publish', label: 'Nueva publicacion', icon: <FileText size={16} /> },
-  { id: 'reviews', label: 'Responder resenas', icon: <MessageSquare size={16} /> },
-  { id: 'analyze', label: 'Analizar negocio', icon: <Search size={16} /> },
-  { id: 'content', label: 'Crear contenido', icon: <Sparkles size={16} /> },
+  { id: 'publish', label: 'Nueva publicacion', icon: <FileText size={16} />, route: '/app-v2/plan', available: true },
+  { id: 'reviews', label: 'Responder resenas', icon: <MessageSquare size={16} />, route: null, available: false, reason: 'Conecta Google Business para responder resenas.' },
+  { id: 'analyze', label: 'Analizar negocio', icon: <Search size={16} />, route: '/app-v2/fuentes', available: true },
+  { id: 'content', label: 'Crear contenido', icon: <Sparkles size={16} />, route: '/app-v2/plan', available: true },
 ];
 
 function QuickActionBar() {
+  const navigate = useNavigate();
+  const [tooltip, setTooltip] = useState<string | null>(null);
+
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-      {QUICK_ACTIONS.map((action) => (
-        <button
-          key={action.id}
-          onClick={() => trackQuickActionClick(action.id)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-v2-lg border border-v2-border-light bg-white
-            text-v2-sm font-medium text-v2-text-secondary hover:text-v2-text-primary hover:border-v2-primary-300
-            hover:bg-v2-primary-50/50 transition-all duration-150 whitespace-nowrap shrink-0"
-        >
-          {action.icon}
-          {action.label}
-        </button>
-      ))}
+    <div className="relative">
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+        {QUICK_ACTIONS.map((action) => (
+          <button
+            key={action.id}
+            onClick={() => {
+              trackQuickActionClick(action.id);
+              if (action.available && action.route) {
+                navigate(action.route);
+              } else if (!action.available) {
+                setTooltip(action.reason ?? null);
+                setTimeout(() => setTooltip(null), 3000);
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-v2-lg border
+              text-v2-sm font-medium whitespace-nowrap shrink-0 transition-all duration-150
+              ${action.available
+                ? 'border-v2-border-light bg-white text-v2-text-secondary hover:text-v2-text-primary hover:border-v2-primary-300 hover:bg-v2-primary-50/50'
+                : 'border-v2-border-light bg-v2-neutral-50 text-v2-text-tertiary'
+              }`}
+          >
+            {action.icon}
+            {action.label}
+          </button>
+        ))}
+      </div>
+      {tooltip && (
+        <div className="absolute top-full left-0 right-0 mt-2 px-4 py-2.5 rounded-v2-lg bg-v2-neutral-800 text-white text-v2-xs shadow-v2-lg z-10 animate-in">
+          <div className="flex items-center gap-2">
+            <Wifi size={12} className="text-v2-warning-400 shrink-0" />
+            {tooltip}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -79,7 +121,6 @@ function DailyGoalCard({ goal }: { goal: Recommendation }) {
           <DataStatusBadge confidence={goal.confidence} className="!bg-white/10 !text-white !border-white/20" />
         </div>
       </div>
-      {/* Subtle background decoration */}
       <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/5" />
       <div className="absolute -right-4 -bottom-12 w-32 h-32 rounded-full bg-white/5" />
     </div>
@@ -126,7 +167,6 @@ function RecommendationCard({ rec, onExecute }: RecommendationCardProps) {
   return (
     <div className="group rounded-v2-xl border border-v2-border-light bg-white hover:border-v2-primary-200 transition-all duration-200">
       <div className="p-5 sm:p-6">
-        {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-3">
           <h3 className="text-v2-base font-semibold text-v2-text-primary leading-snug">
             {rec.title}
@@ -134,12 +174,10 @@ function RecommendationCard({ rec, onExecute }: RecommendationCardProps) {
           <ImpactIndicator level={rec.impact} />
         </div>
 
-        {/* Summary */}
         <p className="text-v2-sm text-v2-text-secondary leading-relaxed mb-4">
           {rec.summary}
         </p>
 
-        {/* Reason - expandable */}
         {expanded && (
           <div className="mb-4 pl-4 border-l-2 border-v2-primary-200 animate-in">
             <p className="text-v2-xs font-medium text-v2-text-secondary mb-1">Te recomendamos esta accion porque:</p>
@@ -147,7 +185,6 @@ function RecommendationCard({ rec, onExecute }: RecommendationCardProps) {
           </div>
         )}
 
-        {/* Meta row */}
         <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mb-5">
           <span className="flex items-center gap-1.5 text-v2-xs text-v2-text-tertiary">
             <Clock size={12} />
@@ -159,7 +196,6 @@ function RecommendationCard({ rec, onExecute }: RecommendationCardProps) {
           <ConfidenceLabel confidence={rec.confidence} />
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-3">
           <Button
             size="sm"
@@ -183,9 +219,6 @@ function RecommendationCard({ rec, onExecute }: RecommendationCardProps) {
 // ─── Weekly Progress Card ───────────────────────────────────────────────────
 
 function WeeklyProgressCard({ completed, total }: { completed: number; total: number }) {
-  const segments = total;
-  const filled = completed;
-
   return (
     <div className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6">
       <div className="flex items-center justify-between mb-4">
@@ -193,16 +226,15 @@ function WeeklyProgressCard({ completed, total }: { completed: number; total: nu
           <TrendingUp size={15} className="text-v2-primary-500" />
           <span className="text-v2-sm font-semibold text-v2-text-primary">Plan semanal</span>
         </div>
-        <span className="text-v2-xs text-v2-text-tertiary">Proxima revision: Lunes</span>
+        <span className="text-v2-xs text-v2-text-tertiary">Datos de ejemplo</span>
       </div>
 
-      {/* Progress bar */}
       <div className="flex gap-1 mb-3">
-        {Array.from({ length: segments }).map((_, i) => (
+        {Array.from({ length: total }).map((_, i) => (
           <div
             key={i}
             className={`h-2.5 flex-1 rounded-full transition-colors duration-300 ${
-              i < filled ? 'bg-v2-primary-500' : 'bg-v2-neutral-100'
+              i < completed ? 'bg-v2-primary-500' : 'bg-v2-neutral-100'
             }`}
           />
         ))}
@@ -296,9 +328,12 @@ export default function DailyBriefingPage() {
           {getGreeting()}, {userName}.
         </h1>
         <p className="text-v2-sm sm:text-v2-base text-v2-text-secondary mt-2 leading-relaxed">
-          Hoy tenemos una oportunidad clara para mejorar tu negocio.
+          Te recomendamos una accion para avanzar hoy con tu negocio.
         </p>
       </div>
+
+      {/* Demo Mode Banner */}
+      <DemoModeBanner />
 
       {/* Quick Actions */}
       <QuickActionBar />

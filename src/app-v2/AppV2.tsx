@@ -57,6 +57,7 @@ function FirstValueRedirect({ children }: { children: React.ReactNode }) {
   const userId = session?.user?.id ?? '';
   const [checked, setChecked] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!userId) { setChecked(true); return; }
@@ -66,6 +67,7 @@ function FirstValueRedirect({ children }: { children: React.ReactNode }) {
       setCompleted(done);
       setChecked(true);
     }).catch(() => {
+      setLoadError(true);
       setChecked(true);
     });
   }, [userId]);
@@ -74,6 +76,25 @@ function FirstValueRedirect({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
         <LoadingState />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2 px-4">
+        <div className="text-center max-w-sm">
+          <h1 className="text-v2-xl font-bold text-v2-text-primary mb-2">Error de conexion</h1>
+          <p className="text-v2-sm text-v2-text-secondary mb-6">
+            No se pudo comprobar tu progreso. Comprueba tu conexion e intentalo de nuevo.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center justify-center px-6 py-3 rounded-v2-lg bg-v2-primary-600 hover:bg-v2-primary-700 text-white font-semibold text-v2-sm transition-colors shadow-v2-sm"
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }

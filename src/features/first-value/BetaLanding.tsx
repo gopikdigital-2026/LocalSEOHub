@@ -94,20 +94,20 @@ export default function BetaLanding() {
       if (error) {
         if (error.code === '23505') {
           setFormError('Este email ya tiene una solicitud pendiente. Te contactaremos pronto.');
-          trackBetaRequestFailed(form.email, 'duplicate');
+          trackBetaRequestFailed('duplicate');
         } else {
           setFormError('No se pudo enviar la solicitud. Intentalo de nuevo en unos minutos.');
-          trackBetaRequestFailed(form.email, error.message);
+          trackBetaRequestFailed('supabase_error');
         }
         setSending(false);
         return;
       }
 
-      trackBetaRequestSuccess(form.email);
+      trackBetaRequestSuccess();
       setSubmitted(true);
     } catch {
       setFormError('Error de conexion. Comprueba tu conexion a internet e intentalo de nuevo.');
-      trackBetaRequestFailed(form.email, 'network');
+      trackBetaRequestFailed('network');
     } finally {
       setSending(false);
     }

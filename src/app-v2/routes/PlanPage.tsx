@@ -105,6 +105,7 @@ export default function PlanPage() {
   const [actions, setActions] = useState<PlanAction[]>([]);
   const [goalId, setGoalId] = useState<GoalId | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
@@ -116,11 +117,27 @@ export default function PlanPage() {
         setActions(generateFollowUpActions(state.selectedGoalId, state.recommendation));
       }
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => {
+      setLoadError(true);
+      setLoading(false);
+    });
   }, [userId]);
 
   if (loading) {
     return <LoadingState message="Cargando tu plan..." />;
+  }
+
+  if (loadError) {
+    return (
+      <div className="rounded-v2-xl border border-v2-border-light bg-white p-8 text-center">
+        <AlertTriangle size={32} className="text-v2-warning-500 mx-auto mb-3" />
+        <h2 className="text-v2-base font-semibold text-v2-text-primary mb-1">Error al cargar tu plan</h2>
+        <p className="text-v2-sm text-v2-text-secondary mb-4">Comprueba tu conexion e intentalo de nuevo.</p>
+        <button onClick={() => window.location.reload()} className="inline-flex items-center gap-2 px-4 py-2 rounded-v2-lg bg-v2-primary-600 hover:bg-v2-primary-700 text-white text-v2-sm font-medium transition-colors">
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   const completed = actions.filter((a) => a.status === 'completed').length;
@@ -130,7 +147,7 @@ export default function PlanPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-v2-xl sm:text-v2-2xl font-bold text-v2-text-primary tracking-tight">Plan semanal</h1>
+        <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">Plan semanal</h1>
         {goalId && (
           <p className="text-v2-sm text-v2-text-secondary mt-1">
             Objetivo: <span className="font-medium text-v2-text-primary">{getGoalLabel(goalId)}</span>

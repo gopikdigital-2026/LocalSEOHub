@@ -1,9 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import type { TimelineEvent, BusinessInsight, BusinessPreference } from './types';
 import { createLocalRepository } from './repository';
 import { generateInsights, inferPreferences } from './engine';
 import { trackTimelineView } from '../../services/analytics/v2Analytics';
-import { useEffect } from 'react';
 import {
   Check,
   Target,
@@ -13,7 +12,16 @@ import {
   AlertTriangle,
   Info,
   Brain,
+  FlaskConical,
 } from 'lucide-react';
+
+function DemoBadge() {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-v2-xs font-medium rounded-full border bg-v2-neutral-100 text-v2-neutral-600 border-v2-neutral-200">
+      <FlaskConical size={11} /> Datos de ejemplo
+    </span>
+  );
+}
 
 const repo = createLocalRepository();
 
@@ -62,16 +70,20 @@ function EventIcon({ type }: { type: TimelineEvent['type'] }) {
 
 export function BusinessTimeline() {
   const state = repo.load();
-  const timeline = state.timeline.length > 0 ? state.timeline : DEMO_TIMELINE;
+  const isDemo = state.timeline.length === 0;
+  const timeline = isDemo ? DEMO_TIMELINE : state.timeline;
   const grouped = groupByDay(timeline);
 
   useEffect(() => { trackTimelineView(); }, []);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-v2-lg font-bold text-v2-text-primary">Cronologia</h2>
-        <p className="text-v2-xs text-v2-text-tertiary mt-1">Historial de acciones de tu negocio</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-v2-lg font-bold text-v2-text-primary">Cronologia</h2>
+          <p className="text-v2-xs text-v2-text-tertiary mt-1">Historial de acciones de tu negocio</p>
+        </div>
+        {isDemo && <DemoBadge />}
       </div>
 
       <div className="space-y-6">
@@ -118,13 +130,17 @@ function InsightIcon({ type }: { type: BusinessInsight['type'] }) {
 export function BusinessInsights() {
   const state = repo.load();
   const liveInsights = useMemo(() => generateInsights(state), [state]);
-  const insights = liveInsights.length > 0 ? liveInsights : DEMO_INSIGHTS;
+  const isDemo = liveInsights.length === 0;
+  const insights = isDemo ? DEMO_INSIGHTS : liveInsights;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Lightbulb size={16} className="text-v2-warning-500" />
-        <h2 className="text-v2-base font-semibold text-v2-text-primary">Insights</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Lightbulb size={16} className="text-v2-warning-500" />
+          <h2 className="text-v2-base font-semibold text-v2-text-primary">Insights</h2>
+        </div>
+        {isDemo && <DemoBadge />}
       </div>
 
       <div className="space-y-2">
@@ -153,13 +169,17 @@ export function BusinessInsights() {
 export function BusinessPreferencesView() {
   const state = repo.load();
   const livePrefs = useMemo(() => inferPreferences(state), [state]);
-  const preferences = livePrefs.length > 0 ? livePrefs : DEMO_PREFERENCES;
+  const isDemo = livePrefs.length === 0;
+  const preferences = isDemo ? DEMO_PREFERENCES : livePrefs;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Brain size={16} className="text-v2-primary-500" />
-        <h2 className="text-v2-base font-semibold text-v2-text-primary">Preferencias detectadas</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Brain size={16} className="text-v2-primary-500" />
+          <h2 className="text-v2-base font-semibold text-v2-text-primary">Preferencias detectadas</h2>
+        </div>
+        {isDemo && <DemoBadge />}
       </div>
       <p className="text-v2-xs text-v2-text-tertiary">Se actualizan automaticamente segun tu uso de la aplicacion.</p>
 

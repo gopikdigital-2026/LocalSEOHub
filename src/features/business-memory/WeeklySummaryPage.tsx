@@ -3,7 +3,7 @@ import type { WeeklySummaryData } from './types';
 import { AVAILABLE_GOALS, generateWeeklySummary } from './engine';
 import { createLocalRepository } from './repository';
 import { trackWeeklySummaryView } from '../../services/analytics/v2Analytics';
-import { BarChart2, Clock, Target, TrendingUp, ArrowRight, Calendar } from 'lucide-react';
+import { BarChart2, Clock, Target, TrendingUp, ArrowRight, Calendar, Info } from 'lucide-react';
 
 const repo = createLocalRepository();
 
@@ -33,7 +33,8 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 export default function WeeklySummaryPage() {
   const state = repo.load();
   const liveSummary = useMemo(() => generateWeeklySummary(state), [state]);
-  const summary = liveSummary.actionsCompleted > 0 ? liveSummary : DEMO_SUMMARY;
+  const isDemo = liveSummary.actionsCompleted === 0;
+  const summary = isDemo ? DEMO_SUMMARY : liveSummary;
 
   useEffect(() => { trackWeeklySummaryView(); }, []);
 
@@ -50,6 +51,18 @@ export default function WeeklySummaryPage() {
           <p className="text-v2-sm text-v2-text-secondary">{weekLabel}</p>
         </div>
       </div>
+
+      {isDemo && (
+        <div className="flex items-start gap-3 rounded-v2-xl border border-v2-warning-200 bg-v2-warning-50/50 px-4 py-3">
+          <Info size={15} className="text-v2-warning-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-v2-sm font-medium text-v2-text-primary">Modo demostracion</p>
+            <p className="text-v2-xs text-v2-text-secondary leading-relaxed mt-0.5">
+              Estos datos son de ejemplo. Completa acciones desde tu plan semanal para ver tu resumen real.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
