@@ -74,9 +74,21 @@ Todas las funciones de tracking usan un `Set<string>` en memoria para evitar dup
 - Fuente inicial más elegida
 - Objetivo más popular
 
+## Sprint 5.1 — Hardening
+
+Todos los problemas identificados en Sprint 5 fueron corregidos en Sprint 5.1:
+- Transparencia (sin afirmaciones falsas)
+- Persistencia Supabase (user+business isolation)
+- ID estable de recomendacion
+- ManualContextStep real
+- Website states (PROVIDED vs VERIFIED)
+- Beta leads en Supabase
+- Plan semanal minimo
+
+Ver `docs/SPRINT_5_1_FIRST_VALUE_HARDENING.md` para detalle completo.
+
 ## Próximos pasos (Sprint 6+)
 
-- Conectar formulario beta a Supabase (tabla `beta_signups`)
 - A/B testing de variantes del flujo
 - Personalización de recomendaciones con IA real
 - Onboarding de fuentes reales (Google Business Profile API)

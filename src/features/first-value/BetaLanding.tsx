@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button, Input } from '../../components/ui';
+import { supabase } from '../../lib/supabase';
+import { trackBetaRequestSuccess, trackBetaRequestFailed } from './analytics';
 import {
   Search,
   Target,
@@ -11,6 +13,7 @@ import {
   Zap,
   Globe,
   Shield,
+  AlertTriangle,
 } from 'lucide-react';
 
 const STEPS = [
@@ -21,29 +24,93 @@ const STEPS = [
   { icon: <Brain size={20} />, title: 'Aprender', description: 'Recuerda tu negocio y mejora con cada semana.' },
 ];
 
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+function getUtmParams(): Record<string, string> {
+  const params: Record<string, string> = {};
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content']) {
+      const val = sp.get(key);
+      if (val) params[key] = val;
+    }
+  } catch { /* ignore */ }
+  return params;
+}
+
 export default function BetaLanding() {
   const [form, setForm] = useState({ name: '', email: '', business: '', sector: '', city: '', goal: '' });
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const lastSubmitRef = useRef(0);
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (formError) setFormError(null);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.email || !form.business) return;
+    setFormError(null);
+
+    // Validation
+    if (!form.email.trim() || !form.business.trim()) {
+      setFormError('El email y el nombre del negocio son obligatorios.');
+      return;
+    }
+    if (!isValidEmail(form.email)) {
+      setFormError('Introduce un email valido.');
+      return;
+    }
+
+    // Rate limit: 5s between submissions
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 5000) {
+      setFormError('Espera unos segundos antes de intentarlo de nuevo.');
+      return;
+    }
+    lastSubmitRef.current = now;
+
     setSending(true);
-    // Store locally as proof of interest
+
     try {
-      const existing = JSON.parse(localStorage.getItem('lsh_beta_signups') ?? '[]');
-      existing.push({ ...form, submittedAt: new Date().toISOString() });
-      localStorage.setItem('lsh_beta_signups', JSON.stringify(existing));
-    } catch { /* silent */ }
-    setTimeout(() => {
-      setSending(false);
+      const utm = getUtmParams();
+      const { error } = await supabase
+        .from('beta_access_requests')
+        .insert({
+          name: form.name.trim() || null,
+          email: form.email.trim().toLowerCase(),
+          business_name: form.business.trim(),
+          sector: form.sector.trim() || null,
+          city: form.city.trim() || null,
+          primary_goal: form.goal.trim() || null,
+          referrer: document.referrer || null,
+          ...utm,
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          setFormError('Este email ya tiene una solicitud pendiente. Te contactaremos pronto.');
+          trackBetaRequestFailed(form.email, 'duplicate');
+        } else {
+          setFormError('No se pudo enviar la solicitud. Intentalo de nuevo en unos minutos.');
+          trackBetaRequestFailed(form.email, error.message);
+        }
+        setSending(false);
+        return;
+      }
+
+      trackBetaRequestSuccess(form.email);
       setSubmitted(true);
-    }, 600);
+    } catch {
+      setFormError('Error de conexion. Comprueba tu conexion a internet e intentalo de nuevo.');
+      trackBetaRequestFailed(form.email, 'network');
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -83,9 +150,7 @@ export default function BetaLanding() {
         <div className="grid gap-4 sm:grid-cols-5">
           {STEPS.map((step, i) => (
             <div key={i} className="text-center p-4">
-              <div className="w-12 h-12 rounded-v2-xl bg-v2-primary-50 border border-v2-primary-200 text-v2-primary-600 flex items-center justify-center mx-auto mb-3">
-                {step.icon}
-              </div>
+              <div className="w-12 h-12 rounded-v2-xl bg-v2-primary-50 border border-v2-primary-200 text-v2-primary-600 flex items-center justify-center mx-auto mb-3">{step.icon}</div>
               <h3 className="text-v2-sm font-semibold text-v2-text-primary mb-1">{step.title}</h3>
               <p className="text-v2-xs text-v2-text-tertiary leading-relaxed">{step.description}</p>
             </div>
@@ -100,7 +165,7 @@ export default function BetaLanding() {
             <div className="w-14 h-14 rounded-full bg-v2-success-50 border border-v2-success-200 flex items-center justify-center mx-auto mb-4">
               <Check size={24} className="text-v2-success-600" />
             </div>
-            <h2 className="text-v2-lg font-bold text-v2-text-primary mb-2">Solicitud recibida</h2>
+            <h2 className="text-v2-lg font-bold text-v2-text-primary mb-2">Solicitud registrada</h2>
             <p className="text-v2-sm text-v2-text-secondary">Te contactaremos cuando tu acceso este listo. Gracias por tu interes.</p>
           </div>
         ) : (
@@ -110,11 +175,18 @@ export default function BetaLanding() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input label="Nombre" value={form.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('name', e.target.value)} placeholder="Tu nombre" />
-              <Input label="Email" type="email" value={form.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('email', e.target.value)} placeholder="tu@email.com" required />
-              <Input label="Nombre del negocio" value={form.business} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('business', e.target.value)} placeholder="Ej: Clinica Dental Sonrie" required />
+              <Input label="Email *" type="email" value={form.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('email', e.target.value)} placeholder="tu@email.com" />
+              <Input label="Nombre del negocio *" value={form.business} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('business', e.target.value)} placeholder="Ej: Clinica Dental Sonrie" />
               <Input label="Sector" value={form.sector} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('sector', e.target.value)} placeholder="Ej: Salud, Restauracion, Servicios..." />
               <Input label="Ciudad" value={form.city} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('city', e.target.value)} placeholder="Ej: Madrid" />
               <Input label="Principal objetivo" value={form.goal} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('goal', e.target.value)} placeholder="Ej: Mas resenas, mas visibilidad..." />
+
+              {formError && (
+                <div className="flex items-start gap-2 p-3 rounded-v2-lg bg-v2-error-50 border border-v2-error-200">
+                  <AlertTriangle size={14} className="text-v2-error-500 mt-0.5 shrink-0" />
+                  <p className="text-v2-xs text-v2-error-600">{formError}</p>
+                </div>
+              )}
 
               <Button type="submit" size="lg" className="w-full" loading={sending} icon={<ArrowRight size={16} />}>
                 Solicitar acceso

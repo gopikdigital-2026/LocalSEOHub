@@ -116,6 +116,21 @@ Las siguientes funciones NO aparecen en la navegacion V2 pero siguen accesibles 
 - Beta landing publica con formulario de pre-registro
 - Ver `docs/SPRINT_5_FIRST_VALUE.md` para detalle completo
 
+### Sprint 5.1 — First Value Hardening (completado)
+- Transparencia: eliminadas afirmaciones falsas, todas las recomendaciones con dataMode/confidence/limitations
+- Persistencia Supabase: tabla `first_value_progress` (por user+business) y `beta_access_requests`
+- ID estable de recomendacion (sin Date.now())
+- Eliminado setState durante render
+- ManualContextStep con 7 preguntas reales
+- Website: estados PROVIDED vs VERIFIED (sin analisis no se marca verificado)
+- Contenido personalizado con datos reales del negocio
+- Leads beta en Supabase con validacion y dedup
+- Plan semanal minimo funcional en /app-v2/plan
+- Ocultas secciones sin funcionalidad (Contenido, Reputacion, Visibilidad)
+- CTAs corregidos (/app-v2/plan en lugar de /informes)
+- Error recovery en todos los pasos
+- Ver `docs/SPRINT_5_1_FIRST_VALUE_HARDENING.md` para detalle completo
+
 ### Sprint 6+ — Pendiente
 - Conexion real con fuentes de datos (Google Business API)
 - Motor de recomendaciones basado en datos reales

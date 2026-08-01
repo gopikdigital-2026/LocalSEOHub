@@ -1,44 +1,47 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { FirstValueState, SourceChoice, SourceChoiceType, FirstRecommendationData } from './types';
+import type { FirstValueState, SourceChoice, SourceChoiceType, ManualContextData } from './types';
 import { STEP_ORDER } from './types';
-
-import { createFirstValueRepository, advanceStep } from './repository';
+import { createFirstValueRepository, createDefaultState } from './repository';
 import { generateFirstRecommendation, getGoalLabel, computeTimeToFirstValue } from './engine';
 import { createLocalRepository as createMemoryRepo } from '../business-memory/repository';
 import { registerActionCompleted } from '../business-memory/engine';
-import { createRealityRepository } from '../reality-engine/repositories';
-import { connectSource } from '../reality-engine/engine';
 import {
   WelcomeStep,
   BusinessSetupStep,
   PrimaryGoalStep,
   SourceSetupStep,
+  ManualContextStep,
   InitialAnalysisStep,
   FirstRecommendationStep,
+  FirstExecutionInline,
   FirstValueSuccess,
+  ErrorRecovery,
 } from './steps';
 import {
   trackFirstValueStarted,
+  trackFirstValueResumed,
   trackFirstValueStepViewed,
   trackFirstValueCompleted,
   trackBusinessSetupCompleted,
   trackPrimaryGoalSelected,
+  trackManualContextCompleted,
   trackInitialSourceSelected,
+  trackInitialAnalysisCompleted,
+  trackFirstRecommendationGenerated,
   trackFirstRecommendationViewed,
   trackFirstRecommendationAccepted,
+  trackFirstWorkspaceOpened,
   trackFirstActionCompleted,
 } from './analytics';
-
-const fvRepo = createFirstValueRepository();
-const memRepo = createMemoryRepo();
-const realityRepo = createRealityRepository();
+import { useAuth } from '../../hooks/useAuth';
+import { LoadingState } from '../../components/ui';
 
 // ─── Progress Indicator ─────────────────────────────────────────────────────
 
 function FirstValueProgress({ currentStep }: { currentStep: string }) {
   const visibleSteps = STEP_ORDER.filter((s) => s !== 'welcome' && s !== 'success');
-  const idx = visibleSteps.indexOf(currentStep as any);
+  const idx = visibleSteps.indexOf(currentStep as typeof visibleSteps[number]);
   if (idx < 0) return null;
 
   return (
@@ -55,34 +58,130 @@ function FirstValueProgress({ currentStep }: { currentStep: string }) {
   );
 }
 
+// ─── Layout Shell ───────────────────────────────────────────────────────────
+
+function FlowShell({ children, progress }: { children: React.ReactNode; progress?: string }) {
+  return (
+    <div className="min-h-screen bg-v2-bg-primary font-v2 flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
+        {progress && <FirstValueProgress currentStep={progress} />}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── Source choice builder ──────────────────────────────────────────────────
+
+function buildSourceChoice(type: SourceChoiceType): SourceChoice {
+  switch (type) {
+    case 'website_analysis':
+      return { type, sourceId: 'website', websiteStatus: 'website_provided', dataMode: 'estimated', confidence: 'low' };
+    case 'manual_entry':
+      return { type, sourceId: 'manual', websiteStatus: null, dataMode: 'manual', confidence: 'medium' };
+    case 'demo':
+      return { type, sourceId: 'manual', websiteStatus: null, dataMode: 'demo', confidence: 'low' };
+  }
+}
+
 // ─── Main Flow ──────────────────────────────────────────────────────────────
 
 export default function FirstValueFlow() {
   const navigate = useNavigate();
-  const [state, setState] = useState<FirstValueState>(() => fvRepo.load());
-  const [recommendation, setRecommendation] = useState<FirstRecommendationData | null>(null);
-  const startedRef = useRef(false);
+  const { session } = useAuth();
+  const userId = session?.user?.id ?? '';
+  const businessId = 'default';
 
-  const save = useCallback((newState: FirstValueState) => {
-    setState(newState);
-    fvRepo.save(newState);
-  }, []);
+  const [state, setState] = useState<FirstValueState | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const repoRef = useRef(userId ? createFirstValueRepository(userId, businessId) : null);
+  const initRef = useRef(false);
 
+  // Load state from Supabase on mount
   useEffect(() => {
-    if (!startedRef.current) {
-      startedRef.current = true;
-      if (state.currentStep === 'welcome') {
-        trackFirstValueStarted();
+    if (!userId || initRef.current) return;
+    initRef.current = true;
+
+    const repo = createFirstValueRepository(userId, businessId);
+    repoRef.current = repo;
+
+    repo.load().then((loaded) => {
+      const ctx = { userId, businessId };
+      if (loaded) {
+        setState(loaded);
+        if (loaded.currentStep !== 'welcome') {
+          trackFirstValueResumed(ctx, loaded.currentStep);
+        }
       } else {
-        trackFirstValueStepViewed(state.currentStep);
+        const fresh = createDefaultState(userId, businessId);
+        setState(fresh);
+        trackFirstValueStarted(ctx);
       }
+      setLoading(false);
+    }).catch(() => {
+      setError('No se pudo cargar tu progreso. Comprueba tu conexion e intentalo de nuevo.');
+      setLoading(false);
+    });
+  }, [userId, businessId]);
+
+  const save = useCallback(async (newState: FirstValueState) => {
+    setState(newState);
+    try {
+      await repoRef.current?.save(newState);
+    } catch {
+      // Save failed — state is in memory, will retry on next action
     }
   }, []);
 
-  function goTo(step: typeof state.currentStep) {
-    const next = advanceStep(state, step);
+  const trackCtx = useCallback(() => ({
+    userId,
+    businessId,
+    recommendationId: state?.recommendation?.id,
+    sourceType: state?.sourceChoice?.type,
+    dataMode: state?.sourceChoice?.dataMode,
+    confidence: state?.recommendation?.confidence,
+  }), [userId, businessId, state?.recommendation, state?.sourceChoice]);
+
+  if (!userId) {
+    return (
+      <FlowShell>
+        <ErrorRecovery
+          title="Sesion no disponible"
+          message="Necesitas iniciar sesion para comenzar el proceso."
+          onRetry={() => navigate('/#login')}
+        />
+      </FlowShell>
+    );
+  }
+
+  if (loading) {
+    return (
+      <FlowShell>
+        <LoadingState message="Cargando tu progreso..." />
+      </FlowShell>
+    );
+  }
+
+  if (error || !state) {
+    return (
+      <FlowShell>
+        <ErrorRecovery
+          title="Error al cargar"
+          message={error ?? 'No se pudo cargar tu progreso.'}
+          onRetry={() => window.location.reload()}
+        />
+      </FlowShell>
+    );
+  }
+
+  const memRepo = createMemoryRepo();
+
+  function goTo(step: FirstValueState['currentStep']) {
+    if (!state) return;
+    const next = { ...state, currentStep: step };
     save(next);
-    trackFirstValueStepViewed(step);
+    trackFirstValueStepViewed(trackCtx(), step);
   }
 
   // ─── Welcome ───────────────────────
@@ -102,13 +201,12 @@ export default function FirstValueFlow() {
           initial={state.businessData}
           onBack={() => goTo('welcome')}
           onContinue={(data) => {
-            const next = { ...state, currentStep: 'primary_goal' as const, businessData: data };
+            const next: FirstValueState = { ...state, currentStep: 'primary_goal', businessData: data };
             save(next);
-            // Also save to business memory
             const memState = memRepo.load();
             memRepo.updateProfile({ ...memState.profile, name: data.name, category: data.category, city: data.city, website: data.website });
-            trackBusinessSetupCompleted();
-            trackFirstValueStepViewed('primary_goal');
+            trackBusinessSetupCompleted(trackCtx());
+            trackFirstValueStepViewed(trackCtx(), 'primary_goal');
           }}
         />
       </FlowShell>
@@ -123,11 +221,11 @@ export default function FirstValueFlow() {
           initial={state.selectedGoalId}
           onBack={() => goTo('business_setup')}
           onContinue={(goalId) => {
-            const next = { ...state, currentStep: 'source_setup' as const, selectedGoalId: goalId };
+            const next: FirstValueState = { ...state, currentStep: 'source_setup', selectedGoalId: goalId };
             save(next);
             memRepo.setGoals([{ goalId, selectedAt: new Date().toISOString() }]);
-            trackPrimaryGoalSelected(goalId);
-            trackFirstValueStepViewed('source_setup');
+            trackPrimaryGoalSelected(trackCtx(), goalId);
+            trackFirstValueStepViewed(trackCtx(), 'source_setup');
           }}
         />
       </FlowShell>
@@ -142,14 +240,30 @@ export default function FirstValueFlow() {
           hasWebsite={!!state.businessData?.website}
           onBack={() => goTo('primary_goal')}
           onContinue={(choiceType: SourceChoiceType) => {
-            const choice: SourceChoice = buildSourceChoice(choiceType);
-            const next = { ...state, currentStep: 'initial_analysis' as const, sourceChoice: choice };
+            const choice = buildSourceChoice(choiceType);
+            const nextStep = choiceType === 'manual_entry' ? 'manual_context' : 'initial_analysis';
+            const next: FirstValueState = { ...state, currentStep: nextStep, sourceChoice: choice };
             save(next);
-            // Connect source in reality engine
-            if (choiceType === 'website_analysis') connectSource(realityRepo, 'website');
-            else if (choiceType === 'manual_entry') connectSource(realityRepo, 'manual');
-            trackInitialSourceSelected(choiceType);
-            trackFirstValueStepViewed('initial_analysis');
+            trackInitialSourceSelected(trackCtx(), choiceType);
+            trackFirstValueStepViewed(trackCtx(), nextStep);
+          }}
+        />
+      </FlowShell>
+    );
+  }
+
+  // ─── Manual Context ─────────────────
+  if (state.currentStep === 'manual_context') {
+    return (
+      <FlowShell progress={state.currentStep}>
+        <ManualContextStep
+          initial={state.manualContext}
+          onBack={() => goTo('source_setup')}
+          onContinue={(data: ManualContextData) => {
+            const next: FirstValueState = { ...state, currentStep: 'initial_analysis', manualContext: data };
+            save(next);
+            trackManualContextCompleted(trackCtx());
+            trackFirstValueStepViewed(trackCtx(), 'initial_analysis');
           }}
         />
       </FlowShell>
@@ -164,16 +278,28 @@ export default function FirstValueFlow() {
           businessName={state.businessData?.name ?? 'tu negocio'}
           sourceType={state.sourceChoice?.type ?? 'demo'}
           onComplete={() => {
-            // Generate recommendation
-            const rec = generateFirstRecommendation({
-              business: state.businessData!,
-              goalId: state.selectedGoalId!,
-              source: state.sourceChoice!,
-            });
-            setRecommendation(rec);
-            const next = { ...state, currentStep: 'first_recommendation' as const, recommendationId: rec.id };
+            // Generate and persist recommendation only if not already generated
+            let rec = state.recommendation;
+            if (!rec) {
+              rec = generateFirstRecommendation({
+                userId,
+                businessId,
+                business: state.businessData!,
+                goalId: state.selectedGoalId!,
+                source: state.sourceChoice!,
+                manualContext: state.manualContext,
+              });
+              trackFirstRecommendationGenerated({
+                ...trackCtx(),
+                recommendationId: rec.id,
+                confidence: rec.confidence,
+                dataMode: rec.dataMode,
+              });
+            }
+            const next: FirstValueState = { ...state, currentStep: 'first_recommendation', recommendation: rec };
             save(next);
-            trackFirstRecommendationViewed(rec.id);
+            trackInitialAnalysisCompleted(trackCtx());
+            trackFirstRecommendationViewed({ ...trackCtx(), recommendationId: rec.id });
           }}
         />
       </FlowShell>
@@ -182,23 +308,34 @@ export default function FirstValueFlow() {
 
   // ─── First Recommendation ───────────
   if (state.currentStep === 'first_recommendation') {
-    const rec = recommendation ?? generateFirstRecommendation({
-      business: state.businessData!,
-      goalId: state.selectedGoalId!,
-      source: state.sourceChoice!,
-    });
-    if (!recommendation) setRecommendation(rec);
+    if (!state.recommendation) {
+      return (
+        <FlowShell>
+          <ErrorRecovery
+            title="Recomendacion no encontrada"
+            message="No se encontro la recomendacion guardada. Puedes volver al paso anterior para generarla de nuevo."
+            onRetry={() => goTo('initial_analysis')}
+            onReset={() => { save(createDefaultState(userId, businessId)); }}
+          />
+        </FlowShell>
+      );
+    }
 
     return (
       <FlowShell progress={state.currentStep}>
         <FirstRecommendationStep
-          recommendation={rec}
+          recommendation={state.recommendation}
           onBack={() => goTo('source_setup')}
           onAccept={() => {
-            const next = { ...state, currentStep: 'first_execution' as const };
+            const next: FirstValueState = {
+              ...state,
+              currentStep: 'first_execution',
+              recommendation: { ...state.recommendation!, status: 'accepted' },
+              executionPayload: { status: 'ready', startedAt: null, completedAt: null, editedContent: null },
+            };
             save(next);
-            trackFirstRecommendationAccepted(rec.id);
-            trackFirstValueStepViewed('first_execution');
+            trackFirstRecommendationAccepted({ ...trackCtx(), recommendationId: state.recommendation!.id });
+            trackFirstWorkspaceOpened({ ...trackCtx(), recommendationId: state.recommendation!.id }, state.recommendation!.actionType);
           }}
         />
       </FlowShell>
@@ -207,26 +344,37 @@ export default function FirstValueFlow() {
 
   // ─── First Execution ────────────────
   if (state.currentStep === 'first_execution') {
-    const rec = recommendation ?? generateFirstRecommendation({
-      business: state.businessData!,
-      goalId: state.selectedGoalId!,
-      source: state.sourceChoice!,
-    });
-    if (!recommendation) setRecommendation(rec);
+    if (!state.recommendation) {
+      return (
+        <FlowShell>
+          <ErrorRecovery
+            title="Recomendacion no encontrada"
+            message="El contenido preparado no esta disponible. Puedes reiniciar el proceso."
+            onReset={() => { save(createDefaultState(userId, businessId)); }}
+          />
+        </FlowShell>
+      );
+    }
 
     return (
       <FlowShell progress={state.currentStep}>
         <FirstExecutionInline
-          recommendation={rec}
-          businessName={state.businessData?.name ?? ''}
+          recommendation={state.recommendation}
           onComplete={() => {
-            // Register in memory and timeline
-            registerActionCompleted(memRepo, rec.title, rec.actionType, rec.impact, rec.estimatedMinutes);
-            const next = { ...state, currentStep: 'success' as const, actionCompleted: true, completedAt: new Date().toISOString() };
+            const rec = state.recommendation!;
+            registerActionCompleted(memRepo, rec.title, rec.actionType, rec.impact, rec.estimatedTimeMinutes);
+            const now = new Date().toISOString();
+            const next: FirstValueState = {
+              ...state,
+              currentStep: 'success',
+              completedAt: now,
+              recommendation: { ...rec, status: 'completed', updatedAt: now },
+              executionPayload: { status: 'completed', startedAt: state.executionPayload?.startedAt ?? now, completedAt: now, editedContent: null },
+            };
             save(next);
             const ttfv = computeTimeToFirstValue(state.startedAt);
-            trackFirstActionCompleted(rec.id, rec.actionType);
-            trackFirstValueCompleted(ttfv);
+            trackFirstActionCompleted({ ...trackCtx(), recommendationId: rec.id }, rec.actionType);
+            trackFirstValueCompleted({ ...trackCtx(), recommendationId: rec.id }, ttfv);
           }}
         />
       </FlowShell>
@@ -235,128 +383,30 @@ export default function FirstValueFlow() {
 
   // ─── Success ────────────────────────
   if (state.currentStep === 'success') {
-    const rec = recommendation ?? generateFirstRecommendation({
-      business: state.businessData!,
-      goalId: state.selectedGoalId!,
-      source: state.sourceChoice!,
-    });
+    const rec = state.recommendation;
     const ttfv = computeTimeToFirstValue(state.startedAt);
 
     return (
       <FlowShell>
         <FirstValueSuccess
           goalLabel={getGoalLabel(state.selectedGoalId!)}
-          actionTitle={rec.title}
+          actionTitle={rec?.title ?? 'Accion completada'}
           timeSeconds={ttfv}
-          onGoToWeeklyPlan={() => navigate('/app-v2/informes')}
+          onGoToPlan={() => navigate('/app-v2/plan')}
           onGoToToday={() => navigate('/app-v2/hoy')}
         />
       </FlowShell>
     );
   }
 
-  return null;
-}
-
-// ─── Inline Execution (simplified workspace within the flow) ────────────────
-
-import { Check, Copy, Edit3 } from 'lucide-react';
-import { Button } from '../../components/ui';
-import { DataStatusBadge } from '../../components/data-status';
-
-function FirstExecutionInline({ recommendation, businessName, onComplete }: { recommendation: FirstRecommendationData; businessName: string; onComplete: () => void }) {
-  const [editing, setEditing] = useState(false);
-  const [content, setContent] = useState(() => generateActionContent(recommendation, businessName));
-  const [copied, setCopied] = useState(false);
-
-  function handleCopy() {
-    navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
+  // ─── Unknown step — recovery ────────
   return (
-    <div className="max-w-lg mx-auto">
-      <h1 className="text-v2-xl sm:text-v2-2xl font-bold text-v2-text-primary tracking-tight mb-2">
-        {recommendation.title}
-      </h1>
-      <div className="flex items-center gap-2 mb-6">
-        <DataStatusBadge confidence={recommendation.confidence} />
-      </div>
-
-      <div className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6 mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-v2-sm font-semibold text-v2-text-primary">Contenido preparado</p>
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setEditing(!editing)} className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400">
-              <Edit3 size={14} />
-            </button>
-            <button onClick={handleCopy} className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400">
-              {copied ? <Check size={14} className="text-v2-success-500" /> : <Copy size={14} />}
-            </button>
-          </div>
-        </div>
-        {editing ? (
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full rounded-v2-lg border border-v2-border-light bg-v2-neutral-50 px-4 py-3 text-v2-sm text-v2-text-primary
-              leading-relaxed focus:outline-none focus:border-v2-primary-500 focus:ring-2 focus:ring-v2-primary-500/10
-              resize-y min-h-[140px] transition-all"
-          />
-        ) : (
-          <p className="text-v2-sm text-v2-text-secondary leading-relaxed whitespace-pre-wrap bg-v2-neutral-50 rounded-v2-lg px-4 py-3">
-            {content}
-          </p>
-        )}
-      </div>
-
-      <p className="text-v2-xs text-v2-text-tertiary mb-6">
-        Puedes copiar este contenido y publicarlo en tu perfil, o marcarlo como completado si ya lo has hecho.
-      </p>
-
-      <Button size="lg" onClick={onComplete} icon={<Check size={16} />}>
-        Marcar como completada
-      </Button>
-    </div>
+    <FlowShell>
+      <ErrorRecovery
+        title="Paso no reconocido"
+        message="Parece que tu progreso se ha corrompido. Puedes reiniciar el proceso."
+        onReset={() => { save(createDefaultState(userId, businessId)); }}
+      />
+    </FlowShell>
   );
-}
-
-function generateActionContent(rec: FirstRecommendationData, businessName: string): string {
-  switch (rec.actionType) {
-    case 'publish_post':
-      return `Novedades en ${businessName}\n\nEste mes queremos compartir las ultimas novedades de nuestro negocio. Trabajamos cada dia para ofrecer el mejor servicio a nuestros clientes.\n\nVisitanos y descubre todo lo que podemos hacer por ti.\n\nTe esperamos.`;
-    case 'respond_reviews':
-      return `Muchas gracias por tomarte el tiempo de dejarnos tu opinion. En ${businessName} trabajamos cada dia para mejorar y comentarios como el tuyo nos ayudan a seguir creciendo. Esperamos verte pronto.`;
-    case 'update_description':
-      return `${businessName} es un negocio local comprometido con ofrecer un servicio de calidad. Ubicados en el centro de la ciudad, contamos con anos de experiencia atendiendo a particulares y empresas. Contacta con nosotros para descubrir como podemos ayudarte.`;
-    default:
-      return `Contenido preparado para ${businessName}. Revisa, edita y publica cuando estes listo.`;
-  }
-}
-
-// ─── Layout Shell ───────────────────────────────────────────────────────────
-
-function FlowShell({ children, progress }: { children: React.ReactNode; progress?: string }) {
-  return (
-    <div className="min-h-screen bg-v2-bg-primary font-v2 flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
-        {progress && <FirstValueProgress currentStep={progress} />}
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// ─── Helper ─────────────────────────────────────────────────────────────────
-
-function buildSourceChoice(type: SourceChoiceType): SourceChoice {
-  switch (type) {
-    case 'website_analysis':
-      return { type, sourceId: 'website', dataSourceType: 'website', confidence: 'estimated' };
-    case 'manual_entry':
-      return { type, sourceId: 'manual', dataSourceType: 'manual', confidence: 'verified' };
-    case 'demo':
-      return { type, sourceId: 'manual', dataSourceType: 'manual', confidence: 'demo' };
-  }
 }

@@ -3,9 +3,6 @@ import { NavLink, Outlet } from 'react-router-dom';
 import {
   Calendar,
   ClipboardList,
-  FileText,
-  Star,
-  Eye,
   BarChart2,
   Menu,
   X,
@@ -27,9 +24,6 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'hoy', label: 'Hoy', path: '/app-v2/hoy', icon: <Calendar size={18} /> },
   { id: 'plan', label: 'Plan', path: '/app-v2/plan', icon: <ClipboardList size={18} /> },
-  { id: 'contenido', label: 'Contenido', path: '/app-v2/contenido', icon: <FileText size={18} /> },
-  { id: 'reputacion', label: 'Reputacion', path: '/app-v2/reputacion', icon: <Star size={18} /> },
-  { id: 'visibilidad', label: 'Visibilidad', path: '/app-v2/visibilidad', icon: <Eye size={18} /> },
   { id: 'informes', label: 'Resumen', path: '/app-v2/informes', icon: <BarChart2 size={18} /> },
   { id: 'negocio', label: 'Mi negocio', path: '/app-v2/negocio', icon: <Building2 size={18} /> },
   { id: 'fuentes', label: 'Fuentes', path: '/app-v2/fuentes', icon: <Wifi size={18} /> },

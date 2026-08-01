@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AppShellV2 from './layouts/AppShellV2';
 import { useAuth } from '../hooks/useAuth';
@@ -6,7 +6,7 @@ import { LoadingState } from '../components/ui';
 import { createFirstValueRepository } from '../features/first-value/repository';
 
 const TodayPage = lazy(() => import('./routes/TodayPage'));
-const PlaceholderPage = lazy(() => import('./routes/PlaceholderPage'));
+const PlanPage = lazy(() => import('./routes/PlanPage'));
 const ExecutionPage = lazy(() => import('../features/execution/ExecutionPage'));
 const BusinessProfilePage = lazy(() => import('../features/business-memory/BusinessProfilePage'));
 const BusinessGoalsPage = lazy(() => import('../features/business-memory/BusinessGoalsPage'));
@@ -53,10 +53,35 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 function FirstValueRedirect({ children }: { children: React.ReactNode }) {
-  const fvRepo = createFirstValueRepository();
-  if (!fvRepo.isCompleted()) {
+  const { session } = useAuth();
+  const userId = session?.user?.id ?? '';
+  const [checked, setChecked] = useState(false);
+  const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    if (!userId) { setChecked(true); return; }
+
+    const repo = createFirstValueRepository(userId);
+    repo.isCompleted().then((done) => {
+      setCompleted(done);
+      setChecked(true);
+    }).catch(() => {
+      setChecked(true);
+    });
+  }, [userId]);
+
+  if (!checked) {
+    return (
+      <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
+        <LoadingState />
+      </div>
+    );
+  }
+
+  if (!completed) {
     return <Navigate to="/app-v2/empezar" replace />;
   }
+
   return <>{children}</>;
 }
 
@@ -86,10 +111,7 @@ export default function AppV2() {
         }>
           <Route index element={<Navigate to="/app-v2/hoy" replace />} />
           <Route path="hoy" element={<TodayPage />} />
-          <Route path="plan" element={<PlaceholderPage title="Plan Semanal" description="Aqui encontraras tu plan de acciones organizado por semana." />} />
-          <Route path="contenido" element={<PlaceholderPage title="Contenido" description="Gestiona y crea contenido para tus canales desde aqui." />} />
-          <Route path="reputacion" element={<PlaceholderPage title="Reputacion" description="Monitoriza y gestiona las resenas y la percepcion online de tu negocio." />} />
-          <Route path="visibilidad" element={<PlaceholderPage title="Visibilidad" description="Analiza como apareces en buscadores y mapas." />} />
+          <Route path="plan" element={<PlanPage />} />
           <Route path="informes" element={<WeeklySummaryPage />} />
           <Route path="negocio" element={<BusinessProfilePage />} />
           <Route path="negocio/objetivos" element={<BusinessGoalsPage />} />

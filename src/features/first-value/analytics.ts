@@ -1,8 +1,9 @@
 import type { ActionType } from '../../domain/types';
-import type { FirstValueStep, SourceChoiceType } from './types';
-import type { GoalId } from '../business-memory/types';
+import type { Confidence, DataMode, FirstValueStep, SourceChoiceType } from './types';
 
-let tracked = new Set<string>();
+// ─── Dedup guard (session-scoped) ───────────────────────────────────────────
+
+const tracked = new Set<string>();
 
 function trackOnce(key: string, fn: () => void) {
   if (tracked.has(key)) return;
@@ -10,51 +11,176 @@ function trackOnce(key: string, fn: () => void) {
   fn();
 }
 
-function trackV2(event: string, props?: Record<string, string | number>) {
+// ─── Core tracking ──────────────────────────────────────────────────────────
+
+interface EventProps {
+  user_id?: string;
+  business_id?: string;
+  recommendation_id?: string;
+  source_type?: string;
+  data_mode?: string;
+  confidence?: string;
+  action_type?: string;
+  time_to_first_value_seconds?: number;
+  step?: string;
+  goal_id?: string;
+  session_id?: string;
+  [key: string]: string | number | undefined;
+}
+
+let sessionId: string | null = null;
+
+function getSessionId(): string {
+  if (!sessionId) {
+    sessionId = `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+  return sessionId;
+}
+
+function trackV2(event: string, props?: EventProps) {
   try {
-    const payload = { event, timestamp: new Date().toISOString(), ...props };
+    const payload = {
+      event,
+      timestamp: new Date().toISOString(),
+      session_id: getSessionId(),
+      ...props,
+    };
     const existing = JSON.parse(localStorage.getItem('lsh_v2_analytics') ?? '[]');
     existing.push(payload);
     localStorage.setItem('lsh_v2_analytics', JSON.stringify(existing.slice(-500)));
   } catch { /* silent */ }
 }
 
-export function trackFirstValueStarted() {
-  trackOnce('fv_started', () => trackV2('first_value_started'));
+// ─── Context-aware tracking functions ───────────────────────────────────────
+
+interface TrackingContext {
+  userId?: string;
+  businessId?: string;
+  recommendationId?: string;
+  sourceType?: SourceChoiceType;
+  dataMode?: DataMode;
+  confidence?: Confidence;
 }
 
-export function trackFirstValueStepViewed(step: FirstValueStep | string) {
-  trackV2('first_value_step_viewed', { step });
+export function trackFirstValueStarted(ctx: TrackingContext) {
+  trackOnce(`fv_started:${ctx.userId}:${ctx.businessId}`, () =>
+    trackV2('first_value_started', { user_id: ctx.userId, business_id: ctx.businessId })
+  );
 }
 
-export function trackBusinessSetupCompleted() {
-  trackOnce('biz_setup', () => trackV2('business_setup_completed'));
+export function trackFirstValueResumed(ctx: TrackingContext, step: FirstValueStep) {
+  trackV2('first_value_resumed', { user_id: ctx.userId, business_id: ctx.businessId, step });
 }
 
-export function trackPrimaryGoalSelected(goalId: GoalId) {
-  trackV2('primary_goal_selected', { goal_id: goalId });
+export function trackFirstValueStepViewed(ctx: TrackingContext, step: FirstValueStep) {
+  trackV2('first_value_step_viewed', { user_id: ctx.userId, business_id: ctx.businessId, step });
 }
 
-export function trackInitialSourceSelected(sourceType: SourceChoiceType) {
-  trackV2('initial_source_selected', { source_type: sourceType });
+export function trackBusinessSetupCompleted(ctx: TrackingContext) {
+  trackOnce(`biz_setup:${ctx.userId}:${ctx.businessId}`, () =>
+    trackV2('business_setup_completed', { user_id: ctx.userId, business_id: ctx.businessId })
+  );
 }
 
-export function trackFirstRecommendationViewed(recommendationId: string) {
-  trackOnce('fv_rec_viewed', () => trackV2('first_recommendation_viewed', { recommendation_id: recommendationId }));
+export function trackPrimaryGoalSelected(ctx: TrackingContext, goalId: string) {
+  trackV2('primary_goal_selected', { user_id: ctx.userId, business_id: ctx.businessId, goal_id: goalId });
 }
 
-export function trackFirstRecommendationAccepted(recommendationId: string) {
-  trackV2('first_recommendation_accepted', { recommendation_id: recommendationId });
+export function trackManualContextCompleted(ctx: TrackingContext) {
+  trackOnce(`manual_ctx:${ctx.userId}:${ctx.businessId}`, () =>
+    trackV2('manual_context_completed', { user_id: ctx.userId, business_id: ctx.businessId })
+  );
 }
 
-export function trackFirstActionCompleted(recommendationId: string, actionType: ActionType) {
-  trackV2('first_action_completed', { recommendation_id: recommendationId, action_type: actionType });
+export function trackInitialSourceSelected(ctx: TrackingContext, sourceType: SourceChoiceType) {
+  trackV2('initial_source_selected', {
+    user_id: ctx.userId,
+    business_id: ctx.businessId,
+    source_type: sourceType,
+  });
 }
 
-export function trackFirstValueCompleted(timeToFirstValueSeconds: number) {
-  trackOnce('fv_completed', () => trackV2('first_value_completed', { time_to_first_value_seconds: timeToFirstValueSeconds }));
+export function trackInitialSourceConnected(ctx: TrackingContext) {
+  trackV2('initial_source_connected', {
+    user_id: ctx.userId,
+    business_id: ctx.businessId,
+    source_type: ctx.sourceType,
+    data_mode: ctx.dataMode,
+  });
 }
 
-export function trackFirstValueAbandoned(step: FirstValueStep | string) {
-  trackV2('first_value_abandoned', { step });
+export function trackInitialAnalysisStarted(ctx: TrackingContext) {
+  trackV2('initial_analysis_started', { user_id: ctx.userId, business_id: ctx.businessId });
+}
+
+export function trackInitialAnalysisCompleted(ctx: TrackingContext) {
+  trackV2('initial_analysis_completed', { user_id: ctx.userId, business_id: ctx.businessId });
+}
+
+export function trackFirstRecommendationGenerated(ctx: TrackingContext) {
+  trackOnce(`fv_rec_gen:${ctx.userId}:${ctx.businessId}`, () =>
+    trackV2('first_recommendation_generated', {
+      user_id: ctx.userId,
+      business_id: ctx.businessId,
+      recommendation_id: ctx.recommendationId,
+      source_type: ctx.sourceType,
+      data_mode: ctx.dataMode,
+      confidence: ctx.confidence,
+    })
+  );
+}
+
+export function trackFirstRecommendationViewed(ctx: TrackingContext) {
+  trackOnce(`fv_rec_viewed:${ctx.userId}:${ctx.businessId}`, () =>
+    trackV2('first_recommendation_viewed', {
+      user_id: ctx.userId,
+      business_id: ctx.businessId,
+      recommendation_id: ctx.recommendationId,
+    })
+  );
+}
+
+export function trackFirstRecommendationAccepted(ctx: TrackingContext) {
+  trackV2('first_recommendation_accepted', {
+    user_id: ctx.userId,
+    business_id: ctx.businessId,
+    recommendation_id: ctx.recommendationId,
+  });
+}
+
+export function trackFirstWorkspaceOpened(ctx: TrackingContext, actionType: ActionType) {
+  trackV2('first_workspace_opened', {
+    user_id: ctx.userId,
+    business_id: ctx.businessId,
+    recommendation_id: ctx.recommendationId,
+    action_type: actionType,
+  });
+}
+
+export function trackFirstActionCompleted(ctx: TrackingContext, actionType: ActionType) {
+  trackV2('first_action_completed', {
+    user_id: ctx.userId,
+    business_id: ctx.businessId,
+    recommendation_id: ctx.recommendationId,
+    action_type: actionType,
+  });
+}
+
+export function trackFirstValueCompleted(ctx: TrackingContext, timeToFirstValueSeconds: number) {
+  trackOnce(`fv_completed:${ctx.userId}:${ctx.businessId}`, () =>
+    trackV2('first_value_completed', {
+      user_id: ctx.userId,
+      business_id: ctx.businessId,
+      recommendation_id: ctx.recommendationId,
+      time_to_first_value_seconds: timeToFirstValueSeconds,
+    })
+  );
+}
+
+export function trackBetaRequestSuccess(email: string) {
+  trackV2('beta_request_success', { email });
+}
+
+export function trackBetaRequestFailed(email: string, reason: string) {
+  trackV2('beta_request_failed', { email, reason });
 }
