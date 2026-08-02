@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
 import { createLocalRepository } from '../business-memory/repository';
 import { createRealityRepository } from '../reality-engine/repositories';
 import { getDailyActions } from './engine';
@@ -11,26 +10,26 @@ import {
   trackDashboardBusinessEdit,
   trackDashboardGrowthDetails,
   trackDashboardWorkspaceOpen,
+  trackBusinessHeaderView,
+  trackBusinessEditClick,
+  trackBusinessSyncClick,
 } from '../../services/analytics/v2Analytics';
 import type { Recommendation } from '../../domain/types';
 import type { BusinessProfile, TimelineEvent } from '../business-memory/types';
 import type { SourceState } from '../reality-engine/types';
 import {
   ArrowRight,
-  Building2,
   Calendar,
   Clock,
   Edit3,
   ExternalLink,
-  Globe,
   MapPin,
   MessageSquare,
+  RefreshCw,
   Sparkles,
   Star,
   Target,
   TrendingUp,
-  Wifi,
-  WifiOff,
   Zap,
 } from 'lucide-react';
 
@@ -45,21 +44,13 @@ function useDashboardData() {
   const profile = memoryState.profile;
   const timeline = memoryState.timeline;
   const sources = realityState.sources;
-  const gbp = sources.find((s) => s.id === 'google_business');
   const hasProfile = Boolean(profile.name);
   const actions = getDailyActions(demoRecommendations, 3);
 
-  return { profile, timeline, sources, gbp, hasProfile, actions };
+  return { profile, timeline, sources, hasProfile, actions };
 }
 
 // ─── Utilities ──────────────────────────────────────────────────────────────
-
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Buenos dias';
-  if (h < 20) return 'Buenas tardes';
-  return 'Buenas noches';
-}
 
 function timeAgo(timestamp: string): string {
   const ms = Date.now() - new Date(timestamp).getTime();
@@ -73,34 +64,140 @@ function timeAgo(timestamp: string): string {
   return `Hace ${days} dias`;
 }
 
-// ─── Hero Header ────────────────────────────────────────────────────────────
+// ─── Connection Badge ───────────────────────────────────────────────────────
 
-function HeroHeader({ profile, gbp, userName }: { profile: BusinessProfile; gbp: SourceState | undefined; userName: string }) {
+type ConnectionStatus = 'connected' | 'pending' | 'not_connected';
+
+function ConnectionBadge({ label, status }: { label: string; status: ConnectionStatus }) {
+  const styles: Record<ConnectionStatus, string> = {
+    connected: 'bg-v2-success-50 text-v2-success-700 border-v2-success-200',
+    pending: 'bg-v2-warning-50 text-v2-warning-700 border-v2-warning-200',
+    not_connected: 'bg-v2-neutral-50 text-v2-neutral-500 border-v2-neutral-200',
+  };
+  const statusLabels: Record<ConnectionStatus, string> = {
+    connected: 'Conectado',
+    pending: 'Pendiente',
+    not_connected: 'No conectado',
+  };
+
   return (
-    <div className="space-y-1">
-      <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">
-        {getGreeting()}, {userName}.
-      </h1>
-      {profile.name ? (
-        <p className="text-v2-sm sm:text-v2-base text-v2-text-secondary leading-relaxed">
-          {profile.name} · {profile.category || 'Sin categoria'} · {profile.city || 'Sin ciudad'}
-          {gbp?.connected && (
-            <span className="inline-flex items-center gap-1 ml-2 text-v2-success-600">
-              <Wifi size={12} /> Google conectado
-            </span>
-          )}
-          {!gbp?.connected && (
-            <span className="inline-flex items-center gap-1 ml-2 text-v2-neutral-400">
-              <WifiOff size={12} /> Pendiente de conectar
-            </span>
-          )}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[13px] font-medium rounded-full border ${styles[status]}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${status === 'connected' ? 'bg-v2-success-500' : status === 'pending' ? 'bg-v2-warning-500' : 'bg-v2-neutral-300'}`} />
+      {label} · {statusLabels[status]}
+    </span>
+  );
+}
+
+// ─── Hero Business ──────────────────────────────────────────────────────────
+
+interface HeroBusinessProps {
+  profile: BusinessProfile;
+  sources: SourceState[];
+  onEdit: () => void;
+  onSync: () => void;
+}
+
+function HeroBusiness({ profile, sources, onEdit, onSync }: HeroBusinessProps) {
+  const hasProfile = Boolean(profile.name);
+
+  useEffect(() => {
+    trackBusinessHeaderView();
+  }, []);
+
+  const gbp = sources.find((s) => s.id === 'google_business');
+  const website = sources.find((s) => s.id === 'website');
+  const lastSync = sources
+    .filter((s) => s.lastSync)
+    .sort((a, b) => new Date(b.lastSync!).getTime() - new Date(a.lastSync!).getTime())[0]?.lastSync;
+
+  function getConnectionStatus(source: SourceState | undefined): ConnectionStatus {
+    if (!source) return 'not_connected';
+    if (source.connected) return 'connected';
+    if (source.status === 'pending') return 'pending';
+    return 'not_connected';
+  }
+
+  // State: No business configured → prompt to complete
+  if (!hasProfile) {
+    return (
+      <section className="rounded-v2-2xl border border-v2-border-light bg-white px-6 py-10 sm:px-10 sm:py-12 text-center">
+        <div className="w-16 h-16 rounded-full bg-v2-neutral-100 flex items-center justify-center mx-auto mb-5">
+          <span className="text-2xl text-v2-neutral-300 font-bold">?</span>
+        </div>
+        <h2 className="text-v2-lg font-semibold text-v2-text-primary mb-2">Tu empresa aun no esta configurada</h2>
+        <p className="text-v2-sm text-v2-text-secondary max-w-md mx-auto mb-6">
+          Completa la informacion de tu empresa para obtener recomendaciones mas precisas y conectar tus fuentes de datos.
         </p>
-      ) : (
-        <p className="text-v2-sm text-v2-text-tertiary">
-          Completa la informacion de tu empresa para recibir recomendaciones personalizadas.
-        </p>
-      )}
-    </div>
+        <button
+          onClick={onEdit}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-v2-lg bg-v2-primary-600 hover:bg-v2-primary-700 text-white text-v2-sm font-medium transition-colors shadow-v2-sm focus-visible:ring-2 focus-visible:ring-v2-primary-500/40 focus-visible:ring-offset-2"
+        >
+          <Edit3 size={14} /> Completar empresa
+        </button>
+      </section>
+    );
+  }
+
+  // State: Business exists
+  const initial = profile.name.charAt(0).toUpperCase();
+
+  return (
+    <section className="rounded-v2-2xl border border-v2-border-light bg-white px-5 py-6 sm:px-8 sm:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-8">
+        {/* Left: Logo / Initial */}
+        <div className="shrink-0 self-center sm:self-start">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-v2-primary-50 border-2 border-v2-primary-100 flex items-center justify-center">
+            <span className="text-2xl sm:text-3xl font-bold text-v2-primary-600">{initial}</span>
+          </div>
+        </div>
+
+        {/* Right: Content */}
+        <div className="flex-1 min-w-0 text-center sm:text-left">
+          {/* Business Name */}
+          <h1 className="text-[28px] sm:text-[36px] lg:text-[40px] font-bold text-v2-text-primary leading-tight tracking-tight">
+            {profile.name}
+          </h1>
+
+          {/* Category · City */}
+          <p className="mt-1.5 text-base sm:text-lg text-v2-text-secondary">
+            {profile.category || 'Sin categoria'}
+            {profile.city && <span className="text-v2-neutral-300 mx-2">·</span>}
+            {profile.city && <span className="text-v2-text-tertiary text-[15px] sm:text-base">{profile.city}</span>}
+          </p>
+
+          {/* Connection badges */}
+          <div className="mt-5 flex flex-wrap gap-2 justify-center sm:justify-start">
+            <ConnectionBadge label="Google Business" status={getConnectionStatus(gbp)} />
+            <ConnectionBadge label="Sitio Web" status={getConnectionStatus(website)} />
+            <ConnectionBadge label="Facebook" status="not_connected" />
+            <ConnectionBadge label="Instagram" status="not_connected" />
+          </div>
+
+          {/* Last sync */}
+          <p className="mt-4 text-v2-xs text-v2-text-tertiary">
+            {lastSync
+              ? `Ultima sincronizacion: ${timeAgo(lastSync)}`
+              : 'Sincronizacion: Pendiente'}
+          </p>
+
+          {/* Buttons */}
+          <div className="mt-5 flex flex-wrap gap-3 justify-center sm:justify-start">
+            <button
+              onClick={onEdit}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-v2-lg bg-white border border-v2-border-light text-v2-sm font-medium text-v2-text-primary hover:bg-v2-neutral-50 hover:border-v2-border-DEFAULT transition-all shadow-v2-sm focus-visible:ring-2 focus-visible:ring-v2-primary-500/30 focus-visible:ring-offset-2"
+            >
+              <Edit3 size={14} /> Editar empresa
+            </button>
+            <button
+              onClick={onSync}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-v2-lg bg-v2-primary-600 hover:bg-v2-primary-700 text-white text-v2-sm font-medium transition-colors shadow-v2-sm focus-visible:ring-2 focus-visible:ring-v2-primary-500/40 focus-visible:ring-offset-2"
+            >
+              <RefreshCw size={14} /> Sincronizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -138,70 +235,6 @@ function QuickStatsRow({ gbpConnected }: { gbpConnected: boolean }) {
           )}
         </div>
       ))}
-    </div>
-  );
-}
-
-// ─── Business Card ──────────────────────────────────────────────────────────
-
-function BusinessCard({ profile, sources, onEdit }: { profile: BusinessProfile; sources: SourceState[]; onEdit: () => void }) {
-  const connectedSources = sources.filter((s) => s.connected);
-  const hasProfile = Boolean(profile.name);
-
-  if (!hasProfile) {
-    return (
-      <div className="rounded-v2-xl border border-dashed border-v2-border-DEFAULT bg-white p-6 sm:p-8 text-center">
-        <div className="w-12 h-12 rounded-full bg-v2-neutral-100 flex items-center justify-center mx-auto mb-4">
-          <Building2 size={20} className="text-v2-neutral-400" />
-        </div>
-        <h3 className="text-v2-base font-semibold text-v2-text-primary mb-1">Configura tu empresa</h3>
-        <p className="text-v2-sm text-v2-text-secondary mb-5 max-w-sm mx-auto">
-          Anade la informacion de tu negocio para recibir recomendaciones personalizadas.
-        </p>
-        <button
-          onClick={onEdit}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-v2-lg bg-v2-primary-600 hover:bg-v2-primary-700 text-white text-v2-sm font-medium transition-colors shadow-v2-sm focus-visible:ring-2 focus-visible:ring-v2-primary-500/40 focus-visible:ring-offset-2"
-        >
-          <Edit3 size={14} /> Completar empresa
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-v2-lg bg-v2-primary-50 flex items-center justify-center shrink-0">
-            <Building2 size={20} className="text-v2-primary-600" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-v2-base font-semibold text-v2-text-primary truncate">{profile.name}</h3>
-            <p className="text-v2-xs text-v2-text-secondary mt-0.5">
-              {profile.category}{profile.city ? ` · ${profile.city}` : ''}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={onEdit}
-          className="p-2 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 hover:text-v2-text-primary transition-colors focus-visible:ring-2 focus-visible:ring-v2-primary-500/30"
-          aria-label="Editar empresa"
-        >
-          <Edit3 size={15} />
-        </button>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-v2-xs text-v2-text-tertiary">
-        {profile.website && (
-          <span className="flex items-center gap-1.5"><Globe size={12} />{profile.website}</span>
-        )}
-        {connectedSources.length > 0 && (
-          <span className="flex items-center gap-1.5"><Wifi size={12} />{connectedSources.length} fuente{connectedSources.length !== 1 ? 's' : ''} conectada{connectedSources.length !== 1 ? 's' : ''}</span>
-        )}
-        {connectedSources.length === 0 && (
-          <span className="flex items-center gap-1.5 text-v2-warning-500"><WifiOff size={12} />Sin fuentes conectadas</span>
-        )}
-      </div>
     </div>
   );
 }
@@ -438,11 +471,9 @@ function AutomationsCard() {
 // ─── Main Dashboard ─────────────────────────────────────────────────────────
 
 export default function DailyBriefingPage() {
-  const { session } = useAuth();
   const navigate = useNavigate();
-  const userName = session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'Usuario';
 
-  const { profile, timeline, sources, gbp, hasProfile, actions } = useDashboardData();
+  const { profile, timeline, sources, hasProfile, actions } = useDashboardData();
 
   useEffect(() => {
     trackDashboardOpen(profile.id);
@@ -455,8 +486,13 @@ export default function DailyBriefingPage() {
   }
 
   function handleEditBusiness() {
+    trackBusinessEditClick();
     trackDashboardBusinessEdit();
     navigate('/app-v2/negocio');
+  }
+
+  function handleSync() {
+    trackBusinessSyncClick();
   }
 
   function handleGrowthDetails() {
@@ -466,11 +502,11 @@ export default function DailyBriefingPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-8 max-w-4xl">
-      {/* Hero Header */}
-      <HeroHeader profile={profile} gbp={gbp} userName={userName} />
+      {/* Hero Business — the protagonist */}
+      <HeroBusiness profile={profile} sources={sources} onEdit={handleEditBusiness} onSync={handleSync} />
 
       {/* Quick Stats */}
-      <QuickStatsRow gbpConnected={gbp?.connected ?? false} />
+      <QuickStatsRow gbpConnected={sources.find((s) => s.id === 'google_business')?.connected ?? false} />
 
       {/* Main 2-column layout on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
@@ -482,7 +518,6 @@ export default function DailyBriefingPage() {
 
         {/* Right column: Sidebar cards (1/3 width) */}
         <div className="space-y-5">
-          <BusinessCard profile={profile} sources={sources} onEdit={handleEditBusiness} />
           <GrowthScore hasProfile={hasProfile} onDetails={handleGrowthDetails} />
           <AiAdvisorCard topAction={actions[0] ?? null} onPrepare={handlePrepare} />
         </div>

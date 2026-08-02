@@ -179,3 +179,15 @@ export function trackDashboardGrowthDetails() {
 export function trackDashboardWorkspaceOpen(recommendationId: string) {
   track('dashboard_workspace_open', { recommendation_id: recommendationId });
 }
+
+export function trackBusinessHeaderView() {
+  trackViewOnce('business_header_view', {});
+}
+
+export function trackBusinessEditClick() {
+  track('business_edit_click', {});
+}
+
+export function trackBusinessSyncClick() {
+  track('business_sync_click', {});
+}
