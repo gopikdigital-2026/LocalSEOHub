@@ -157,3 +157,25 @@ export function trackSourceError(sourceId: string) {
 export function trackSourceDisconnected(sourceId: string) {
   track('source_disconnected', { source_id: sourceId });
 }
+
+// ─── Dashboard Events ───────────────────────────────────────────────────────
+
+export function trackDashboardOpen(businessId?: string) {
+  trackViewOnce('dashboard_open', { business_id: businessId });
+}
+
+export function trackDashboardActionClick(recommendationId: string, actionType: string) {
+  track('dashboard_action_click', { recommendation_id: recommendationId, action_type: actionType });
+}
+
+export function trackDashboardBusinessEdit() {
+  track('dashboard_business_edit', {});
+}
+
+export function trackDashboardGrowthDetails() {
+  track('dashboard_growth_details', {});
+}
+
+export function trackDashboardWorkspaceOpen(recommendationId: string) {
+  track('dashboard_workspace_open', { recommendation_id: recommendationId });
+}
