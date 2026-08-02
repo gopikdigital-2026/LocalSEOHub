@@ -76,15 +76,15 @@
 @layer components {
   /* ─── Cards ───────────────────────────────────────────────────────────────── */
   .v2-card {
-    @apply bg-white rounded-v2-2xl border border-v2-border-DEFAULT;
+    @apply bg-white rounded-v2-2xl border border-v2-border;
     padding: 1.5rem;
   }
   .v2-card-lg {
-    @apply bg-white rounded-v2-2xl border border-v2-border-DEFAULT;
+    @apply bg-white rounded-v2-2xl border border-v2-border;
     padding: 2rem;
   }
   .v2-card-flush {
-    @apply bg-white rounded-v2-2xl border border-v2-border-DEFAULT;
+    @apply bg-white rounded-v2-2xl border border-v2-border;
   }
 
   /* ─── Buttons ─────────────────────────────────────────────────────────────── */
@@ -101,7 +101,7 @@
   }
   .v2-btn-secondary {
     @apply v2-btn px-5 py-2.5 rounded-v2-lg text-v2-sm;
-    @apply bg-white border border-v2-border-DEFAULT hover:bg-v2-neutral-50 hover:border-v2-border-dark;
+    @apply bg-white border border-v2-border hover:bg-v2-neutral-50 hover:border-v2-border-dark;
     @apply text-v2-text-primary shadow-v2-xs;
     @apply focus-visible:ring-v2-neutral-400/30;
   }
@@ -121,7 +121,7 @@
 
   /* ─── Inputs ──────────────────────────────────────────────────────────────── */
   .v2-input {
-    @apply w-full bg-white border border-v2-border-DEFAULT rounded-v2-lg px-3.5 py-2.5;
+    @apply w-full bg-white border border-v2-border rounded-v2-lg px-3.5 py-2.5;
     @apply text-v2-sm text-v2-text-primary placeholder:text-v2-text-tertiary;
     @apply transition-all duration-v2-normal;
     @apply focus:outline-none focus:ring-2 focus:ring-v2-primary-500/20 focus:border-v2-primary-400;

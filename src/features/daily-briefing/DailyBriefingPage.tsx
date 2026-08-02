@@ -184,7 +184,7 @@ function HeroBusiness({ profile, sources, onEdit, onSync }: HeroBusinessProps) {
           <div className="mt-5 flex flex-wrap gap-3 justify-center sm:justify-start">
             <button
               onClick={onEdit}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-v2-lg bg-white border border-v2-border-light text-v2-sm font-medium text-v2-text-primary hover:bg-v2-neutral-50 hover:border-v2-border-DEFAULT transition-all shadow-v2-sm focus-visible:ring-2 focus-visible:ring-v2-primary-500/30 focus-visible:ring-offset-2"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-v2-lg bg-white border border-v2-border-light text-v2-sm font-medium text-v2-text-primary hover:bg-v2-neutral-50 hover:border-v2-border transition-all shadow-v2-sm focus-visible:ring-2 focus-visible:ring-v2-primary-500/30 focus-visible:ring-offset-2"
             >
               <Edit3 size={14} /> Editar empresa
             </button>
@@ -244,7 +244,7 @@ function QuickStatsRow({ gbpConnected }: { gbpConnected: boolean }) {
 function TodayActions({ actions, onPrepare }: { actions: Recommendation[]; onPrepare: (rec: Recommendation) => void }) {
   if (actions.length === 0) {
     return (
-      <div className="rounded-v2-xl border border-dashed border-v2-border-DEFAULT bg-white p-6 text-center">
+      <div className="rounded-v2-xl border border-dashed border-v2-border bg-white p-6 text-center">
         <Sparkles size={20} className="text-v2-neutral-300 mx-auto mb-3" />
         <p className="text-v2-sm text-v2-text-secondary">Completa tu empresa para recibir acciones personalizadas.</p>
       </div>
