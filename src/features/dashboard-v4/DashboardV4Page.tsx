@@ -124,6 +124,11 @@ export default function DashboardV4Page() {
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-8 max-w-4xl">
+      {import.meta.env.DEV && (
+        <div className="bg-v2-success-50 border border-v2-success-200 rounded-v2-lg px-3 py-1.5 text-v2-xs font-mono text-v2-success-700 w-fit">
+          DASHBOARD V4 ACTIVE
+        </div>
+      )}
       <BusinessHero
         name={profile.name}
         category={profile.category}

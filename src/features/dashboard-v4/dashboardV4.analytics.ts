@@ -3,7 +3,7 @@ const VIEW_TRACKED = new Set<string>();
 function track(event: string, props: Record<string, string | undefined>) {
   try {
     const payload = { event, ...props, timestamp: new Date().toISOString() };
-    const win = window as Record<string, unknown>;
+    const win = window as unknown as Record<string, unknown>;
     if (typeof window !== 'undefined' && win.__analytics_queue) {
       (win.__analytics_queue as unknown[]).push(payload);
     }

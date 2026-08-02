@@ -4506,6 +4506,12 @@ export default function App() {
     );
   }
 
+  // Authenticated users: redirect / and /dashboard to V2 dashboard
+  if (user && (window.location.pathname === '/' || window.location.pathname === '/dashboard')) {
+    window.location.replace('/app-v2/hoy');
+    return null;
+  }
+
   // Content generator landing — fully public, no auth required
   if (window.location.pathname === '/generador-contenido-seo') {
     return (
