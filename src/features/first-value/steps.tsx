@@ -327,8 +327,9 @@ export function InitialAnalysisStep({ businessName, sourceType, onComplete }: In
   const [ready, setReady] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
+  // Brief pause to let user see the summary of their inputs before proceeding
   useEffect(() => {
-    timerRef.current = setTimeout(() => setReady(true), 1800);
+    timerRef.current = setTimeout(() => setReady(true), 600);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, []);
 
@@ -468,8 +469,8 @@ export function FirstExecutionInline({ recommendation, onComplete }: FirstExecut
             {pc.callToAction && <p className="text-v2-xs text-v2-text-tertiary mt-0.5">{pc.callToAction}</p>}
           </div>
           <div className="flex items-center gap-1.5">
-            <button onClick={() => setEditing(!editing)} className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400"><Edit3 size={14} /></button>
-            <button onClick={handleCopy} className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400">
+            <button onClick={() => setEditing(!editing)} aria-label="Editar contenido" className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 transition-colors focus-visible:ring-2 focus-visible:ring-v2-primary-500/30"><Edit3 size={14} /></button>
+            <button onClick={handleCopy} aria-label="Copiar contenido" className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 transition-colors focus-visible:ring-2 focus-visible:ring-v2-primary-500/30">
               {copied ? <Check size={14} className="text-v2-success-500" /> : <Copy size={14} />}
             </button>
           </div>

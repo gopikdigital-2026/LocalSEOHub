@@ -8,7 +8,6 @@ import {
   X,
   Building2,
   LogOut,
-  ChevronDown,
   Wifi,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -49,20 +48,6 @@ function SidebarNav() {
         </div>
       </div>
 
-      {/* Business selector */}
-      <div className="px-4 py-4 border-b border-v2-border-light">
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-v2-lg bg-v2-neutral-50 border border-v2-border-light hover:border-v2-border-DEFAULT transition-colors">
-          <div className="w-8 h-8 rounded-v2-md bg-v2-secondary-100 flex items-center justify-center">
-            <Building2 size={14} className="text-v2-secondary-600" />
-          </div>
-          <div className="flex-1 text-left min-w-0">
-            <p className="text-v2-sm font-medium text-v2-text-primary truncate">Mi Negocio</p>
-            <p className="text-v2-xs text-v2-text-tertiary">Sin configurar</p>
-          </div>
-          <ChevronDown size={14} className="text-v2-neutral-400 shrink-0" />
-        </button>
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => (
@@ -95,7 +80,8 @@ function SidebarNav() {
           </div>
           <button
             onClick={() => signOut()}
-            className="p-2 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 hover:text-v2-error-500 transition-colors"
+            aria-label="Cerrar sesion"
+            className="p-2 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 hover:text-v2-error-500 transition-colors focus-visible:ring-2 focus-visible:ring-v2-primary-500/30"
             title="Cerrar sesion"
           >
             <LogOut size={16} />
@@ -122,60 +108,66 @@ function MobileHeader() {
         </div>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="p-2 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-500"
+          aria-label={menuOpen ? 'Cerrar menu' : 'Abrir menu'}
+          className="p-2 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-500 transition-colors focus-visible:ring-2 focus-visible:ring-v2-primary-500/30"
         >
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </header>
 
-      {/* Mobile menu drawer */}
-      {menuOpen && (
-        <>
-          <div className="fixed inset-0 z-40 bg-v2-neutral-900/30 backdrop-blur-sm lg:hidden" onClick={() => setMenuOpen(false)} />
-          <div className="fixed top-14 right-0 bottom-0 z-50 w-72 bg-white border-l border-v2-border-light p-4 space-y-4 overflow-y-auto lg:hidden">
-            <div className="flex items-center gap-3 pb-4 border-b border-v2-border-light">
-              <div className="w-9 h-9 rounded-full bg-v2-primary-100 flex items-center justify-center">
-                <span className="text-v2-sm font-semibold text-v2-primary-700">{userName[0]?.toUpperCase()}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-v2-sm font-medium text-v2-text-primary truncate">{userName}</p>
-              </div>
-            </div>
-            <nav className="space-y-1">
-              {NAV_ITEMS.map((item) => (
-                <NavLink
-                  key={item.id}
-                  to={item.path}
-                  onClick={() => { trackNavigationClick(item.id); setMenuOpen(false); }}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-v2-lg text-v2-sm font-medium transition-all
-                    ${isActive ? 'bg-v2-primary-50 text-v2-primary-700' : 'text-v2-text-secondary hover:bg-v2-neutral-50'}`
-                  }
-                >
-                  {item.icon}
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-            <div className="pt-4 border-t border-v2-border-light">
-              <button
-                onClick={() => signOut()}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-v2-lg text-v2-sm font-medium text-v2-error-500 hover:bg-v2-error-50 w-full transition-colors"
-              >
-                <LogOut size={18} />
-                Cerrar sesion
-              </button>
-            </div>
+      {/* Mobile menu drawer with transition */}
+      <div
+        className={`fixed inset-0 z-40 bg-v2-neutral-900/30 backdrop-blur-sm lg:hidden transition-opacity duration-200 ${menuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setMenuOpen(false)}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu de navegacion"
+        className={`fixed top-14 right-0 bottom-0 z-50 w-72 bg-white border-l border-v2-border-light p-4 space-y-4 overflow-y-auto lg:hidden
+          transition-transform duration-250 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <div className="flex items-center gap-3 pb-4 border-b border-v2-border-light">
+          <div className="w-9 h-9 rounded-full bg-v2-primary-100 flex items-center justify-center">
+            <span className="text-v2-sm font-semibold text-v2-primary-700">{userName[0]?.toUpperCase()}</span>
           </div>
-        </>
-      )}
+          <div className="flex-1 min-w-0">
+            <p className="text-v2-sm font-medium text-v2-text-primary truncate">{userName}</p>
+          </div>
+        </div>
+        <nav className="space-y-1">
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.id}
+              to={item.path}
+              onClick={() => { trackNavigationClick(item.id); setMenuOpen(false); }}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-v2-lg text-v2-sm font-medium transition-all
+                ${isActive ? 'bg-v2-primary-50 text-v2-primary-700' : 'text-v2-text-secondary hover:bg-v2-neutral-50'}`
+              }
+            >
+              {item.icon}
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="pt-4 border-t border-v2-border-light">
+          <button
+            onClick={() => signOut()}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-v2-lg text-v2-sm font-medium text-v2-error-500 hover:bg-v2-error-50 w-full transition-colors"
+          >
+            <LogOut size={18} />
+            Cerrar sesion
+          </button>
+        </div>
+      </div>
     </>
   );
 }
 
 function MobileBottomNav() {
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-v2-border-light flex items-center justify-around h-16 z-30 safe-area-pb">
+    <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-v2-border-light flex items-center justify-around h-16 z-30 safe-area-pb" aria-label="Navegacion principal">
       {NAV_ITEMS.slice(0, 5).map((item) => (
         <NavLink
           key={item.id}

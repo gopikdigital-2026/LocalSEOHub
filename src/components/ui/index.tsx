@@ -14,10 +14,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const buttonVariants: Record<ButtonVariant, string> = {
-  primary: 'bg-v2-primary-600 hover:bg-v2-primary-700 text-white shadow-v2-sm hover:shadow-v2-md active:shadow-none',
-  secondary: 'bg-white hover:bg-v2-neutral-50 text-v2-text-primary border border-v2-border-light shadow-v2-sm hover:border-v2-border-DEFAULT',
-  ghost: 'bg-transparent hover:bg-v2-neutral-100 text-v2-text-secondary',
-  danger: 'bg-v2-error-500 hover:bg-v2-error-600 text-white shadow-v2-sm',
+  primary: 'bg-v2-primary-600 hover:bg-v2-primary-700 text-white shadow-v2-sm hover:shadow-v2-md active:shadow-none focus-visible:ring-2 focus-visible:ring-v2-primary-500/40 focus-visible:ring-offset-2',
+  secondary: 'bg-white hover:bg-v2-neutral-50 text-v2-text-primary border border-v2-border-light shadow-v2-sm hover:border-v2-border-DEFAULT focus-visible:ring-2 focus-visible:ring-v2-primary-500/30 focus-visible:ring-offset-2',
+  ghost: 'bg-transparent hover:bg-v2-neutral-100 text-v2-text-secondary focus-visible:ring-2 focus-visible:ring-v2-primary-500/30 focus-visible:ring-offset-1',
+  danger: 'bg-v2-error-500 hover:bg-v2-error-600 text-white shadow-v2-sm focus-visible:ring-2 focus-visible:ring-v2-error-500/40 focus-visible:ring-offset-2',
 };
 
 const buttonSizes: Record<ButtonSize, string> = {
@@ -105,13 +105,15 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
 }
 
-export function Input({ label, error, icon, className = '', ...props }: InputProps) {
+export function Input({ label, error, icon, className = '', id, ...props }: InputProps) {
+  const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
   return (
     <div className="space-y-1.5">
-      {label && <label className="block text-v2-sm font-medium text-v2-text-primary">{label}</label>}
+      {label && <label htmlFor={inputId} className="block text-v2-sm font-medium text-v2-text-primary">{label}</label>}
       <div className="relative">
         {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-v2-neutral-400">{icon}</span>}
         <input
+          id={inputId}
           className={`w-full rounded-v2-lg border border-v2-border-light bg-white px-3.5 py-2.5 text-v2-sm text-v2-text-primary
             placeholder:text-v2-neutral-400 focus:outline-none focus:border-v2-primary-500 focus:ring-2 focus:ring-v2-primary-500/10
             transition-all ${icon ? 'pl-10' : ''} ${error ? 'border-v2-error-400 focus:border-v2-error-500 focus:ring-v2-error-500/10' : ''} ${className}`}
@@ -130,12 +132,14 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options: { value: string; label: string }[];
 }
 
-export function Select({ label, options, className = '', ...props }: SelectProps) {
+export function Select({ label, options, className = '', id, ...props }: SelectProps) {
+  const selectId = id || (label ? `select-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
   return (
     <div className="space-y-1.5">
-      {label && <label className="block text-v2-sm font-medium text-v2-text-primary">{label}</label>}
+      {label && <label htmlFor={selectId} className="block text-v2-sm font-medium text-v2-text-primary">{label}</label>}
       <div className="relative">
         <select
+          id={selectId}
           className={`w-full appearance-none rounded-v2-lg border border-v2-border-light bg-white px-3.5 py-2.5 pr-10 text-v2-sm text-v2-text-primary
             focus:outline-none focus:border-v2-primary-500 focus:ring-2 focus:ring-v2-primary-500/10 transition-all ${className}`}
           {...props}
@@ -157,12 +161,13 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
   error?: string;
 }
 
-export function Textarea({ label, error, className = '', ...props }: TextareaProps) {
+export function Textarea({ label, error, className = '', id, ...props }: TextareaProps) {
+  const textareaId = id || (label ? `textarea-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
   return (
     <div className="space-y-1.5">
-      {label && <label className="block text-v2-sm font-medium text-v2-text-primary">{label}</label>}
+      {label && <label htmlFor={textareaId} className="block text-v2-sm font-medium text-v2-text-primary">{label}</label>}
       <textarea
-        className={`w-full rounded-v2-lg border border-v2-border-light bg-white px-3.5 py-2.5 text-v2-sm text-v2-text-primary
+        id={textareaId}        className={`w-full rounded-v2-lg border border-v2-border-light bg-white px-3.5 py-2.5 text-v2-sm text-v2-text-primary
           placeholder:text-v2-neutral-400 focus:outline-none focus:border-v2-primary-500 focus:ring-2 focus:ring-v2-primary-500/10
           transition-all resize-y min-h-[80px] ${error ? 'border-v2-error-400' : ''} ${className}`}
         {...props}
@@ -185,13 +190,13 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' }: ModalProps) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0 bg-v2-neutral-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative bg-white rounded-v2-2xl shadow-v2-xl w-full ${maxWidth} max-h-[90vh] overflow-y-auto`}>
+      <div className={`relative bg-white rounded-v2-2xl shadow-v2-xl w-full ${maxWidth} max-h-[90vh] overflow-y-auto animate-in`}>
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-v2-border-light">
             <h2 className="text-v2-lg font-semibold text-v2-text-primary">{title}</h2>
-            <button onClick={onClose} className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 transition-colors">
+            <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 transition-colors focus-visible:ring-2 focus-visible:ring-v2-primary-500/30">
               <X size={18} />
             </button>
           </div>
@@ -215,12 +220,12 @@ export function Drawer({ open, onClose, title, children }: DrawerProps) {
   return (
     <>
       {open && <div className="fixed inset-0 z-40 bg-v2-neutral-900/40 backdrop-blur-sm" onClick={onClose} />}
-      <div className={`fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-v2-xl transition-transform duration-300 ease-out
+      <div role="dialog" aria-modal="true" aria-label={title} className={`fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-v2-xl transition-transform duration-300 ease-out
         ${open ? 'translate-x-0' : 'translate-x-full'}`}>
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-v2-border-light">
             <h2 className="text-v2-lg font-semibold text-v2-text-primary">{title}</h2>
-            <button onClick={onClose} className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 transition-colors">
+            <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 transition-colors focus-visible:ring-2 focus-visible:ring-v2-primary-500/30">
               <X size={18} />
             </button>
           </div>
@@ -396,7 +401,7 @@ export function ProgressIndicator({ completed, inProgress, total }: ProgressIndi
         <span className="text-v2-text-secondary font-medium">{completed} de {total} completadas</span>
         <span className="text-v2-text-tertiary">{inProgress} en curso</span>
       </div>
-      <div className="h-2 rounded-full bg-v2-neutral-100 overflow-hidden flex">
+      <div className="h-2 rounded-full bg-v2-neutral-100 overflow-hidden flex" role="progressbar" aria-valuenow={completed} aria-valuemin={0} aria-valuemax={total} aria-label={`${completed} de ${total} completadas`}>
         <div className="h-full bg-v2-success-500 rounded-full transition-all duration-500" style={{ width: `${pctCompleted}%` }} />
         <div className="h-full bg-v2-warning-400 transition-all duration-500" style={{ width: `${pctInProgress}%` }} />
       </div>

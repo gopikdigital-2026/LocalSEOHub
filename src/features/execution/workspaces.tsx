@@ -21,7 +21,6 @@ import {
   Copy,
   Star,
   MessageSquare,
-  Send,
 } from 'lucide-react';
 
 // ─── Shared Props ───────────────────────────────────────────────────────────
@@ -110,8 +109,8 @@ export function ReviewWorkspace({ recommendation, executionState, onStateChange,
                   )}
 
                   <div className="flex items-center gap-2">
-                    <Button size="sm" onClick={() => handleRespond(review.id)} icon={<Send size={13} />}>Enviar respuesta</Button>
-                    <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(response); trackContentCopy(); }} icon={<Copy size={13} />}>Copiar</Button>
+                    <Button size="sm" onClick={() => { navigator.clipboard.writeText(response); handleRespond(review.id); }} icon={<Copy size={13} />}>Copiar y marcar</Button>
+                    <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(response); trackContentCopy(); }} icon={<Copy size={13} />}>Solo copiar</Button>
                   </div>
                 </div>
               )}
@@ -168,6 +167,7 @@ export function PostWorkspace({ recommendation, executionState, onStateChange, o
         )}
         <div className="hidden lg:block pt-4">
           <Button onClick={handlePublish} icon={<Check size={16} />}>Marcar como publicada</Button>
+          <p className="text-v2-xs text-v2-text-tertiary mt-2">Usa el boton de copiar para llevar el texto a tus redes sociales.</p>
         </div>
       </div>
     </WorkspaceLayout>
@@ -218,7 +218,8 @@ export function ProfileWorkspace({ recommendation, executionState, onStateChange
           </div>
         ))}
         <div className="hidden lg:block pt-4">
-          <Button onClick={handleComplete} icon={<Check size={16} />}>Aplicar cambios al perfil</Button>
+          <Button onClick={handleComplete} icon={<Check size={16} />}>Marcar cambios como aplicados</Button>
+          <p className="text-v2-xs text-v2-text-tertiary mt-2">Aplica los cambios sugeridos en tu perfil de Google Business y marca la accion como completada.</p>
         </div>
       </div>
     </WorkspaceLayout>

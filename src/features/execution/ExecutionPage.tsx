@@ -21,6 +21,7 @@ export default function ExecutionPage() {
       setExecutionState(state);
       trackWorkspaceOpen(recommendation.id, resolveWorkspaceId(recommendation.actionType));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recommendation?.id]);
 
   function handleBack() {

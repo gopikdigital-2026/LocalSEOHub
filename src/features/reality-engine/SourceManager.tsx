@@ -131,7 +131,13 @@ function SourceStatusCard({ source, onConnect, onDisconnect, onSync, syncing }: 
 // ─── Sync History Panel ─────────────────────────────────────────────────────
 
 function SyncHistoryPanel({ events }: { events: SyncEvent[] }) {
-  if (events.length === 0) return null;
+  if (events.length === 0) {
+    return (
+      <div className="rounded-v2-xl border border-v2-border-light bg-white p-5 text-center">
+        <p className="text-v2-sm text-v2-text-tertiary">El historial de sincronizacion aparecera aqui cuando conectes una fuente real.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-v2-xl border border-v2-border-light bg-white p-5">
@@ -181,13 +187,11 @@ export default function SourceManager() {
 
   function handleSync(sourceId: SourceId) {
     setSyncingId(sourceId);
-    setTimeout(() => {
-      const event = syncSource(repo, sourceId);
-      if (event.status === 'error') trackSourceError(sourceId);
-      else trackSourceSync(sourceId);
-      setSyncingId(null);
-      refresh();
-    }, 800);
+    const event = syncSource(repo, sourceId);
+    if (event.status === 'error') trackSourceError(sourceId);
+    else trackSourceSync(sourceId);
+    setSyncingId(null);
+    refresh();
   }
 
   const connectedCount = state.sources.filter((s) => s.connected).length;
