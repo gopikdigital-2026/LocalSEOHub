@@ -9,27 +9,6 @@ export interface ConnectionEntry {
   lastSync: string | null;
 }
 
-export interface QuickStatItem {
-  id: string;
-  label: string;
-  value: string | null;
-  source: string | null;
-  updatedAt: string | null;
-  confidence: ConfidenceLevel | null;
-}
-
-export interface DashboardBusinessState {
-  exists: boolean;
-  name: string;
-  category: string;
-  city: string;
-  website: string;
-  connections: ConnectionEntry[];
-  lastGlobalSync: string | null;
-}
-
-export type DashboardLoadState = 'loading' | 'ready' | 'empty' | 'error';
-
 export interface DashboardAction {
   id: string;
   title: string;

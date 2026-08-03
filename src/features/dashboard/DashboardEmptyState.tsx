@@ -1,5 +1,4 @@
 import { ArrowRight } from 'lucide-react';
-import { trackDashboardEmptyStateClick } from './dashboardV4.analytics';
 
 interface DashboardEmptyStateProps {
   onSetup: () => void;
@@ -19,7 +18,7 @@ export default function DashboardEmptyState({ onSetup }: DashboardEmptyStateProp
           Necesitamos conocer lo esencial de tu empresa para ofrecerte recomendaciones y acciones personalizadas.
         </p>
         <button
-          onClick={() => { trackDashboardEmptyStateClick(); onSetup(); }}
+          onClick={onSetup}
           className="v2-btn-primary text-v2-base px-6 py-3"
         >
           Configurar mi negocio <ArrowRight size={16} />

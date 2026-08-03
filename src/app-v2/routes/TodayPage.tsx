@@ -1,12 +1,16 @@
 import { lazy, Suspense } from 'react';
-import DashboardSkeleton from '../../features/dashboard-v4/DashboardSkeleton';
+import { LoadingState } from '../../components/ui';
 
-const DashboardV4Page = lazy(() => import('../../features/dashboard-v4/DashboardV4Page'));
+const DashboardPage = lazy(() => import('../../features/dashboard/DashboardPage'));
 
 export default function TodayPage() {
   return (
-    <Suspense fallback={<DashboardSkeleton />}>
-      <DashboardV4Page />
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <LoadingState />
+      </div>
+    }>
+      <DashboardPage />
     </Suspense>
   );
 }
