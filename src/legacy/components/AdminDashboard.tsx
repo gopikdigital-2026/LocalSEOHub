@@ -29,7 +29,7 @@ import {
   Timer,
   XCircle,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

@@ -21,11 +21,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'hoy', label: 'Hoy', path: '/app-v2/hoy', icon: <Calendar size={18} /> },
-  { id: 'plan', label: 'Plan', path: '/app-v2/plan', icon: <ClipboardList size={18} /> },
-  { id: 'informes', label: 'Resumen', path: '/app-v2/informes', icon: <BarChart2 size={18} /> },
-  { id: 'negocio', label: 'Mi negocio', path: '/app-v2/negocio', icon: <Building2 size={18} /> },
-  { id: 'fuentes', label: 'Fuentes', path: '/app-v2/fuentes', icon: <Wifi size={18} /> },
+  { id: 'hoy', label: 'Hoy', path: '/hoy', icon: <Calendar size={18} /> },
+  { id: 'plan', label: 'Plan', path: '/plan', icon: <ClipboardList size={18} /> },
+  { id: 'informes', label: 'Resumen', path: '/informes', icon: <BarChart2 size={18} /> },
+  { id: 'negocio', label: 'Mi negocio', path: '/negocio', icon: <Building2 size={18} /> },
+  { id: 'fuentes', label: 'Fuentes', path: '/fuentes', icon: <Wifi size={18} /> },
 ];
 
 function SidebarNav() {

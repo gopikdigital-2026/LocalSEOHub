@@ -26,7 +26,7 @@ export default function ExecutionPage() {
 
   function handleBack() {
     if (recommendation) trackWorkspaceClose(recommendation.id);
-    navigate('/app-v2/hoy');
+    navigate('/hoy');
   }
 
   function handleStateChange(newState: ExecutionState) {
@@ -37,7 +37,7 @@ export default function ExecutionPage() {
     return (
       <ErrorState
         message="No se encontro la recomendacion solicitada."
-        onRetry={() => navigate('/app-v2/hoy')}
+        onRetry={() => navigate('/hoy')}
       />
     );
   }

@@ -90,12 +90,12 @@ export default function DashboardV4Page() {
   const { profile, hasProfile, connections, lastGlobalSync, actions, quickStats, timeline } = useDashboardV4Data();
 
   if (!hasProfile) {
-    return <DashboardEmptyState onSetup={() => navigate('/app-v2/empezar')} />;
+    return <DashboardEmptyState onSetup={() => navigate('/empezar')} />;
   }
 
   function handleEditBusiness() {
     trackDashboardBusinessEditClick(profile.id);
-    navigate('/app-v2/negocio');
+    navigate('/negocio');
   }
 
   function handleSync() {
@@ -104,19 +104,19 @@ export default function DashboardV4Page() {
 
   function handlePrepareAction(action: DashboardAction) {
     trackDashboardPrimaryActionClick(action.id, action.actionType);
-    navigate(`/app-v2/ejecutar/${action.id}`);
+    navigate(`/ejecutar/${action.id}`);
   }
 
   function handleViewHistory() {
-    navigate('/app-v2/negocio/memoria');
+    navigate('/negocio/memoria');
   }
 
   function handleGrowthDetails() {
-    navigate('/app-v2/informes');
+    navigate('/informes');
   }
 
   function handleManageAutomations() {
-    navigate('/app-v2/fuentes');
+    navigate('/fuentes');
   }
 
   const primaryAction = actions[0] ?? null;
@@ -124,11 +124,6 @@ export default function DashboardV4Page() {
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-8 max-w-4xl">
-      {import.meta.env.DEV && (
-        <div className="bg-v2-success-50 border border-v2-success-200 rounded-v2-lg px-3 py-1.5 text-v2-xs font-mono text-v2-success-700 w-fit">
-          DASHBOARD V4 ACTIVE
-        </div>
-      )}
       <BusinessHero
         name={profile.name}
         category={profile.category}

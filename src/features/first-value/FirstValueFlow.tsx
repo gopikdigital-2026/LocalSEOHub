@@ -392,8 +392,8 @@ export default function FirstValueFlow() {
           goalLabel={getGoalLabel(state.selectedGoalId!)}
           actionTitle={rec?.title ?? 'Accion completada'}
           timeSeconds={ttfv}
-          onGoToPlan={() => navigate('/app-v2/plan')}
-          onGoToToday={() => navigate('/app-v2/hoy')}
+          onGoToPlan={() => navigate('/plan')}
+          onGoToToday={() => navigate('/hoy')}
         />
       </FlowShell>
     );

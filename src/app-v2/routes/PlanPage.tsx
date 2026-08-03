@@ -183,7 +183,7 @@ export default function PlanPage() {
           <Target size={32} className="text-v2-neutral-300 mx-auto mb-3" />
           <h2 className="text-v2-base font-semibold text-v2-text-primary mb-1">Aun no tienes un plan</h2>
           <p className="text-v2-sm text-v2-text-secondary mb-4">Completa la configuracion inicial para recibir tu primera recomendacion.</p>
-          <button onClick={() => navigate('/app-v2/empezar')} className="inline-flex items-center gap-2 px-4 py-2 rounded-v2-lg bg-v2-primary-600 hover:bg-v2-primary-700 text-white text-v2-sm font-medium transition-colors">
+          <button onClick={() => navigate('/empezar')} className="inline-flex items-center gap-2 px-4 py-2 rounded-v2-lg bg-v2-primary-600 hover:bg-v2-primary-700 text-white text-v2-sm font-medium transition-colors">
             Empezar <ArrowRight size={14} />
           </button>
         </div>

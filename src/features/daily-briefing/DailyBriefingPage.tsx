@@ -458,7 +458,7 @@ function AutomationsCard() {
           <p className="text-v2-xs text-v2-text-tertiary mt-0.5">0 activas</p>
         </div>
         <button
-          onClick={() => navigate('/app-v2/fuentes')}
+          onClick={() => navigate('/fuentes')}
           className="text-v2-xs font-medium text-v2-primary-600 hover:text-v2-primary-700 transition-colors flex items-center gap-1"
         >
           Gestionar <ExternalLink size={11} />
@@ -482,13 +482,13 @@ export default function DailyBriefingPage() {
   function handlePrepare(rec: Recommendation) {
     trackDashboardActionClick(rec.id, rec.actionType);
     trackDashboardWorkspaceOpen(rec.id);
-    navigate(`/app-v2/ejecutar/${rec.id}`);
+    navigate(`/ejecutar/${rec.id}`);
   }
 
   function handleEditBusiness() {
     trackBusinessEditClick();
     trackDashboardBusinessEdit();
-    navigate('/app-v2/negocio');
+    navigate('/negocio');
   }
 
   function handleSync() {
@@ -497,7 +497,7 @@ export default function DailyBriefingPage() {
 
   function handleGrowthDetails() {
     trackDashboardGrowthDetails();
-    navigate('/app-v2/informes');
+    navigate('/informes');
   }
 
   return (
