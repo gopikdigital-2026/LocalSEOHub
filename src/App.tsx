@@ -111,6 +111,21 @@ function MetaAdsRoute() {
   );
 }
 
+function DemoShell() {
+  useEffect(() => {
+    const DEMO_KEY = 'business_memory_v2';
+    if (!localStorage.getItem(DEMO_KEY)) {
+      localStorage.setItem(DEMO_KEY, JSON.stringify({
+        profile: { name: 'Panaderia Artesana', category: 'Panaderia / Pasteleria', city: 'Madrid', postalCode: '28012', description: 'Panaderia artesana con horno de lena en el centro de Madrid.' },
+        goals: [{ id: 'g1', text: 'Aparecer en el top 3 de Google Maps', active: true }],
+        history: []
+      }));
+    }
+  }, []);
+
+  return <AppShellV2 />;
+}
+
 export default function App() {
   return (
     <Suspense fallback={
@@ -134,6 +149,14 @@ export default function App() {
 
         {/* Admin */}
         <Route path="/admin" element={<AdminRoute />} />
+
+        {/* Demo mode — no auth required */}
+        <Route element={<DemoShell />}>
+          <Route path="/demo" element={<TodayPage />} />
+          <Route path="/demo/plan" element={<PlanPage />} />
+          <Route path="/demo/negocio" element={<BusinessProfilePage />} />
+          <Route path="/demo/fuentes" element={<SourceManagerPage />} />
+        </Route>
 
         {/* First Value onboarding — auth required, no shell */}
         <Route path="/empezar" element={
