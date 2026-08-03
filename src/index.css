@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   V2 DESIGN SYSTEM — Premium Light Theme
-   Inspired by: Notion, Stripe, Linear, Arc, Apple Business
+   DESIGN SYSTEM — Premium Light Theme
+   Inspired by: Stripe, Linear, Notion, Vercel
    ══════════════════════════════════════════════════════════════════════════════ */
 
 @layer base {
@@ -15,62 +15,20 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* V1 body — dark glass background for legacy pages */
   body {
-    background:
-      radial-gradient(ellipse 80% 65% at 8%  3%,  rgba(16,185,129,0.20) 0%, transparent 55%),
-      radial-gradient(ellipse 65% 50% at 92% 15%, rgba(20,184,166,0.16) 0%, transparent 50%),
-      radial-gradient(ellipse 55% 60% at 50% 95%, rgba(6,182,212,0.14)  0%, transparent 55%),
-      radial-gradient(ellipse 45% 45% at 12% 80%, rgba(5,150,105,0.11)  0%, transparent 50%),
-      radial-gradient(ellipse 30% 30% at 75% 65%, rgba(13,148,136,0.07) 0%, transparent 45%),
-      linear-gradient(160deg, #040c12 0%, #03090e 50%, #02070c 100%);
-    min-height: 100vh;
-  }
-
-  /* V2 App Shell — clean light background */
-  .v2-shell {
-    background: #F8FAFC;
+    background: #FFFFFF;
     color: #0F172A;
     min-height: 100vh;
   }
 
-  .glass-card {
-    background:
-      linear-gradient(145deg, rgba(255,255,255,0.05) 0%, transparent 38%),
-      linear-gradient(180deg,
-        rgba(18, 38, 58, 0.64) 0%,
-        rgba(10, 22, 36, 0.72) 100%
-      ) !important;
-    backdrop-filter: blur(28px) saturate(185%) brightness(1.04) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(185%) brightness(1.04) !important;
-    border: 1px solid rgba(255,255,255,0.11) !important;
-    box-shadow:
-      0 28px 72px rgba(0,0,0,0.65),
-      0 6px 22px  rgba(0,0,0,0.45),
-      0 1px 0     rgba(255,255,255,0.04),
-      inset 0  1.5px 0 rgba(255,255,255,0.17),
-      inset 0 -1px  0 rgba(0,0,0,0.38) !important;
-  }
-
-  .glass-card input,
-  .glass-card textarea,
-  .glass-card select {
-    background: rgba(3, 8, 16, 0.88) !important;
-    border-color: rgba(255,255,255,0.09) !important;
-  }
-  .glass-card input::placeholder,
-  .glass-card textarea::placeholder {
-    color: rgba(148,163,184,0.45);
-  }
-
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(71,85,105,0.2); border-radius: 9999px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.35); }
+  ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.45); }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   V2 COMPONENT LAYER
+   COMPONENT LAYER
    ══════════════════════════════════════════════════════════════════════════════ */
 
 @layer components {
@@ -78,13 +36,16 @@
   .v2-card {
     @apply bg-white rounded-v2-2xl border border-v2-border;
     padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
   }
   .v2-card-lg {
     @apply bg-white rounded-v2-2xl border border-v2-border;
     padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
   }
   .v2-card-flush {
     @apply bg-white rounded-v2-2xl border border-v2-border;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
   }
 
   /* ─── Buttons ─────────────────────────────────────────────────────────────── */
@@ -203,10 +164,9 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   V2 UTILITIES
+   UTILITIES & ANIMATIONS
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* ─── Animations ────────────────────────────────────────────────────────────── */
 @keyframes animateIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
@@ -239,19 +199,19 @@
   animation: scaleIn 0.15s ease-out both;
 }
 
-/* ─── Stagger delays for lists ─────────────────────────────────────────────── */
+/* Stagger delays */
 .v2-stagger-1 { animation-delay: 50ms; }
 .v2-stagger-2 { animation-delay: 100ms; }
 .v2-stagger-3 { animation-delay: 150ms; }
 .v2-stagger-4 { animation-delay: 200ms; }
 .v2-stagger-5 { animation-delay: 250ms; }
 
-/* ─── Safe area ─────────────────────────────────────────────────────────────── */
+/* Safe area */
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+/* Scrollbar hide */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -260,73 +220,7 @@
   display: none;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   V1 LEGACY ANIMATIONS (used by landing pages, not V2)
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-@keyframes voiceWave {
-  0%, 100% { transform: scaleY(0.12); }
-  50%       { transform: scaleY(1); }
-}
-
-.twin-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #10b981;
-  border: 2px solid #064e3b;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2), 0 2px 8px rgba(0,0,0,0.4);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.twin-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-  box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.25), 0 2px 12px rgba(0,0,0,0.5);
-}
-.twin-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #10b981;
-  border: 2px solid #064e3b;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-  cursor: pointer;
-}
-
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes radarRing {
-  0%   { transform: scale(1);   opacity: 0.55; }
-  100% { transform: scale(2.8); opacity: 0; }
-}
-@keyframes radarSweep {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@keyframes scanProgress {
-  from { width: 4%; }
-  to   { width: 95%; }
-}
-
-@keyframes slideUpFadeIn {
-  from { opacity: 0; transform: translateY(100%); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulseOnce {
-  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); }
-  50%  { box-shadow: 0 0 0 14px rgba(16,185,129,0); }
-  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
-}
-.animate-pulse-once {
-  animation: pulseOnce 1.6s ease-out 0.8s 2;
-}
-
+/* Reveal animations for landing pages */
 .reveal {
   opacity: 0;
   transform: translateY(28px);
@@ -341,30 +235,24 @@
 .reveal-delay-3 { transition-delay: 0.3s; }
 .reveal-delay-4 { transition-delay: 0.4s; }
 
-@keyframes floatDash {
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseOnce {
+  0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
+  50%  { box-shadow: 0 0 0 14px rgba(59,130,246,0); }
+  100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+}
+.animate-pulse-once {
+  animation: pulseOnce 1.6s ease-out 0.8s 2;
+}
+
+@keyframes float {
   0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-8px); }
+  50%       { transform: translateY(-6px); }
 }
-.float-dash {
-  animation: floatDash 5s ease-in-out infinite;
-}
-
-@keyframes shimmerBorder {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes drawLine {
-  from { transform: scaleX(0); }
-  to   { transform: scaleX(1); }
-}
-
-@keyframes counterPop {
-  0%   { opacity: 0; transform: scale(0.85) translateY(12px); }
-  60%  { transform: scale(1.04) translateY(-2px); }
-  100% { opacity: 1; transform: none; }
-}
-.counter-pop {
-  animation: counterPop 0.55s cubic-bezier(0.34,1.56,0.64,1) both;
+.float {
+  animation: float 5s ease-in-out infinite;
 }

@@ -177,7 +177,7 @@ function LoadingScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-6"
-      style={{ background: 'rgba(2,7,12,0.97)', backdropFilter: 'blur(20px)' }}>
+      style={{ background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(20px)' }}>
       <div className="w-full max-w-[320px]">
         <div className="flex justify-center mb-8">
           <div className="relative w-14 h-14">
@@ -185,7 +185,7 @@ function LoadingScreen({ onDone }: { onDone: () => void }) {
               style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)' }} />
             <div className="w-14 h-14 rounded-full flex items-center justify-center"
               style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
-              <Zap size={20} className="text-emerald-400" />
+              <Zap size={20} className="text-emerald-600" />
             </div>
           </div>
         </div>
@@ -200,13 +200,13 @@ function LoadingScreen({ onDone }: { onDone: () => void }) {
                 <div className="flex-shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center transition-all"
                   style={{
                     background: isDone ? '#10b981' : 'transparent',
-                    border: isDone ? 'none' : `1px solid ${isActive ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                    border: isDone ? 'none' : `1px solid ${isActive ? '#cbd5e1' : '#e2e8f0'}`,
                   }}>
                   {isDone ? <Check size={10} className="text-white" strokeWidth={3} />
-                    : isActive ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> : null}
+                    : isActive ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" /> : null}
                 </div>
                 <span className="text-[13px]"
-                  style={{ color: isDone ? '#34d399' : isActive ? '#fff' : 'rgba(255,255,255,0.12)' }}>
+                  style={{ color: isDone ? '#059669' : isActive ? '#1e293b' : 'rgba(100,116,139,0.3)' }}>
                   {step}
                 </span>
               </div>
@@ -249,14 +249,14 @@ function ResultView({ business, plan, onRegister }: {
   return (
     <div className="min-h-screen pb-32">
       {/* Header */}
-      <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span className="text-white font-bold text-sm">Plan inicial para {business}</span>
+      <div className="px-5 py-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
+        <span className="text-slate-900 font-bold text-sm">Plan inicial para {business}</span>
       </div>
 
       <div className="max-w-lg mx-auto px-5 pt-6 space-y-5">
 
         {/* Tab nav */}
-        <div className="flex gap-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: '#f8fafc' }}>
           {tabs.map((t, i) => (
             <button key={i} onClick={() => {
               setTab(i as 0 | 1 | 2);
@@ -264,9 +264,9 @@ function ResultView({ business, plan, onRegister }: {
             }}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[12px] font-semibold transition-all"
               style={{
-                background: tab === i ? 'rgba(16,185,129,0.12)' : 'transparent',
-                color: tab === i ? '#34d399' : 'rgba(148,163,184,0.6)',
-                border: tab === i ? '1px solid rgba(16,185,129,0.2)' : '1px solid transparent',
+                background: tab === i ? '#ecfdf5' : 'transparent',
+                color: tab === i ? '#059669' : 'rgba(148,163,184,0.6)',
+                border: tab === i ? '1px solid #a7f3d0' : '1px solid transparent',
               }}>
               <t.icon size={13} />
               {t.label}
@@ -276,19 +276,19 @@ function ResultView({ business, plan, onRegister }: {
 
         {/* Tab content */}
         {tab === 0 && (
-          <div className="glass-card rounded-2xl p-5 space-y-4">
+          <div className="glass-card rounded-2xl p-5 space-y-4" style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <div className="flex items-center gap-2 mb-1">
-              <Calendar size={13} className="text-emerald-400" />
-              <span className="text-[11px] text-emerald-400 font-semibold uppercase tracking-wider">Publicación recomendada</span>
+              <Calendar size={13} className="text-emerald-600" />
+              <span className="text-[11px] text-emerald-600 font-semibold uppercase tracking-wider">Publicación recomendada</span>
             </div>
-            <h3 className="text-white font-bold text-[15px] leading-snug">{plan.publication.title}</h3>
-            <p className="text-slate-400 text-[13px] leading-relaxed">{plan.publication.body}</p>
-            <p className="text-emerald-400 text-[13px] font-medium">{plan.publication.cta}</p>
-            <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <span className="text-slate-600 text-[11px]">Canal: {plan.publication.channel}</span>
+            <h3 className="text-slate-900 font-bold text-[15px] leading-snug">{plan.publication.title}</h3>
+            <p className="text-slate-600 text-[13px] leading-relaxed">{plan.publication.body}</p>
+            <p className="text-emerald-600 text-[13px] font-medium">{plan.publication.cta}</p>
+            <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid #e2e8f0' }}>
+              <span className="text-slate-500 text-[11px]">Canal: {plan.publication.channel}</span>
               <button onClick={copyPost}
                 className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all"
-                style={{ background: 'rgba(16,185,129,0.1)', color: '#34d399', border: '1px solid rgba(16,185,129,0.2)' }}>
+                style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}>
                 {copied ? <><Check size={11} />Copiado</> : <><Copy size={11} />Copiar</>}
               </button>
             </div>
@@ -296,36 +296,36 @@ function ResultView({ business, plan, onRegister }: {
         )}
 
         {tab === 1 && (
-          <div className="glass-card rounded-2xl p-5 space-y-3">
+          <div className="glass-card rounded-2xl p-5 space-y-3" style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <div className="flex items-center gap-2 mb-1">
-              <Eye size={13} className="text-emerald-400" />
-              <span className="text-[11px] text-emerald-400 font-semibold uppercase tracking-wider">Oportunidad detectada</span>
+              <Eye size={13} className="text-emerald-600" />
+              <span className="text-[11px] text-emerald-600 font-semibold uppercase tracking-wider">Oportunidad detectada</span>
             </div>
-            <p className="text-white text-[14px] leading-relaxed font-medium">{plan.opportunity}</p>
-            <p className="text-slate-600 text-[11px] leading-relaxed pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-slate-900 text-[14px] leading-relaxed font-medium">{plan.opportunity}</p>
+            <p className="text-slate-500 text-[11px] leading-relaxed pt-2" style={{ borderTop: '1px solid #e2e8f0' }}>
               Esta recomendación se basa en el tipo de negocio y patrones habituales del sector. No implica un análisis de datos externos.
             </p>
           </div>
         )}
 
         {tab === 2 && (
-          <div className="glass-card rounded-2xl p-5 space-y-3">
+          <div className="glass-card rounded-2xl p-5 space-y-3" style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <div className="flex items-center gap-2 mb-1">
-              <Zap size={13} className="text-emerald-400" />
-              <span className="text-[11px] text-emerald-400 font-semibold uppercase tracking-wider">Haz esto primero</span>
+              <Zap size={13} className="text-emerald-600" />
+              <span className="text-[11px] text-emerald-600 font-semibold uppercase tracking-wider">Haz esto primero</span>
             </div>
-            <p className="text-white text-[14px] leading-relaxed font-medium">{plan.priority.action}</p>
-            <div className="flex items-center gap-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <span className="text-slate-600 text-[11px]">Impacto potencial:</span>
+            <p className="text-slate-900 text-[14px] leading-relaxed font-medium">{plan.priority.action}</p>
+            <div className="flex items-center gap-2 pt-2" style={{ borderTop: '1px solid #e2e8f0' }}>
+              <span className="text-slate-500 text-[11px]">Impacto potencial:</span>
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
                 style={{
-                  color: plan.priority.impact === 'alto' ? '#34d399' : '#fbbf24',
-                  background: plan.priority.impact === 'alto' ? 'rgba(16,185,129,0.1)' : 'rgba(251,191,36,0.1)',
+                  color: plan.priority.impact === 'alto' ? '#059669' : '#d97706',
+                  background: plan.priority.impact === 'alto' ? '#ecfdf5' : '#fefce8',
                 }}>
                 {plan.priority.impact}
               </span>
             </div>
-            <p className="text-slate-700 text-[10px]">La priorización es orientativa y depende del estado actual de cada negocio.</p>
+            <p className="text-slate-400 text-[10px]">La priorización es orientativa y depende del estado actual de cada negocio.</p>
           </div>
         )}
 
@@ -334,24 +334,24 @@ function ResultView({ business, plan, onRegister }: {
           {/* Blurred preview */}
           <div className="relative" style={{ userSelect: 'none' }}>
             <div className="space-y-3" style={{ filter: 'blur(5px)', opacity: 0.3 }}>
-              <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-white text-sm font-medium">Calendario de 30 publicaciones</p>
-                <p className="text-slate-600 text-xs">Planificación completa del mes...</p>
+              <div className="rounded-2xl p-5" style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}>
+                <p className="text-slate-900 text-sm font-medium">Calendario de 30 publicaciones</p>
+                <p className="text-slate-500 text-xs">Planificación completa del mes...</p>
               </div>
-              <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-white text-sm font-medium">Plan semanal personalizado</p>
-                <p className="text-slate-600 text-xs">Acciones priorizadas para cada semana...</p>
+              <div className="rounded-2xl p-5" style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}>
+                <p className="text-slate-900 text-sm font-medium">Plan semanal personalizado</p>
+                <p className="text-slate-500 text-xs">Acciones priorizadas para cada semana...</p>
               </div>
-              <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-white text-sm font-medium">Herramientas de visibilidad local</p>
-                <p className="text-slate-600 text-xs">Análisis, directorios, reseñas...</p>
+              <div className="rounded-2xl p-5" style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}>
+                <p className="text-slate-900 text-sm font-medium">Herramientas de visibilidad local</p>
+                <p className="text-slate-500 text-xs">Análisis, directorios, reseñas...</p>
               </div>
             </div>
           </div>
 
           {/* Gate CTA */}
-          <div className="glass-card rounded-2xl p-6 text-center space-y-4">
-            <h3 className="text-white font-black text-[18px] leading-snug">Tu plan completo ya está preparado</h3>
+          <div className="glass-card rounded-2xl p-6 text-center space-y-4" style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <h3 className="text-slate-900 font-black text-[18px] leading-snug">Tu plan completo ya está preparado</h3>
             <p className="text-slate-500 text-[13px] leading-relaxed">
               Crea tu cuenta gratuita para guardar el plan, desbloquear el calendario completo y seguir generando contenido para tu negocio.
             </p>
@@ -363,12 +363,12 @@ function ResultView({ business, plan, onRegister }: {
               style={{ background: '#10b981', color: '#fff', boxShadow: '0 0 0 1px rgba(16,185,129,0.3), 0 6px 24px rgba(16,185,129,0.22)' }}>
               Guardar y desbloquear mi plan <ArrowRight size={14} />
             </button>
-            <p className="text-slate-700 text-[11px]">Sin tarjeta. Puedes probarlo antes de decidir.</p>
+            <p className="text-slate-400 text-[11px]">Sin tarjeta. Puedes probarlo antes de decidir.</p>
           </div>
 
           {/* Trust */}
-          <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-slate-400 text-[13px] font-semibold mb-3">¿Qué puedes hacer con tu plan?</p>
+          <div className="rounded-2xl p-5" style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}>
+            <p className="text-slate-600 text-[13px] font-semibold mb-3">¿Qué puedes hacer con tu plan?</p>
             <ul className="space-y-2">
               {['Saber qué publicar cada semana', 'Priorizar las acciones importantes', 'Ahorrar tiempo con recomendaciones adaptadas', 'Mejorar progresivamente tu presencia digital'].map(t => (
                 <li key={t} className="flex items-center gap-2.5 text-slate-500 text-[12px]">
@@ -376,7 +376,7 @@ function ResultView({ business, plan, onRegister }: {
                 </li>
               ))}
             </ul>
-            <p className="text-slate-700 text-[10px] mt-3 leading-relaxed">
+            <p className="text-slate-400 text-[10px] mt-3 leading-relaxed">
               LocalSEOHub organiza las recomendaciones. Los resultados dependen también de la ejecución, el mercado y la competencia.
             </p>
           </div>
@@ -485,20 +485,20 @@ function RegisterOverlay({ business, onClose }: { business: string; onClose: () 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: 'rgba(2,7,12,0.92)', backdropFilter: 'blur(12px)' }}
+      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="w-full max-w-[420px] mx-4 mb-4 sm:mb-0 rounded-2xl overflow-hidden"
-        style={{ background: 'linear-gradient(180deg, rgba(18,38,58,0.95) 0%, rgba(10,22,36,0.98) 100%)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}>
 
         {/* Context reminder */}
-        <div className="px-6 pt-5 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="px-6 pt-5 pb-3" style={{ borderBottom: '1px solid #e2e8f0' }}>
           <p className="text-slate-500 text-[11px]">Tu plan para:</p>
-          <p className="text-white font-bold text-[14px]">{business}</p>
+          <p className="text-slate-900 font-bold text-[14px]">{business}</p>
         </div>
 
         <div className="px-6 py-5 space-y-4">
           <div>
-            <p className="text-white font-bold text-[15px] mb-1">
+            <p className="text-slate-900 font-bold text-[15px] mb-1">
               {mode === 'signup' ? 'Crea tu cuenta gratuita' : 'Inicia sesión'}
             </p>
             <p className="text-slate-500 text-[12px]">Accede inmediatamente a tu plan completo.</p>
@@ -507,7 +507,7 @@ function RegisterOverlay({ business, onClose }: { business: string; onClose: () 
           {/* Google button */}
           <button onClick={handleGoogle} disabled={googleLoading}
             className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-[13px] font-semibold transition-all disabled:opacity-60"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#e2e8f0' }}>
+            style={{ background: '#ffffff', border: '1px solid #e2e8f0', color: '#475569' }}>
             {googleLoading ? (
               <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
             ) : (
@@ -523,39 +523,39 @@ function RegisterOverlay({ business, onClose }: { business: string; onClose: () 
 
           {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-            <span className="text-slate-700 text-[10px] font-semibold uppercase">o con email</span>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+            <div className="flex-1 h-px" style={{ background: '#f1f5f9' }} />
+            <span className="text-slate-400 text-[10px] font-semibold uppercase">o con email</span>
+            <div className="flex-1 h-px" style={{ background: '#f1f5f9' }} />
           </div>
 
           {/* Email form */}
           <form onSubmit={submit} className="space-y-3">
             <div className="relative">
-              <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+              <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="email" required autoComplete="email"
                 value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="Tu email"
-                className="w-full rounded-xl pl-10 pr-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none"
-                style={{ background: 'rgba(3,8,16,0.88)', border: '1px solid rgba(255,255,255,0.09)' }}
+                className="w-full rounded-xl pl-10 pr-4 py-3.5 text-sm text-slate-900 placeholder-slate-400 outline-none"
+                style={{ background: '#ffffff', border: '1px solid #cbd5e1' }}
                 onFocus={e => (e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)')}
-                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#cbd5e1')}
               />
             </div>
             <div className="relative">
-              <Lock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+              <Lock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type={showPwd ? 'text' : 'password'} required minLength={6}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 value={password} onChange={e => setPassword(e.target.value)}
                 placeholder={mode === 'login' ? 'Tu contraseña' : 'Contraseña (mín. 6 caracteres)'}
-                className="w-full rounded-xl pl-10 pr-12 py-3.5 text-sm text-white placeholder-slate-600 outline-none"
-                style={{ background: 'rgba(3,8,16,0.88)', border: '1px solid rgba(255,255,255,0.09)' }}
+                className="w-full rounded-xl pl-10 pr-12 py-3.5 text-sm text-slate-900 placeholder-slate-400 outline-none"
+                style={{ background: '#ffffff', border: '1px solid #cbd5e1' }}
                 onFocus={e => (e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)')}
-                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#cbd5e1')}
               />
               <button type="button" onClick={() => setShowPwd(!showPwd)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors">
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                 {showPwd ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
             </div>
@@ -569,11 +569,11 @@ function RegisterOverlay({ business, onClose }: { business: string; onClose: () 
               }
             </button>
             {mode === 'signup' && (
-              <p className="text-center text-slate-700 text-[11px]">Sin tarjeta. Acceso inmediato.</p>
+              <p className="text-center text-slate-400 text-[11px]">Sin tarjeta. Acceso inmediato.</p>
             )}
             {mode === 'login' && (
               <button type="button" onClick={() => { setMode('signup'); setErr(''); }}
-                className="w-full text-center text-slate-500 text-[11px] hover:text-slate-300 transition-colors">
+                className="w-full text-center text-slate-500 text-[11px] hover:text-slate-700 transition-colors">
                 No tengo cuenta - crear una nueva
               </button>
             )}
@@ -694,13 +694,13 @@ export default function GrowthPlanLanding() {
           {/* Eyebrow */}
           <div className="flex justify-center mb-5">
             <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] px-3 py-1.5 rounded-full"
-              style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)', color: 'rgba(52,211,153,0.85)' }}>
+              style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857' }}>
               Diagnóstico gratuito para negocios locales
             </span>
           </div>
 
           {/* Headline */}
-          <h1 className="text-white text-center font-black leading-[1.08] tracking-[-0.03em] mb-3"
+          <h1 className="text-slate-900 text-center font-black leading-[1.08] tracking-[-0.03em] mb-3"
             style={{ fontSize: 'clamp(22px, 5.5vw, 40px)' }}>
             Descubre qué publicaría, mejoraría y priorizaría la IA para tu negocio{' '}
             <span style={{ background: 'linear-gradient(135deg, #10b981, #34d399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
@@ -717,7 +717,7 @@ export default function GrowthPlanLanding() {
           {/* ═══ FORM ═══ */}
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="text-slate-400 text-[11px] font-semibold mb-1.5 block pl-1">
+              <label className="text-slate-600 text-[11px] font-semibold mb-1.5 block pl-1">
                 Nombre de tu negocio
               </label>
               <input
@@ -728,17 +728,17 @@ export default function GrowthPlanLanding() {
                 value={name}
                 onChange={handleChange}
                 placeholder="Ejemplo: Clínica Dental Sonrisa, Málaga"
-                className="w-full rounded-xl text-white outline-none transition-all duration-200"
+                className="w-full rounded-xl text-slate-900 outline-none transition-all duration-200"
                 style={{
                   padding: '16px',
                   fontSize: 15,
-                  background: ready ? 'rgba(16,185,129,0.04)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${ready ? 'rgba(16,185,129,0.35)' : 'rgba(255,255,255,0.1)'}`,
+                  background: ready ? 'rgba(16,185,129,0.05)' : '#ffffff',
+                  border: `1px solid ${ready ? 'rgba(16,185,129,0.35)' : '#cbd5e1'}`,
                   boxShadow: ready ? '0 0 0 3px rgba(16,185,129,0.06)' : 'none',
                 }}
               />
               {ready && (
-                <p className="text-emerald-600 text-[11px] mt-1.5 pl-1 animate-pulse">
+                <p className="text-emerald-500 text-[11px] mt-1.5 pl-1 animate-pulse">
                   Estamos preparando una vista previa para tu negocio.
                 </p>
               )}
@@ -766,7 +766,7 @@ export default function GrowthPlanLanding() {
             ))}
           </div>
 
-          <p className="text-center text-slate-700 text-[10px] mt-2.5 leading-relaxed max-w-[320px] mx-auto">
+          <p className="text-center text-slate-400 text-[10px] mt-2.5 leading-relaxed max-w-[320px] mx-auto">
             No recibirás un informe genérico. Las recomendaciones se adaptarán a tu negocio, ubicación y sector.
           </p>
         </div>
@@ -779,14 +779,14 @@ export default function GrowthPlanLanding() {
         </p>
 
         {/* Tab switcher */}
-        <div className="flex gap-1 mb-3 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+        <div className="flex gap-1 mb-3 p-1 rounded-xl" style={{ background: '#f8fafc' }}>
           {previews.map((pv, i) => (
             <button key={i} onClick={() => setPreviewTab(i)}
               className="flex-1 text-[11px] font-semibold py-2 rounded-lg transition-all"
               style={{
-                background: previewTab === i ? 'rgba(16,185,129,0.1)' : 'transparent',
-                color: previewTab === i ? '#34d399' : 'rgba(148,163,184,0.5)',
-                border: previewTab === i ? '1px solid rgba(16,185,129,0.15)' : '1px solid transparent',
+                background: previewTab === i ? '#ecfdf5' : 'transparent',
+                color: previewTab === i ? '#059669' : 'rgba(148,163,184,0.5)',
+                border: previewTab === i ? '1px solid #a7f3d0' : '1px solid transparent',
               }}>
               {pv.label}
             </button>
@@ -794,10 +794,10 @@ export default function GrowthPlanLanding() {
         </div>
 
         {/* Preview card */}
-        <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <p className="text-white text-[13px] font-medium leading-snug mb-1">{previews[previewTab].text}</p>
+        <div className="rounded-xl p-4" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+          <p className="text-slate-900 text-[13px] font-medium leading-snug mb-1">{previews[previewTab].text}</p>
           {previews[previewTab].sub && (
-            <p className="text-slate-600 text-[11px]">{previews[previewTab].sub}</p>
+            <p className="text-slate-500 text-[11px]">{previews[previewTab].sub}</p>
           )}
         </div>
       </div>
@@ -805,7 +805,7 @@ export default function GrowthPlanLanding() {
       {/* ═══ STICKY MOBILE CTA ═══ */}
       {!formVisible && stage === 'hero' && (
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 px-4 py-3"
-          style={{ background: 'rgba(2,7,12,0.97)', borderTop: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)' }}>
+          style={{ background: 'rgba(255,255,255,0.97)', borderTop: '1px solid #e2e8f0', backdropFilter: 'blur(20px)' }}>
           <button
             onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
             className="w-full text-white font-black text-[13px] py-4 rounded-xl flex items-center justify-center gap-2"

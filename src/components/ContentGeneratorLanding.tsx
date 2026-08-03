@@ -136,13 +136,13 @@ function LoadingAnimation({ onDone }: { onDone: () => void }) {
   void elapsed;
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-10 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-4">
-            <Zap size={24} className="text-emerald-400" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 mb-4">
+            <Zap size={24} className="text-emerald-600" />
           </div>
-          <p className="text-slate-400 text-sm">Generando tu contenido...</p>
+          <p className="text-slate-500 text-sm">Generando tu contenido...</p>
         </div>
 
         <div className="space-y-4">
@@ -162,7 +162,7 @@ function LoadingAnimation({ onDone }: { onDone: () => void }) {
                       ? 'bg-emerald-500'
                       : active
                       ? 'border-2 border-emerald-400 bg-transparent'
-                      : 'border border-slate-700 bg-transparent'
+                      : 'border border-slate-300 bg-transparent'
                   }`}
                 >
                   {done ? (
@@ -173,7 +173,7 @@ function LoadingAnimation({ onDone }: { onDone: () => void }) {
                 </div>
                 <span
                   className={`text-sm font-medium transition-colors duration-300 ${
-                    done ? 'text-emerald-400' : active ? 'text-white' : 'text-slate-600'
+                    done ? 'text-emerald-600' : active ? 'text-slate-900' : 'text-slate-400'
                   }`}
                 >
                   {step}
@@ -184,7 +184,7 @@ function LoadingAnimation({ onDone }: { onDone: () => void }) {
         </div>
 
         {/* progress bar */}
-        <div className="mt-10 h-1 bg-slate-800 rounded-full overflow-hidden">
+        <div className="mt-10 h-1 bg-slate-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
             style={{ width: `${((completed.length) / LOADING_STEPS.length) * 100}%` }}
@@ -218,37 +218,37 @@ function PostCard({
     <div
       className={`relative rounded-2xl border transition-all duration-300 ${
         blurred
-          ? 'border-slate-800/40 bg-slate-900/20'
-          : 'border-slate-700/50 bg-slate-900/60 hover:border-slate-600/60'
+          ? 'border-slate-200 bg-white'
+          : 'border-slate-200 bg-white hover:border-slate-300'
       }`}
     >
       {blurred && (
-        <div className="absolute inset-0 backdrop-blur-md rounded-2xl z-10 bg-slate-950/40" />
+        <div className="absolute inset-0 backdrop-blur-md rounded-2xl z-10 bg-white/90" />
       )}
 
       <div className={`p-5 ${blurred ? 'select-none' : ''}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest">
+          <span className="text-xs font-semibold text-emerald-600 uppercase tracking-widest">
             {post.day}
           </span>
           {!blurred && (
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"
             >
-              {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
               {copied ? 'Copiado' : 'Copiar'}
             </button>
           )}
         </div>
 
-        <h3 className="font-bold text-white text-base mb-2">{post.title}</h3>
-        <p className="text-slate-400 text-sm leading-relaxed mb-3">{post.body}</p>
+        <h3 className="font-bold text-slate-900 text-base mb-2">{post.title}</h3>
+        <p className="text-slate-600 text-sm leading-relaxed mb-3">{post.body}</p>
         <div className="flex flex-wrap gap-1.5">
           {post.hashtags.map((h) => (
             <span
               key={h}
-              className="text-[11px] text-emerald-500/70 font-medium bg-emerald-500/8 px-2 py-0.5 rounded-full"
+              className="text-[11px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded-full"
             >
               {h}
             </span>
@@ -261,28 +261,28 @@ function PostCard({
 
 function GateBlock({ onRegister }: { onRegister: () => void }) {
   return (
-    <div className="relative rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-slate-900 to-slate-950 p-8 text-center overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/60 to-slate-950 pointer-events-none" />
+    <div className="relative rounded-2xl border border-emerald-200 bg-gradient-to-b from-white to-slate-50 p-8 text-center overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/60 to-slate-50 pointer-events-none" />
       <div className="relative z-10">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-4">
-          <Lock size={20} className="text-emerald-400" />
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 mb-4">
+          <Lock size={20} className="text-emerald-600" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">
+        <h3 className="text-xl font-bold text-slate-900 mb-2">
           Tu calendario completo ya está preparado.
         </h3>
-        <p className="text-slate-400 text-sm leading-relaxed mb-6 max-w-sm mx-auto">
+        <p className="text-slate-600 text-sm leading-relaxed mb-6 max-w-sm mx-auto">
           Crea una cuenta gratuita para desbloquear las{' '}
-          <span className="text-white font-semibold">30 publicaciones</span> y seguir generando
+          <span className="text-slate-900 font-semibold">30 publicaciones</span> y seguir generando
           contenido cuando quieras.
         </p>
         <button
           onClick={onRegister}
-          className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm px-8 py-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5 shadow-xl shadow-emerald-500/25"
+          className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm px-8 py-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5 shadow-xl shadow-emerald-500/15"
         >
           Desbloquear gratis
           <ArrowRight size={16} />
         </button>
-        <p className="text-slate-600 text-xs mt-4">7 días gratis · Sin compromiso</p>
+        <p className="text-slate-500 text-xs mt-4">7 días gratis · Sin compromiso</p>
       </div>
     </div>
   );
@@ -327,16 +327,16 @@ function RegisterPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl">
         <div className="h-[2px] bg-gradient-to-r from-emerald-500 to-teal-400" />
         <div className="p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-white font-bold text-lg">Desbloquea tu calendario</h2>
+              <h2 className="text-slate-900 font-bold text-lg">Desbloquea tu calendario</h2>
               <p className="text-slate-500 text-xs mt-0.5">7 días gratis · sin tarjeta</p>
             </div>
-            <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors p-1">
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-700 transition-colors p-1">
               <ChevronDown size={20} />
             </button>
           </div>
@@ -348,7 +348,7 @@ function RegisterPanel({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Tu email"
-              className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/60 transition-colors"
+              className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500/60 transition-colors"
             />
             <input
               type="password"
@@ -357,13 +357,13 @@ function RegisterPanel({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Contraseña (mínimo 6 caracteres)"
-              className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/60 transition-colors"
+              className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500/60 transition-colors"
             />
             {error && <p className="text-red-400 text-xs">{error}</p>}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl text-sm transition-all duration-200 disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 rounded-xl text-sm transition-all duration-200 disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -489,7 +489,7 @@ export default function ContentGeneratorLanding() {
     const blurredPosts = registered ? [] : posts.slice(2, 4);
 
     return (
-      <div className="min-h-screen bg-[#0a0f0a] pb-24">
+      <div className="min-h-screen bg-white pb-24">
         {showRegister && (
           <RegisterPanel
             onSuccess={handleRegisterSuccess}
@@ -498,16 +498,16 @@ export default function ContentGeneratorLanding() {
         )}
 
         {/* Header */}
-        <div className="border-b border-slate-800/50 px-4 py-4">
+        <div className="border-b border-slate-200 px-4 py-4">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <Zap size={14} className="text-emerald-400" />
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                <Zap size={14} className="text-emerald-600" />
               </div>
-              <span className="text-white font-bold text-sm">LocalSEOHub</span>
+              <span className="text-slate-900 font-bold text-sm">LocalSEOHub</span>
             </div>
             {registered && (
-              <span className="text-emerald-400 text-xs font-medium flex items-center gap-1">
+              <span className="text-emerald-600 text-xs font-medium flex items-center gap-1">
                 <Check size={12} /> Contenido desbloqueado
               </span>
             )}
@@ -518,13 +518,13 @@ export default function ContentGeneratorLanding() {
           {/* Summary */}
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest">
+              <span className="text-xs font-semibold text-emerald-600 uppercase tracking-widest">
                 Calendario generado
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-slate-900">
               {registered ? '30 publicaciones para' : 'Vista previa para'}{' '}
-              <span className="text-emerald-400">{business}</span>
+              <span className="text-emerald-600">{business}</span>
             </h1>
             <p className="text-slate-500 text-sm mt-1">
               {city} · {category}
@@ -558,15 +558,15 @@ export default function ContentGeneratorLanding() {
               {posts.slice(2).map((post, i) => (
                 <PostCard key={i} post={post} index={i + 2} blurred={false} />
               ))}
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center mt-8">
-                <Check size={24} className="text-emerald-400 mx-auto mb-3" />
-                <h3 className="text-white font-bold mb-1">Cuenta creada con éxito</h3>
-                <p className="text-slate-400 text-sm mb-4">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center mt-8">
+                <Check size={24} className="text-emerald-600 mx-auto mb-3" />
+                <h3 className="text-slate-900 font-bold mb-1">Cuenta creada con éxito</h3>
+                <p className="text-slate-600 text-sm mb-4">
                   Accede a tu panel para generar nuevos calendarios, editar publicaciones y mucho más.
                 </p>
                 <a
                   href="/"
-                  className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm px-6 py-3 rounded-xl transition-colors"
+                  className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors"
                 >
                   Ir a mi panel <ArrowRight size={14} />
                 </a>
@@ -577,17 +577,17 @@ export default function ContentGeneratorLanding() {
 
         {/* Fixed bottom CTA (only when gate is active) */}
         {!registered && (
-          <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800/60 p-4">
+          <div className="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-xl border-t border-slate-200 p-4">
             <div className="max-w-2xl mx-auto flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-semibold truncate">
+                <p className="text-slate-900 text-sm font-semibold truncate">
                   Las 30 publicaciones están listas
                 </p>
                 <p className="text-slate-500 text-xs">7 días gratis · sin compromiso</p>
               </div>
               <button
                 onClick={handleRegisterOpen}
-                className="flex-shrink-0 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm px-5 py-3 rounded-xl transition-all duration-200 flex items-center gap-1.5"
+                className="flex-shrink-0 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm px-5 py-3 rounded-xl transition-all duration-200 flex items-center gap-1.5"
               >
                 Desbloquear <ArrowRight size={14} />
               </button>
@@ -602,35 +602,35 @@ export default function ContentGeneratorLanding() {
   // Hero + Form (combined to reduce steps on mobile)
   // -------------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-[#0a0f0a] flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Example modal */}
       {showExample && (
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6"
           onClick={() => setShowExample(false)}
         >
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" />
-          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
+          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl">
             <div className="h-[2px] bg-gradient-to-r from-emerald-500 to-teal-400" />
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white font-bold">Ejemplo de publicación</h3>
-                <button onClick={() => setShowExample(false)} className="text-slate-500 hover:text-slate-300">
+                <h3 className="text-slate-900 font-bold">Ejemplo de publicación</h3>
+                <button onClick={() => setShowExample(false)} className="text-slate-500 hover:text-slate-700">
                   <ChevronDown size={18} />
                 </button>
               </div>
-              <div className="rounded-xl border border-slate-700/50 bg-slate-950/60 p-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest">Lunes</span>
+                  <span className="text-xs font-semibold text-emerald-600 uppercase tracking-widest">Lunes</span>
                 </div>
-                <h4 className="font-bold text-white mb-2">¿Sabías que...?</h4>
-                <p className="text-slate-400 text-sm leading-relaxed mb-3">
+                <h4 className="font-bold text-slate-900 mb-2">¿Sabías que...?</h4>
+                <p className="text-slate-600 text-sm leading-relaxed mb-3">
                   En Madrid, los restaurantes que cuidan su presencia online reciben hasta 3 veces más reservas. En La
                   Trattoria lo sabemos y trabajamos cada día para ofrecerte lo mejor. ¡Ven a conocernos!
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {['#sabiasque', '#negociolocal', '#restaurante', '#madrid'].map((h) => (
-                    <span key={h} className="text-[11px] text-emerald-500/70 font-medium bg-emerald-500/8 px-2 py-0.5 rounded-full">
+                    <span key={h} className="text-[11px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">
                       {h}
                     </span>
                   ))}
@@ -649,7 +649,7 @@ export default function ContentGeneratorLanding() {
         <div className="w-full max-w-xl">
           {/* Social proof pill */}
           <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/8 border border-emerald-500/20 text-emerald-400 text-xs font-medium px-4 py-2 rounded-full">
+            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium px-4 py-2 rounded-full">
               <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={10} fill="currentColor" className="text-amber-400" />
@@ -660,16 +660,16 @@ export default function ContentGeneratorLanding() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-[clamp(28px,6vw,48px)] font-extrabold text-white text-center leading-[1.12] tracking-tight mb-4">
+          <h1 className="text-[clamp(28px,6vw,48px)] font-extrabold text-slate-900 text-center leading-[1.12] tracking-tight mb-4">
             La IA crea un mes completo de contenido para tu negocio{' '}
-            <span className="text-emerald-400">en menos de un minuto.</span>
+            <span className="text-emerald-600">en menos de un minuto.</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-slate-400 text-center text-base sm:text-lg leading-relaxed mb-3 max-w-lg mx-auto">
+          <p className="text-slate-600 text-center text-base sm:text-lg leading-relaxed mb-3 max-w-lg mx-auto">
             Publicaciones para Google Business Profile, Facebook e Instagram adaptadas a tu negocio,
             ciudad y sector.{' '}
-            <span className="text-slate-300">Sin escribir una sola línea.</span>
+            <span className="text-slate-700">Sin escribir una sola línea.</span>
           </p>
 
           {/* Benefits row */}
@@ -694,7 +694,7 @@ export default function ContentGeneratorLanding() {
                 value={business}
                 onChange={(e) => setBusiness(e.target.value)}
                 placeholder="Nombre de tu negocio"
-                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-xl px-4 py-4 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/60 transition-colors"
+                className="w-full bg-white border border-slate-300 rounded-xl px-4 py-4 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500/60 transition-colors"
               />
               <input
                 type="text"
@@ -702,7 +702,7 @@ export default function ContentGeneratorLanding() {
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Ciudad"
-                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-xl px-4 py-4 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/60 transition-colors"
+                className="w-full bg-white border border-slate-300 rounded-xl px-4 py-4 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500/60 transition-colors"
               />
             </div>
 
@@ -711,14 +711,14 @@ export default function ContentGeneratorLanding() {
                 required
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full appearance-none bg-slate-900/80 border border-slate-700/60 rounded-xl px-4 py-4 text-sm text-white outline-none focus:border-emerald-500/60 transition-colors cursor-pointer"
-                style={{ color: category ? 'white' : 'rgb(75 85 99)' }}
+                className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-4 py-4 text-sm text-slate-800 outline-none focus:border-emerald-500/60 transition-colors cursor-pointer"
+                style={{ color: category ? '#1e293b' : 'rgb(75 85 99)' }}
               >
                 <option value="" disabled style={{ color: 'rgb(75 85 99)' }}>
                   Categoría de tu negocio
                 </option>
                 {CATEGORIES.map((c) => (
-                  <option key={c} value={c} style={{ color: 'white', background: '#0f172a' }}>
+                  <option key={c} value={c} style={{ color: '#1e293b', background: '#ffffff' }}>
                     {c}
                   </option>
                 ))}
@@ -731,7 +731,7 @@ export default function ContentGeneratorLanding() {
 
             <button
               type="submit"
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2"
+              className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 rounded-xl text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-xl shadow-emerald-500/15 flex items-center justify-center gap-2"
             >
               <Zap size={16} fill="currentColor" />
               Generar contenido con IA
@@ -742,21 +742,21 @@ export default function ContentGeneratorLanding() {
           <div className="flex justify-center mt-4">
             <button
               onClick={() => setShowExample(true)}
-              className="text-slate-500 hover:text-slate-300 text-xs underline underline-offset-4 transition-colors"
+              className="text-slate-500 hover:text-slate-700 text-xs underline underline-offset-4 transition-colors"
             >
               Ver ejemplo
             </button>
           </div>
 
           {/* Trust micro-copy */}
-          <p className="text-center text-slate-600 text-[11px] mt-5">
+          <p className="text-center text-slate-500 text-[11px] mt-5">
             Sin tarjeta de crédito · Gratis durante 7 días
           </p>
         </div>
       </div>
 
       {/* Bottom fixed CTA (visible on mobile while scrolling) */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/60 px-4 py-3">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-4 py-3">
         <button
           type="button"
           onClick={() => {
@@ -765,7 +765,7 @@ export default function ContentGeneratorLanding() {
               document.querySelector<HTMLInputElement>('input[placeholder="Nombre de tu negocio"]')?.focus();
             }
           }}
-          className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+          className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
         >
           <Zap size={15} fill="currentColor" />
           Generar mi contenido gratis

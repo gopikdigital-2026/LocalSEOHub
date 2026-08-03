@@ -160,12 +160,12 @@ function useCounter(target: number, active: boolean, duration = 1200) {
 function SubScoreCard({ item, animate }: { item: SubScore; animate: boolean }) {
   const count = useCounter(item.value, animate, 1000);
   return (
-    <div className="rounded-2xl border border-white/6 bg-white/[0.025] p-5">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-slate-400 text-sm font-medium">{item.label}</span>
-        <span className="text-white font-extrabold text-xl tabular-nums">{count}</span>
+        <span className="text-slate-600 text-sm font-medium">{item.label}</span>
+        <span className="text-slate-900 font-extrabold text-xl tabular-nums">{count}</span>
       </div>
-      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-[1200ms] ease-out"
           style={{
@@ -176,8 +176,8 @@ function SubScoreCard({ item, animate }: { item: SubScore; animate: boolean }) {
         />
       </div>
       <div className="flex justify-between mt-1.5">
-        <span className="text-[10px] text-slate-700">0</span>
-        <span className="text-[10px] text-slate-700">100</span>
+        <span className="text-[10px] text-slate-400">0</span>
+        <span className="text-[10px] text-slate-400">100</span>
       </div>
     </div>
   );
@@ -217,20 +217,20 @@ function LoadingAnimation({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
   return (
-    <div className="min-h-screen bg-[#060709] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Animated logo mark */}
         <div className="flex justify-center mb-12">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center">
-              <BrainCircuit size={28} className="text-slate-300" />
+            <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center">
+              <BrainCircuit size={28} className="text-slate-700" />
             </div>
-            <div className="absolute inset-0 rounded-2xl border border-white/10 animate-ping opacity-20" />
+            <div className="absolute inset-0 rounded-2xl border border-slate-200 animate-ping opacity-20" />
           </div>
         </div>
         <div className="text-center mb-10">
-          <h2 className="text-white font-bold text-xl mb-1">Analizando tu negocio</h2>
-          <p className="text-slate-600 text-sm">Comparando con tu competencia local...</p>
+          <h2 className="text-slate-900 font-bold text-xl mb-1">Analizando tu negocio</h2>
+          <p className="text-slate-500 text-sm">Comparando con tu competencia local...</p>
         </div>
         <div className="space-y-3.5">
           {LOADING_STEPS.map((step, i) => {
@@ -245,22 +245,22 @@ function LoadingAnimation({ onDone }: { onDone: () => void }) {
               >
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-                    done ? 'bg-emerald-500' : active ? 'border border-white/30' : 'border border-white/10'
+                    done ? 'bg-emerald-500' : active ? 'border border-slate-300' : 'border border-slate-200'
                   }`}
                 >
                   {done ? <Check size={11} className="text-white" strokeWidth={3} /> :
-                   active ? <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> : null}
+                   active ? <div className="w-1.5 h-1.5 rounded-full bg-slate-900 animate-pulse" /> : null}
                 </div>
-                <span className={`text-sm ${done ? 'text-emerald-400' : active ? 'text-white' : 'text-slate-700'}`}>
+                <span className={`text-sm ${done ? 'text-emerald-600' : active ? 'text-slate-900' : 'text-slate-400'}`}>
                   {step}
                 </span>
               </div>
             );
           })}
         </div>
-        <div className="mt-10 h-[1px] bg-white/5 rounded-full overflow-hidden">
+        <div className="mt-10 h-[1px] bg-slate-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-slate-400 to-emerald-400 rounded-full transition-all duration-600"
+            className="h-full bg-gradient-to-r from-slate-400 to-emerald-600 rounded-full transition-all duration-600"
             style={{ width: `${(completed.length / LOADING_STEPS.length) * 100}%` }}
           />
         </div>
@@ -302,21 +302,21 @@ function RegisterPanel({ onSuccess, onClose }: { onSuccess: () => void; onClose:
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[#060709]/90 backdrop-blur-lg" onClick={onClose} />
+      <div className="absolute inset-0 bg-white/60 backdrop-blur-lg" onClick={onClose} />
       <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl" style={{
-        background: 'rgba(10,12,16,0.98)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
       }}>
-        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="h-[1px] bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
         <div className="p-7">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h2 className="text-white font-bold text-xl leading-tight">
+              <h2 className="text-slate-900 font-bold text-xl leading-tight">
                 Desbloquea tu diagnóstico
               </h2>
               <p className="text-slate-500 text-sm mt-1">7 días gratis · Sin tarjeta · Cancela cuando quieras</p>
             </div>
-            <button onClick={onClose} className="text-slate-600 hover:text-slate-400 transition-colors mt-0.5">
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-600 transition-colors mt-0.5">
               <ChevronDown size={20} />
             </button>
           </div>
@@ -327,7 +327,7 @@ function RegisterPanel({ onSuccess, onClose }: { onSuccess: () => void; onClose:
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Tu email"
-              className="w-full bg-white/[0.04] border border-white/8 rounded-xl px-4 py-4 text-sm text-white placeholder-slate-600 outline-none focus:border-white/20 transition-colors"
+              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-4 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-400 transition-colors"
             />
             <input
               type="password"
@@ -336,13 +336,13 @@ function RegisterPanel({ onSuccess, onClose }: { onSuccess: () => void; onClose:
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Crea una contraseña (mínimo 6 caracteres)"
-              className="w-full bg-white/[0.04] border border-white/8 rounded-xl px-4 py-4 text-sm text-white placeholder-slate-600 outline-none focus:border-white/20 transition-colors"
+              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-4 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-400 transition-colors"
             />
             {error && <p className="text-red-400 text-xs pl-1">{error}</p>}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-white text-slate-950 font-bold py-4 rounded-xl text-sm transition-all duration-200 hover:bg-slate-100 disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl text-sm transition-all duration-200 hover:bg-slate-800 disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading && (
                 <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -479,7 +479,7 @@ export default function DiagnosticLanding() {
     const gated = result.opportunities.slice(2);
 
     return (
-      <div className="min-h-screen bg-[#060709] pb-28">
+      <div className="min-h-screen bg-white pb-28">
         {showRegister && (
           <RegisterPanel
             onSuccess={() => { setShowRegister(false); setRegistered(true); }}
@@ -488,11 +488,11 @@ export default function DiagnosticLanding() {
         )}
 
         {/* Top bar */}
-        <div className="border-b border-white/[0.05] px-5 py-4">
+        <div className="border-b border-slate-200 px-5 py-4">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
-            <span className="text-white font-bold tracking-tight text-sm">LocalSEOHub</span>
+            <span className="text-slate-900 font-bold tracking-tight text-sm">LocalSEOHub</span>
             {registered && (
-              <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
+              <span className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
                 <Check size={12} />Diagnóstico desbloqueado
               </span>
             )}
@@ -503,19 +503,19 @@ export default function DiagnosticLanding() {
 
           {/* Overall score */}
           <div className="rounded-2xl p-7" style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-            border: '1px solid rgba(255,255,255,0.07)',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
           }}>
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-[0.15em] mb-5">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.15em] mb-5">
               Salud Digital · {business}
             </p>
             <div className="flex items-end gap-4 flex-wrap">
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-[72px] font-black text-white leading-none tabular-nums">
+                  <span className="text-[72px] font-black text-slate-900 leading-none tabular-nums">
                     {overallCount}
                   </span>
-                  <span className="text-2xl text-slate-600 font-light mb-2">/ 100</span>
+                  <span className="text-2xl text-slate-500 font-light mb-2">/ 100</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span
@@ -524,13 +524,13 @@ export default function DiagnosticLanding() {
                   >
                     {result.label}
                   </span>
-                  <span className="text-slate-600 text-sm">{city} · {category}</span>
+                  <span className="text-slate-500 text-sm">{city} · {category}</span>
                 </div>
               </div>
               <div className="flex-1 min-w-[160px]">
-                <p className="text-slate-600 text-xs leading-relaxed">
+                <p className="text-slate-500 text-xs leading-relaxed">
                   La IA ha detectado{' '}
-                  <span className="text-white font-semibold">{result.opportunities.length} oportunidades</span>{' '}
+                  <span className="text-slate-900 font-semibold">{result.opportunities.length} oportunidades</span>{' '}
                   importantes para tu negocio.
                 </p>
               </div>
@@ -546,7 +546,7 @@ export default function DiagnosticLanding() {
 
           {/* Visible opportunities */}
           <div>
-            <h2 className="text-white font-bold text-base mb-3">Oportunidades detectadas</h2>
+            <h2 className="text-slate-900 font-bold text-base mb-3">Oportunidades detectadas</h2>
             <div className="space-y-3">
               {visible.map((opp, i) => (
                 <OpportunityCard key={i} opp={opp} blurred={false} />
@@ -562,9 +562,9 @@ export default function DiagnosticLanding() {
                   <OpportunityCard key={i} opp={opp} blurred />
                 ))}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <div className="flex items-center gap-2 bg-[#060709]/95 border border-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
-                    <Lock size={12} className="text-slate-400" />
-                    <span className="text-slate-400 text-xs font-medium">
+                  <div className="flex items-center gap-2 bg-white/95 border border-slate-200 px-4 py-2 rounded-full backdrop-blur-sm">
+                    <Lock size={12} className="text-slate-600" />
+                    <span className="text-slate-600 text-xs font-medium">
                       {gated.length} oportunidades bloqueadas
                     </span>
                   </div>
@@ -575,29 +575,29 @@ export default function DiagnosticLanding() {
               <div
                 className="rounded-2xl p-8 text-center"
                 style={{
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
                 }}
               >
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/10 mb-5">
-                  <Lock size={18} className="text-slate-300" />
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-200 border border-slate-200 mb-5">
+                  <Lock size={18} className="text-slate-700" />
                 </div>
-                <h3 className="text-white font-bold text-xl mb-3 leading-tight">
+                <h3 className="text-slate-900 font-bold text-xl mb-3 leading-tight">
                   Tu informe completo ya está preparado.
                 </h3>
                 <p className="text-slate-500 text-sm leading-relaxed mb-7 max-w-sm mx-auto">
                   Regístrate gratis para desbloquear todas las oportunidades detectadas, el{' '}
-                  <span className="text-slate-300 font-medium">plan de acción personalizado</span>{' '}
+                  <span className="text-slate-700 font-medium">plan de acción personalizado</span>{' '}
                   y las herramientas IA.
                 </p>
                 <button
                   onClick={handleRegisterOpen}
-                  className="inline-flex items-center gap-2.5 bg-white text-slate-950 font-bold text-sm px-8 py-4 rounded-xl transition-all duration-200 hover:bg-slate-100 hover:-translate-y-0.5 shadow-2xl shadow-white/10"
+                  className="inline-flex items-center gap-2.5 bg-slate-900 text-white font-bold text-sm px-8 py-4 rounded-xl transition-all duration-200 hover:bg-slate-800 hover:-translate-y-0.5 shadow-2xl shadow-slate-900/10"
                 >
                   Desbloquear diagnóstico
                   <ArrowRight size={15} />
                 </button>
-                <p className="text-slate-700 text-xs mt-5">7 días gratis · Sin compromiso · Cancela cuando quieras</p>
+                <p className="text-slate-400 text-xs mt-5">7 días gratis · Sin compromiso · Cancela cuando quieras</p>
               </div>
             </>
           )}
@@ -611,9 +611,9 @@ export default function DiagnosticLanding() {
                 ))}
               </div>
               <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
-                <Check size={24} className="text-emerald-400 mx-auto mb-3" />
-                <h3 className="text-white font-bold mb-2">Diagnóstico completo desbloqueado</h3>
-                <p className="text-slate-400 text-sm mb-5">
+                <Check size={24} className="text-emerald-600 mx-auto mb-3" />
+                <h3 className="text-slate-900 font-bold mb-2">Diagnóstico completo desbloqueado</h3>
+                <p className="text-slate-600 text-sm mb-5">
                   Accede a tu panel para ver el plan de acción completo y empezar a mejorar hoy.
                 </p>
                 <a
@@ -630,15 +630,15 @@ export default function DiagnosticLanding() {
         {/* Fixed bottom bar */}
         {!registered && (
           <div className="fixed bottom-0 left-0 right-0 z-20 px-4 py-4"
-            style={{ background: 'rgba(6,7,9,0.96)', borderTop: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)' }}>
+            style={{ background: 'rgba(255,255,255,0.97)', borderTop: '1px solid #e2e8f0', backdropFilter: 'blur(20px)' }}>
             <div className="max-w-2xl mx-auto flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-semibold">Diagnóstico completo listo</p>
-                <p className="text-slate-600 text-xs">7 días gratis · sin compromiso</p>
+                <p className="text-slate-900 text-sm font-semibold">Diagnóstico completo listo</p>
+                <p className="text-slate-500 text-xs">7 días gratis · sin compromiso</p>
               </div>
               <button
                 onClick={handleRegisterOpen}
-                className="flex-shrink-0 bg-white text-slate-950 font-bold text-sm px-5 py-3 rounded-xl transition-all hover:bg-slate-100 flex items-center gap-1.5"
+                className="flex-shrink-0 bg-slate-900 text-white font-bold text-sm px-5 py-3 rounded-xl transition-all hover:bg-slate-800 flex items-center gap-1.5"
               >
                 Desbloquear <ArrowRight size={13} />
               </button>
@@ -651,24 +651,24 @@ export default function DiagnosticLanding() {
 
   // ---------- Landing ----------
   return (
-    <div className="min-h-screen bg-[#060709] text-white" style={{ fontFamily: '"Inter", system-ui, sans-serif' }}>
+    <div className="min-h-screen bg-white text-slate-900" style={{ fontFamily: '"Inter", system-ui, sans-serif' }}>
 
       {/* ===== HERO ===== */}
       <section className="min-h-[100svh] flex flex-col items-center justify-center px-5 pt-14 pb-10 relative overflow-hidden">
         {/* Subtle radial glow */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full"
-            style={{ background: 'radial-gradient(ellipse, rgba(255,255,255,0.025) 0%, transparent 70%)' }} />
+            style={{ background: 'radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%)' }} />
         </div>
 
         <div className="relative z-10 w-full max-w-xl text-center">
           {/* Eyebrow */}
           <div className="inline-flex items-center gap-2.5 mb-8">
-            <div className="h-[1px] w-8 bg-white/20" />
+            <div className="h-[1px] w-8 bg-slate-200" />
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em]">
               Diagnóstico Digital Gratuito
             </span>
-            <div className="h-[1px] w-8 bg-white/20" />
+            <div className="h-[1px] w-8 bg-slate-200" />
           </div>
 
           {/* Headline */}
@@ -682,15 +682,15 @@ export default function DiagnosticLanding() {
           </h1>
 
           {/* Body */}
-          <p className="text-slate-400 text-base sm:text-[17px] leading-[1.7] mb-10 max-w-lg mx-auto">
+          <p className="text-slate-600 text-base sm:text-[17px] leading-[1.7] mb-10 max-w-lg mx-auto">
             En menos de un minuto nuestra IA analizará tu presencia digital y detectará las oportunidades que están aprovechando tus competidores.
           </p>
 
           {/* CTA */}
           <button
             onClick={scrollToForm}
-            className="group inline-flex items-center gap-2.5 bg-white text-slate-950 font-bold px-8 py-4 rounded-xl text-[15px] transition-all duration-200 hover:bg-slate-100 hover:-translate-y-0.5 mb-5"
-            style={{ boxShadow: '0 0 0 1px rgba(255,255,255,0.15), 0 20px 60px rgba(255,255,255,0.08)' }}
+            className="group inline-flex items-center gap-2.5 bg-slate-900 text-white font-bold px-8 py-4 rounded-xl text-[15px] transition-all duration-200 hover:bg-slate-800 hover:-translate-y-0.5 mb-5"
+            style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.15), 0 20px 60px rgba(0,0,0,0.08)' }}
           >
             Quiero mi diagnóstico gratuito
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
@@ -700,7 +700,7 @@ export default function DiagnosticLanding() {
           <div className="flex items-center justify-center gap-6 flex-wrap">
             {['Gratis', 'Sin conocimientos técnicos', 'Resultado en menos de 60 segundos'].map((t) => (
               <span key={t} className="flex items-center gap-1.5 text-slate-500 text-sm">
-                <Check size={13} className="text-emerald-500 flex-shrink-0" />
+                <Check size={13} className="text-emerald-600 flex-shrink-0" />
                 {t}
               </span>
             ))}
@@ -709,7 +709,7 @@ export default function DiagnosticLanding() {
       </section>
 
       {/* ===== SECTION 2 — AREAS ===== */}
-      <section className="px-5 py-20 sm:py-28 border-t border-white/[0.05]">
+      <section className="px-5 py-20 sm:py-28 border-t border-slate-200">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-2xl sm:text-[34px] font-black leading-tight tracking-tight mb-4">
@@ -725,15 +725,15 @@ export default function DiagnosticLanding() {
             ].map(({ icon: Icon, label, question }) => (
               <div
                 key={label}
-                className="group rounded-2xl p-6 flex items-center gap-5 cursor-default transition-all duration-300 hover:bg-white/[0.03]"
-                style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}
+                className="group rounded-2xl p-6 flex items-center gap-5 cursor-default transition-all duration-300 hover:bg-slate-50"
+                style={{ border: '1px solid #e2e8f0', background: '#ffffff' }}
               >
-                <div className="w-12 h-12 rounded-xl bg-white/[0.05] border border-white/8 flex items-center justify-center flex-shrink-0">
-                  <Icon size={20} className="text-slate-400" />
+                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                  <Icon size={20} className="text-slate-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest mb-1">{label}</p>
-                  <p className="text-white font-semibold text-[15px] leading-snug">{question}</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">{label}</p>
+                  <p className="text-slate-900 font-semibold text-[15px] leading-snug">{question}</p>
                   <div className="flex items-center gap-0.5 mt-2">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} size={10} fill="currentColor" className="text-amber-400/40 group-hover:text-amber-400/70 transition-colors" />
@@ -747,9 +747,9 @@ export default function DiagnosticLanding() {
       </section>
 
       {/* ===== SECTION 3 — DIAGNOSTIC AREAS ===== */}
-      <section className="px-5 py-20 sm:py-28 border-t border-white/[0.05]">
+      <section className="px-5 py-20 sm:py-28 border-t border-slate-200">
         <div className="max-w-3xl mx-auto text-center">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-[0.18em] mb-3">Cobertura</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em] mb-3">Cobertura</p>
           <h2 className="text-2xl sm:text-[34px] font-black tracking-tight mb-14">
             Tu diagnóstico analiza automáticamente
           </h2>
@@ -757,12 +757,12 @@ export default function DiagnosticLanding() {
             {AREAS.map(({ icon: Icon, label }) => (
               <div key={label} className="flex flex-col items-center gap-3 group">
                 <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:bg-white/[0.06]"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:bg-slate-100"
+                  style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}
                 >
-                  <Icon size={22} className="text-slate-500 group-hover:text-slate-300 transition-colors" />
+                  <Icon size={22} className="text-slate-500 group-hover:text-slate-700 transition-colors" />
                 </div>
-                <span className="text-slate-600 text-[11px] font-medium text-center leading-tight group-hover:text-slate-400 transition-colors">
+                <span className="text-slate-500 text-[11px] font-medium text-center leading-tight group-hover:text-slate-600 transition-colors">
                   {label}
                 </span>
               </div>
@@ -772,15 +772,15 @@ export default function DiagnosticLanding() {
       </section>
 
       {/* ===== SECTION 4 — HOW IT WORKS ===== */}
-      <section className="px-5 py-20 sm:py-28 border-t border-white/[0.05]">
+      <section className="px-5 py-20 sm:py-28 border-t border-slate-200">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-[0.18em] mb-3">Proceso</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em] mb-3">Proceso</p>
             <h2 className="text-2xl sm:text-[34px] font-black tracking-tight">¿Cómo funciona?</h2>
           </div>
           <div className="relative">
             {/* Vertical line */}
-            <div className="absolute left-5 top-5 bottom-5 w-[1px] bg-gradient-to-b from-white/10 via-white/5 to-transparent hidden sm:block" />
+            <div className="absolute left-5 top-5 bottom-5 w-[1px] bg-gradient-to-b from-slate-200 via-slate-100 to-transparent hidden sm:block" />
             <div className="space-y-8">
               {[
                 { n: '01', title: 'Escribes tu negocio', desc: 'Nombre, ciudad y categoría. Tres campos, sin formularios largos.' },
@@ -790,14 +790,14 @@ export default function DiagnosticLanding() {
               ].map(({ n, title, desc }) => (
                 <div key={n} className="flex items-start gap-5 sm:gap-8 group">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black text-slate-500 transition-all duration-300 group-hover:text-white"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black text-slate-500 transition-all duration-300 group-hover:text-slate-900"
+                    style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}
                   >
                     {n}
                   </div>
                   <div className="pt-2">
-                    <h3 className="text-white font-bold text-[15px] mb-1">{title}</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
+                    <h3 className="text-slate-900 font-bold text-[15px] mb-1">{title}</h3>
+                    <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
                   </div>
                 </div>
               ))}
@@ -807,10 +807,10 @@ export default function DiagnosticLanding() {
       </section>
 
       {/* ===== TESTIMONIALS ===== */}
-      <section className="px-5 py-20 sm:py-28 border-t border-white/[0.05]">
+      <section className="px-5 py-20 sm:py-28 border-t border-slate-200">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-[0.18em] mb-3">Resultados</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em] mb-3">Resultados</p>
             <h2 className="text-2xl sm:text-[34px] font-black tracking-tight">Lo que descubrieron otros negocios</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -818,21 +818,21 @@ export default function DiagnosticLanding() {
               <div
                 key={t.name}
                 className="rounded-2xl p-6 flex flex-col"
-                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}
               >
                 <div className="flex gap-0.5 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} size={12} fill="currentColor" className="text-amber-400" />
                   ))}
                 </div>
-                <p className="text-slate-300 text-sm leading-relaxed flex-1 mb-5">"{t.quote}"</p>
+                <p className="text-slate-700 text-sm leading-relaxed flex-1 mb-5">"{t.quote}"</p>
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                     {t.initials}
                   </div>
                   <div>
-                    <p className="text-white text-xs font-semibold">{t.name}</p>
-                    <p className="text-slate-600 text-[10px]">{t.role}</p>
+                    <p className="text-slate-900 text-xs font-semibold">{t.name}</p>
+                    <p className="text-slate-500 text-[10px]">{t.role}</p>
                   </div>
                 </div>
               </div>
@@ -842,10 +842,10 @@ export default function DiagnosticLanding() {
       </section>
 
       {/* ===== FORM ===== */}
-      <section className="px-5 py-20 sm:py-28 border-t border-white/[0.05]">
+      <section className="px-5 py-20 sm:py-28 border-t border-slate-200">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-10">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-[0.18em] mb-3">Empieza hoy</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.18em] mb-3">Empieza hoy</p>
             <h2 className="text-2xl sm:text-[34px] font-black tracking-tight mb-3">
               Analiza tu negocio gratis
             </h2>
@@ -858,7 +858,7 @@ export default function DiagnosticLanding() {
               value={business}
               onChange={(e) => setBusiness(e.target.value)}
               placeholder="Nombre de tu negocio"
-              className="w-full bg-white/[0.04] border border-white/8 rounded-xl px-5 py-4 text-sm text-white placeholder-slate-600 outline-none focus:border-white/15 transition-colors"
+              className="w-full bg-white border border-slate-200 rounded-xl px-5 py-4 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-400 transition-colors"
             />
             <input
               type="text"
@@ -866,40 +866,40 @@ export default function DiagnosticLanding() {
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="Ciudad"
-              className="w-full bg-white/[0.04] border border-white/8 rounded-xl px-5 py-4 text-sm text-white placeholder-slate-600 outline-none focus:border-white/15 transition-colors"
+              className="w-full bg-white border border-slate-200 rounded-xl px-5 py-4 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-400 transition-colors"
             />
             <div className="relative">
               <select
                 required
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full appearance-none bg-white/[0.04] border border-white/8 rounded-xl px-5 py-4 text-sm outline-none focus:border-white/15 transition-colors cursor-pointer"
-                style={{ color: category ? 'white' : 'rgb(75 85 99)' }}
+                className="w-full appearance-none bg-white border border-slate-200 rounded-xl px-5 py-4 text-sm outline-none focus:border-emerald-400 transition-colors cursor-pointer"
+                style={{ color: category ? '#0f172a' : 'rgb(148 163 184)' }}
               >
-                <option value="" disabled style={{ color: 'rgb(75 85 99)' }}>Categoría de tu negocio</option>
+                <option value="" disabled style={{ color: 'rgb(148 163 184)' }}>Categoría de tu negocio</option>
                 {CATEGORIES.map((c) => (
-                  <option key={c} value={c} style={{ color: 'white', background: '#0d1117' }}>{c}</option>
+                  <option key={c} value={c} style={{ color: '#0f172a', background: '#ffffff' }}>{c}</option>
                 ))}
               </select>
-              <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+              <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
             </div>
             <button
               type="submit"
-              className="w-full bg-white text-slate-950 font-bold py-4 rounded-xl text-sm transition-all duration-200 hover:bg-slate-100 hover:-translate-y-0.5 flex items-center justify-center gap-2"
-              style={{ boxShadow: '0 0 0 1px rgba(255,255,255,0.12), 0 10px 40px rgba(255,255,255,0.06)' }}
+              className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl text-sm transition-all duration-200 hover:bg-slate-800 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.12), 0 10px 40px rgba(0,0,0,0.06)' }}
             >
               <BarChart2 size={15} />
               Analizar mi negocio
             </button>
           </form>
-          <p className="text-center text-slate-700 text-xs mt-4">
+          <p className="text-center text-slate-400 text-xs mt-4">
             Gratis · Sin tarjeta · Resultado en menos de 60 segundos
           </p>
         </div>
       </section>
 
       {/* ===== GUARANTEES ===== */}
-      <section className="px-5 py-14 border-t border-white/[0.05]">
+      <section className="px-5 py-14 border-t border-slate-200">
         <div className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
           {[
             { icon: Clock,  title: '7 días gratis',      desc: 'No cobramos nada durante los primeros 7 días.' },
@@ -909,28 +909,28 @@ export default function DiagnosticLanding() {
             <div key={title} className="flex flex-col items-center">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}
               >
                 <Icon size={17} className="text-slate-500" />
               </div>
-              <h4 className="text-white font-semibold text-sm mb-1">{title}</h4>
-              <p className="text-slate-600 text-xs leading-relaxed">{desc}</p>
+              <h4 className="text-slate-900 font-semibold text-sm mb-1">{title}</h4>
+              <p className="text-slate-500 text-xs leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Footer */}
-      <div className="border-t border-white/[0.04] px-5 py-6 text-center">
-        <p className="text-slate-800 text-xs">© {new Date().getFullYear()} LocalSEOHub</p>
+      <div className="border-t border-slate-200 px-5 py-6 text-center">
+        <p className="text-slate-400 text-xs">© {new Date().getFullYear()} LocalSEOHub</p>
       </div>
 
       {/* Mobile fixed CTA */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 px-4 py-3"
-        style={{ background: 'rgba(6,7,9,0.97)', borderTop: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)' }}>
+        style={{ background: 'rgba(255,255,255,0.97)', borderTop: '1px solid #e2e8f0', backdropFilter: 'blur(20px)' }}>
         <button
           onClick={scrollToForm}
-          className="w-full bg-white text-slate-950 font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+          className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
         >
           <BarChart2 size={15} />
           Quiero mi diagnóstico gratuito
@@ -954,9 +954,9 @@ function OpportunityCard({ opp, blurred }: { opp: Opportunity; blurred: boolean 
   return (
     <div
       className="rounded-2xl p-5 relative overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}
+      style={{ background: '#ffffff', border: '1px solid #e2e8f0' }}
     >
-      {blurred && <div className="absolute inset-0 backdrop-blur-md bg-[#060709]/50 rounded-2xl z-10" />}
+      {blurred && <div className="absolute inset-0 backdrop-blur-md bg-white/60 rounded-2xl z-10" />}
       <div className={`flex items-start gap-4 ${blurred ? 'select-none opacity-40' : ''}`}>
         <div
           className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -966,7 +966,7 @@ function OpportunityCard({ opp, blurred }: { opp: Opportunity; blurred: boolean 
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1.5">
-            <h3 className="text-white font-semibold text-[14px] leading-snug">{opp.title}</h3>
+            <h3 className="text-slate-900 font-semibold text-[14px] leading-snug">{opp.title}</h3>
             <span
               className="text-[9px] font-bold px-2 py-0.5 rounded-full tracking-widest"
               style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}

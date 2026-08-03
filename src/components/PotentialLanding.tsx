@@ -101,7 +101,7 @@ function Ring({ value, run, color }: { value: number; run: boolean; color: strin
   return (
     <div className="relative inline-flex items-center justify-center">
       <svg width="128" height="128" className="-rotate-90" style={{ overflow: 'visible' }}>
-        <circle cx="64" cy="64" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+        <circle cx="64" cy="64" r={R} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="7" />
         <circle
           cx="64" cy="64" r={R} fill="none"
           stroke={color} strokeWidth="7" strokeLinecap="round"
@@ -114,8 +114,8 @@ function Ring({ value, run, color }: { value: number; run: boolean; color: strin
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[38px] font-black text-white leading-none tabular-nums">{n}</span>
-        <span className="text-[11px] text-slate-600 font-medium mt-0.5">/ 100</span>
+        <span className="text-[38px] font-black text-slate-900 leading-none tabular-nums">{n}</span>
+        <span className="text-[11px] text-slate-400 font-medium mt-0.5">/ 100</span>
       </div>
     </div>
   );
@@ -160,7 +160,7 @@ function Loading({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center px-6 z-50"
-      style={{ background: 'rgba(2,7,12,0.97)', backdropFilter: 'blur(20px)' }}>
+      style={{ background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(20px)' }}>
       <div className="w-full max-w-[300px]">
 
         {/* Animated orb */}
@@ -172,7 +172,7 @@ function Loading({ onDone }: { onDone: () => void }) {
               style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 70%)', animationDelay: '0.4s' }} />
             <div className="relative w-16 h-16 rounded-full flex items-center justify-center"
               style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
-              <Search size={22} className="text-emerald-400" />
+              <Search size={22} className="text-emerald-600" />
             </div>
           </div>
         </div>
@@ -193,7 +193,7 @@ function Loading({ onDone }: { onDone: () => void }) {
                   style={{
                     width: 18, height: 18,
                     background:    isDone ? '#10b981' : 'transparent',
-                    border:        isDone ? 'none' : `1px solid ${isActive ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)'}`,
+                    border:        isDone ? 'none' : `1px solid ${isActive ? '#cbd5e1' : '#e2e8f0'}`,
                   }}
                 >
                   {isDone
@@ -203,7 +203,7 @@ function Loading({ onDone }: { onDone: () => void }) {
                       : null
                   }
                 </div>
-                <span className="text-[13px]" style={{ color: isDone ? '#34d399' : isActive ? '#fff' : 'rgba(255,255,255,0.15)' }}>
+                <span className="text-[13px]" style={{ color: isDone ? '#059669' : isActive ? '#1e293b' : 'rgba(100,116,139,0.3)' }}>
                   {step}
                 </span>
               </div>
@@ -212,7 +212,7 @@ function Loading({ onDone }: { onDone: () => void }) {
         </div>
 
         {/* Bar */}
-        <div className="h-px rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div className="h-px rounded-full overflow-hidden" style={{ background: '#e2e8f0' }}>
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#10b981,#34d399)' }}
@@ -267,11 +267,11 @@ function Gate({ business }: { business: string }) {
       <div className="text-center py-4">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4"
           style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}>
-          <Mail size={20} className="text-emerald-400" />
+          <Mail size={20} className="text-emerald-600" />
         </div>
-        <p className="text-white font-bold text-[15px] mb-1">Revisa tu email</p>
+        <p className="text-slate-900 font-bold text-[15px] mb-1">Revisa tu email</p>
         <p className="text-slate-500 text-sm leading-relaxed">
-          Enviamos el acceso a <span className="text-slate-300">{email}</span>.
+          Enviamos el acceso a <span className="text-slate-700">{email}</span>.
           <br />Haz clic en el enlace para ver tu informe completo.
         </p>
       </div>
@@ -281,7 +281,7 @@ function Gate({ business }: { business: string }) {
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="relative">
-        <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+        <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         <input
           type="email"
           required
@@ -289,13 +289,13 @@ function Gate({ business }: { business: string }) {
           value={email}
           onChange={e => setEmail(e.target.value)}
           placeholder="Tu email"
-          className="w-full rounded-xl pl-10 pr-4 py-4 text-sm text-white placeholder-slate-600 outline-none transition-all"
+          className="w-full rounded-xl pl-10 pr-4 py-4 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all"
           style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
           }}
           onFocus={e => (e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)')}
-          onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
+          onBlur={e => (e.currentTarget.style.borderColor = '#cbd5e1')}
         />
       </div>
       {errMsg && <p className="text-red-400 text-xs pl-1">{errMsg}</p>}
@@ -314,7 +314,7 @@ function Gate({ business }: { business: string }) {
           : <>Ver informe completo <ArrowRight size={14} /></>
         }
       </button>
-      <p className="text-center text-slate-700 text-[11px]">Sin tarjeta · Sin compromiso · 7 días gratis</p>
+      <p className="text-center text-slate-500 text-[11px]">Sin tarjeta · Sin compromiso · 7 días gratis</p>
     </form>
   );
 }
@@ -341,10 +341,10 @@ function Result({
 
       {/* Top bar */}
       <div className="px-5 py-4 flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span className="text-white font-bold text-sm tracking-tight">Diagnóstico</span>
+        style={{ borderBottom: '1px solid #e2e8f0' }}>
+        <span className="text-slate-900 font-bold text-sm tracking-tight">Diagnóstico</span>
         {unlocked && (
-          <span className="text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
+          <span className="text-emerald-600 text-xs font-semibold flex items-center gap-1.5">
             <Check size={11} strokeWidth={3} />Desbloqueado
           </span>
         )}
@@ -353,8 +353,8 @@ function Result({
       <div className="max-w-lg mx-auto px-5 pt-7 space-y-4">
 
         {/* Score card */}
-        <div className="glass-card rounded-2xl px-6 pt-7 pb-6 text-center">
-          <p className="text-[11px] text-slate-600 uppercase tracking-[0.18em] font-semibold mb-5">
+        <div className="glass-card rounded-2xl px-6 pt-7 pb-6 text-center" style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <p className="text-[11px] text-slate-500 uppercase tracking-[0.18em] font-semibold mb-5">
             Puntuación · {business}
           </p>
           <div className="flex justify-center mb-4">
@@ -366,9 +366,9 @@ function Result({
           >
             {score.label}
           </span>
-          <p className="text-slate-600 text-xs mt-3 leading-relaxed">
+          <p className="text-slate-500 text-xs mt-3 leading-relaxed">
             Hemos detectado{' '}
-            <span className="text-white font-semibold">{score.opportunities.length} oportunidades</span>{' '}
+            <span className="text-slate-900 font-semibold">{score.opportunities.length} oportunidades</span>{' '}
             que podrían ayudarte a conseguir más clientes.
           </p>
         </div>
@@ -376,13 +376,13 @@ function Result({
         {/* Visible opportunities */}
         <div className="space-y-3">
           {visible.map((opp, i) => (
-            <div key={i} className="glass-card rounded-2xl p-5">
+            <div key={i} className="glass-card rounded-2xl p-5" style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full flex-shrink-0 mt-[7px]"
                   style={{ background: score.ring, boxShadow: `0 0 6px ${score.ring}80` }} />
                 <div>
-                  <p className="text-white font-semibold text-[13px] leading-snug mb-1.5">{opp.title}</p>
-                  <p className="text-slate-600 text-[12px] leading-relaxed">{opp.detail}</p>
+                  <p className="text-slate-900 font-semibold text-[13px] leading-snug mb-1.5">{opp.title}</p>
+                  <p className="text-slate-500 text-[12px] leading-relaxed">{opp.detail}</p>
                 </div>
               </div>
             </div>
@@ -397,16 +397,16 @@ function Result({
               {gated.map((opp, i) => (
                 <div key={i} className="rounded-2xl p-5"
                   style={{
-                    background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid rgba(255,255,255,0.07)',
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
                     filter: 'blur(5px)',
                     opacity: 0.3,
                   }}>
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: score.ring }} />
                     <div>
-                      <p className="text-white font-semibold text-[13px] mb-1">{opp.title}</p>
-                      <p className="text-slate-600 text-[12px]">{opp.detail}</p>
+                      <p className="text-slate-900 font-semibold text-[13px] mb-1">{opp.title}</p>
+                      <p className="text-slate-500 text-[12px]">{opp.detail}</p>
                     </div>
                   </div>
                 </div>
@@ -414,22 +414,22 @@ function Result({
               {/* Lock badge */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="flex items-center gap-2 px-4 py-2.5 rounded-full"
-                  style={{ background: 'rgba(2,7,12,0.9)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)' }}>
+                  style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid #e2e8f0', backdropFilter: 'blur(12px)' }}>
                   <Lock size={11} className="text-slate-500" />
-                  <span className="text-slate-400 text-[12px] font-medium">{gated.length} oportunidades bloqueadas</span>
+                  <span className="text-slate-500 text-[12px] font-medium">{gated.length} oportunidades bloqueadas</span>
                 </div>
               </div>
             </div>
 
             {/* Gate CTA */}
-            <div id="gate-cta" className="glass-card rounded-2xl p-7">
+            <div id="gate-cta" className="glass-card rounded-2xl p-7" style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
               <div className="text-center mb-6">
-                <h3 className="text-white font-black text-[19px] leading-snug mb-3">
+                <h3 className="text-slate-900 font-black text-[19px] leading-snug mb-3">
                   Tu informe completo está preparado.
                 </h3>
                 <p className="text-slate-500 text-[13px] leading-relaxed">
                   Hemos encontrado varias oportunidades que podrían ayudarte a conseguir más clientes.{' '}
-                  <span className="text-slate-300 font-medium">Desbloquéalas gratis.</span>
+                  <span className="text-slate-700 font-medium">Desbloquéalas gratis.</span>
                 </p>
               </div>
               <Gate business={business} />
@@ -441,22 +441,22 @@ function Result({
             <div className="space-y-3">
               {gated.map((opp, i) => (
                 <div key={i} className="glass-card rounded-2xl p-5"
-                  style={{ border: '1px solid rgba(16,185,129,0.15)' }}>
+                  style={{ background: '#ffffff', border: '1px solid #a7f3d0', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full flex-shrink-0 mt-[7px]"
                       style={{ background: '#10b981' }} />
                     <div>
-                      <p className="text-white font-semibold text-[13px] leading-snug mb-1.5">{opp.title}</p>
-                      <p className="text-slate-600 text-[12px] leading-relaxed">{opp.detail}</p>
+                      <p className="text-slate-900 font-semibold text-[13px] leading-snug mb-1.5">{opp.title}</p>
+                      <p className="text-slate-500 text-[12px] leading-relaxed">{opp.detail}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
             <div className="rounded-2xl p-6 text-center"
-              style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.18)' }}>
-              <Check size={22} className="text-emerald-400 mx-auto mb-3" />
-              <p className="text-white font-bold mb-1">Revisa tu email</p>
+              style={{ background: '#ecfdf5', border: '1px solid #a7f3d0' }}>
+              <Check size={22} className="text-emerald-600 mx-auto mb-3" />
+              <p className="text-slate-900 font-bold mb-1">Revisa tu email</p>
               <p className="text-slate-500 text-[12px]">Haz clic en el enlace que te hemos enviado para acceder a tu panel completo.</p>
             </div>
           </>
@@ -466,11 +466,11 @@ function Result({
       {/* Sticky bottom bar when locked */}
       {!unlocked && (
         <div className="fixed bottom-0 left-0 right-0 z-30 px-4 py-3"
-          style={{ background: 'rgba(2,7,12,0.97)', borderTop: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)' }}>
+          style={{ background: 'rgba(255,255,255,0.97)', borderTop: '1px solid #e2e8f0', backdropFilter: 'blur(20px)' }}>
           <div className="max-w-lg mx-auto flex items-center gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-white text-[12px] font-semibold">Informe completo listo</p>
-              <p className="text-slate-600 text-[11px]">7 días gratis · sin tarjeta</p>
+              <p className="text-slate-900 text-[12px] font-semibold">Informe completo listo</p>
+              <p className="text-slate-500 text-[11px]">7 días gratis · sin tarjeta</p>
             </div>
             <button
               onClick={() => document.getElementById('gate-cta')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
@@ -588,7 +588,7 @@ export default function PotentialLanding() {
           {/* Eyebrow */}
           <div className="flex justify-center mb-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-[0.14em]"
-              style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)', color: 'rgba(52,211,153,0.85)' }}>
+              style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857' }}>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Análisis gratuito · Resultado en 60 seg.
             </div>
@@ -596,7 +596,7 @@ export default function PotentialLanding() {
 
           {/* Headline */}
           <h1
-            className="text-white text-center font-black leading-[1.06] tracking-[-0.035em] mb-4"
+            className="text-slate-900 text-center font-black leading-[1.06] tracking-[-0.035em] mb-4"
             style={{ fontSize: 'clamp(28px, 6vw, 50px)' }}
           >
             Descubre qué está impidiendo
@@ -635,12 +635,12 @@ export default function PotentialLanding() {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 placeholder="Escribe el nombre de tu negocio"
-                className="w-full rounded-2xl text-white outline-none transition-all duration-200"
+                className="w-full rounded-2xl text-slate-900 outline-none transition-all duration-200"
                 style={{
                   padding: '17px 18px 17px 44px',
                   fontSize: 15,
-                  background:   ready ? 'rgba(16,185,129,0.04)' : 'rgba(255,255,255,0.04)',
-                  border:       `1px solid ${ready ? 'rgba(16,185,129,0.35)' : 'rgba(255,255,255,0.1)'}`,
+                  background:   ready ? 'rgba(16,185,129,0.05)' : '#ffffff',
+                  border:       `1px solid ${ready ? 'rgba(16,185,129,0.35)' : '#cbd5e1'}`,
                   boxShadow:    ready ? '0 0 0 3px rgba(16,185,129,0.07)' : 'none',
                 }}
               />
@@ -680,7 +680,7 @@ export default function PotentialLanding() {
           <div className="flex items-center justify-center gap-4 mt-4 flex-wrap">
             {['Resultado en menos de 60 segundos', 'Sin tarjeta', 'Sin compromiso'].map(t => (
               <span key={t} className="flex items-center gap-1.5 text-[12px]" style={{ color: 'rgba(100,116,139,0.7)' }}>
-                <Check size={11} className="text-emerald-500 flex-shrink-0" strokeWidth={3} />
+                <Check size={11} className="text-emerald-600 flex-shrink-0" strokeWidth={3} />
                 {t}
               </span>
             ))}
@@ -699,10 +699,11 @@ export default function PotentialLanding() {
             <div
               key={label}
               className="glass-card rounded-2xl p-4 flex flex-col items-center text-center gap-2"
+              style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
             >
-              <Icon size={16} className="text-emerald-500 flex-shrink-0" />
-              <p className="text-white font-bold text-[11px] sm:text-[12px] leading-snug">{label}</p>
-              <p className="text-slate-600 text-[10px] leading-relaxed hidden sm:block">{desc}</p>
+              <Icon size={16} className="text-emerald-600 flex-shrink-0" />
+              <p className="text-slate-900 font-bold text-[11px] sm:text-[12px] leading-snug">{label}</p>
+              <p className="text-slate-500 text-[10px] leading-relaxed hidden sm:block">{desc}</p>
             </div>
           ))}
         </div>
@@ -724,8 +725,8 @@ export default function PotentialLanding() {
       <div
         className="sm:hidden fixed bottom-0 left-0 right-0 z-20 px-4 py-3"
         style={{
-          background: 'rgba(2,7,12,0.97)',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          background: 'rgba(255,255,255,0.97)',
+          borderTop: '1px solid #e2e8f0',
           backdropFilter: 'blur(20px)',
         }}
       >

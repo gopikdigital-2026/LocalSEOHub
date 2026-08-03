@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Mail, Lock, Zap, Eye, EyeOff, AlertCircle, ExternalLink, Copy, Check } from 'lucide-react';
+import { X, Mail, Lock, Eye, EyeOff, AlertCircle, ExternalLink, Copy, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { trackCompleteRegistration } from '../lib/pixel';
 import { track } from '../lib/analytics';
@@ -42,7 +42,6 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2500);
     } catch {
-      // fallback for older browsers
       const ta = document.createElement('textarea');
       ta.value = window.location.href;
       document.body.appendChild(ta);
@@ -93,11 +92,9 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
       if (authError) {
         setError(translateError(authError.message));
       } else {
-        // login_success fired by useAuth onAuthStateChange
         onClose();
       }
     } else {
-      // Use signup-instant to create a pre-confirmed account, bypassing email verification
       track('register_attempt', { method: 'email' });
       const res = await supabase.functions.invoke('signup-instant', { body: { email, password } });
       if (res.error) {
@@ -109,7 +106,6 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
       const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
       if (!loginErr) {
         trackCompleteRegistration();
-        // register_success fired by useAuth onAuthStateChange
         onClose();
       } else {
         track('register_partial_failure', { step: 'auto_login', error: loginErr.message });
@@ -125,38 +121,30 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="absolute inset-0 bg-[#05060b]/85 backdrop-blur-md" />
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-v2-neutral-900/50 backdrop-blur-sm" />
 
-      <div
-        className="relative w-full max-w-md rounded-2xl overflow-hidden"
-        style={{
-          background: 'rgba(12,24,38,0.88)',
-          backdropFilter: 'blur(28px) saturate(160%)',
-          border: '1px solid rgba(255,255,255,0.10)',
-          boxShadow: '0 40px 80px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.09)',
-        }}
-      >
-        <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-blue-500" />
-
-        <div className="p-7">
+      {/* Modal */}
+      <div className="relative w-full max-w-md bg-white rounded-v2-2xl shadow-v2-xl border border-v2-border v2-scale-in overflow-hidden">
+        <div className="p-7 sm:p-8">
           {/* Header */}
           <div className="flex items-start justify-between mb-7">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/30">
-                <Zap size={18} className="text-slate-950" fill="currentColor" />
+              <div className="w-10 h-10 rounded-v2-xl bg-v2-primary-50 border border-v2-primary-200 flex items-center justify-center">
+                <span className="text-lg font-bold text-v2-primary-600">L</span>
               </div>
               <div>
-                <h2 className="font-extrabold text-white text-lg leading-tight tracking-tight">
+                <h2 className="font-bold text-v2-text-primary text-v2-lg leading-tight tracking-tight">
                   {mode === 'login' ? 'Bienvenido de nuevo' : 'Crear cuenta gratis'}
                 </h2>
-                <p className="text-slate-500 text-xs mt-0.5">
-                  {mode === 'login' ? 'Accede a tu panel de LocalSEOHub' : '7 días gratis · sin tarjeta hasta decidir'}
+                <p className="text-v2-text-tertiary text-v2-xs mt-0.5">
+                  {mode === 'login' ? 'Accede a tu panel de LocalSEOHub' : '7 dias gratis · sin tarjeta hasta decidir'}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-lg hover:bg-slate-800"
+              className="v2-btn-icon"
             >
               <X size={18} />
             </button>
@@ -164,43 +152,42 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
 
           {/* In-app browser warning */}
           {inApp ? (
-            <div className="mb-5 rounded-xl border border-amber-500/25 bg-amber-500/8 p-4">
+            <div className="mb-5 rounded-v2-xl border border-v2-warning-200 bg-v2-warning-50 p-4">
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-                  <ExternalLink size={15} className="text-amber-400" />
+                <div className="w-8 h-8 rounded-v2-lg bg-v2-warning-100 flex items-center justify-center shrink-0">
+                  <ExternalLink size={15} className="text-v2-warning-600" />
                 </div>
                 <div>
-                  <p className="text-amber-300 text-xs font-bold mb-1">Abre en tu navegador para usar Google</p>
-                  <p className="text-amber-200/60 text-[11px] leading-relaxed">
+                  <p className="text-v2-warning-700 text-v2-xs font-bold mb-1">Abre en tu navegador para usar Google</p>
+                  <p className="text-v2-warning-600 text-[11px] leading-relaxed">
                     {isAndroid()
-                      ? 'Toca los tres puntos (⋮) arriba y selecciona "Abrir en Chrome" o tu navegador.'
+                      ? 'Toca los tres puntos arriba y selecciona "Abrir en Chrome" o tu navegador.'
                       : 'Toca el icono de compartir y selecciona "Abrir en Safari" para continuar con Google.'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleCopyLink}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-amber-500/25 bg-amber-500/10 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-v2-lg border border-v2-warning-200 bg-white text-v2-warning-700 text-v2-xs font-semibold hover:bg-v2-warning-50 transition-colors"
               >
                 {linkCopied ? <Check size={13} /> : <Copy size={13} />}
-                {linkCopied ? '¡Enlace copiado!' : 'Copiar enlace para abrir en otro navegador'}
+                {linkCopied ? 'Enlace copiado!' : 'Copiar enlace para abrir en otro navegador'}
               </button>
             </div>
           ) : (
-            /* Google OAuth button — only shown outside in-app browsers */
             <>
               <button
                 type="button"
                 onClick={handleGoogleAuth}
                 disabled={googleLoading || loading}
-                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-sm font-semibold
-                  bg-white/5 border border-white/10 text-slate-200
-                  hover:bg-white/10 hover:border-white/20 hover:text-white
+                className="w-full flex items-center justify-center gap-3 py-3 rounded-v2-lg text-v2-sm font-semibold
+                  bg-white border border-v2-border hover:bg-v2-neutral-50 hover:border-v2-border-dark
+                  text-v2-text-primary shadow-v2-xs
                   transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
                   active:scale-[0.99] mb-5"
               >
                 {googleLoading ? (
-                  <svg className="animate-spin w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-4 h-4 text-v2-text-tertiary" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
@@ -211,9 +198,9 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
               </button>
 
               <div className="flex items-center gap-3 mb-5">
-                <div className="flex-1 h-px bg-slate-800/80" />
-                <span className="text-xs text-slate-600 font-medium">o con email</span>
-                <div className="flex-1 h-px bg-slate-800/80" />
+                <div className="flex-1 h-px bg-v2-border" />
+                <span className="text-v2-xs text-v2-text-tertiary font-medium">o con email</span>
+                <div className="flex-1 h-px bg-v2-border" />
               </div>
             </>
           )}
@@ -221,41 +208,37 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
           {/* Email form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Email</label>
+              <label className="v2-label">Email</label>
               <div className="relative">
-                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-v2-text-tertiary pointer-events-none" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="tu@email.com"
-                  className="w-full bg-slate-950/70 border border-slate-800/80 rounded-xl pl-10 pr-4 py-3.5 text-sm
-                    text-slate-100 placeholder-slate-600 outline-none transition-all duration-200
-                    focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+                  className="v2-input pl-10"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Contraseña</label>
+              <label className="v2-label">Contrasena</label>
               <div className="relative">
-                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-v2-text-tertiary pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  placeholder="Mínimo 6 caracteres"
-                  className="w-full bg-slate-950/70 border border-slate-800/80 rounded-xl pl-10 pr-11 py-3.5 text-sm
-                    text-slate-100 placeholder-slate-600 outline-none transition-all duration-200
-                    focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20"
+                  placeholder="Minimo 6 caracteres"
+                  className="v2-input pl-10 pr-11"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-v2-text-tertiary hover:text-v2-text-secondary transition-colors"
                 >
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -263,42 +246,39 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
             </div>
 
             {error && (
-              <div className="flex items-start gap-2.5 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-                <AlertCircle size={14} className="text-red-400 mt-0.5 shrink-0" />
-                <p className="text-red-400 text-xs leading-relaxed">{error}</p>
+              <div className="flex items-start gap-2.5 bg-v2-error-50 border border-v2-error-200 rounded-v2-lg px-4 py-3">
+                <AlertCircle size={14} className="text-v2-error-500 mt-0.5 shrink-0" />
+                <p className="text-v2-error-600 text-v2-xs leading-relaxed">{error}</p>
               </div>
             )}
             {success && (
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
-                <p className="text-emerald-400 text-xs">{success}</p>
+              <div className="bg-v2-success-50 border border-v2-success-200 rounded-v2-lg px-4 py-3">
+                <p className="text-v2-success-700 text-v2-xs">{success}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading || googleLoading}
-              className="w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all duration-300
-                bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40
-                disabled:opacity-60 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+              className="w-full v2-btn-primary py-3 text-v2-sm font-bold"
             >
-              {loading ? (
+              {loading && (
                 <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-              ) : null}
-              {mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta Gratis'}
+              )}
+              {mode === 'login' ? 'Iniciar Sesion' : 'Crear Cuenta Gratis'}
             </button>
           </form>
 
-          <p className="text-center text-xs text-slate-500 mt-5">
-            {mode === 'login' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}{' '}
+          <p className="text-center text-v2-xs text-v2-text-tertiary mt-5">
+            {mode === 'login' ? 'No tienes cuenta?' : 'Ya tienes cuenta?'}{' '}
             <button
               onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); clearMessages(); }}
-              className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+              className="text-v2-primary-600 hover:text-v2-primary-700 font-medium transition-colors"
             >
-              {mode === 'login' ? 'Regístrate gratis' : 'Inicia sesión'}
+              {mode === 'login' ? 'Registrate gratis' : 'Inicia sesion'}
             </button>
           </p>
         </div>
@@ -319,10 +299,10 @@ function GoogleIcon() {
 }
 
 function translateError(msg: string): string {
-  if (msg.includes('Invalid login credentials')) return 'Email o contraseña incorrectos.';
-  if (msg.includes('Email not confirmed')) return 'Confirma tu email antes de iniciar sesión.';
-  if (msg.includes('User already registered')) return 'Este email ya está registrado. Inicia sesión.';
-  if (msg.includes('Password should be')) return 'La contraseña debe tener al menos 6 caracteres.';
-  if (msg.includes('provider')) return 'Google no está disponible ahora. Regístrate con email.';
+  if (msg.includes('Invalid login credentials')) return 'Email o contrasena incorrectos.';
+  if (msg.includes('Email not confirmed')) return 'Confirma tu email antes de iniciar sesion.';
+  if (msg.includes('User already registered')) return 'Este email ya esta registrado. Inicia sesion.';
+  if (msg.includes('Password should be')) return 'La contrasena debe tener al menos 6 caracteres.';
+  if (msg.includes('provider')) return 'Google no esta disponible ahora. Registrate con email.';
   return msg;
 }

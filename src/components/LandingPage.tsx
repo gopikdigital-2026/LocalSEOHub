@@ -45,7 +45,7 @@ function getTrialTools(t: TFn): Array<{
       IconComponent: FileText,
       gradient: 'from-emerald-500/15 to-teal-500/8',
       border: 'border-emerald-500/30',
-      iconBg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+      iconBg: 'bg-emerald-50 text-emerald-600 border-emerald-200',
       ph1: t('trial_seo_ph1'),
       ph2: t('trial_seo_ph2'),
       btn: t('trial_seo_btn'),
@@ -58,7 +58,7 @@ function getTrialTools(t: TFn): Array<{
       IconComponent: MapPinned,
       gradient: 'from-blue-500/15 to-sky-500/8',
       border: 'border-blue-500/30',
-      iconBg: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
+      iconBg: 'bg-blue-50 text-blue-600 border-blue-200',
       ph1: t('trial_maps_ph1'),
       ph2: t('trial_maps_ph2'),
       btn: t('trial_maps_btn'),
@@ -71,7 +71,7 @@ function getTrialTools(t: TFn): Array<{
       IconComponent: Eye,
       gradient: 'from-cyan-500/15 to-sky-500/8',
       border: 'border-cyan-500/30',
-      iconBg: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/25',
+      iconBg: 'bg-cyan-50 text-cyan-600 border-cyan-200',
       ph1: t('trial_twin_ph1'),
       ph2: t('trial_twin_ph2'),
       btn: t('trial_twin_btn'),
@@ -84,7 +84,7 @@ function getTrialTools(t: TFn): Array<{
       IconComponent: Target,
       gradient: 'from-orange-500/15 to-amber-500/8',
       border: 'border-orange-500/30',
-      iconBg: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
+      iconBg: 'bg-orange-50 text-orange-600 border-orange-200',
       ph1: t('trial_radar_ph1'),
       ph2: t('trial_radar_ph2'),
       btn: t('trial_radar_btn'),
@@ -97,7 +97,7 @@ function getTrialTools(t: TFn): Array<{
       IconComponent: Brain,
       gradient: 'from-rose-500/15 to-pink-500/8',
       border: 'border-rose-500/30',
-      iconBg: 'bg-rose-500/15 text-rose-400 border-rose-500/25',
+      iconBg: 'bg-rose-50 text-rose-600 border-rose-200',
       ph1: t('trial_advisor_ph1'),
       ph2: t('trial_advisor_ph2'),
       btn: t('trial_advisor_btn'),
@@ -169,38 +169,36 @@ function RegistrationGate({
 
   if (submitted) {
     return (
-      <div className="rounded-2xl p-5 text-center space-y-2 border border-emerald-500/28"
-        style={{ background: 'linear-gradient(160deg, rgba(16,185,129,0.09) 0%, rgba(8,14,26,0.99) 55%)' }}>
-        <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mx-auto">
-          <Check size={18} className="text-emerald-400" />
+      <div className="rounded-2xl p-5 text-center space-y-2 border border-emerald-200 bg-white shadow-lg">
+        <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto">
+          <Check size={18} className="text-emerald-600" />
         </div>
-        <p className="text-white font-bold text-sm">{t('gate_opening')}</p>
+        <p className="text-slate-900 font-bold text-sm">{t('gate_opening')}</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-emerald-500/30"
-      style={{ background: 'linear-gradient(170deg, rgba(16,185,129,0.08) 0%, rgba(8,14,26,0.99) 50%)' }}>
+    <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-lg">
       <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
       <div className="p-5 space-y-3">
 
         <div className="text-center space-y-1">
-          <p className="text-white font-extrabold text-base leading-tight">
+          <p className="text-slate-900 font-extrabold text-base leading-tight">
             {businessName
               ? `${t('gate_unlock_title').replace('{name}', businessName)}`
               : `${t('gate_unlock_title_generic').replace('{tool}', toolLabel)}`}
           </p>
-          <p className="text-emerald-400 text-[12px]">
+          <p className="text-emerald-600 text-[12px]">
             {t('gate_register_sub')}
           </p>
         </div>
 
         <div className="grid grid-cols-3 gap-2 py-1">
           {[t('gate_feature_1'), t('gate_feature_2'), t('gate_feature_3')].map((item) => (
-            <div key={item} className="flex flex-col items-center gap-1 rounded-xl bg-slate-800/40 border border-slate-700/40 p-2">
-              <Check size={11} className="text-emerald-400" />
-              <span className="text-[10px] text-slate-400 text-center leading-tight">{item}</span>
+            <div key={item} className="flex flex-col items-center gap-1 rounded-xl bg-slate-50 border border-slate-200 p-2">
+              <Check size={11} className="text-emerald-500" />
+              <span className="text-[10px] text-slate-500 text-center leading-tight">{item}</span>
             </div>
           ))}
         </div>
@@ -210,16 +208,16 @@ function RegistrationGate({
           {/* PRIMARY: email — es el método que convierte según los datos */}
           <form onSubmit={handleEmail} className="space-y-2">
             <div className="relative">
-              <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com — empieza gratis"
-                className="w-full bg-slate-900/80 border border-slate-600/60 rounded-xl pl-10 pr-3 py-3 text-sm text-slate-100
-                  placeholder-slate-600 outline-none transition-all focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20" />
+                className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3 py-3 text-sm text-slate-800
+                  placeholder-slate-400 outline-none transition-all focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20" />
             </div>
             <button type="submit" disabled={!email.trim()}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all duration-150
                 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                text-slate-950 shadow-[0_4px_20px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 active:translate-y-0
+                text-white shadow-[0_4px_20px_rgba(16,185,129,0.25)] hover:-translate-y-0.5 active:translate-y-0
                 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0">
               <ArrowRight size={14} />
               {t('gate_cta_view')}
@@ -227,9 +225,9 @@ function RegistrationGate({
           </form>
 
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-px bg-slate-800" />
-            <span className="text-[9px] text-slate-600 px-1">o</span>
-            <div className="flex-1 h-px bg-slate-800" />
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-[9px] text-slate-400 px-1">o</span>
+            <div className="flex-1 h-px bg-slate-200" />
           </div>
 
           {/* SECONDARY: Google / in-app fallback */}
@@ -237,27 +235,27 @@ function RegistrationGate({
             <a href={window.location.href} target="_blank" rel="noopener noreferrer"
               onClick={() => { track('gate_register_click', { context, method: 'inapp_open' }); }}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-[12px]
-                border border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-800/40 transition-all no-underline">
+                border border-slate-200 hover:border-slate-300 text-slate-600 hover:bg-slate-50 transition-all no-underline">
               <ExternalLink size={12} />{t('gate_open_browser')}
             </a>
           ) : (
             <button type="button" onClick={handleGoogle}
               className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl font-semibold text-[12px]
-                border border-slate-700/60 hover:border-slate-600/80 text-slate-300 hover:bg-slate-800/40 transition-all">
+                border border-slate-200 hover:border-slate-300 text-slate-600 hover:bg-slate-50 transition-all">
               <GoogleIconSm />
               {t('gate_google')}
             </button>
           )}
 
           <div className="flex items-center justify-center gap-3 pt-0.5">
-            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />{t('gate_7days')}</span>
-            <span className="text-slate-700 text-[9px]">·</span>
-            <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Shield size={8} />{t('gate_no_card')}</span>
-            <span className="text-slate-700 text-[9px]">·</span>
-            <span className="text-[9px] text-slate-600">
+            <span className="text-[9px] text-slate-500 flex items-center gap-0.5"><Shield size={8} />{t('gate_7days')}</span>
+            <span className="text-slate-300 text-[9px]">·</span>
+            <span className="text-[9px] text-slate-500 flex items-center gap-0.5"><Shield size={8} />{t('gate_no_card')}</span>
+            <span className="text-slate-300 text-[9px]">·</span>
+            <span className="text-[9px] text-slate-500">
               {t('gate_have_account')}{' '}
               <button type="button" onClick={() => { track('gate_register_click', { context, method: 'login_link' }); onLoginClick(); }}
-                className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                className="text-emerald-600 hover:text-emerald-500 transition-colors">
                 {t('gate_sign_in')}
               </button>
             </span>
@@ -280,31 +278,31 @@ function SeoResult({ input1, input2 }: { input1: string; input2: string }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Resultado generado</p>
-        <span className="text-[9px] bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-full px-2 py-0.5 font-semibold uppercase">Gratis</span>
+        <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Resultado generado</p>
+        <span className="text-[9px] bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full px-2 py-0.5 font-semibold uppercase">Gratis</span>
       </div>
-      <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
-        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">Título SEO optimizado</p>
-        <p className="text-white text-sm font-medium leading-snug">{title}</p>
+      <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3.5">
+        <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-1.5">Título SEO optimizado</p>
+        <p className="text-slate-900 text-sm font-medium leading-snug">{title}</p>
       </div>
-      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+      <div className="rounded-xl bg-white border border-slate-200 p-3.5">
         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Descripción (vista previa)</p>
-        <p className="text-slate-300 text-xs leading-relaxed">{desc}</p>
-        <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-500">
+        <p className="text-slate-600 text-xs leading-relaxed">{desc}</p>
+        <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-400">
           <Lock size={9} />
           <span>Versión SEO extendida + schema estructurado bloqueados</span>
         </div>
       </div>
-      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+      <div className="rounded-xl bg-white border border-slate-200 p-3.5">
         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Keywords</p>
         <div className="flex flex-wrap gap-2">
-          {kws.map((k) => <span key={k} className="text-[11px] bg-teal-500/15 border border-teal-500/20 text-teal-300 rounded-full px-3 py-1">{k}</span>)}
-          <span className="flex items-center gap-1 text-[11px] bg-slate-700/60 border border-slate-600/50 text-slate-400 rounded-full px-3 py-1"><Lock size={9} />+8 bloqueadas</span>
+          {kws.map((k) => <span key={k} className="text-[11px] bg-teal-50 border border-teal-200 text-teal-700 rounded-full px-3 py-1">{k}</span>)}
+          <span className="flex items-center gap-1 text-[11px] bg-slate-100 border border-slate-200 text-slate-500 rounded-full px-3 py-1"><Lock size={9} />+8 bloqueadas</span>
         </div>
       </div>
-      <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/6 border border-amber-500/25">
-        <AlertCircle size={14} className="text-amber-400 shrink-0" />
-        <p className="text-amber-300/90 text-xs">Tu ficha actual tiene un score estimado de <strong>{score}/100</strong>. Con las optimizaciones completas puedes llegar a 85+.</p>
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+        <AlertCircle size={14} className="text-amber-500 shrink-0" />
+        <p className="text-amber-700 text-xs">Tu ficha actual tiene un score estimado de <strong>{score}/100</strong>. Con las optimizaciones completas puedes llegar a 85+.</p>
       </div>
     </div>
   );
@@ -321,47 +319,47 @@ function MapsResult({ input1, input2 }: { input1: string; input2: string }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">Puntuación de optimización</p>
-          <p className="text-white font-bold text-sm">{biz} · {city}</p>
+          <p className="text-slate-900 font-bold text-sm">{biz} · {city}</p>
         </div>
         <div className="text-right shrink-0">
-          <div className="text-2xl font-extrabold text-amber-400 tabular-nums">{score}/100</div>
+          <div className="text-2xl font-extrabold text-amber-500 tabular-nums">{score}/100</div>
           <div className="text-[10px] text-slate-500">Infraoptimizado</div>
         </div>
       </div>
-      <div className="w-full bg-slate-800/60 rounded-full h-2.5 overflow-hidden">
+      <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
         <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-1000"
           style={{ width: `${score}%` }} />
       </div>
-      <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-3.5">
-        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mb-1.5">Título optimizado (gratis)</p>
-        <p className="text-white text-sm font-medium leading-snug">{title}</p>
+      <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3.5">
+        <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-1.5">Título optimizado (gratis)</p>
+        <p className="text-slate-900 text-sm font-medium leading-snug">{title}</p>
       </div>
-      <div className="rounded-xl bg-amber-500/6 border border-amber-500/25 p-3.5">
-        <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider mb-2">Fallos críticos detectados</p>
+      <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5">
+        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-2">Fallos críticos detectados</p>
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs text-amber-300/80">
-            <AlertCircle size={10} className="text-amber-400 shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-amber-700">
+            <AlertCircle size={10} className="text-amber-500 shrink-0" />
             <span>Sin horarios especiales para festivos (pierdes el 68% de búsquedas nocturnas)</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <Lock size={10} className="shrink-0" /><span className="blur-[3px] select-none">Descripción sin keywords semánticas locales</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <Lock size={10} className="shrink-0" /><span className="blur-[3px] select-none">Sin schema de negocio estructurado</span>
           </div>
         </div>
       </div>
-      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3">
+      <div className="rounded-xl bg-white border border-slate-200 p-3">
         <div className="flex items-center gap-2 mb-2">
-          <Lock size={9} className="text-slate-500" />
+          <Lock size={9} className="text-slate-400" />
           <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Competidores cercanos — bloqueado</p>
         </div>
         <div className="space-y-1.5">
           {['Competidor #1 en tu zona', 'Competidor #2 en tu zona'].map((c, i) => (
             <div key={i} className="flex items-center gap-2">
-              <span className="text-[9px] font-black text-amber-400 w-4">#{i + 1}</span>
-              <span className="text-[11px] text-slate-300 blur-[5px] select-none flex-1">{c}</span>
-              <span className="text-[9px] text-red-400 font-bold">+{i === 0 ? 47 : 29} pts</span>
+              <span className="text-[9px] font-black text-amber-500 w-4">#{i + 1}</span>
+              <span className="text-[11px] text-slate-600 blur-[5px] select-none flex-1">{c}</span>
+              <span className="text-[9px] text-red-500 font-bold">+{i === 0 ? 47 : 29} pts</span>
             </div>
           ))}
         </div>
@@ -379,20 +377,20 @@ function TwinResult({ input1, input2 }: { input1: string; input2: string }) {
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-0.5">Gemelo Digital creado</p>
-          <p className="text-white font-bold text-sm">{biz} · {cat}</p>
+          <p className="text-[10px] text-cyan-600 font-bold uppercase tracking-wider mb-0.5">Gemelo Digital creado</p>
+          <p className="text-slate-900 font-bold text-sm">{biz} · {cat}</p>
         </div>
         <div className="text-right shrink-0">
-          <div className="text-2xl font-extrabold text-cyan-400 tabular-nums">{score}/100</div>
+          <div className="text-2xl font-extrabold text-cyan-500 tabular-nums">{score}/100</div>
           <div className="text-[10px] text-slate-500">Presencia digital</div>
         </div>
       </div>
-      <div className="w-full bg-slate-800/60 rounded-full h-2 overflow-hidden">
+      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
         <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 transition-all duration-1000"
           style={{ width: `${score}%` }} />
       </div>
-      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
-        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Señales detectadas</p>
+      <div className="rounded-xl bg-white border border-slate-200 p-3.5">
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Señales detectadas</p>
         <div className="space-y-2">
           {[
             { ok: true, label: 'Presencia en Google Maps: Activa' },
@@ -401,24 +399,24 @@ function TwinResult({ input1, input2 }: { input1: string; input2: string }) {
           ].map(({ ok, label }, i) => (
             <div key={i} className="flex items-center gap-2 text-xs">
               {ok
-                ? <BadgeCheck size={11} className="text-emerald-400 shrink-0" />
-                : <AlertCircle size={11} className="text-amber-400 shrink-0" />}
-              <span className={ok ? 'text-slate-300' : 'text-amber-300/80'}>{label}</span>
+                ? <BadgeCheck size={11} className="text-emerald-500 shrink-0" />
+                : <AlertCircle size={11} className="text-amber-500 shrink-0" />}
+              <span className={ok ? 'text-slate-600' : 'text-amber-700'}>{label}</span>
             </div>
           ))}
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <Lock size={10} className="shrink-0" />
             <span className="blur-[3px] select-none">Schema estructurado: No detectado</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <Lock size={10} className="shrink-0" />
             <span className="blur-[3px] select-none">Visibilidad en IA generativa: Sin datos</span>
           </div>
         </div>
       </div>
-      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3">
+      <div className="rounded-xl bg-white border border-slate-200 p-3">
         <div className="flex items-center gap-2">
-          <Lock size={9} className="text-slate-500" />
+          <Lock size={9} className="text-slate-400" />
           <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Mapa de calor de visibilidad por zonas — bloqueado</p>
         </div>
         <div className="mt-2 grid grid-cols-5 gap-1">
@@ -446,50 +444,50 @@ function RadarResult({ input1, input2 }: { input1: string; input2: string }) {
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <div className="text-center shrink-0">
-          <div className="text-2xl font-extrabold text-orange-400 tabular-nums">{myScore}</div>
+          <div className="text-2xl font-extrabold text-orange-500 tabular-nums">{myScore}</div>
           <div className="text-[9px] text-slate-500">Tu score</div>
         </div>
         <div className="flex-1">
-          <p className="text-white font-bold text-sm">{biz}</p>
+          <p className="text-slate-900 font-bold text-sm">{biz}</p>
           <p className="text-slate-500 text-[11px]">vs. 3 competidores en {city}</p>
         </div>
       </div>
-      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5 space-y-2.5">
+      <div className="rounded-xl bg-white border border-slate-200 p-3.5 space-y-2.5">
         {comps.map((c, i) => (
           <div key={i} className="space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 blur-[4px] select-none">Competidor #{i + 1} en {city}</span>
+              <span className="text-[10px] font-bold text-slate-500 blur-[4px] select-none">Competidor #{i + 1} en {city}</span>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[10px] text-red-400 font-bold">+{c.score - myScore} pts</span>
+                <span className="text-[10px] text-red-500 font-bold">+{c.score - myScore} pts</span>
                 <Star size={9} className="text-amber-400 fill-amber-400" />
-                <span className="text-[9px] text-slate-400">{c.reviews}</span>
+                <span className="text-[9px] text-slate-500">{c.reviews}</span>
               </div>
             </div>
-            <div className="w-full bg-slate-700/40 rounded-full h-1.5">
+            <div className="w-full bg-slate-200 rounded-full h-1.5">
               <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-400"
                 style={{ width: `${Math.min(c.score, 100)}%` }} />
             </div>
           </div>
         ))}
-        <div className="space-y-1 border-t border-slate-700/50 pt-2">
+        <div className="space-y-1 border-t border-slate-200 pt-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-emerald-400">{biz} (tú)</span>
-            <span className="text-[10px] text-slate-400 font-bold">{myScore}/100</span>
+            <span className="text-[10px] font-bold text-emerald-600">{biz} (tú)</span>
+            <span className="text-[10px] text-slate-500 font-bold">{myScore}/100</span>
           </div>
-          <div className="w-full bg-slate-700/40 rounded-full h-1.5">
+          <div className="w-full bg-slate-200 rounded-full h-1.5">
             <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
               style={{ width: `${myScore}%` }} />
           </div>
         </div>
       </div>
-      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3">
+      <div className="rounded-xl bg-white border border-slate-200 p-3">
         <div className="flex items-center gap-2">
-          <Lock size={9} className="text-slate-500" />
+          <Lock size={9} className="text-slate-400" />
           <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Plan para superar al #1 en 30 días — bloqueado</p>
         </div>
         <div className="mt-2 space-y-1">
           {['Acción inmediata #1 para cerrar la brecha', 'Palabras clave que el #1 usa y tú no', 'Estrategia de reseñas semana a semana'].map((item) => (
-            <p key={item} className="text-[11px] text-slate-500 blur-[3.5px] select-none">{item}</p>
+            <p key={item} className="text-[11px] text-slate-400 blur-[3.5px] select-none">{item}</p>
           ))}
         </div>
       </div>
@@ -503,31 +501,31 @@ function AdvisorResult({ input1, input2 }: { input1: string; input2: string }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Consejo AI para {biz}</p>
-      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3.5">
+      <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">Consejo AI para {biz}</p>
+      <div className="rounded-xl bg-white border border-slate-200 p-3.5">
         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Análisis de tu situación</p>
-        <p className="text-slate-300 text-xs leading-relaxed">
-          Para un negocio como <strong className="text-white">{biz}</strong>, el mayor obstáculo en la captación suele ser la baja visibilidad local: apareces tarde en los resultados cuando un cliente potencial busca "{problem.toLowerCase()}" cerca de tu dirección. Esto se debe principalmente a una ficha de Google Business Profile incompleta y a la ausencia de señales semánticas locales…
+        <p className="text-slate-600 text-xs leading-relaxed">
+          Para un negocio como <strong className="text-slate-900">{biz}</strong>, el mayor obstáculo en la captación suele ser la baja visibilidad local: apareces tarde en los resultados cuando un cliente potencial busca "{problem.toLowerCase()}" cerca de tu dirección. Esto se debe principalmente a una ficha de Google Business Profile incompleta y a la ausencia de señales semánticas locales…
         </p>
         <div className="mt-2 flex items-center gap-1.5">
-          <Lock size={9} className="text-slate-500" />
-          <span className="text-[10px] text-slate-500">Análisis completo (8 puntos más) bloqueado</span>
+          <Lock size={9} className="text-slate-400" />
+          <span className="text-[10px] text-slate-400">Análisis completo (8 puntos más) bloqueado</span>
         </div>
       </div>
-      <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-3">
+      <div className="rounded-xl bg-white border border-slate-200 p-3">
         <div className="flex items-center gap-2 mb-2">
-          <Lock size={9} className="text-slate-500" />
+          <Lock size={9} className="text-slate-400" />
           <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Plan de acción en 5 pasos — bloqueado</p>
         </div>
         <div className="space-y-1">
           {['Quick win esta semana: optimizar ficha GBP', 'Conseguir 10 reseñas con plantilla incluida', 'Keywords locales prioritarias para tu categoría'].map((item) => (
-            <p key={item} className="text-[11px] text-slate-500 blur-[3.5px] select-none">{item}</p>
+            <p key={item} className="text-[11px] text-slate-400 blur-[3.5px] select-none">{item}</p>
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/6 border border-rose-500/20">
-        <AlertCircle size={14} className="text-rose-400 shrink-0" />
-        <p className="text-rose-300/90 text-xs">Sin un plan estructurado, la mayoría de negocios locales pierden entre el 60% y el 80% de sus clientes potenciales ante competidores mejor posicionados.</p>
+      <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-50 border border-rose-200">
+        <AlertCircle size={14} className="text-rose-500 shrink-0" />
+        <p className="text-rose-700 text-xs">Sin un plan estructurado, la mayoría de negocios locales pierden entre el 60% y el 80% de sus clientes potenciales ante competidores mejor posicionados.</p>
       </div>
     </div>
   );
@@ -584,11 +582,11 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
 
   useEffect(() => () => { if (scanRef.current) clearTimeout(scanRef.current); }, []);
 
-  const INPUT_CLS = 'w-full bg-slate-950/70 border border-slate-700/50 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-all focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20';
+  const INPUT_CLS = 'w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20';
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="glass-card rounded-2xl overflow-hidden">
+      <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
         <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
 
         {/* Tool picker */}
@@ -604,10 +602,10 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
                 <button key={tool_item.id} onClick={() => switchTool(i)}
                   className={`flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl text-[10px] font-semibold transition-all duration-200 ${
                     isActive
-                      ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
-                      : 'text-slate-500 hover:text-slate-300 border border-transparent hover:bg-slate-800/40'
+                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                      : 'text-slate-500 hover:text-slate-700 border border-transparent hover:bg-slate-50'
                   }`}>
-                  <Icon size={14} className={isActive ? 'text-emerald-400' : 'text-slate-500'} />
+                  <Icon size={14} className={isActive ? 'text-emerald-600' : 'text-slate-400'} />
                   <span className="hidden sm:block truncate w-full text-center">{tool_item.shortLabel}</span>
                 </button>
               );
@@ -622,7 +620,7 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
               <tool.IconComponent size={14} />
             </div>
             <div>
-              <p className="text-white text-sm font-bold leading-tight">{tool.label}</p>
+              <p className="text-slate-900 text-sm font-bold leading-tight">{tool.label}</p>
               <p className="text-slate-500 text-[11px]">{t('trial_free_label')}</p>
             </div>
           </div>
@@ -639,12 +637,12 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
               <button onClick={handleScan} disabled={!input1.trim()}
                 className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base transition-all duration-300
                   bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
-                  text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/45 hover:-translate-y-0.5 active:translate-y-0
+                  text-white shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/35 hover:-translate-y-0.5 active:translate-y-0
                   disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0">
                 <Zap size={16} fill="currentColor" />
                 {tool.btn}
               </button>
-              <p className="text-center text-[11px] text-slate-600 flex items-center justify-center gap-1">
+              <p className="text-center text-[11px] text-slate-400 flex items-center justify-center gap-1">
                 <Shield size={9} />Sin registro · Sin tarjeta · Resultado en segundos
               </p>
             </div>
@@ -660,15 +658,15 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
                   <div key={i} className="absolute rounded-full border border-emerald-400/35"
                     style={{ width: `${40 + i * 20}px`, height: `${40 + i * 20}px`, animation: 'radarRing 2s ease-out infinite', animationDelay: `${i * 0.55}s` }} />
                 ))}
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/40 z-10">
-                  <tool.IconComponent size={18} className="text-slate-950" />
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/30 z-10">
+                  <tool.IconComponent size={18} className="text-white" />
                 </div>
               </div>
               <div className="text-center space-y-1">
-                <p className="text-white font-bold text-sm">{tool.scanMsg}</p>
-                <p className="text-slate-500 text-xs">Analizando: <span className="text-slate-300">"{lockedInput1}"</span></p>
+                <p className="text-slate-900 font-bold text-sm">{tool.scanMsg}</p>
+                <p className="text-slate-500 text-xs">Analizando: <span className="text-slate-700">"{lockedInput1}"</span></p>
               </div>
-              <div className="w-full max-w-xs bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+              <div className="w-full max-w-xs bg-slate-200 rounded-full h-1.5 overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
                   style={{ animation: 'scanProgress 2.5s ease-out forwards' }} />
               </div>
@@ -679,7 +677,7 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
           {phase === 'result' && (
             <div className="space-y-3">
               <button onClick={() => { setPhase('idle'); setInput1(''); setInput2(''); setShowGate(false); }}
-                className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-300 transition-colors mb-1">
+                className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-700 transition-colors mb-1">
                 <ChevronRight size={11} className="rotate-180" />
                 {t('trial_analyze_other')}
               </button>
@@ -711,16 +709,16 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
     <button onClick={() => setOpen((v) => !v)}
-      className="w-full text-left rounded-xl border border-slate-800/80 bg-slate-900/40 hover:bg-slate-900/70 transition-colors overflow-hidden">
+      className="w-full text-left rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-5 py-4">
-        <span className="text-sm font-semibold text-white">{q}</span>
-        <div className={`shrink-0 w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
-          <ChevronDown size={11} className="text-slate-400" />
+        <span className="text-sm font-semibold text-slate-900">{q}</span>
+        <div className={`shrink-0 w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
+          <ChevronDown size={11} className="text-slate-500" />
         </div>
       </div>
       {open && (
-        <div className="px-5 pb-4 border-t border-slate-800/60">
-          <p className="text-slate-400 text-sm leading-relaxed pt-3">{a}</p>
+        <div className="px-5 pb-4 border-t border-slate-200">
+          <p className="text-slate-600 text-sm leading-relaxed pt-3">{a}</p>
         </div>
       )}
     </button>
@@ -729,13 +727,13 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 // ─── Color map for tool cards ─────────────────────────────────────────────────
 const TOOL_COLORS: Record<string, { bg: string; border: string; icon: string; badge: string }> = {
-  emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400', badge: 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400' },
-  blue:    { bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: 'text-blue-400',    badge: 'bg-blue-500/15 border-blue-500/25 text-blue-400' },
-  cyan:    { bg: 'bg-cyan-500/10',    border: 'border-cyan-500/20',    icon: 'text-cyan-400',    badge: 'bg-cyan-500/15 border-cyan-500/25 text-cyan-400' },
-  orange:  { bg: 'bg-orange-500/10',  border: 'border-orange-500/20',  icon: 'text-orange-400',  badge: 'bg-orange-500/15 border-orange-500/25 text-orange-400' },
-  teal:    { bg: 'bg-teal-500/10',    border: 'border-teal-500/20',    icon: 'text-teal-400',    badge: 'bg-teal-500/15 border-teal-500/25 text-teal-400' },
-  rose:    { bg: 'bg-rose-500/10',    border: 'border-rose-500/20',    icon: 'text-rose-400',    badge: 'bg-rose-500/15 border-rose-500/25 text-rose-400' },
-  violet:  { bg: 'bg-violet-500/10',  border: 'border-violet-500/20',  icon: 'text-violet-400',  badge: 'bg-violet-500/15 border-violet-500/25 text-violet-400' },
+  emerald: { bg: 'bg-emerald-50',  border: 'border-emerald-200', icon: 'text-emerald-600', badge: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+  blue:    { bg: 'bg-blue-50',     border: 'border-blue-200',    icon: 'text-blue-600',    badge: 'bg-blue-50 border-blue-200 text-blue-700' },
+  cyan:    { bg: 'bg-cyan-50',     border: 'border-cyan-200',    icon: 'text-cyan-600',    badge: 'bg-cyan-50 border-cyan-200 text-cyan-700' },
+  orange:  { bg: 'bg-orange-50',   border: 'border-orange-200',  icon: 'text-orange-600',  badge: 'bg-orange-50 border-orange-200 text-orange-700' },
+  teal:    { bg: 'bg-teal-50',     border: 'border-teal-200',    icon: 'text-teal-600',    badge: 'bg-teal-50 border-teal-200 text-teal-700' },
+  rose:    { bg: 'bg-rose-50',     border: 'border-rose-200',    icon: 'text-rose-600',    badge: 'bg-rose-50 border-rose-200 text-rose-700' },
+  violet:  { bg: 'bg-violet-50',   border: 'border-violet-200',  icon: 'text-violet-600',  badge: 'bg-violet-50 border-violet-200 text-violet-700' },
 };
 
 // ─── Scroll-reveal hook ──────────────────────────────────────────────────────
@@ -800,23 +798,22 @@ function HeroDashboard() {
   return (
     <div className="relative float-dash">
       {/* Glow behind card */}
-      <div className="absolute -inset-6 bg-emerald-500/8 rounded-3xl blur-2xl -z-10 pointer-events-none" />
+      <div className="absolute -inset-6 bg-emerald-500/5 rounded-3xl blur-2xl -z-10 pointer-events-none" />
 
-      <div className="rounded-2xl overflow-hidden border border-slate-700/50 shadow-2xl shadow-black/60"
-        style={{ background: 'linear-gradient(160deg, rgba(15,23,42,0.99) 0%, rgba(6,11,20,1) 100%)' }}>
+      <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xl bg-white">
 
         {/* Browser chrome */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/60 bg-slate-900/70">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 bg-slate-50">
           <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
+            <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
           </div>
-          <div className="flex-1 mx-3 bg-slate-800/70 rounded-md px-3 py-1 text-[10px] text-slate-500 font-mono text-center">
+          <div className="flex-1 mx-3 bg-slate-100 rounded-md px-3 py-1 text-[10px] text-slate-500 font-mono text-center">
             localsenhub.io/dashboard
           </div>
-          <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />Live
+          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />Live
           </span>
         </div>
 
@@ -824,31 +821,31 @@ function HeroDashboard() {
           {/* Biz header */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-bold text-sm">Peluquería López</p>
+              <p className="text-slate-900 font-bold text-sm">Peluquería López</p>
               <p className="text-slate-500 text-xs">Madrid · Peluquería</p>
             </div>
             <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all duration-500 ${
               score >= 74
-                ? 'bg-amber-500/15 border-amber-500/25 text-amber-400'
-                : 'bg-slate-700/40 border-slate-600/30 text-slate-500'
+                ? 'bg-amber-50 border-amber-200 text-amber-600'
+                : 'bg-slate-100 border-slate-200 text-slate-500'
             }`}>
               {score >= 74 ? 'Mejorable' : 'Analizando…'}
             </span>
           </div>
 
           {/* Score card */}
-          <div className="rounded-xl bg-slate-800/60 border border-slate-700/40 p-4">
+          <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
             <div className="flex items-end justify-between mb-3">
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Visibilidad Local</p>
-              <p className="text-3xl font-black tabular-nums text-white">
-                {score}<span className="text-slate-600 text-base font-normal">/100</span>
+              <p className="text-3xl font-black tabular-nums text-slate-900">
+                {score}<span className="text-slate-400 text-base font-normal">/100</span>
               </p>
             </div>
-            <div className="w-full h-2 bg-slate-700/60 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
               <div className="h-full rounded-full transition-none" style={{ width: `${score}%`, background: barColor }} />
             </div>
             <p className={`text-[10px] mt-2 flex items-center gap-1 font-medium transition-all duration-700 ${
-              score >= 74 ? 'text-emerald-400 opacity-100' : 'opacity-0'
+              score >= 74 ? 'text-emerald-600 opacity-100' : 'opacity-0'
             }`}>
               <Sparkles size={9} />Con optimización IA: estimado 91/100
             </p>
@@ -857,11 +854,11 @@ function HeroDashboard() {
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { v: '+23%', label: 'Llamadas', tc: 'text-emerald-400' },
-              { v: '+14%', label: 'Clics web', tc: 'text-sky-400' },
-              { v: '+17%', label: 'Rutas', tc: 'text-violet-400' },
+              { v: '+23%', label: 'Llamadas', tc: 'text-emerald-600' },
+              { v: '+14%', label: 'Clics web', tc: 'text-sky-600' },
+              { v: '+17%', label: 'Rutas', tc: 'text-violet-600' },
             ].map(({ v, label, tc }) => (
-              <div key={label} className="rounded-xl bg-slate-800/40 border border-slate-700/30 p-3 text-center">
+              <div key={label} className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
                 <p className={`text-lg font-black ${tc} transition-all duration-500 ${score >= 74 ? 'opacity-100' : 'opacity-0'}`}>{v}</p>
                 <p className="text-[9px] text-slate-500 mt-0.5">{label}</p>
               </div>
@@ -869,22 +866,22 @@ function HeroDashboard() {
           </div>
 
           {/* Actions list */}
-          <div className="rounded-xl border border-slate-700/30 overflow-hidden">
-            <div className="px-3 py-2.5 bg-slate-800/40 border-b border-slate-700/30">
-              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Plan de acción IA</p>
+          <div className="rounded-xl border border-slate-200 overflow-hidden">
+            <div className="px-3 py-2.5 bg-slate-50 border-b border-slate-200">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Plan de acción IA</p>
             </div>
             {[
               { t: 'Optimizar descripción con keywords locales', p: 'Alta', dot: 'bg-red-400' },
               { t: 'Responder 3 reseñas sin contestar', p: 'Alta', dot: 'bg-red-400' },
               { t: 'Publicar actualización semanal', p: 'Media', dot: 'bg-amber-400' },
             ].map(({ t, p, dot }, i) => (
-              <div key={t} className="flex items-center justify-between px-3 py-2.5 gap-2 border-b border-slate-800/30 last:border-0"
+              <div key={t} className="flex items-center justify-between px-3 py-2.5 gap-2 border-b border-slate-100 last:border-0"
                 style={{ opacity: score >= 74 ? 1 : 0, transform: score >= 74 ? 'none' : 'translateX(-6px)', transition: `opacity 0.4s ease ${0.5 + i * 0.12}s, transform 0.4s ease ${0.5 + i * 0.12}s` }}>
                 <div className="flex items-center gap-2">
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
-                  <span className="text-xs text-slate-300">{t}</span>
+                  <span className="text-xs text-slate-600">{t}</span>
                 </div>
-                <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${p === 'Alta' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'}`}>{p}</span>
+                <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${p === 'Alta' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500'}`}>{p}</span>
               </div>
             ))}
           </div>
@@ -892,7 +889,7 @@ function HeroDashboard() {
       </div>
 
       {/* Floating badge */}
-      <div className={`absolute -top-4 -right-4 z-10 bg-emerald-500 rounded-xl px-3.5 py-2 shadow-lg shadow-emerald-500/40 text-[11px] font-bold text-slate-950 flex items-center gap-1.5 transition-all duration-500 ${score >= 74 ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
+      <div className={`absolute -top-4 -right-4 z-10 bg-emerald-500 rounded-xl px-3.5 py-2 shadow-lg shadow-emerald-500/25 text-[11px] font-bold text-white flex items-center gap-1.5 transition-all duration-500 ${score >= 74 ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
         <Sparkles size={11} />5 oportunidades detectadas
       </div>
     </div>
@@ -974,10 +971,10 @@ function buildResult(name: string): VResult {
 }
 
 const CLR: Record<string, { text: string; bg: string; bar: string; ring: string }> = {
-  sky:     { text: 'text-sky-400',     bg: 'bg-sky-500/10',     bar: 'bg-sky-400',     ring: 'border-sky-500/25'     },
-  amber:   { text: 'text-amber-400',   bg: 'bg-amber-500/10',   bar: 'bg-amber-400',   ring: 'border-amber-500/25'   },
-  orange:  { text: 'text-orange-400',  bg: 'bg-orange-500/10',  bar: 'bg-orange-400',  ring: 'border-orange-500/25'  },
-  emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/10', bar: 'bg-emerald-400', ring: 'border-emerald-500/25' },
+  sky:     { text: 'text-sky-600',     bg: 'bg-sky-50',     bar: 'bg-sky-500',     ring: 'border-sky-200'     },
+  amber:   { text: 'text-amber-600',   bg: 'bg-amber-50',   bar: 'bg-amber-500',   ring: 'border-amber-200'   },
+  orange:  { text: 'text-orange-600',  bg: 'bg-orange-50',  bar: 'bg-orange-500',  ring: 'border-orange-200'  },
+  emerald: { text: 'text-emerald-600', bg: 'bg-emerald-50', bar: 'bg-emerald-500', ring: 'border-emerald-200' },
 };
 
 // ── Score ring (SVG circle) ──────────────────────────────────────────────────
@@ -986,7 +983,7 @@ function ScoreRing({ score }: { score: number }) {
   const R = 70, C = 2 * Math.PI * R;
   const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
   const tag   = score >= 80 ? 'Bueno'   : score >= 60 ? 'Mejorable' : 'Crítico';
-  const tagC  = score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400';
+  const tagC  = score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-red-600';
 
   useEffect(() => {
     let n = 0;
@@ -1001,14 +998,14 @@ function ScoreRing({ score }: { score: number }) {
   return (
     <div className="relative inline-flex items-center justify-center w-[168px] h-[168px]">
       <svg width={168} height={168} className="absolute inset-0 -rotate-90">
-        <circle cx={84} cy={84} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={10} />
+        <circle cx={84} cy={84} r={R} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={10} />
         <circle cx={84} cy={84} r={R} fill="none" stroke={color} strokeWidth={10}
           strokeDasharray={`${(anim / 100) * C} ${C}`} strokeLinecap="round"
           style={{ filter: `drop-shadow(0 0 8px ${color}55)` }} />
       </svg>
       <div className="flex flex-col items-center justify-center z-10">
-        <span className="text-[2.6rem] font-black text-white tabular-nums leading-none">{anim}</span>
-        <span className="text-slate-600 text-xs">/100</span>
+        <span className="text-[2.6rem] font-black text-slate-900 tabular-nums leading-none">{anim}</span>
+        <span className="text-slate-400 text-xs">/100</span>
         <span className={`text-xs font-bold mt-1.5 ${tagC}`}>{tag}</span>
       </div>
     </div>
@@ -1025,8 +1022,7 @@ function SubScoreCard({ label, score, Icon, clr }: { label: string; score: numbe
     return () => clearInterval(iv);
   }, [score]);
   return (
-    <div className={`rounded-xl border ${c.ring} p-4 flex flex-col gap-3`}
-      style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.92) 0%,rgba(8,14,26,0.97) 100%)' }}>
+    <div className={`rounded-xl border ${c.ring} p-4 flex flex-col gap-3 bg-white`}>
       <div className="flex items-center justify-between">
         <div className={`w-8 h-8 rounded-lg ${c.bg} flex items-center justify-center`}>
           <Icon size={14} className={c.text} />
@@ -1034,8 +1030,8 @@ function SubScoreCard({ label, score, Icon, clr }: { label: string; score: numbe
         <span className={`text-xl font-black tabular-nums ${c.text}`}>{anim}</span>
       </div>
       <div>
-        <p className="text-slate-400 text-[11px] mb-1.5">{label}</p>
-        <div className="w-full h-1.5 rounded-full bg-slate-800">
+        <p className="text-slate-500 text-[11px] mb-1.5">{label}</p>
+        <div className="w-full h-1.5 rounded-full bg-slate-200">
           <div className={`h-full rounded-full ${c.bar} transition-none`} style={{ width: `${anim}%` }} />
         </div>
       </div>
@@ -1160,60 +1156,60 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
             <motion.div initial="hidden" animate="show" variants={STAG} className="space-y-7">
 
               <motion.div variants={FI}>
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-4 py-1.5 text-xs font-semibold text-emerald-400">
-                  <Sparkles size={11} className="text-orange-400" />
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-200 px-4 py-1.5 text-xs font-semibold text-emerald-700">
+                  <Sparkles size={11} className="text-orange-500" />
                   AI Growth Copilot · Google Maps Visibility Checker
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 </span>
               </motion.div>
 
               <motion.h1 variants={FU}
-                className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold text-white leading-[1.07] tracking-tight">
+                className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold text-slate-900 leading-[1.07] tracking-tight">
                 ¿Cuántos clientes pierdes<br className="hidden sm:block" /> por no aparecer en{' '}
-                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
                   Google Maps?
                 </span>
               </motion.h1>
 
-              <motion.p variants={FU} className="text-slate-400 text-lg">
+              <motion.p variants={FU} className="text-slate-500 text-lg">
                 Descúbrelo ahora. Gratis. Sin registro.
               </motion.p>
 
               {/* ── Search bar ── */}
               <motion.form onSubmit={handleSubmit} variants={FU}>
-                <div className="flex flex-col sm:flex-row gap-2.5 p-2 rounded-2xl border border-slate-700/50 bg-slate-900/60 backdrop-blur-sm shadow-2xl shadow-black/40">
+                <div className="flex flex-col sm:flex-row gap-2.5 p-2 rounded-2xl border border-slate-200 bg-white shadow-lg">
                   <div className="flex items-center gap-3 flex-1 px-4 py-2.5">
-                    <MapPin size={18} className="text-emerald-400 shrink-0" />
+                    <MapPin size={18} className="text-emerald-500 shrink-0" />
                     <input ref={inputRef} value={name} onChange={(e) => setName(e.target.value)}
                       placeholder="Escribe el nombre de tu negocio..."
-                      className="flex-1 bg-transparent text-white placeholder-slate-500 text-base focus:outline-none min-w-0"
+                      className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 text-base focus:outline-none min-w-0"
                       aria-label="Nombre del negocio"
                       autoComplete="off"
                     />
                     {name && (
                       <button type="button" onClick={() => { setName(''); inputRef.current?.focus(); }}
-                        className="text-slate-600 hover:text-slate-400 transition-colors text-sm leading-none px-1"
+                        className="text-slate-400 hover:text-slate-600 transition-colors text-sm leading-none px-1"
                         aria-label="Limpiar">✕</button>
                     )}
                   </div>
                   <motion.button type="submit" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                     className="flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-base
-                      bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
-                      shadow-lg shadow-emerald-500/30 shrink-0 whitespace-nowrap">
+                      bg-gradient-to-r from-emerald-500 to-teal-500 text-white
+                      shadow-lg shadow-emerald-500/20 shrink-0 whitespace-nowrap">
                     <Zap size={15} fill="currentColor" />
                     Analizar Gratis
                   </motion.button>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1.5 mt-3.5 text-xs text-slate-600">
+                <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1.5 mt-3.5 text-xs text-slate-400">
                   <span>Prueba con:</span>
                   {['Peluquería', 'Restaurante', 'Dentista', 'Fontanero', 'Clínica'].map((s, i, a) => (
                     <React.Fragment key={s}>
                       <button type="button" onClick={() => { setName(s); inputRef.current?.focus(); }}
-                        className="text-slate-500 hover:text-emerald-400 transition-colors hover:underline underline-offset-2">
+                        className="text-slate-500 hover:text-emerald-600 transition-colors hover:underline underline-offset-2">
                         {s}
                       </button>
-                      {i < a.length - 1 && <span className="text-slate-700">·</span>}
+                      {i < a.length - 1 && <span className="text-slate-300">·</span>}
                     </React.Fragment>
                   ))}
                 </div>
@@ -1226,8 +1222,8 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
                   { text: 'Menos de 2 minutos' },
                   { text: 'Sin tarjeta de crédito' },
                 ].map(({ text }) => (
-                  <span key={text} className="flex items-center gap-1.5 text-sm text-slate-400">
-                    <Check size={13} className="text-emerald-400" />{text}
+                  <span key={text} className="flex items-center gap-1.5 text-sm text-slate-500">
+                    <Check size={13} className="text-emerald-500" />{text}
                   </span>
                 ))}
               </motion.div>
@@ -1235,7 +1231,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
           </div>
 
           {/* Trust strip — desktop only; on mobile the trust trio + sticky CTA cover this */}
-          <div className="absolute bottom-0 inset-x-0 border-t border-slate-800/40 bg-slate-900/30 hidden sm:block">
+          <div className="absolute bottom-0 inset-x-0 border-t border-slate-200 bg-slate-50 hidden sm:block">
             <div className="max-w-4xl mx-auto px-5 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
               {[
                 { icon: Shield,     text: 'Sin tarjeta de crédito' },
@@ -1243,8 +1239,8 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
                 { icon: Brain,      text: 'IA para negocios locales' },
                 { icon: BadgeCheck, text: '7 días gratis incluidos' },
               ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-2 text-sm text-slate-400">
-                  <Icon size={13} className="text-emerald-400 shrink-0" />{text}
+                <div key={text} className="flex items-center gap-2 text-sm text-slate-500">
+                  <Icon size={13} className="text-emerald-500 shrink-0" />{text}
                 </div>
               ))}
             </div>
@@ -1278,14 +1274,14 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
 
             {/* Icon + name */}
             <div className="text-center space-y-4">
-              <div className="w-20 h-20 rounded-3xl bg-slate-900/80 border border-emerald-500/25 flex items-center justify-center mx-auto shadow-xl shadow-black/40">
+              <div className="w-20 h-20 rounded-3xl bg-white border border-emerald-200 flex items-center justify-center mx-auto shadow-xl shadow-slate-200/60">
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}>
-                  <Radar size={32} className="text-emerald-400" />
+                  <Radar size={32} className="text-emerald-500" />
                 </motion.div>
               </div>
               <div>
-                <p className="text-slate-400 text-sm">Analizando</p>
-                <p className="text-white font-bold text-xl mt-1 px-4 break-words">"{name}"</p>
+                <p className="text-slate-500 text-sm">Analizando</p>
+                <p className="text-slate-900 font-bold text-xl mt-1 px-4 break-words">"{name}"</p>
               </div>
             </div>
 
@@ -1293,21 +1289,21 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs mb-1">
                 <motion.span key={msgI} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                  className="text-slate-300 font-medium">
+                  className="text-slate-700 font-medium">
                   {LOAD_MSGS[msgI]}
                 </motion.span>
-                <span className="text-slate-500 tabular-nums font-mono">{pct}%</span>
+                <span className="text-slate-400 tabular-nums font-mono">{pct}%</span>
               </div>
-              <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden">
+              <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
                 <motion.div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
                   animate={{ width: `${pct}%` }}
                   transition={{ duration: 0.9, ease: 'easeOut' }}
-                  style={{ boxShadow: '0 0 12px rgba(16,185,129,0.45)' }} />
+                  style={{ boxShadow: '0 0 12px rgba(16,185,129,0.3)' }} />
               </div>
             </div>
 
             {/* Checklist building up */}
-            <div className="space-y-3 glass-card rounded-2xl p-5">
+            <div className="space-y-3 bg-white border border-slate-200 shadow-sm rounded-2xl p-5">
               {LOAD_MSGS.map((msg, i) => {
                 if (i > msgI) return null;
                 const done   = i < msgI;
@@ -1317,11 +1313,11 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
                     transition={{ duration: 0.3 }}
                     className="flex items-center gap-3 text-sm">
                     {done
-                      ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                      ? <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
                       : <motion.div animate={{ opacity: [1, 0.35, 1] }} transition={{ duration: 1.1, repeat: Infinity }}
                           className="w-3.5 h-3.5 rounded-full border-2 border-emerald-500/70 shrink-0" />
                     }
-                    <span className={done ? 'text-slate-500' : active ? 'text-slate-200 font-medium' : 'text-slate-500'}>
+                    <span className={done ? 'text-slate-400' : active ? 'text-slate-700 font-medium' : 'text-slate-400'}>
                       {msg}
                     </span>
                   </motion.div>
@@ -1333,7 +1329,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
             {earlyResult && (
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16,1,0.3,1] }}
-                className="glass-card rounded-2xl p-5">
+                className="bg-white border border-slate-200 shadow-sm rounded-2xl p-5">
                 <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-3">Vista previa — puntuación detectada</p>
                 <div className="flex items-center gap-5">
                   <ScoreRing score={earlyResult.overall} />
@@ -1364,7 +1360,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
 
             {/* Back */}
             <button onClick={reset}
-              className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm mb-8 transition-colors group">
+              className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 text-sm mb-8 transition-colors group">
               <ChevronRight size={14} className="rotate-180 group-hover:-translate-x-0.5 transition-transform" />
               Analizar otro negocio
             </button>
@@ -1372,19 +1368,18 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
             {/* Result card */}
             <motion.div initial={{ opacity: 0, y: 28, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.55, ease: [0.16,1,0.3,1] }}
-              className="rounded-3xl border border-slate-700/40 overflow-hidden"
-              style={{ background: 'linear-gradient(160deg,rgba(14,22,38,0.98) 0%,rgba(7,12,20,1) 100%)' }}>
+              className="rounded-3xl border border-slate-200 overflow-hidden bg-white shadow-xl">
 
               {/* Card header */}
-              <div className="px-7 pt-6 pb-5 border-b border-slate-800/50 flex items-start justify-between gap-4">
+              <div className="px-7 pt-6 pb-5 border-b border-slate-200 flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[10px] text-slate-500 uppercase tracking-[0.18em] font-semibold mb-1">Informe de Visibilidad</p>
-                  <p className="text-white font-bold text-xl leading-snug">{result.name}</p>
+                  <p className="text-slate-900 font-bold text-xl leading-snug">{result.name}</p>
                   <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-1">
                     <MapPin size={10} />Google Maps · España
                   </p>
                 </div>
-                <span className="shrink-0 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 mt-1">
+                <span className="shrink-0 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-600 mt-1">
                   Mejorable
                 </span>
               </div>
@@ -1396,7 +1391,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
                   <div className="flex flex-col items-center gap-2.5 shrink-0">
                     <ScoreRing score={result.overall} />
                     <div className="text-center">
-                      <p className="text-white font-bold text-sm">Visibilidad Local</p>
+                      <p className="text-slate-900 font-bold text-sm">Visibilidad Local</p>
                       <p className="text-slate-500 text-xs mt-0.5">4 factores analizados</p>
                     </div>
                   </div>
@@ -1409,8 +1404,8 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
 
                 {/* Actions */}
                 <div>
-                  <p className="text-white font-bold text-base mb-4 flex items-center gap-2">
-                    <Sparkles size={15} className="text-emerald-400" />
+                  <p className="text-slate-900 font-bold text-base mb-4 flex items-center gap-2">
+                    <Sparkles size={15} className="text-emerald-500" />
                     Tu Plan de Acción
                   </p>
                   <div className="space-y-2">
@@ -1418,15 +1413,15 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
                       <motion.div key={title}
                         initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2 + i * 0.08, duration: 0.35 }}
-                        className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-700/30 bg-slate-800/30">
-                        <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
-                        <span className="flex-1 text-slate-200 text-sm">{title}</span>
+                        className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50/50">
+                        <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
+                        <span className="flex-1 text-slate-700 text-sm">{title}</span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            impact === 'Alto' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                            impact === 'Alto' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'
                           }`}>{impact}</span>
-                          <span className="text-[10px] text-slate-600 hidden sm:block">{time}</span>
-                          <span className={`text-[10px] hidden sm:block ${diff === 'Fácil' ? 'text-emerald-400/60' : 'text-amber-400/60'}`}>{diff}</span>
+                          <span className="text-[10px] text-slate-400 hidden sm:block">{time}</span>
+                          <span className={`text-[10px] hidden sm:block ${diff === 'Fácil' ? 'text-emerald-500' : 'text-amber-500'}`}>{diff}</span>
                         </div>
                       </motion.div>
                     ))}
@@ -1435,7 +1430,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
 
                 {/* Locked: full report CTA */}
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}
-                  className="rounded-2xl border border-emerald-500/20 overflow-hidden relative">
+                  className="rounded-2xl border border-emerald-200 overflow-hidden relative">
 
                   {/* Blurred preview rows */}
                   <div className="px-6 pt-5 pb-2 space-y-2" aria-hidden="true">
@@ -1445,38 +1440,37 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
                       'Estrategia de reseñas personalizada',
                       'Comparativa detallada con 3 competidores',
                     ].map((t) => (
-                      <div key={t} className="flex items-center gap-2.5 p-3 rounded-lg bg-slate-800/30">
-                        <Lock size={13} className="text-slate-700 shrink-0" />
-                        <span className="text-slate-500 text-sm select-none blur-[3px]">{t}</span>
+                      <div key={t} className="flex items-center gap-2.5 p-3 rounded-lg bg-slate-50">
+                        <Lock size={13} className="text-slate-300 shrink-0" />
+                        <span className="text-slate-400 text-sm select-none blur-[3px]">{t}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Gradient overlay */}
-                  <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-transparent to-slate-950/80 pointer-events-none" />
+                  <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-transparent to-white/80 pointer-events-none" />
 
                   {/* CTA box */}
-                  <div className="px-6 pb-6 pt-4 relative z-10"
-                    style={{ background: 'linear-gradient(160deg,rgba(16,185,129,0.08) 0%,rgba(8,14,26,0.99) 60%)' }}>
-                    <div className="rounded-2xl border border-emerald-500/25 p-6 text-center space-y-4">
+                  <div className="px-6 pb-6 pt-4 relative z-10 bg-white">
+                    <div className="rounded-2xl border border-emerald-200 p-6 text-center space-y-4">
                       <div className="flex items-center justify-center gap-2.5 mb-1">
-                        <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
-                          <Lock size={14} className="text-emerald-400" />
+                        <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                          <Lock size={14} className="text-emerald-600" />
                         </div>
-                        <p className="text-white font-bold text-lg">Desbloquea el informe completo</p>
+                        <p className="text-slate-900 font-bold text-lg">Desbloquea el informe completo</p>
                       </div>
-                      <p className="text-slate-400 text-sm max-w-sm mx-auto">
+                      <p className="text-slate-500 text-sm max-w-sm mx-auto">
                         Accede a tu plan detallado con IA: keywords, estrategia de reseñas, comparativa de competidores y más.
                       </p>
                       <motion.button onClick={onUnlock} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
                         className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
-                          bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
-                          shadow-xl shadow-emerald-500/35 hover:shadow-emerald-500/55 transition-shadow">
+                          bg-gradient-to-r from-emerald-500 to-teal-500 text-white
+                          shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/35 transition-shadow">
                         <Zap size={16} fill="currentColor" />
                         Analizar mi negocio gratis — 7 días
                       </motion.button>
-                      <p className="text-xs text-slate-500 flex items-center justify-center gap-1.5">
-                        <Shield size={10} className="text-slate-600" />
+                      <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
+                        <Shield size={10} className="text-slate-400" />
                         Sin tarjeta · Cancela cuando quieras · 9,99€/mes después
                       </p>
                     </div>
@@ -1501,8 +1495,8 @@ const PrimaryBtn = memo(function PrimaryBtn({
     <motion.button onClick={onClick} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
       className={`${full ? 'w-full' : ''} inline-flex items-center justify-center gap-2.5
         ${large ? 'px-10 py-5 text-lg' : 'px-8 py-4 text-base'} rounded-xl font-bold
-        bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
-        shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-shadow duration-200`}>
+        bg-gradient-to-r from-emerald-500 to-teal-500 text-white
+        shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/35 transition-shadow duration-200`}>
       <Zap size={large ? 18 : 16} fill="currentColor" />
       {t('lp_cta_analyze')}
     </motion.button>
@@ -1544,9 +1538,9 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
   ], [t]);
 
   const MCLS = useMemo(() => ({
-    emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/10', ring: 'border-emerald-500/20' },
-    sky:     { text: 'text-sky-400',     bg: 'bg-sky-500/10',     ring: 'border-sky-500/20'     },
-    violet:  { text: 'text-violet-400',  bg: 'bg-violet-500/10',  ring: 'border-violet-500/20'  },
+    emerald: { text: 'text-emerald-600', bg: 'bg-emerald-50', ring: 'border-emerald-200' },
+    sky:     { text: 'text-sky-600',     bg: 'bg-sky-50',     ring: 'border-sky-200'     },
+    violet:  { text: 'text-violet-600',  bg: 'bg-violet-50',  ring: 'border-violet-200'  },
   }), []);
 
   const testimonials = useMemo(() => [
@@ -1569,20 +1563,20 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
   ], [t]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden pb-20 sm:pb-0">
+    <div className="min-h-screen bg-white text-slate-800 overflow-x-hidden pb-20 sm:pb-0">
 
       {/* ════════════════════════════ INTERACTIVE HERO (VisibilityChecker) */}
       <VisibilityChecker onUnlock={onSubscribeClick} onPhaseChange={setAnalysisPhase} />
 
       {/* ══════════════════════════════════════════════ CÓMO FUNCIONA */}
-      <section className="py-28 px-5 border-t border-slate-800/40">
+      <section className="py-28 px-5 border-t border-slate-200">
         <div className="max-w-4xl mx-auto">
           <Rev className="text-center mb-16">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_section_process')}</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">{t('lp_section_process')}</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               {t('lp_howto_title')}
             </h2>
-            <p className="text-slate-400 text-base mt-3">{t('lp_howto_more')}</p>
+            <p className="text-slate-500 text-base mt-3">{t('lp_howto_more')}</p>
           </Rev>
 
           <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-10 relative">
@@ -1590,15 +1584,15 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             {STEPS.map(({ n, icon: Icon, title, desc }, i) => (
               <motion.div key={n} variants={FU} className="flex flex-col items-center text-center gap-5">
                 <motion.div whileHover={{ scale: 1.08 }} className="relative">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center">
-                    <Icon size={24} className="text-emerald-400" />
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                    <Icon size={24} className="text-emerald-600" />
                   </div>
-                  <span className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 text-xs font-black flex items-center justify-center">
+                  <span className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-black flex items-center justify-center">
                     {i + 1}
                   </span>
                 </motion.div>
                 <div>
-                  <p className="text-white font-bold text-lg mb-2">{title}</p>
+                  <p className="text-slate-900 font-bold text-lg mb-2">{title}</p>
                   <p className="text-slate-500 text-sm">{desc}</p>
                 </div>
               </motion.div>
@@ -1613,14 +1607,14 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
 
       {/* ════════════════════════════════ DEMO INTERACTIVA */}
       <section ref={demoRef as React.RefObject<HTMLElement>} id="demo-section"
-        className="py-28 px-5 bg-slate-900/30 border-y border-slate-800/40">
+        className="py-28 px-5 bg-slate-50/80 border-y border-slate-200">
         <div className="max-w-5xl mx-auto">
           <Rev className="text-center mb-12">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_demo_badge')}</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">{t('lp_demo_badge')}</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
               {t('lp_demo_title')}
             </h2>
-            <p className="text-slate-400 text-base max-w-md mx-auto">
+            <p className="text-slate-500 text-base max-w-md mx-auto">
               {t('lp_demo_sub')}
             </p>
           </Rev>
@@ -1634,8 +1628,8 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <section className="py-28 px-5">
         <div className="max-w-5xl mx-auto">
           <Rev className="text-center mb-14">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_results_badge')}</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">{t('lp_results_badge')}</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               {t('lp_results_title')}
             </h2>
           </Rev>
@@ -1645,13 +1639,12 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
               const c = MCLS[color];
               return (
                 <motion.div key={label} variants={FU} whileHover={HCARD}
-                  className={`rounded-2xl border ${c.ring} p-8 text-center cursor-default`}
-                  style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.9) 0%,rgba(8,14,26,0.97) 100%)' }}>
+                  className={`rounded-2xl border ${c.ring} p-8 text-center cursor-default bg-white shadow-sm`}>
                   <div className={`w-12 h-12 rounded-2xl ${c.bg} border ${c.ring} flex items-center justify-center mx-auto mb-5`}>
                     <Icon size={20} className={c.text} />
                   </div>
                   <MetricCounter target={target} cls={`text-5xl font-black mb-2 block ${c.text}`} />
-                  <p className="text-white font-bold text-lg mb-1">{label}</p>
+                  <p className="text-slate-900 font-bold text-lg mb-1">{label}</p>
                   <p className="text-slate-500 text-sm leading-snug">{sub}</p>
                 </motion.div>
               );
@@ -1661,11 +1654,11 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       </section>
 
       {/* ══════════════════════════════════════════════ TESTIMONIOS */}
-      <section className="py-28 px-5 bg-slate-900/30 border-y border-slate-800/40">
+      <section className="py-28 px-5 bg-slate-50/80 border-y border-slate-200">
         <div className="max-w-5xl mx-auto">
           <Rev className="text-center mb-14">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_trust_badge')}</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">{t('lp_trust_badge')}</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               {t('lp_trust_title')}
             </h2>
           </Rev>
@@ -1673,24 +1666,23 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
           <Rev stagger className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {testimonials.map((testimonial, i) => (
               <motion.div key={i} variants={FU} whileHover={HCARD}
-                className="rounded-2xl border border-slate-800/60 p-7 flex flex-col gap-5 cursor-default"
-                style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.82) 0%,rgba(8,14,26,0.95) 100%)' }}>
+                className="rounded-2xl border border-slate-200 p-7 flex flex-col gap-5 cursor-default bg-white shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex gap-0.5">
                     {Array.from({ length: testimonial.stars }).map((_, j) => (
                       <Star key={j} size={13} className="text-amber-400 fill-amber-400" />
                     ))}
                   </div>
-                  <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400">
+                  <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
                     {testimonial.metric}
                   </span>
                 </div>
-                <p className="text-slate-200 text-base leading-relaxed flex-1">"{testimonial.text}"</p>
-                <div className="flex items-center gap-3.5 pt-4 border-t border-slate-800/50">
+                <p className="text-slate-700 text-base leading-relaxed flex-1">"{testimonial.text}"</p>
+                <div className="flex items-center gap-3.5 pt-4 border-t border-slate-200">
                   <img src={testimonial.photo} alt={testimonial.name} loading="lazy" width={40} height={40}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-700/60" />
+                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-200" />
                   <div>
-                    <p className="text-white font-bold text-sm">{testimonial.name}</p>
+                    <p className="text-slate-900 font-bold text-sm">{testimonial.name}</p>
                     <p className="text-slate-500 text-xs">{testimonial.role} · {testimonial.city}</p>
                   </div>
                 </div>
@@ -1704,22 +1696,21 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       <section ref={pricingRef} id="pricing" className="py-28 px-5">
         <div className="max-w-sm mx-auto">
           <Rev className="text-center mb-10">
-            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.2em] mb-4">{t('lp_pricing_badge')}</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">{t('lp_pricing_badge')}</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
               {t('lp_pricing_title')}
             </h2>
-            <p className="text-slate-400 text-base">{t('lp_pricing_sub')}</p>
+            <p className="text-slate-500 text-base">{t('lp_pricing_sub')}</p>
           </Rev>
 
           <Rev>
             <motion.div whileHover={{ scale: 1.01, y: -2 }}
-              className="rounded-2xl border border-emerald-500/25 overflow-hidden"
-              style={{ background: 'linear-gradient(160deg,rgba(16,185,129,0.08) 0%,rgba(8,14,26,1) 60%)' }}>
+              className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-lg">
               <div className="h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400" />
               <div className="p-8">
                 <div className="flex items-end gap-2 mb-1">
-                  <span className="text-5xl font-extrabold text-white">{t('lp_pricing_price')}</span>
-                  <span className="text-slate-400 mb-2">{t('lp_pricing_per_mo')}</span>
+                  <span className="text-5xl font-extrabold text-slate-900">{t('lp_pricing_price')}</span>
+                  <span className="text-slate-500 mb-2">{t('lp_pricing_per_mo')}</span>
                 </div>
                 <p className="text-slate-500 text-sm mb-7">{t('lp_pricing_plan_sub')}</p>
                 <div className="space-y-2.5 mb-8">
@@ -1731,14 +1722,14 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
                     t('lp_pricing_f5'),
                     t('lp_pricing_f6'),
                   ].map((f) => (
-                    <div key={f} className="flex items-center gap-2.5 text-sm text-slate-300">
-                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />{f}
+                    <div key={f} className="flex items-center gap-2.5 text-sm text-slate-600">
+                      <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />{f}
                     </div>
                   ))}
                 </div>
                 <PrimaryBtn onClick={onSubscribeClick} full />
-                <p className="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1.5">
-                  <Shield size={10} className="text-slate-600" />{t('lp_pricing_secure')}
+                <p className="text-center text-xs text-slate-400 mt-3 flex items-center justify-center gap-1.5">
+                  <Shield size={10} className="text-slate-400" />{t('lp_pricing_secure')}
                 </p>
               </div>
             </motion.div>
@@ -1747,10 +1738,10 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       </section>
 
       {/* ════════════════════════════════════════════════════ FAQ */}
-      <section className="py-24 px-5 bg-slate-900/30 border-y border-slate-800/40">
+      <section className="py-24 px-5 bg-slate-50/80 border-y border-slate-200">
         <div className="max-w-2xl mx-auto">
           <Rev className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">{t('lp_faq_title_new')}</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{t('lp_faq_title_new')}</h2>
           </Rev>
           <Rev className="space-y-2">
             {faqs.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)}
@@ -1761,18 +1752,18 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       {/* ═══════════════════════════════════════════════ CTA FINAL */}
       <section className="py-32 px-5 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/30 to-slate-950" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-emerald-500/6 rounded-full blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 to-white" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl" />
         </div>
         <div className="max-w-xl mx-auto text-center relative">
           <Rev className="space-y-7">
-            <span className="inline-flex items-center gap-2 rounded-full bg-orange-500/10 border border-orange-500/25 px-4 py-2 text-xs font-semibold text-orange-400">
+            <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 border border-orange-200 px-4 py-2 text-xs font-semibold text-orange-600">
               <Flame size={12} />{t('lp_cta_badge')}
             </span>
-            <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-[1.08] tracking-tight">
+            <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 leading-[1.08] tracking-tight">
               {t('lp_cta_title')}
             </h2>
-            <p className="text-slate-400 text-lg max-w-md mx-auto">
+            <p className="text-slate-500 text-lg max-w-md mx-auto">
               {t('lp_cta_sub')}
             </p>
             <PrimaryBtn onClick={onSubscribeClick} large />
@@ -1788,19 +1779,19 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       </section>
 
       {/* ═══════════════════════════════════════════════════ FOOTER */}
-      <footer className="border-t border-slate-800/50 py-10 px-5">
+      <footer className="border-t border-slate-200 bg-slate-50 py-10 px-5">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
           <div className="flex items-center gap-2.5">
             <LogoIcon size={20} />
-            <span className="text-white font-bold text-sm">LocalSEOHub.io</span>
-            <span className="text-slate-700 text-xs">© 2026</span>
+            <span className="text-slate-900 font-bold text-sm">LocalSEOHub.io</span>
+            <span className="text-slate-400 text-xs">© 2026</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-1">
             <button onClick={() => onLoginClick()}
-              className="px-4 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
+              className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors">
               {t('lp_footer_login')}
             </button>
-            <span className="text-slate-700">·</span>
+            <span className="text-slate-300">·</span>
             {([
               { label: t('lp_footer_privacy'), modal: 'privacy' as const },
               { label: t('lp_footer_terms'),   modal: 'terms'   as const },
@@ -1808,10 +1799,10 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
             ]).map(({ label, modal }, i, a) => (
               <React.Fragment key={label}>
                 <button onClick={() => setLegalModal(modal)}
-                  className="px-4 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors">
+                  className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors">
                   {label}
                 </button>
-                {i < a.length - 1 && <span className="text-slate-700">·</span>}
+                {i < a.length - 1 && <span className="text-slate-300">·</span>}
               </React.Fragment>
             ))}
           </div>
@@ -1821,14 +1812,14 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
       {/* ═══════════════════════════ MOBILE STICKY CTA — hidden during analysis */}
       {analysisPhase === 'idle' && (
       <div className="fixed bottom-0 inset-x-0 z-50 sm:hidden">
-        <div className="px-4 pt-3 pb-5 bg-slate-950/96 backdrop-blur-md border-t border-slate-800/70">
+        <div className="px-4 pt-3 pb-5 bg-white/95 backdrop-blur-md border-t border-slate-200">
           <motion.button onClick={onSubscribeClick} whileTap={{ scale: 0.97 }}
             className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
-              bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-xl shadow-emerald-500/25">
+              bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-xl shadow-emerald-500/15">
             <Zap size={16} fill="currentColor" />
             {t('lp_cta_analyze')}
           </motion.button>
-          <p className="text-center text-xs text-slate-500 mt-2">{t('lp_cta_mobile_sub')}</p>
+          <p className="text-center text-xs text-slate-400 mt-2">{t('lp_cta_mobile_sub')}</p>
         </div>
       </div>
       )}

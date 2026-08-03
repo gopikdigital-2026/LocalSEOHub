@@ -134,7 +134,7 @@ function ScoreRing({ score, animate }: { score: number; animate: boolean }) {
     <div className="flex flex-col items-center">
       <div className="relative w-36 h-36">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 128 128">
-          <circle cx="64" cy="64" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+          <circle cx="64" cy="64" r={radius} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="10" />
           <circle
             cx="64"
             cy="64"
@@ -149,7 +149,7 @@ function ScoreRing({ score, animate }: { score: number; animate: boolean }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-extrabold text-white leading-none">{score}</span>
+          <span className="text-3xl font-extrabold text-slate-900 leading-none">{score}</span>
           <span className="text-xs text-slate-500 mt-0.5">/ 100</span>
         </div>
       </div>
@@ -197,13 +197,13 @@ function LoadingAnimation({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
   return (
-    <div className="min-h-screen bg-[#07090c] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-10 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-5">
-            <BarChart2 size={24} className="text-amber-400" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 mb-5">
+            <BarChart2 size={24} className="text-amber-600" />
           </div>
-          <h2 className="text-white font-bold text-lg">Analizando tu negocio</h2>
+          <h2 className="text-slate-900 font-bold text-lg">Analizando tu negocio</h2>
           <p className="text-slate-500 text-sm mt-1">Comparando con la competencia en tu zona...</p>
         </div>
         <div className="space-y-4">
@@ -223,7 +223,7 @@ function LoadingAnimation({ onDone }: { onDone: () => void }) {
                       ? 'bg-emerald-500'
                       : active
                       ? 'border-2 border-amber-400'
-                      : 'border border-slate-700'
+                      : 'border border-slate-300'
                   }`}
                 >
                   {done ? (
@@ -232,14 +232,14 @@ function LoadingAnimation({ onDone }: { onDone: () => void }) {
                     <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                   ) : null}
                 </div>
-                <span className={`text-sm font-medium ${done ? 'text-emerald-400' : active ? 'text-white' : 'text-slate-600'}`}>
+                <span className={`text-sm font-medium ${done ? 'text-emerald-600' : active ? 'text-slate-900' : 'text-slate-500'}`}>
                   {step}
                 </span>
               </div>
             );
           })}
         </div>
-        <div className="mt-10 h-1 bg-slate-800 rounded-full overflow-hidden">
+        <div className="mt-10 h-1 bg-slate-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 rounded-full transition-all duration-500"
             style={{ width: `${(completed.length / LOADING_STEPS.length) * 100}%` }}
@@ -283,16 +283,16 @@ function RegisterPanel({ onSuccess, onClose }: { onSuccess: () => void; onClose:
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-[#0d1117] border border-slate-700/60 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl">
         <div className="h-[2px] bg-gradient-to-r from-amber-500 via-emerald-400 to-teal-500" />
         <div className="p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-white font-bold text-lg leading-tight">Desbloquea tu informe completo</h2>
+              <h2 className="text-slate-900 font-bold text-lg leading-tight">Desbloquea tu informe completo</h2>
               <p className="text-slate-500 text-xs mt-0.5">7 días gratis · Sin tarjeta · Sin compromiso</p>
             </div>
-            <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-700 transition-colors">
               <ChevronDown size={20} />
             </button>
           </div>
@@ -303,7 +303,7 @@ function RegisterPanel({ onSuccess, onClose }: { onSuccess: () => void; onClose:
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Tu email"
-              className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/60 transition-colors"
+              className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500/60 transition-colors"
             />
             <input
               type="password"
@@ -312,9 +312,9 @@ function RegisterPanel({ onSuccess, onClose }: { onSuccess: () => void; onClose:
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Contraseña (mínimo 6 caracteres)"
-              className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/60 transition-colors"
+              className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500/60 transition-colors"
             />
-            {error && <p className="text-red-400 text-xs">{error}</p>}
+            {error && <p className="text-red-600 text-xs">{error}</p>}
             <button
               type="submit"
               disabled={loading}
@@ -331,7 +331,7 @@ function RegisterPanel({ onSuccess, onClose }: { onSuccess: () => void; onClose:
           </form>
           <div className="flex items-center justify-center gap-4 mt-4">
             {['Gratis 7 días', 'Sin tarjeta', 'Cancela cuando quieras'].map((t) => (
-              <span key={t} className="flex items-center gap-1 text-slate-600 text-[10px]">
+              <span key={t} className="flex items-center gap-1 text-slate-500 text-[10px]">
                 <Check size={10} className="text-emerald-500" />
                 {t}
               </span>
@@ -458,22 +458,22 @@ export default function BusinessAuditLanding() {
     const gatedOpportunities = audit.opportunities.slice(2);
 
     return (
-      <div className="min-h-screen bg-[#07090c] pb-28">
+      <div className="min-h-screen bg-slate-50 pb-28">
         {showRegister && (
           <RegisterPanel onSuccess={handleRegisterSuccess} onClose={() => setShowRegister(false)} />
         )}
 
         {/* Top bar */}
-        <div className="border-b border-white/5 px-4 py-4">
+        <div className="border-b border-slate-200 px-4 py-4">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <Zap size={13} className="text-emerald-400" />
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                <Zap size={13} className="text-emerald-600" />
               </div>
-              <span className="text-white font-bold text-sm">LocalSEOHub</span>
+              <span className="text-slate-900 font-bold text-sm">LocalSEOHub</span>
             </div>
             {registered && (
-              <span className="text-emerald-400 text-xs font-medium flex items-center gap-1.5">
+              <span className="text-emerald-600 text-xs font-medium flex items-center gap-1.5">
                 <Check size={12} /> Informe desbloqueado
               </span>
             )}
@@ -482,14 +482,14 @@ export default function BusinessAuditLanding() {
 
         <div className="max-w-2xl mx-auto px-4 pt-8 space-y-6">
           {/* Score card */}
-          <div className="rounded-2xl border border-white/6 bg-white/[0.02] p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
             <p className="text-slate-500 text-xs font-semibold uppercase tracking-widest mb-4">
               Informe de visibilidad
             </p>
             <div className="flex items-center gap-6 flex-wrap">
               <ScoreRing score={audit.score} animate={ringAnimated} />
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold text-white leading-tight mb-1">
+                <h1 className="text-xl font-bold text-slate-900 leading-tight mb-1">
                   {business}
                 </h1>
                 <p className="text-slate-500 text-sm mb-3">
@@ -508,43 +508,43 @@ export default function BusinessAuditLanding() {
 
           {/* Visible opportunities */}
           <div>
-            <h2 className="text-white font-bold text-base mb-3">
+            <h2 className="text-slate-900 font-bold text-base mb-3">
               Oportunidades detectadas
             </h2>
             <div className="space-y-3">
               {visibleOpportunities.map((opp, i) => (
                 <div
                   key={i}
-                  className="rounded-2xl border border-white/6 bg-white/[0.02] p-5"
+                  className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5"
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
                         opp.severity === 'high'
-                          ? 'bg-red-500/10 border border-red-500/20'
-                          : 'bg-amber-500/10 border border-amber-500/20'
+                          ? 'bg-red-50 border border-red-200'
+                          : 'bg-amber-50 border border-amber-200'
                       }`}
                     >
                       <AlertTriangle
                         size={14}
-                        className={opp.severity === 'high' ? 'text-red-400' : 'text-amber-400'}
+                        className={opp.severity === 'high' ? 'text-red-600' : 'text-amber-600'}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h3 className="text-white font-semibold text-sm">{opp.title}</h3>
+                        <h3 className="text-slate-900 font-semibold text-sm">{opp.title}</h3>
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             opp.severity === 'high'
-                              ? 'bg-red-500/15 text-red-400'
-                              : 'bg-amber-500/15 text-amber-400'
+                              ? 'bg-red-50 text-red-600'
+                              : 'bg-amber-50 text-amber-600'
                           }`}
                         >
                           {opp.severity === 'high' ? 'PRIORITARIO' : 'IMPORTANTE'}
                         </span>
                       </div>
-                      <p className="text-slate-400 text-xs leading-relaxed mb-2">{opp.detail}</p>
-                      <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
+                      <p className="text-slate-600 text-xs leading-relaxed mb-2">{opp.detail}</p>
+                      <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
                         <TrendingUp size={11} />
                         {opp.impact}
                       </div>
@@ -556,16 +556,16 @@ export default function BusinessAuditLanding() {
           </div>
 
           {/* Potential estimate */}
-          <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-5">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <TrendingUp size={14} className="text-emerald-400" />
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <TrendingUp size={14} className="text-emerald-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-emerald-400 uppercase tracking-widest mb-1">
+                <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-1">
                   Potencial estimado
                 </p>
-                <p className="text-slate-300 text-sm leading-relaxed">{audit.potential}</p>
+                <p className="text-slate-700 text-sm leading-relaxed">{audit.potential}</p>
               </div>
             </div>
           </div>
@@ -577,24 +577,24 @@ export default function BusinessAuditLanding() {
                 {gatedOpportunities.map((opp, i) => (
                   <div
                     key={i}
-                    className="rounded-2xl border border-white/4 bg-white/[0.015] p-5 relative overflow-hidden"
+                    className="rounded-2xl border border-slate-200 bg-white p-5 relative overflow-hidden"
                   >
-                    <div className="absolute inset-0 backdrop-blur-sm z-10 bg-slate-950/50 rounded-2xl" />
+                    <div className="absolute inset-0 backdrop-blur-sm z-10 bg-white/50 rounded-2xl" />
                     <div className="flex items-start gap-3 opacity-40 select-none">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
-                        <AlertTriangle size={14} className="text-amber-400" />
+                      <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0">
+                        <AlertTriangle size={14} className="text-amber-600" />
                       </div>
                       <div>
-                        <h3 className="text-white font-semibold text-sm mb-1">{opp.title}</h3>
-                        <p className="text-slate-400 text-xs">{opp.detail}</p>
+                        <h3 className="text-slate-900 font-semibold text-sm mb-1">{opp.title}</h3>
+                        <p className="text-slate-600 text-xs">{opp.detail}</p>
                       </div>
                     </div>
                   </div>
                 ))}
                 <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                  <div className="flex items-center gap-2 bg-slate-950/90 border border-slate-700/60 px-4 py-2 rounded-full">
-                    <Lock size={13} className="text-slate-400" />
-                    <span className="text-slate-400 text-xs font-medium">
+                  <div className="flex items-center gap-2 bg-white/90 border border-slate-200 px-4 py-2 rounded-full shadow-sm">
+                    <Lock size={13} className="text-slate-600" />
+                    <span className="text-slate-600 text-xs font-medium">
                       {gatedOpportunities.length} recomendaciones más bloqueadas
                     </span>
                   </div>
@@ -602,36 +602,36 @@ export default function BusinessAuditLanding() {
               </div>
 
               {/* Gate CTA */}
-              <div className="rounded-2xl border border-white/8 bg-gradient-to-b from-white/[0.03] to-transparent p-7 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-4">
-                  <Lock size={18} className="text-emerald-400" />
+              <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-7 text-center shadow-sm">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 mb-4">
+                  <Lock size={18} className="text-emerald-600" />
                 </div>
-                <h3 className="text-white font-bold text-lg mb-2">
+                <h3 className="text-slate-900 font-bold text-lg mb-2">
                   Tu informe completo ya está preparado.
                 </h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-6 max-w-sm mx-auto">
+                <p className="text-slate-600 text-sm leading-relaxed mb-6 max-w-sm mx-auto">
                   Regístrate gratis para desbloquear todas las recomendaciones, el{' '}
-                  <span className="text-white font-medium">plan de acción personalizado</span> y las
+                  <span className="text-slate-900 font-medium">plan de acción personalizado</span> y las
                   herramientas IA.
                 </p>
                 <button
                   onClick={handleRegisterOpen}
-                  className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm px-8 py-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5 shadow-xl shadow-emerald-500/20"
+                  className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm px-8 py-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5 shadow-xl shadow-emerald-500/15"
                 >
                   Desbloquear informe completo
                   <ArrowRight size={15} />
                 </button>
-                <p className="text-slate-600 text-xs mt-4">7 días gratis · Sin compromiso</p>
+                <p className="text-slate-500 text-xs mt-4">7 días gratis · Sin compromiso</p>
               </div>
             </>
           )}
 
           {/* Post-register state */}
           {registered && (
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
-              <Check size={24} className="text-emerald-400 mx-auto mb-3" />
-              <h3 className="text-white font-bold mb-1">Cuenta creada con éxito</h3>
-              <p className="text-slate-400 text-sm mb-4">
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
+              <Check size={24} className="text-emerald-600 mx-auto mb-3" />
+              <h3 className="text-slate-900 font-bold mb-1">Cuenta creada con éxito</h3>
+              <p className="text-slate-600 text-sm mb-4">
                 Accede a tu panel para ver el plan completo y empezar a aplicar las mejoras.
               </p>
               <a
@@ -646,10 +646,10 @@ export default function BusinessAuditLanding() {
 
         {/* Fixed bottom CTA */}
         {!registered && (
-          <div className="fixed bottom-0 left-0 right-0 z-20 bg-[#07090c]/92 backdrop-blur-xl border-t border-white/5 px-4 py-4">
+          <div className="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-4 py-4">
             <div className="max-w-2xl mx-auto flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-semibold truncate">
+                <p className="text-slate-900 text-sm font-semibold truncate">
                   Informe completo listo
                 </p>
                 <p className="text-slate-500 text-xs">7 días gratis · sin compromiso</p>
@@ -669,16 +669,16 @@ export default function BusinessAuditLanding() {
 
   // ---------- Landing page ----------
   return (
-    <div className="min-h-screen bg-[#07090c] text-white">
+    <div className="min-h-screen bg-white text-slate-900">
 
       {/* ===== HERO ===== */}
       <section className="min-h-[100svh] flex flex-col items-center justify-center px-4 pt-12 pb-8 sm:pt-20 sm:pb-12 relative overflow-hidden">
         {/* Background glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-amber-500/6 blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-amber-500/10 blur-[120px] pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-xl text-center">
           {/* Urgency pill */}
-          <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold px-4 py-2 rounded-full mb-6">
+          <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-xs font-semibold px-4 py-2 rounded-full mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
             Negocios de tu zona ya están aplicando esto
           </div>
@@ -693,10 +693,10 @@ export default function BusinessAuditLanding() {
           </h1>
 
           {/* Subheadline */}
-          <p className="text-slate-400 text-base sm:text-lg leading-relaxed mb-8 max-w-lg mx-auto">
+          <p className="text-slate-600 text-base sm:text-lg leading-relaxed mb-8 max-w-lg mx-auto">
             Analiza gratuitamente tu negocio y descubre por qué otros aparecen antes que tú en Google
             y qué puedes hacer para conseguir más{' '}
-            <span className="text-slate-200">llamadas, visitas y reservas.</span>
+            <span className="text-slate-700">llamadas, visitas y reservas.</span>
           </p>
 
           {/* Trust trio */}
@@ -706,8 +706,8 @@ export default function BusinessAuditLanding() {
               { label: 'En menos de 60 segundos' },
               { label: 'Sin conocimientos de SEO' },
             ].map(({ label }) => (
-              <span key={label} className="flex items-center gap-1.5 text-slate-400 text-sm">
-                <Check size={14} className="text-emerald-400 flex-shrink-0" />
+              <span key={label} className="flex items-center gap-1.5 text-slate-600 text-sm">
+                <Check size={14} className="text-emerald-600 flex-shrink-0" />
                 {label}
               </span>
             ))}
@@ -716,7 +716,7 @@ export default function BusinessAuditLanding() {
           {/* CTA */}
           <button
             onClick={scrollToForm}
-            className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 py-4 rounded-xl text-base transition-all duration-200 hover:-translate-y-0.5 shadow-2xl shadow-emerald-500/20 mb-4"
+            className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 py-4 rounded-xl text-base transition-all duration-200 hover:-translate-y-0.5 shadow-2xl shadow-emerald-500/15 mb-4"
           >
             Quiero mi análisis gratuito
             <ArrowRight size={17} />
@@ -733,34 +733,34 @@ export default function BusinessAuditLanding() {
       </section>
 
       {/* ===== SECTION 2 — URGENCY ===== */}
-      <section className="px-4 py-16 sm:py-24 border-t border-white/4">
+      <section className="px-4 py-16 sm:py-24 border-t border-slate-200">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight mb-3">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight mb-3">
             Cada día que no optimizas tu presencia online...
           </h2>
-          <p className="text-slate-400 text-base sm:text-lg mb-12">
+          <p className="text-slate-600 text-base sm:text-lg mb-12">
             ...otros negocios reciben los clientes que podrían ser tuyos.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
                 icon: Phone,
-                color: 'text-emerald-400',
-                bg: 'bg-emerald-500/8 border-emerald-500/15',
+                color: 'text-emerald-600',
+                bg: 'bg-emerald-50 border-emerald-200',
                 title: 'Más llamadas',
                 desc: 'Clientes que buscan exactamente lo que ofreces y te encuentran a ti primero.',
               },
               {
                 icon: MapPin,
                 color: 'text-blue-400',
-                bg: 'bg-blue-500/8 border-blue-500/15',
+                bg: 'bg-blue-50 border-blue-200',
                 title: 'Más visibilidad',
                 desc: 'Aparece en las búsquedas locales donde hoy aparecen tus competidores.',
               },
               {
                 icon: Star,
                 color: 'text-amber-400',
-                bg: 'bg-amber-500/8 border-amber-500/15',
+                bg: 'bg-amber-50 border-amber-200',
                 title: 'Más confianza',
                 desc: 'Una presencia online cuidada convierte visitas en clientes recurrentes.',
               },
@@ -772,8 +772,8 @@ export default function BusinessAuditLanding() {
                 <div className={`w-10 h-10 rounded-xl ${bg} border flex items-center justify-center mb-4`}>
                   <Icon size={18} className={color} />
                 </div>
-                <h3 className="text-white font-bold text-lg mb-2">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+                <h3 className="text-slate-900 font-bold text-lg mb-2">{title}</h3>
+                <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -781,12 +781,12 @@ export default function BusinessAuditLanding() {
       </section>
 
       {/* ===== SECTION 3 — HOW IT WORKS ===== */}
-      <section className="px-4 py-16 sm:py-24 border-t border-white/4">
+      <section className="px-4 py-16 sm:py-24 border-t border-slate-200">
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-xs font-semibold text-emerald-400 uppercase tracking-widest mb-3">
+          <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-3">
             Proceso
           </p>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-12">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-12">
             ¿Cómo funciona?
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -811,13 +811,13 @@ export default function BusinessAuditLanding() {
               },
             ].map(({ step, icon: Icon, title, desc }) => (
               <div key={step} className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/8 flex items-center justify-center mb-4 relative">
-                  <Icon size={24} className="text-slate-300" />
+                <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mb-4 relative">
+                  <Icon size={24} className="text-slate-700" />
                   <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-extrabold flex items-center justify-center">
                     {step}
                   </span>
                 </div>
-                <h3 className="text-white font-bold mb-2">{title}</h3>
+                <h3 className="text-slate-900 font-bold mb-2">{title}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
               </div>
             ))}
@@ -826,13 +826,13 @@ export default function BusinessAuditLanding() {
       </section>
 
       {/* ===== TESTIMONIALS ===== */}
-      <section className="px-4 py-16 sm:py-24 border-t border-white/4">
+      <section className="px-4 py-16 sm:py-24 border-t border-slate-200">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-10">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
               Casos reales
             </p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
               Lo que dicen otros negocios
             </h2>
           </div>
@@ -840,14 +840,14 @@ export default function BusinessAuditLanding() {
             {TESTIMONIALS.map((t) => (
               <div
                 key={t.name}
-                className="rounded-2xl border border-white/6 bg-white/[0.02] p-5 flex flex-col"
+                className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5 flex flex-col"
               >
                 <div className="flex items-center gap-0.5 mb-3">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} size={12} fill="currentColor" className="text-amber-400" />
                   ))}
                 </div>
-                <p className="text-slate-300 text-sm leading-relaxed flex-1 mb-4">
+                <p className="text-slate-700 text-sm leading-relaxed flex-1 mb-4">
                   "{t.text}"
                 </p>
                 <div className="flex items-center gap-2.5 mt-auto">
@@ -857,8 +857,8 @@ export default function BusinessAuditLanding() {
                     {t.initials}
                   </div>
                   <div>
-                    <p className="text-white text-xs font-semibold">{t.name}</p>
-                    <p className="text-slate-600 text-[10px]">{t.business}</p>
+                    <p className="text-slate-900 text-xs font-semibold">{t.name}</p>
+                    <p className="text-slate-500 text-[10px]">{t.business}</p>
                   </div>
                 </div>
               </div>
@@ -868,13 +868,13 @@ export default function BusinessAuditLanding() {
       </section>
 
       {/* ===== FORM ===== */}
-      <section className="px-4 py-16 sm:py-24 border-t border-white/4" id="form-section">
+      <section className="px-4 py-16 sm:py-24 border-t border-slate-200" id="form-section">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-widest mb-2">
+            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-2">
               Empieza ahora
             </p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-3">
               Analiza tu negocio gratis
             </h2>
             <p className="text-slate-500 text-sm">
@@ -889,7 +889,7 @@ export default function BusinessAuditLanding() {
               value={business}
               onChange={(e) => setBusiness(e.target.value)}
               placeholder="Nombre de tu negocio"
-              className="w-full bg-white/[0.04] border border-white/8 rounded-xl px-4 py-4 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
+              className="w-full bg-white border border-slate-300 rounded-xl px-4 py-4 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500/50 transition-colors"
             />
             <input
               type="text"
@@ -897,19 +897,19 @@ export default function BusinessAuditLanding() {
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="Ciudad"
-              className="w-full bg-white/[0.04] border border-white/8 rounded-xl px-4 py-4 text-sm text-white placeholder-slate-600 outline-none focus:border-emerald-500/50 transition-colors"
+              className="w-full bg-white border border-slate-300 rounded-xl px-4 py-4 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-emerald-500/50 transition-colors"
             />
             <div className="relative">
               <select
                 required
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full appearance-none bg-white/[0.04] border border-white/8 rounded-xl px-4 py-4 text-sm outline-none focus:border-emerald-500/50 transition-colors cursor-pointer"
-                style={{ color: category ? 'white' : 'rgb(75 85 99)' }}
+                className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-4 py-4 text-sm outline-none focus:border-emerald-500/50 transition-colors cursor-pointer"
+                style={{ color: category ? '#1e293b' : 'rgb(75 85 99)' }}
               >
                 <option value="" disabled style={{ color: 'rgb(75 85 99)' }}>Categoría de tu negocio</option>
                 {CATEGORIES.map((c) => (
-                  <option key={c} value={c} style={{ color: 'white', background: '#0d1117' }}>{c}</option>
+                  <option key={c} value={c} style={{ color: '#1e293b', background: '#ffffff' }}>{c}</option>
                 ))}
               </select>
               <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
@@ -917,21 +917,21 @@ export default function BusinessAuditLanding() {
 
             <button
               type="submit"
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2"
+              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl text-sm transition-all duration-200 hover:-translate-y-0.5 shadow-xl shadow-emerald-500/15 flex items-center justify-center gap-2"
             >
               <BarChart2 size={16} />
               Analizar mi negocio
             </button>
           </form>
 
-          <p className="text-center text-slate-600 text-xs mt-4">
+          <p className="text-center text-slate-500 text-xs mt-4">
             Gratis · Sin tarjeta · Resultados en menos de 60 segundos
           </p>
         </div>
       </section>
 
       {/* ===== GUARANTEES ===== */}
-      <section className="px-4 py-12 border-t border-white/4">
+      <section className="px-4 py-12 border-t border-slate-200">
         <div className="max-w-2xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
             {[
@@ -940,10 +940,10 @@ export default function BusinessAuditLanding() {
               { icon: Shield, title: 'Datos protegidos', desc: 'Tu información nunca se comparte con terceros.' },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/8 flex items-center justify-center mb-3">
-                  <Icon size={18} className="text-slate-400" />
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mb-3">
+                  <Icon size={18} className="text-slate-600" />
                 </div>
-                <h4 className="text-white font-semibold text-sm mb-1">{title}</h4>
+                <h4 className="text-slate-900 font-semibold text-sm mb-1">{title}</h4>
                 <p className="text-slate-500 text-xs leading-relaxed">{desc}</p>
               </div>
             ))}
@@ -952,14 +952,14 @@ export default function BusinessAuditLanding() {
       </section>
 
       {/* ===== FOOTER MICRO ===== */}
-      <div className="border-t border-white/4 px-4 py-6 text-center">
-        <p className="text-slate-700 text-xs">
+      <div className="border-t border-slate-200 px-4 py-6 text-center">
+        <p className="text-slate-500 text-xs">
           © {new Date().getFullYear()} LocalSEOHub · Todos los derechos reservados
         </p>
       </div>
 
       {/* Fixed bottom CTA on mobile */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-[#07090c]/95 backdrop-blur-xl border-t border-white/6 px-4 py-3">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-4 py-3">
         <button
           onClick={scrollToForm}
           className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"

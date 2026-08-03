@@ -42,10 +42,10 @@ function buildResult(name: string): VResult {
 }
 
 const CLR: Record<string, { text: string; bg: string; bar: string; ring: string }> = {
-  sky:     { text: 'text-sky-400',     bg: 'bg-sky-500/10',     bar: 'bg-sky-400',     ring: 'border-sky-500/25'     },
-  amber:   { text: 'text-amber-400',   bg: 'bg-amber-500/10',   bar: 'bg-amber-400',   ring: 'border-amber-500/25'   },
-  orange:  { text: 'text-orange-400',  bg: 'bg-orange-500/10',  bar: 'bg-orange-400',  ring: 'border-orange-500/25'  },
-  emerald: { text: 'text-emerald-400', bg: 'bg-emerald-500/10', bar: 'bg-emerald-400', ring: 'border-emerald-500/25' },
+  sky:     { text: 'text-sky-600',     bg: 'bg-sky-50',     bar: 'bg-sky-500',     ring: 'border-sky-200'     },
+  amber:   { text: 'text-amber-600',   bg: 'bg-amber-50',   bar: 'bg-amber-500',   ring: 'border-amber-200'   },
+  orange:  { text: 'text-orange-600',  bg: 'bg-orange-50',  bar: 'bg-orange-500',  ring: 'border-orange-200'  },
+  emerald: { text: 'text-emerald-600', bg: 'bg-emerald-50', bar: 'bg-emerald-500', ring: 'border-emerald-200' },
 };
 
 // ─── Score ring ───────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ function ScoreRing({ score }: { score: number }) {
   const R = 70, C = 2 * Math.PI * R;
   const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
   const tag   = score >= 80 ? 'Bueno'   : score >= 60 ? 'Mejorable' : 'Crítico';
-  const tagC  = score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400';
+  const tagC  = score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-red-600';
 
   useEffect(() => {
     let n = 0;
@@ -69,14 +69,14 @@ function ScoreRing({ score }: { score: number }) {
   return (
     <div className="relative inline-flex items-center justify-center w-[168px] h-[168px]">
       <svg width={168} height={168} className="absolute inset-0 -rotate-90">
-        <circle cx={84} cy={84} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={10} />
+        <circle cx={84} cy={84} r={R} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={10} />
         <circle cx={84} cy={84} r={R} fill="none" stroke={color} strokeWidth={10}
           strokeDasharray={`${(anim / 100) * C} ${C}`} strokeLinecap="round"
           style={{ filter: `drop-shadow(0 0 8px ${color}55)` }} />
       </svg>
       <div className="flex flex-col items-center justify-center z-10">
-        <span className="text-[2.6rem] font-black text-white tabular-nums leading-none">{anim}</span>
-        <span className="text-slate-600 text-xs">/100</span>
+        <span className="text-[2.6rem] font-black text-slate-900 tabular-nums leading-none">{anim}</span>
+        <span className="text-slate-500 text-xs">/100</span>
         <span className={`text-xs font-bold mt-1.5 ${tagC}`}>{tag}</span>
       </div>
     </div>
@@ -94,7 +94,7 @@ function SubScoreCard({ label, score, Icon, clr }: { label: string; score: numbe
   }, [score]);
   return (
     <div className={`rounded-xl border ${c.ring} p-4 flex flex-col gap-3`}
-      style={{ background: 'linear-gradient(145deg,rgba(15,23,42,0.92) 0%,rgba(8,14,26,0.97) 100%)' }}>
+      style={{ background: '#ffffff' }}>
       <div className="flex items-center justify-between">
         <div className={`w-8 h-8 rounded-lg ${c.bg} flex items-center justify-center`}>
           <Icon size={14} className={c.text} />
@@ -102,8 +102,8 @@ function SubScoreCard({ label, score, Icon, clr }: { label: string; score: numbe
         <span className={`text-xl font-black tabular-nums ${c.text}`}>{anim}</span>
       </div>
       <div>
-        <p className="text-slate-400 text-[11px] mb-1.5">{label}</p>
-        <div className="w-full h-1.5 rounded-full bg-slate-800">
+        <p className="text-slate-600 text-[11px] mb-1.5">{label}</p>
+        <div className="w-full h-1.5 rounded-full bg-slate-200">
           <div className={`h-full rounded-full ${c.bar} transition-none`} style={{ width: `${anim}%` }} />
         </div>
       </div>
@@ -231,7 +231,7 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
+    <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden">
       <AnimatePresence mode="wait">
 
         {/* ══════════════════════════════════════════════════════════════════ IDLE */}
@@ -242,16 +242,16 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
 
             {/* Background glow */}
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-teal-500/3 rounded-full blur-3xl" />
+              <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-emerald-500/8 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-3xl" />
             </div>
 
             <div className="relative w-full max-w-xl mx-auto text-center flex flex-col items-center justify-center gap-5 py-4">
 
               {/* Badge */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-3.5 py-1.5 text-[11px] sm:text-xs font-semibold text-emerald-400">
-                  <Sparkles size={11} className="text-orange-400" />
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 text-[11px] sm:text-xs font-semibold text-emerald-600">
+                  <Sparkles size={11} className="text-orange-600" />
                   Análisis gratuito · Google Maps
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 </span>
@@ -259,7 +259,7 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
 
               {/* Title */}
               <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }}
-                className="text-[1.6rem] leading-[1.15] sm:text-4xl font-extrabold text-white tracking-tight px-2">
+                className="text-[1.6rem] leading-[1.15] sm:text-4xl font-extrabold text-slate-900 tracking-tight px-2">
                 ¿Tu competencia aparece antes que tú en{' '}
                 <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
                   Google Maps?
@@ -268,32 +268,32 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
 
               {/* Subtitle */}
               <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
-                className="text-slate-400 text-sm sm:text-base max-w-md mx-auto px-2">
+                className="text-slate-600 text-sm sm:text-base max-w-md mx-auto px-2">
                 Analiza gratis tu negocio y descubre qué debes mejorar para conseguir más visibilidad local.
               </motion.p>
 
               {/* Form */}
               <motion.form onSubmit={handleSubmit} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }}
                 className="w-full max-w-md mx-auto">
-                <div className="flex flex-col gap-2 p-2 rounded-2xl border border-slate-700/50 bg-slate-900/60 backdrop-blur-sm shadow-2xl shadow-black/40">
+                <div className="flex flex-col gap-2 p-2 rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200">
                   <div className="flex items-center gap-3 flex-1 px-4 py-3">
-                    <MapPin size={18} className="text-emerald-400 shrink-0" />
+                    <MapPin size={18} className="text-emerald-600 shrink-0" />
                     <input ref={inputRef} value={name} onChange={(e) => setName(e.target.value)}
                       placeholder="Escribe el nombre de tu negocio..."
-                      className="flex-1 bg-transparent text-white placeholder-slate-500 text-base focus:outline-none min-w-0"
+                      className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 text-base focus:outline-none min-w-0"
                       aria-label="Nombre del negocio"
                       autoComplete="off"
                     />
                     {name && (
                       <button type="button" onClick={() => { setName(''); inputRef.current?.focus(); }}
-                        className="text-slate-600 hover:text-slate-400 transition-colors text-sm leading-none px-1"
+                        className="text-slate-500 hover:text-slate-600 transition-colors text-sm leading-none px-1"
                         aria-label="Limpiar">✕</button>
                     )}
                   </div>
                   <motion.button type="submit" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     className="flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-base
                       bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
-                      shadow-lg shadow-emerald-500/30 shrink-0 whitespace-nowrap">
+                      shadow-lg shadow-emerald-500/20 shrink-0 whitespace-nowrap">
                     <Zap size={15} fill="currentColor" />
                     Analizar mi negocio gratis
                   </motion.button>
@@ -301,11 +301,11 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
 
                 {/* Trust line */}
                 <p className="text-center text-[11px] sm:text-xs text-slate-500 mt-3 flex items-center justify-center gap-1.5 flex-wrap">
-                  <Shield size={10} className="text-emerald-400" />
+                  <Shield size={10} className="text-emerald-600" />
                   Sin tarjeta
-                  <span className="text-slate-700">·</span>
+                  <span className="text-slate-400">·</span>
                   Resultado en menos de 30 segundos
-                  <span className="text-slate-700">·</span>
+                  <span className="text-slate-400">·</span>
                   Gratis
                 </p>
               </motion.form>
@@ -313,16 +313,16 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
               {/* Demo preview — result screenshot mock */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
                 className="w-full max-w-md mx-auto mt-2">
-                <div className="rounded-2xl overflow-hidden border border-slate-700/40 shadow-xl shadow-black/40"
-                  style={{ background: 'linear-gradient(160deg,rgba(14,22,38,0.95) 0%,rgba(7,12,20,1) 100%)' }}>
+                <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xl shadow-slate-200"
+                  style={{ background: '#ffffff' }}>
                   {/* Browser chrome */}
-                  <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-800/60 bg-slate-900/70">
+                  <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-slate-100">
                     <div className="flex gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-red-500/50" />
-                      <div className="w-2 h-2 rounded-full bg-amber-500/50" />
-                      <div className="w-2 h-2 rounded-full bg-emerald-500/60" />
+                      <div className="w-2 h-2 rounded-full bg-red-400" />
+                      <div className="w-2 h-2 rounded-full bg-amber-400" />
+                      <div className="w-2 h-2 rounded-full bg-emerald-400" />
                     </div>
-                    <div className="flex-1 mx-2 bg-slate-800/70 rounded-md px-2.5 py-0.5 text-[9px] text-slate-500 font-mono text-center">
+                    <div className="flex-1 mx-2 bg-slate-100 rounded-md px-2.5 py-0.5 text-[9px] text-slate-400 font-mono text-center">
                       Tu resultado
                     </div>
                   </div>
@@ -331,21 +331,21 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Informe de Visibilidad</p>
-                        <p className="text-white font-bold text-sm">Peluquería López · Madrid</p>
+                        <p className="text-slate-900 font-bold text-sm">Peluquería López · Madrid</p>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400">Mejorable</span>
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-600">Mejorable</span>
                     </div>
                     {/* Score + bars */}
                     <div className="flex items-center gap-4">
                       <div className="relative w-20 h-20 shrink-0">
                         <svg width={80} height={80} className="-rotate-90">
-                          <circle cx={40} cy={40} r={32} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={6} />
+                          <circle cx={40} cy={40} r={32} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={6} />
                           <circle cx={40} cy={40} r={32} fill="none" stroke="#f59e0b" strokeWidth={6}
                             strokeDasharray={`${0.74 * 2 * Math.PI * 32} ${2 * Math.PI * 32}`} strokeLinecap="round" />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-lg font-black text-white tabular-nums leading-none">74</span>
-                          <span className="text-[8px] text-slate-600">/100</span>
+                          <span className="text-lg font-black text-slate-900 tabular-nums leading-none">74</span>
+                          <span className="text-[8px] text-slate-500">/100</span>
                         </div>
                       </div>
                       <div className="flex-1 space-y-1.5">
@@ -357,9 +357,9 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
                           <div key={label}>
                             <div className="flex items-center justify-between mb-0.5">
                               <span className="text-[9px] text-slate-500">{label}</span>
-                              <span className="text-[9px] text-slate-400 font-bold tabular-nums">{score}</span>
+                              <span className="text-[9px] text-slate-600 font-bold tabular-nums">{score}</span>
                             </div>
-                            <div className="w-full h-1 rounded-full bg-slate-800 overflow-hidden">
+                            <div className="w-full h-1 rounded-full bg-slate-200 overflow-hidden">
                               <div className={`h-full rounded-full ${clr}`} style={{ width: `${score}%` }} />
                             </div>
                           </div>
@@ -372,20 +372,20 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
                         { t: 'Añadir más fotos al perfil', p: 'Alto' },
                         { t: 'Responder reseñas pendientes', p: 'Alto' },
                       ].map(({ t, p }) => (
-                        <div key={t} className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/30">
-                          <CheckCircle2 size={11} className="text-emerald-400 shrink-0" />
-                          <span className="text-[10px] text-slate-300 flex-1">{t}</span>
-                          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${p === 'Alto' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'}`}>{p}</span>
+                        <div key={t} className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
+                          <CheckCircle2 size={11} className="text-emerald-600 shrink-0" />
+                          <span className="text-[10px] text-slate-700 flex-1">{t}</span>
+                          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${p === 'Alto' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'}`}>{p}</span>
                         </div>
                       ))}
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/20">
-                        <Lock size={10} className="text-slate-600 shrink-0" />
-                        <span className="text-[10px] text-slate-600 blur-[2px] select-none flex-1">+3 acciones adicionales bloqueadas</span>
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
+                        <Lock size={10} className="text-slate-500 shrink-0" />
+                        <span className="text-[10px] text-slate-500 blur-[2px] select-none flex-1">+3 acciones adicionales bloqueadas</span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <p className="text-center text-[10px] text-slate-600 mt-2">Así se verá tu informe personalizado</p>
+                <p className="text-center text-[10px] text-slate-500 mt-2">Así se verá tu informe personalizado</p>
               </motion.div>
             </div>
           </motion.section>
@@ -413,26 +413,26 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
 
             <div className="relative z-10 w-full max-w-md mx-auto space-y-10">
               <div className="text-center space-y-4">
-                <div className="w-20 h-20 rounded-3xl bg-slate-900/80 border border-emerald-500/25 flex items-center justify-center mx-auto shadow-xl shadow-black/40">
+                <div className="w-20 h-20 rounded-3xl bg-white border border-emerald-200 flex items-center justify-center mx-auto shadow-xl shadow-slate-200">
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}>
-                    <Radar size={32} className="text-emerald-400" />
+                    <Radar size={32} className="text-emerald-600" />
                   </motion.div>
                 </div>
                 <div>
-                  <p className="text-slate-400 text-sm">Analizando</p>
-                  <p className="text-white font-bold text-xl mt-1 px-4 break-words">"{name}"</p>
+                  <p className="text-slate-600 text-sm">Analizando</p>
+                  <p className="text-slate-900 font-bold text-xl mt-1 px-4 break-words">"{name}"</p>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs mb-1">
                   <motion.span key={msgI} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                    className="text-slate-300 font-medium">
+                    className="text-slate-700 font-medium">
                     {LOAD_MSGS[msgI]}
                   </motion.span>
                   <span className="text-slate-500 tabular-nums font-mono">{pct}%</span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden">
+                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                   <motion.div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.9, ease: 'easeOut' }}
@@ -440,7 +440,7 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-2xl border border-slate-800/60 p-5 bg-slate-900/40">
+              <div className="space-y-3 rounded-2xl border border-slate-200 p-5 bg-slate-50">
                 {LOAD_MSGS.map((msg, i) => {
                   if (i > msgI) return null;
                   const done   = i < msgI;
@@ -450,11 +450,11 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
                       transition={{ duration: 0.3 }}
                       className="flex items-center gap-3 text-sm">
                       {done
-                        ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                        ? <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
                         : <motion.div animate={{ opacity: [1, 0.35, 1] }} transition={{ duration: 1.1, repeat: Infinity }}
                             className="w-3.5 h-3.5 rounded-full border-2 border-emerald-500/70 shrink-0" />
                       }
-                      <span className={done ? 'text-slate-500' : active ? 'text-slate-200 font-medium' : 'text-slate-500'}>
+                      <span className={done ? 'text-slate-500' : active ? 'text-slate-700 font-medium' : 'text-slate-500'}>
                         {msg}
                       </span>
                     </motion.div>
@@ -465,7 +465,7 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
               {earlyResult && (
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease: [0.16,1,0.3,1] as const }}
-                  className="rounded-2xl border border-slate-800/60 p-5 bg-slate-900/40">
+                  className="rounded-2xl border border-slate-200 p-5 bg-slate-50">
                   <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-3">Vista previa — puntuación detectada</p>
                   <div className="flex items-center gap-5">
                     <ScoreRing score={earlyResult.overall} />
@@ -493,25 +493,25 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
 
             <div className="relative max-w-2xl mx-auto">
               <button onClick={reset}
-                className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm mb-8 transition-colors group">
+                className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 text-sm mb-8 transition-colors group">
                 <ChevronRight size={14} className="rotate-180 group-hover:-translate-x-0.5 transition-transform" />
                 Analizar otro negocio
               </button>
 
               <motion.div initial={{ opacity: 0, y: 28, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.55, ease: [0.16,1,0.3,1] as const }}
-                className="rounded-3xl border border-slate-700/40 overflow-hidden"
-                style={{ background: 'linear-gradient(160deg,rgba(14,22,38,0.98) 0%,rgba(7,12,20,1) 100%)' }}>
+                className="rounded-3xl border border-slate-200 overflow-hidden"
+                style={{ background: '#ffffff' }}>
 
-                <div className="px-7 pt-6 pb-5 border-b border-slate-800/50 flex items-start justify-between gap-4">
+                <div className="px-7 pt-6 pb-5 border-b border-slate-200 flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[10px] text-slate-500 uppercase tracking-[0.18em] font-semibold mb-1">Informe de Visibilidad</p>
-                    <p className="text-white font-bold text-xl leading-snug">{result.name}</p>
+                    <p className="text-slate-900 font-bold text-xl leading-snug">{result.name}</p>
                     <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-1">
                       <MapPin size={10} />Google Maps · España
                     </p>
                   </div>
-                  <span className="shrink-0 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 mt-1">
+                  <span className="shrink-0 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-600 mt-1">
                     Mejorable
                   </span>
                 </div>
@@ -521,7 +521,7 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
                     <div className="flex flex-col items-center gap-2.5 shrink-0">
                       <ScoreRing score={result.overall} />
                       <div className="text-center">
-                        <p className="text-white font-bold text-sm">Visibilidad Local</p>
+                        <p className="text-slate-900 font-bold text-sm">Visibilidad Local</p>
                         <p className="text-slate-500 text-xs mt-0.5">4 factores analizados</p>
                       </div>
                     </div>
@@ -533,8 +533,8 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
                   </div>
 
                   <div>
-                    <p className="text-white font-bold text-base mb-4 flex items-center gap-2">
-                      <Sparkles size={15} className="text-emerald-400" />
+                    <p className="text-slate-900 font-bold text-base mb-4 flex items-center gap-2">
+                      <Sparkles size={15} className="text-emerald-600" />
                       Tu Plan de Acción
                     </p>
                     <div className="space-y-2">
@@ -542,15 +542,15 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
                         <motion.div key={title}
                           initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.2 + i * 0.08, duration: 0.35 }}
-                          className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-700/30 bg-slate-800/30">
-                          <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
-                          <span className="flex-1 text-slate-200 text-sm">{title}</span>
+                          className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50">
+                          <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                          <span className="flex-1 text-slate-700 text-sm">{title}</span>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              impact === 'Alto' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                              impact === 'Alto' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'
                             }`}>{impact}</span>
-                            <span className="text-[10px] text-slate-600 hidden sm:block">{time}</span>
-                            <span className={`text-[10px] hidden sm:block ${diff === 'Fácil' ? 'text-emerald-400/60' : 'text-amber-400/60'}`}>{diff}</span>
+                            <span className="text-[10px] text-slate-500 hidden sm:block">{time}</span>
+                            <span className={`text-[10px] hidden sm:block ${diff === 'Fácil' ? 'text-emerald-600/60' : 'text-amber-600/60'}`}>{diff}</span>
                           </div>
                         </motion.div>
                       ))}
@@ -559,7 +559,7 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
 
                   {/* Unlock CTA */}
                   <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}
-                    className="rounded-2xl border border-emerald-500/20 overflow-hidden relative">
+                    className="rounded-2xl border border-emerald-200 overflow-hidden relative">
 
                     <div className="px-6 pt-5 pb-2 space-y-2" aria-hidden="true">
                       {[
@@ -568,36 +568,36 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
                         'Estrategia de reseñas personalizada',
                         'Comparativa detallada con 3 competidores',
                       ].map((t) => (
-                        <div key={t} className="flex items-center gap-2.5 p-3 rounded-lg bg-slate-800/30">
-                          <Lock size={13} className="text-slate-700 shrink-0" />
-                          <span className="text-slate-500 text-sm select-none blur-[3px]">{t}</span>
+                        <div key={t} className="flex items-center gap-2.5 p-3 rounded-lg bg-slate-50">
+                          <Lock size={13} className="text-slate-400 shrink-0" />
+                          <span className="text-slate-400 text-sm select-none blur-[3px]">{t}</span>
                         </div>
                       ))}
                     </div>
 
-                    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-transparent to-slate-950/80 pointer-events-none" />
+                    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-transparent to-white/80 pointer-events-none" />
 
                     <div className="px-6 pb-6 pt-4 relative z-10"
-                      style={{ background: 'linear-gradient(160deg,rgba(16,185,129,0.08) 0%,rgba(8,14,26,0.99) 60%)' }}>
-                      <div className="rounded-2xl border border-emerald-500/25 p-6 text-center space-y-4">
+                      style={{ background: 'linear-gradient(160deg, rgba(16,185,129,0.05) 0%, #f8fafc 60%)' }}>
+                      <div className="rounded-2xl border border-emerald-200 p-6 text-center space-y-4">
                         <div className="flex items-center justify-center gap-2.5 mb-1">
-                          <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
-                            <Lock size={14} className="text-emerald-400" />
+                          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                            <Lock size={14} className="text-emerald-600" />
                           </div>
-                          <p className="text-white font-bold text-lg">Desbloquea el informe completo</p>
+                          <p className="text-slate-900 font-bold text-lg">Desbloquea el informe completo</p>
                         </div>
-                        <p className="text-slate-400 text-sm max-w-sm mx-auto">
+                        <p className="text-slate-600 text-sm max-w-sm mx-auto">
                           Accede a tu plan detallado con IA: keywords, estrategia de reseñas, comparativa de competidores y más.
                         </p>
                         <motion.button onClick={onUnlock} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
                           className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
                             bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950
-                            shadow-xl shadow-emerald-500/35 hover:shadow-emerald-500/55 transition-shadow">
+                            shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-shadow">
                           <Zap size={16} fill="currentColor" />
                           Ver informe completo — 7 días gratis
                         </motion.button>
                         <p className="text-xs text-slate-500 flex items-center justify-center gap-1.5">
-                          <Shield size={10} className="text-slate-600" />
+                          <Shield size={10} className="text-slate-500" />
                           Sin tarjeta · Cancela cuando quieras · 9,99€/mes después
                         </p>
                       </div>
@@ -612,12 +612,12 @@ export default function MetaAdsLanding({ onUnlock }: MetaAdsLandingProps) {
 
       {/* Footer — minimal */}
       {phase === 'idle' && (
-        <footer className="border-t border-slate-800/50 py-6 px-5 text-center">
+        <footer className="border-t border-slate-200 py-6 px-5 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <LogoIcon size={16} />
-            <span className="text-slate-400 font-bold text-xs">LocalSEOHub.io</span>
+            <span className="text-slate-500 font-bold text-xs">LocalSEOHub.io</span>
           </div>
-          <p className="text-slate-600 text-[10px]">© 2026 · Análisis gratuito de visibilidad en Google Maps</p>
+          <p className="text-slate-400 text-[10px]">© 2026 · Análisis gratuito de visibilidad en Google Maps</p>
         </footer>
       )}
     </div>
