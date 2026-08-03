@@ -45,17 +45,12 @@ function computePersonalizedScore(rec: Recommendation, memoryState: BusinessMemo
   return computeBaseScore(rec) + personalizedScore(rec, memoryState);
 }
 
-export function prioritizeRecommendations(recs: Recommendation[]): Recommendation[] {
+function prioritizeRecommendations(recs: Recommendation[]): Recommendation[] {
   const memoryState = getMemoryState();
 
   return [...recs]
     .filter((r) => r.status !== 'completed' && r.status !== 'dismissed' && r.status !== 'expired')
     .sort((a, b) => computePersonalizedScore(b, memoryState) - computePersonalizedScore(a, memoryState));
-}
-
-export function getDailyGoal(recs: Recommendation[]): Recommendation | null {
-  const prioritized = prioritizeRecommendations(recs);
-  return prioritized[0] ?? null;
 }
 
 export function getDailyActions(recs: Recommendation[], limit = 3): Recommendation[] {

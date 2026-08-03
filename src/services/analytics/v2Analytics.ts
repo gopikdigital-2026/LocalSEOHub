@@ -14,10 +14,6 @@ function trackViewOnce(eventName: string, props: Record<string, unknown> = {}) {
 
 // ─── App-level events ───────────────────────────────────────────────────────
 
-export function trackAppView(route: string) {
-  trackViewOnce('v2_app_view', { route });
-}
-
 export function trackTodayView(businessId?: string) {
   trackViewOnce('v2_today_view', { business_id: businessId });
 }
