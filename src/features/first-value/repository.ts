@@ -50,38 +50,64 @@ export function createFirstValueRepository(userId: string, businessId: string = 
     const row = mapStateToRow(state);
 
     if (state.id) {
-      await supabase
+      const { error } = await supabase
         .from('first_value_progress')
         .update(row)
         .eq('id', state.id);
+
+      if (error) {
+        if (import.meta.env.DEV) console.error('[FV repo] update error:', error);
+        throw new Error(`Save failed: ${error.message}`);
+      }
+
+      if (import.meta.env.DEV) console.log('[FV repo] row updated:', state.id, 'step:', state.currentStep, 'completed:', state.completedAt !== null);
     } else {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('first_value_progress')
         .upsert(row, { onConflict: 'user_id,business_id' })
         .select('id')
         .maybeSingle();
 
+      if (error) {
+        if (import.meta.env.DEV) console.error('[FV repo] upsert error:', error);
+        throw new Error(`Save failed: ${error.message}`);
+      }
+
       if (data) state.id = data.id;
+
+      if (import.meta.env.DEV) console.log('[FV repo] row upserted:', data?.id, 'step:', state.currentStep, 'completed:', state.completedAt !== null);
     }
   }
 
   async function isCompleted(): Promise<boolean> {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('first_value_progress')
-      .select('completed')
+      .select('completed, completed_at')
       .eq('user_id', userId)
       .eq('business_id', businessId)
       .maybeSingle();
 
-    return data?.completed === true;
+    if (error) {
+      if (import.meta.env.DEV) console.error('[FV repo] isCompleted error:', error);
+      return false;
+    }
+
+    const result = data?.completed === true && data?.completed_at !== null;
+    if (import.meta.env.DEV) console.log('[FV repo] isCompleted:', result);
+    return result;
   }
 
   async function reset(): Promise<void> {
-    await supabase
+    const { error } = await supabase
       .from('first_value_progress')
       .delete()
       .eq('user_id', userId)
       .eq('business_id', businessId);
+
+    if (error) {
+      if (import.meta.env.DEV) console.error('[FV repo] reset error:', error);
+      throw new Error(`Reset failed: ${error.message}`);
+    }
   }
 
   return { load, save, isCompleted, reset };

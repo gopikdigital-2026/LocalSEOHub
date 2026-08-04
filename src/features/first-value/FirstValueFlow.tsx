@@ -95,10 +95,11 @@ export default function FirstValueFlow() {
   const [state, setState] = useState<FirstValueState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const repoRef = useRef(userId ? createFirstValueRepository(userId, businessId) : null);
   const initRef = useRef(false);
 
-  // Load state from Supabase on mount
   useEffect(() => {
     if (!userId || initRef.current) return;
     initRef.current = true;
@@ -125,13 +126,9 @@ export default function FirstValueFlow() {
     });
   }, [userId, businessId]);
 
-  const save = useCallback(async (newState: FirstValueState) => {
+  const save = useCallback(async (newState: FirstValueState): Promise<void> => {
     setState(newState);
-    try {
-      await repoRef.current?.save(newState);
-    } catch {
-      // Save failed — state is in memory, will retry on next action
-    }
+    await repoRef.current?.save(newState);
   }, []);
 
   const trackCtx = useCallback(() => ({
@@ -278,7 +275,6 @@ export default function FirstValueFlow() {
           businessName={state.businessData?.name ?? 'tu negocio'}
           sourceType={state.sourceChoice?.type ?? 'demo'}
           onComplete={() => {
-            // Generate and persist recommendation only if not already generated
             let rec = state.recommendation;
             if (!rec) {
               rec = generateFirstRecommendation({
@@ -327,11 +323,12 @@ export default function FirstValueFlow() {
           recommendation={state.recommendation}
           onBack={() => goTo('source_setup')}
           onAccept={() => {
+            const now = new Date().toISOString();
             const next: FirstValueState = {
               ...state,
               currentStep: 'first_execution',
               recommendation: { ...state.recommendation!, status: 'accepted' },
-              executionPayload: { status: 'ready', startedAt: null, completedAt: null, editedContent: null },
+              executionPayload: { status: 'ready', startedAt: now, completedAt: null, editedContent: null },
             };
             save(next);
             trackFirstRecommendationAccepted({ ...trackCtx(), recommendationId: state.recommendation!.id });
@@ -360,21 +357,44 @@ export default function FirstValueFlow() {
       <FlowShell progress={state.currentStep}>
         <FirstExecutionInline
           recommendation={state.recommendation}
-          onComplete={() => {
+          onComplete={async () => {
+            setSaving(true);
+            setSaveError(null);
+
             const rec = state.recommendation!;
             registerActionCompleted(memRepo, rec.title, rec.actionType, rec.impact, rec.estimatedTimeMinutes);
             const now = new Date().toISOString();
+
+            const executionStartedAt = state.executionPayload?.startedAt ?? now;
+            const ttfv = computeTimeToFirstValue(executionStartedAt);
+
             const next: FirstValueState = {
               ...state,
               currentStep: 'success',
               completedAt: now,
               recommendation: { ...rec, status: 'completed', updatedAt: now },
-              executionPayload: { status: 'completed', startedAt: state.executionPayload?.startedAt ?? now, completedAt: now, editedContent: null },
+              executionPayload: { status: 'completed', startedAt: executionStartedAt, completedAt: now, editedContent: null },
             };
-            save(next);
-            const ttfv = computeTimeToFirstValue(state.startedAt);
-            trackFirstActionCompleted({ ...trackCtx(), recommendationId: rec.id }, rec.actionType);
-            trackFirstValueCompleted({ ...trackCtx(), recommendationId: rec.id }, ttfv);
+
+            try {
+              await save(next);
+
+              const confirmed = await repoRef.current!.isCompleted();
+              if (!confirmed) {
+                throw new Error('La base de datos no confirmo el estado completado.');
+              }
+
+              if (import.meta.env.DEV) console.log('[FV] completion confirmed, navigating allowed');
+
+              trackFirstActionCompleted({ ...trackCtx(), recommendationId: rec.id }, rec.actionType);
+              trackFirstValueCompleted({ ...trackCtx(), recommendationId: rec.id }, ttfv);
+              setSaving(false);
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : 'Error desconocido';
+              if (import.meta.env.DEV) console.error('[FV] completion save failed:', msg);
+              setSaveError(msg);
+              setSaving(false);
+            }
           }}
         />
       </FlowShell>
@@ -383,8 +403,42 @@ export default function FirstValueFlow() {
 
   // ─── Success ────────────────────────
   if (state.currentStep === 'success') {
+    if (saving) {
+      return (
+        <FlowShell>
+          <LoadingState message="Guardando tu progreso..." />
+        </FlowShell>
+      );
+    }
+
+    if (saveError) {
+      return (
+        <FlowShell>
+          <ErrorRecovery
+            title="No hemos podido guardar tu progreso"
+            message={saveError}
+            onRetry={async () => {
+              setSaving(true);
+              setSaveError(null);
+              try {
+                await repoRef.current?.save(state);
+                const confirmed = await repoRef.current!.isCompleted();
+                if (!confirmed) throw new Error('La base de datos no confirmo el estado completado.');
+                setSaving(false);
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : 'Error desconocido';
+                setSaveError(msg);
+                setSaving(false);
+              }
+            }}
+          />
+        </FlowShell>
+      );
+    }
+
     const rec = state.recommendation;
-    const ttfv = computeTimeToFirstValue(state.startedAt);
+    const executionStartedAt = state.executionPayload?.startedAt ?? state.startedAt;
+    const ttfv = computeTimeToFirstValue(executionStartedAt);
 
     return (
       <FlowShell>
@@ -392,8 +446,14 @@ export default function FirstValueFlow() {
           goalLabel={getGoalLabel(state.selectedGoalId!)}
           actionTitle={rec?.title ?? 'Accion completada'}
           timeSeconds={ttfv}
-          onGoToPlan={() => navigate('/plan')}
-          onGoToToday={() => navigate('/hoy')}
+          onGoToPlan={() => {
+            if (import.meta.env.DEV) console.log('[FV] navigating to /plan');
+            navigate('/plan');
+          }}
+          onGoToToday={() => {
+            if (import.meta.env.DEV) console.log('[FV] navigating to /hoy');
+            navigate('/hoy');
+          }}
         />
       </FlowShell>
     );
