@@ -52,7 +52,7 @@ export function AppGuard({ children }: { children: React.ReactNode }) {
 
 /**
  * Protects /empezar.
- * - Not authenticated → /registro?next=/empezar
+ * - Not authenticated → /signup
  * - Authenticated + completed → /hoy
  * - Authenticated + not completed → render children
  */
@@ -63,7 +63,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   if (status === 'error') return ERROR_SCREEN;
 
   if (!authenticated) {
-    return <Navigate to="/registro?next=/empezar" replace />;
+    return <Navigate to="/signup" replace />;
   }
 
   if (status === 'completed') {

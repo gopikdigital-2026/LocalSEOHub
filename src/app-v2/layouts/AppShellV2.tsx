@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   Calendar,
   ClipboardList,
@@ -30,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
 
 function SidebarNav() {
   const { session, signOut } = useAuth();
+  const navigate = useNavigate();
   const userEmail = session?.user?.email ?? '';
   const userName = session?.user?.user_metadata?.name || userEmail.split('@')[0] || 'Usuario';
 
@@ -79,7 +80,7 @@ function SidebarNav() {
             <p className="text-v2-xs text-v2-text-tertiary truncate">{userEmail}</p>
           </div>
           <button
-            onClick={() => signOut()}
+            onClick={() => { signOut().then(() => navigate('/')); }}
             aria-label="Cerrar sesion"
             className="p-2 rounded-v2-md hover:bg-v2-neutral-100 text-v2-neutral-400 hover:text-v2-error-500 transition-colors focus-visible:ring-2 focus-visible:ring-v2-primary-500/30"
             title="Cerrar sesion"
@@ -95,6 +96,7 @@ function SidebarNav() {
 function MobileHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { session, signOut } = useAuth();
+  const navigate = useNavigate();
   const userName = session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'Usuario';
 
   return (
@@ -153,7 +155,7 @@ function MobileHeader() {
         </nav>
         <div className="pt-4 border-t border-v2-border-light">
           <button
-            onClick={() => signOut()}
+            onClick={() => { signOut().then(() => navigate('/')); }}
             className="flex items-center gap-3 px-3 py-2.5 rounded-v2-lg text-v2-sm font-medium text-v2-error-500 hover:bg-v2-error-50 w-full transition-colors"
           >
             <LogOut size={18} />

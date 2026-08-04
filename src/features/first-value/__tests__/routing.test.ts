@@ -1,67 +1,48 @@
 import { describe, it, expect } from 'vitest';
 import type { OnboardingStatus } from '../../../hooks/useOnboardingStatus';
 
-/**
- * Routing decision logic extracted so it can be tested without React rendering.
- * The actual guards in auth.tsx and App.tsx implement these same rules.
- */
-
 type UserState = {
   authenticated: boolean;
   onboarding: OnboardingStatus;
 };
 
 function resolveRoute(path: string, user: UserState): string {
-  // Unprotected public routes — always served
-  const publicPaths = [
-    '/beta', '/generador-contenido-seo', '/mas-clientes-google',
-    '/diagnostico-negocio', '/descubre-tu-potencial', '/plan-crecimiento-gratis',
-    '/copiloto-ia', '/analisis-google-maps', '/admin',
-    '/demo', '/demo/plan', '/demo/negocio', '/demo/fuentes',
-  ];
-  if (publicPaths.includes(path)) return path;
-
   // ── Not authenticated ──
   if (!user.authenticated) {
     if (path === '/') return '/';
-    if (path === '/registro') return '/registro';
+    if (path === '/signup') return '/signup';
     if (path === '/login') return '/login';
-    if (path === '/empezar') return '/registro?next=/empezar';
-    // Protected app pages → login with ?next=
+    if (path === '/empezar') return '/signup';
     return `/login?next=${encodeURIComponent(path)}`;
   }
 
   // ── Authenticated, onboarding incomplete ──
   if (user.onboarding !== 'completed') {
-    if (path === '/' || path === '/registro' || path === '/login' ||
-        path === '/hoy' || path === '/plan') return '/empezar';
-    if (path === '/empezar') return '/empezar';
     return '/empezar';
   }
 
   // ── Authenticated, onboarding complete ──
-  if (path === '/' || path === '/registro' || path === '/login' || path === '/empezar') return '/hoy';
-  // App pages served directly
+  if (path === '/' || path === '/signup' || path === '/login' || path === '/empezar') return '/hoy';
   return path;
 }
 
-describe('Routing rules — not authenticated', () => {
+describe('Routing — not authenticated', () => {
   const anon: UserState = { authenticated: false, onboarding: 'not_started' };
 
-  it('/ serves landing page', () => {
+  it('/ shows landing', () => {
     expect(resolveRoute('/', anon)).toBe('/');
   });
 
-  it('/registro serves signup', () => {
-    expect(resolveRoute('/registro', anon)).toBe('/registro');
+  it('/signup shows signup', () => {
+    expect(resolveRoute('/signup', anon)).toBe('/signup');
   });
 
-  it('/login serves login', () => {
+  it('/login shows login', () => {
     expect(resolveRoute('/login', anon)).toBe('/login');
   });
 
-  it('/empezar redirects to /registro?next=/empezar', () => {
-    expect(resolveRoute('/empezar', anon)).toBe('/registro?next=/empezar');
+  it('/empezar redirects to /signup', () => {
+    expect(resolveRoute('/empezar', anon)).toBe('/signup');
   });
 
   it('/hoy redirects to /login?next=/hoy', () => {
@@ -73,72 +54,32 @@ describe('Routing rules — not authenticated', () => {
   });
 });
 
-describe('Routing rules — authenticated, onboarding incomplete', () => {
+describe('Routing — authenticated, onboarding incomplete', () => {
   const partial: UserState = { authenticated: true, onboarding: 'in_progress' };
-  const notStarted: UserState = { authenticated: true, onboarding: 'not_started' };
 
-  it('/ redirects to /empezar (in_progress)', () => {
-    expect(resolveRoute('/', partial)).toBe('/empezar');
-  });
-
-  it('/ redirects to /empezar (not_started)', () => {
-    expect(resolveRoute('/', notStarted)).toBe('/empezar');
-  });
-
-  it('/registro redirects to /empezar', () => {
-    expect(resolveRoute('/registro', partial)).toBe('/empezar');
-  });
-
-  it('/login redirects to /empezar', () => {
-    expect(resolveRoute('/login', partial)).toBe('/empezar');
-  });
-
-  it('/hoy redirects to /empezar', () => {
-    expect(resolveRoute('/hoy', partial)).toBe('/empezar');
-  });
-
-  it('/plan redirects to /empezar', () => {
-    expect(resolveRoute('/plan', partial)).toBe('/empezar');
-  });
-
-  it('/empezar stays on /empezar', () => {
-    expect(resolveRoute('/empezar', partial)).toBe('/empezar');
-  });
+  it('/ → /empezar', () => expect(resolveRoute('/', partial)).toBe('/empezar'));
+  it('/signup → /empezar', () => expect(resolveRoute('/signup', partial)).toBe('/empezar'));
+  it('/login → /empezar', () => expect(resolveRoute('/login', partial)).toBe('/empezar'));
+  it('/hoy → /empezar', () => expect(resolveRoute('/hoy', partial)).toBe('/empezar'));
+  it('/plan → /empezar', () => expect(resolveRoute('/plan', partial)).toBe('/empezar'));
+  it('/empezar stays', () => expect(resolveRoute('/empezar', partial)).toBe('/empezar'));
 });
 
-describe('Routing rules — authenticated, onboarding complete', () => {
+describe('Routing — authenticated, onboarding complete', () => {
   const done: UserState = { authenticated: true, onboarding: 'completed' };
 
-  it('/ redirects to /hoy', () => {
-    expect(resolveRoute('/', done)).toBe('/hoy');
-  });
-
-  it('/registro redirects to /hoy', () => {
-    expect(resolveRoute('/registro', done)).toBe('/hoy');
-  });
-
-  it('/login redirects to /hoy', () => {
-    expect(resolveRoute('/login', done)).toBe('/hoy');
-  });
-
-  it('/empezar redirects to /hoy', () => {
-    expect(resolveRoute('/empezar', done)).toBe('/hoy');
-  });
-
-  it('/hoy serves dashboard', () => {
-    expect(resolveRoute('/hoy', done)).toBe('/hoy');
-  });
-
-  it('/plan serves plan page', () => {
-    expect(resolveRoute('/plan', done)).toBe('/plan');
-  });
+  it('/ → /hoy', () => expect(resolveRoute('/', done)).toBe('/hoy'));
+  it('/signup → /hoy', () => expect(resolveRoute('/signup', done)).toBe('/hoy'));
+  it('/login → /hoy', () => expect(resolveRoute('/login', done)).toBe('/hoy'));
+  it('/empezar → /hoy', () => expect(resolveRoute('/empezar', done)).toBe('/hoy'));
+  it('/hoy stays', () => expect(resolveRoute('/hoy', done)).toBe('/hoy'));
+  it('/plan stays', () => expect(resolveRoute('/plan', done)).toBe('/plan'));
 });
 
 describe('E2E flow scenarios', () => {
   it('1. / → signup → /empezar', () => {
     const anon: UserState = { authenticated: false, onboarding: 'not_started' };
     expect(resolveRoute('/', anon)).toBe('/');
-    // User clicks CTA → opens signup → registers → becomes authenticated
     const newUser: UserState = { authenticated: true, onboarding: 'not_started' };
     expect(resolveRoute('/', newUser)).toBe('/empezar');
   });
@@ -166,7 +107,6 @@ describe('E2E flow scenarios', () => {
   it('6. New user tries /hoy → /login → /empezar', () => {
     const anon: UserState = { authenticated: false, onboarding: 'not_started' };
     expect(resolveRoute('/hoy', anon)).toBe('/login?next=%2Fhoy');
-    // After login as new user
     const newUser: UserState = { authenticated: true, onboarding: 'not_started' };
     expect(resolveRoute('/hoy', newUser)).toBe('/empezar');
   });
@@ -176,7 +116,7 @@ describe('E2E flow scenarios', () => {
     expect(resolveRoute('/empezar', done)).toBe('/hoy');
   });
 
-  it('8. Refresh /hoy and /plan with valid session', () => {
+  it('8. Refresh /hoy and /plan with session', () => {
     const done: UserState = { authenticated: true, onboarding: 'completed' };
     expect(resolveRoute('/hoy', done)).toBe('/hoy');
     expect(resolveRoute('/plan', done)).toBe('/plan');

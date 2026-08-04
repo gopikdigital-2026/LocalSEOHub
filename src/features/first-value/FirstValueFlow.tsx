@@ -154,7 +154,7 @@ export default function FirstValueFlow() {
         <ErrorRecovery
           title="Sesion no disponible"
           message="Necesitas iniciar sesion para comenzar el proceso."
-          onRetry={() => navigate('/#login')}
+          onRetry={() => navigate('/signup')}
         />
       </FlowShell>
     );
