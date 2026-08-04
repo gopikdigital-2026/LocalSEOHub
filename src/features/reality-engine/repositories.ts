@@ -1,81 +1,108 @@
-import type { RealityState, SourceState, SourceId, SyncEvent } from './types';
+import { supabase } from '../../lib/supabase';
+import type { ConnectedSource, SyncEvent, SyncEventType, SourceType } from './types';
 
-const STORAGE_KEY = 'lsh_v2_reality_state';
+// ─── Load all sources for current user ──────────────────────────────────────
 
-function getDefaultState(): RealityState {
-  return {
-    sources: [
-      { id: 'google_business', name: 'Google Business Profile', description: 'Perfil de negocio', icon: 'Building2', status: 'not_connected', health: 'unknown', connected: false, lastSync: null, nextSync: null, lastError: null, confidence: 'demo', permissions: [], dataSourceType: 'google_business' },
-      { id: 'website', name: 'Sitio web', description: 'Analisis web', icon: 'Globe', status: 'not_connected', health: 'unknown', connected: false, lastSync: null, nextSync: null, lastError: null, confidence: 'demo', permissions: [], dataSourceType: 'website' },
-      { id: 'reviews', name: 'Resenas de Google', description: 'Resenas', icon: 'MessageSquare', status: 'not_connected', health: 'unknown', connected: false, lastSync: null, nextSync: null, lastError: null, confidence: 'demo', permissions: [], dataSourceType: 'reviews' },
-      { id: 'search_console', name: 'Google Search Console', description: 'Busquedas', icon: 'Search', status: 'not_connected', health: 'unknown', connected: false, lastSync: null, nextSync: null, lastError: null, confidence: 'demo', permissions: [], dataSourceType: 'google_business' },
-      { id: 'analytics', name: 'Google Analytics', description: 'Trafico', icon: 'BarChart2', status: 'not_connected', health: 'unknown', connected: false, lastSync: null, nextSync: null, lastError: null, confidence: 'demo', permissions: [], dataSourceType: 'website' },
-      { id: 'manual', name: 'Entrada manual', description: 'Datos manuales', icon: 'PenTool', status: 'connected', health: 'healthy', connected: true, lastSync: new Date().toISOString(), nextSync: null, lastError: null, confidence: 'verified', permissions: ['read_write'], dataSourceType: 'manual' },
-    ],
-    syncHistory: [],
-    lastGlobalSync: null,
-  };
+export async function loadSources(businessId = 'default'): Promise<ConnectedSource[]> {
+  const { data, error } = await supabase
+    .from('connected_sources')
+    .select('id, user_id, business_id, source_type, status, external_account_id, external_location_id, token_expires_at, last_sync_at, last_error, metadata, created_at, updated_at')
+    .eq('business_id', businessId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    if (import.meta.env.DEV) console.error('[sources] load error:', error);
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as ConnectedSource[];
 }
 
-function readState(): RealityState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as RealityState;
-  } catch { /* corrupted - reset */ }
-  return getDefaultState();
+// ─── Upsert a source ────────────────────────────────────────────────────────
+
+export async function upsertSource(
+  sourceType: SourceType,
+  patch: Partial<Pick<ConnectedSource, 'status' | 'external_account_id' | 'external_location_id' | 'last_sync_at' | 'last_error' | 'metadata'>>,
+  businessId = 'default'
+): Promise<ConnectedSource> {
+  const { data, error } = await supabase
+    .from('connected_sources')
+    .upsert(
+      {
+        source_type: sourceType,
+        business_id: businessId,
+        ...patch,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,business_id,source_type' }
+    )
+    .select('id, user_id, business_id, source_type, status, external_account_id, external_location_id, token_expires_at, last_sync_at, last_error, metadata, created_at, updated_at')
+    .single();
+
+  if (error) {
+    if (import.meta.env.DEV) console.error('[sources] upsert error:', error);
+    throw new Error(error.message);
+  }
+
+  return data as ConnectedSource;
 }
 
-function writeState(state: RealityState): void {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* quota */ }
+// ─── Delete (disconnect) a source ───────────────────────────────────────────
+
+export async function deleteSource(sourceId: string): Promise<void> {
+  const { error } = await supabase
+    .from('connected_sources')
+    .delete()
+    .eq('id', sourceId);
+
+  if (error) {
+    if (import.meta.env.DEV) console.error('[sources] delete error:', error);
+    throw new Error(error.message);
+  }
 }
 
-export interface RealityRepository {
-  load(): RealityState;
-  save(state: RealityState): void;
-  getSource(id: SourceId): SourceState | undefined;
-  updateSource(id: SourceId, patch: Partial<SourceState>): void;
-  addSyncEvent(event: SyncEvent): void;
-  getSyncHistory(sourceId?: SourceId): SyncEvent[];
+// ─── Sync events ────────────────────────────────────────────────────────────
+
+export async function addSyncEvent(
+  sourceId: string,
+  sourceType: SourceType,
+  eventType: SyncEventType,
+  message?: string,
+  recordsUpdated = 0,
+  errorDetails?: string
+): Promise<SyncEvent> {
+  const { data, error } = await supabase
+    .from('source_sync_events')
+    .insert({
+      source_id: sourceId,
+      source_type: sourceType,
+      event_type: eventType,
+      message: message ?? null,
+      records_updated: recordsUpdated,
+      error_details: errorDetails ?? null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (import.meta.env.DEV) console.error('[sources] event insert error:', error);
+    throw new Error(error.message);
+  }
+
+  return data as SyncEvent;
 }
 
-export function createRealityRepository(): RealityRepository {
-  let state = readState();
+export async function loadSyncEvents(limit = 50): Promise<SyncEvent[]> {
+  const { data, error } = await supabase
+    .from('source_sync_events')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
-  return {
-    load() {
-      state = readState();
-      return state;
-    },
+  if (error) {
+    if (import.meta.env.DEV) console.error('[sources] events load error:', error);
+    throw new Error(error.message);
+  }
 
-    save(newState: RealityState) {
-      state = newState;
-      writeState(state);
-    },
-
-    getSource(id: SourceId) {
-      return state.sources.find((s) => s.id === id);
-    },
-
-    updateSource(id: SourceId, patch: Partial<SourceState>) {
-      state = {
-        ...state,
-        sources: state.sources.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-      };
-      writeState(state);
-    },
-
-    addSyncEvent(event: SyncEvent) {
-      state = {
-        ...state,
-        syncHistory: [event, ...state.syncHistory].slice(0, 100),
-        lastGlobalSync: event.timestamp,
-      };
-      writeState(state);
-    },
-
-    getSyncHistory(sourceId?: SourceId) {
-      if (sourceId) return state.syncHistory.filter((e) => e.sourceId === sourceId);
-      return state.syncHistory;
-    },
-  };
+  return (data ?? []) as SyncEvent[];
 }

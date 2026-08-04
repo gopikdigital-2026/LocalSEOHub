@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createLocalRepository } from '../../features/business-memory/repository';
-import { createRealityRepository } from '../../features/reality-engine/repositories';
+import { loadSources as loadConnectedSources } from '../../features/reality-engine/repositories';
+import type { ConnectedSource } from '../../features/reality-engine/types';
 import { getDailyActions } from '../../features/daily-briefing/engine';
 import { demoRecommendations } from '../demo/demoData';
 import type { ConnectionEntry, DashboardAction } from '../../features/dashboard/types';
@@ -50,23 +51,35 @@ function recToAction(rec: Recommendation): DashboardAction {
   };
 }
 
+function sourceToConnection(s: ConnectedSource): ConnectionEntry {
+  return {
+    id: s.source_type,
+    label: s.source_type === 'google_business' ? 'Google Business' :
+           s.source_type === 'website' ? 'Sitio Web' :
+           s.source_type === 'reviews' ? 'Resenas' : s.source_type,
+    status: s.status === 'connected' ? 'connected' : s.status === 'error' ? 'not_connected' : 'not_connected',
+    lastSync: s.last_sync_at,
+  };
+}
+
 function useDashboardData() {
   const memoryRepo = useMemo(() => createLocalRepository(), []);
-  const realityRepo = useMemo(() => createRealityRepository(), []);
+  const [connectedSources, setConnectedSources] = useState<ConnectedSource[]>([]);
+
+  useEffect(() => {
+    loadConnectedSources().then(setConnectedSources).catch(() => {});
+  }, []);
 
   const memory = memoryRepo.load();
-  const reality = realityRepo.load();
-
   const profile = memory.profile;
   const hasProfile = Boolean(profile.name);
 
-  const sources = reality.sources;
-  const connections: ConnectionEntry[] = [
-    { id: 'google_business', label: 'Google Business', status: sources.find(s => s.id === 'google_business')?.connected ? 'connected' : sources.find(s => s.id === 'google_business')?.status === 'pending' ? 'pending' : 'not_connected', lastSync: sources.find(s => s.id === 'google_business')?.lastSync ?? null },
-    { id: 'website', label: 'Sitio Web', status: sources.find(s => s.id === 'website')?.connected ? 'connected' : 'not_connected', lastSync: sources.find(s => s.id === 'website')?.lastSync ?? null },
-    { id: 'facebook', label: 'Facebook', status: 'not_connected', lastSync: null },
-    { id: 'instagram', label: 'Instagram', status: 'not_connected', lastSync: null },
-  ];
+  const connections: ConnectionEntry[] = connectedSources.length > 0
+    ? connectedSources.map(sourceToConnection)
+    : [
+        { id: 'google_business', label: 'Google Business', status: 'not_connected', lastSync: null },
+        { id: 'website', label: 'Sitio Web', status: 'not_connected', lastSync: null },
+      ];
 
   const recs = getDailyActions(demoRecommendations, 5);
   const actions = recs.map(recToAction);

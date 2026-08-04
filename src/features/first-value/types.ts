@@ -1,6 +1,6 @@
 import type { ActionType, ImpactLevel } from '../../domain/types';
 import type { GoalId } from '../business-memory/types';
-import type { SourceId } from '../reality-engine/types';
+import type { SourceType as SourceId } from '../reality-engine/types';
 
 // ─── Data transparency ──────────────────────────────────────────────────────
 
