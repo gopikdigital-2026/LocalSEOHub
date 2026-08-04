@@ -15,7 +15,7 @@ import { isInAppBrowser } from '../lib/socialWebView';
 
 interface LandingPageProps {
   onLoginClick: (email?: string) => void;
-  onSignupClick: () => void;
+  onSignupClick: (businessName?: string) => void;
   onSubscribeClick: () => void;
   scrollToPricing?: boolean;
 }
@@ -1065,7 +1065,7 @@ const LOAD_STAGES = [
 ];
 
 // ── Main VisibilityChecker ────────────────────────────────────────────────────
-function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; onPhaseChange?: (phase: VPhase) => void }) {
+function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: () => void; onPhaseChange?: (phase: VPhase) => void; onSignup?: (businessName: string) => void }) {
   const [phase,       setPhase]       = useState<VPhase>('idle');
   const [name,        setName]        = useState('');
   const [pct,         setPct]         = useState(0);
@@ -1085,11 +1085,8 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
     e.preventDefault();
     const n = name.trim();
     if (!n) { inputRef.current?.focus(); return; }
-    startTimeRef.current = Date.now();
-    track('hero_analysis_start', { name: n });
-    changePhase('loading');
-    setPct(0); setMsgI(0);
-    setEarlyResult(null);
+    track('hero_cta_click', { name: n });
+    onSignup?.(n);
   };
 
   useEffect(() => {
@@ -1198,7 +1195,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange }: { onUnlock: () => void; 
                       bg-gradient-to-r from-emerald-500 to-teal-500 text-white
                       shadow-lg shadow-emerald-500/20 shrink-0 whitespace-nowrap">
                     <Zap size={15} fill="currentColor" />
-                    Analizar Gratis
+                    Configurar mi negocio gratis
                   </motion.button>
                 </div>
 
@@ -1581,17 +1578,17 @@ export default function LandingPage({ onLoginClick, onSignupClick, onSubscribeCl
               Iniciar sesion
             </button>
             <button
-              onClick={onSignupClick}
+              onClick={() => onSignupClick()}
               className="text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg transition-colors shadow-sm"
             >
-              Crear cuenta gratis
+              Configurar mi negocio gratis
             </button>
           </div>
         </div>
       </header>
 
       {/* ════════════════════════════ INTERACTIVE HERO (VisibilityChecker) */}
-      <VisibilityChecker onUnlock={onSubscribeClick} onPhaseChange={setAnalysisPhase} />
+      <VisibilityChecker onUnlock={onSubscribeClick} onPhaseChange={setAnalysisPhase} onSignup={(name) => onSignupClick(name)} />
 
       {/* ══════════════════════════════════════════════ CTA PRINCIPAL */}
       <section className="py-16 px-5 bg-gradient-to-b from-slate-50 to-white border-t border-slate-100">
@@ -1603,10 +1600,10 @@ export default function LandingPage({ onLoginClick, onSignupClick, onSubscribeCl
             Crea tu cuenta en 30 segundos. Sin tarjeta. 7 dias gratis.
           </p>
           <button
-            onClick={onSignupClick}
+            onClick={() => onSignupClick()}
             className="inline-flex items-center gap-2 text-base font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-8 py-4 rounded-xl transition-colors shadow-lg shadow-emerald-600/20"
           >
-            Crear mi cuenta gratis
+            Configurar mi negocio gratis
           </button>
           <p className="text-xs text-slate-400 mt-4">
             Ya tienes cuenta?{' '}

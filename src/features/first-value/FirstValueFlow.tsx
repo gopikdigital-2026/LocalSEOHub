@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getPendingBusinessName } from '../../App';
 import type { FirstValueState, SourceChoice, SourceChoiceType, ManualContextData } from './types';
 import { STEP_ORDER } from './types';
 import { createFirstValueRepository, createDefaultState } from './repository';
@@ -109,13 +110,20 @@ export default function FirstValueFlow() {
 
     repo.load().then((loaded) => {
       const ctx = { userId, businessId };
+      const pendingName = getPendingBusinessName();
       if (loaded) {
+        if (pendingName && !loaded.businessData?.name) {
+          loaded.businessData = { ...(loaded.businessData ?? { name: '', category: '', city: '', website: '' }), name: pendingName };
+        }
         setState(loaded);
         if (loaded.currentStep !== 'welcome') {
           trackFirstValueResumed(ctx, loaded.currentStep);
         }
       } else {
         const fresh = createDefaultState(userId, businessId);
+        if (pendingName) {
+          fresh.businessData = { name: pendingName, category: '', city: '', website: '' };
+        }
         setState(fresh);
         trackFirstValueStarted(ctx);
       }

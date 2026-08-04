@@ -1,9 +1,10 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import AppShellV2 from './app-v2/layouts/AppShellV2';
 import { useAuth } from './hooks/useAuth';
+import { useOnboardingStatus } from './hooks/useOnboardingStatus';
+import { AppGuard, OnboardingGuard, useAuthRedirect } from './app-v2/auth';
 import { LoadingState } from './components/ui';
-import { FirstValueRedirect, AuthGate } from './app-v2/auth';
 
 // V2 pages (main app)
 const TodayPage = lazy(() => import('./app-v2/routes/TodayPage'));
@@ -29,10 +30,30 @@ const CopilotLanding = lazy(() => import('./components/CopilotLanding'));
 const MetaAdsLanding = lazy(() => import('./components/MetaAdsLanding'));
 const AdminDashboard = lazy(() => import('./legacy/components/AdminDashboard'));
 
-// ─── Root: landing for anon, redirect for logged-in ─────────────────────────
+const SKELETON = (
+  <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
+    <LoadingState message="Cargando..." />
+  </div>
+);
 
-function RootRedirect() {
-  const { session, loading } = useAuth();
+// ─── Temp storage for business name from landing ────────────────────────────
+
+const PENDING_BIZ_KEY = 'pending_business_name';
+
+export function getPendingBusinessName(): string | null {
+  const v = sessionStorage.getItem(PENDING_BIZ_KEY);
+  if (v) sessionStorage.removeItem(PENDING_BIZ_KEY);
+  return v;
+}
+
+function savePendingBusinessName(name: string) {
+  if (name.trim()) sessionStorage.setItem(PENDING_BIZ_KEY, name.trim());
+}
+
+// ─── / Root ─────────────────────────────────────────────────────────────────
+
+function RootRoute() {
+  const { status, authenticated } = useOnboardingStatus();
   const [showLogin, setShowLogin] = useState(false);
   const [loginMode, setLoginMode] = useState<'login' | 'signup'>('login');
   const [loginEmail, setLoginEmail] = useState('');
@@ -47,16 +68,11 @@ function RootRedirect() {
     }
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
-        <LoadingState message="Cargando..." />
-      </div>
-    );
-  }
+  if (status === 'loading') return SKELETON;
 
-  if (session) {
-    return <Navigate to="/hoy" replace />;
+  if (authenticated) {
+    if (status === 'completed') return <Navigate to="/hoy" replace />;
+    return <Navigate to="/empezar" replace />;
   }
 
   return (
@@ -67,7 +83,8 @@ function RootRedirect() {
           setLoginMode('login');
           setShowLogin(true);
         }}
-        onSignupClick={() => {
+        onSignupClick={(businessName?: string) => {
+          if (businessName) savePendingBusinessName(businessName);
           setLoginMode('signup');
           setShowLogin(true);
         }}
@@ -89,22 +106,22 @@ function RootRedirect() {
   );
 }
 
-// ─── /registro and /login standalone routes ─────────────────────────────────
+// ─── /registro & /login ─────────────────────────────────────────────────────
 
-function AuthPageRoute({ mode }: { mode: 'login' | 'signup' }) {
-  const { session, loading } = useAuth();
+function AuthRoute({ mode }: { mode: 'login' | 'signup' }) {
+  const redirect = useAuthRedirect();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { status } = useOnboardingStatus();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
-        <LoadingState message="Cargando..." />
-      </div>
-    );
-  }
+  if (status === 'loading') return SKELETON;
 
-  if (session) {
-    return <Navigate to={mode === 'signup' ? '/empezar' : '/hoy'} replace />;
+  if (redirect) {
+    const next = searchParams.get('next');
+    if (next && redirect !== '/empezar') {
+      return <Navigate to={next} replace />;
+    }
+    return <Navigate to={redirect} replace />;
   }
 
   return (
@@ -117,43 +134,13 @@ function AuthPageRoute({ mode }: { mode: 'login' | 'signup' }) {
   );
 }
 
-// ─── /empezar guard: redirect to /registro if not authenticated ─────────────
-
-function OnboardingRoute() {
-  const { session, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
-        <LoadingState message="Cargando..." />
-      </div>
-    );
-  }
-
-  if (!session) {
-    return <Navigate to="/registro" replace />;
-  }
-
-  return (
-    <Suspense fallback={null}>
-      <FirstValueFlow />
-    </Suspense>
-  );
-}
-
 // ─── Admin ──────────────────────────────────────────────────────────────────
 
 function AdminRoute() {
   const { session, loading } = useAuth();
   const ADMIN_EMAILS = ['hola@localseo.es', 'admin@localseo.es'];
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
-        <LoadingState />
-      </div>
-    );
-  }
+  if (loading) return SKELETON;
 
   if (!session || !ADMIN_EMAILS.includes(session.user.email ?? '')) {
     return <Navigate to="/" replace />;
@@ -166,7 +153,7 @@ function AdminRoute() {
   );
 }
 
-// ─── Meta Ads landing with login ────────────────────────────────────────────
+// ─── Meta Ads landing ───────────────────────────────────────────────────────
 
 function MetaAdsRoute() {
   const [showLogin, setShowLogin] = useState(false);
@@ -183,7 +170,7 @@ function MetaAdsRoute() {
   );
 }
 
-// ─── Demo shell (no auth) ───────────────────────────────────────────────────
+// ─── Demo shell ─────────────────────────────────────────────────────────────
 
 function DemoShell() {
   useEffect(() => {
@@ -204,20 +191,16 @@ function DemoShell() {
 
 export default function App() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
-        <LoadingState />
-      </div>
-    }>
+    <Suspense fallback={SKELETON}>
       <Routes>
-        {/* Root — authenticated users go to dashboard, others see landing */}
-        <Route path="/" element={<RootRedirect />} />
+        {/* Root */}
+        <Route path="/" element={<RootRoute />} />
 
-        {/* Direct auth routes */}
-        <Route path="/registro" element={<AuthPageRoute mode="signup" />} />
-        <Route path="/login" element={<AuthPageRoute mode="login" />} />
+        {/* Auth pages */}
+        <Route path="/registro" element={<AuthRoute mode="signup" />} />
+        <Route path="/login" element={<AuthRoute mode="login" />} />
 
-        {/* Public landing pages (marketing/SEO) */}
+        {/* Public marketing pages */}
         <Route path="/beta" element={<BetaLanding />} />
         <Route path="/generador-contenido-seo" element={<ContentGeneratorLanding />} />
         <Route path="/mas-clientes-google" element={<BusinessAuditLanding />} />
@@ -230,7 +213,7 @@ export default function App() {
         {/* Admin */}
         <Route path="/admin" element={<AdminRoute />} />
 
-        {/* Demo mode — no auth required */}
+        {/* Demo (no auth) */}
         <Route element={<DemoShell />}>
           <Route path="/demo" element={<TodayPage />} />
           <Route path="/demo/plan" element={<PlanPage />} />
@@ -238,16 +221,20 @@ export default function App() {
           <Route path="/demo/fuentes" element={<SourceManagerPage />} />
         </Route>
 
-        {/* First Value onboarding — redirects to /registro if not authenticated */}
-        <Route path="/empezar" element={<OnboardingRoute />} />
+        {/* Onboarding */}
+        <Route path="/empezar" element={
+          <OnboardingGuard>
+            <Suspense fallback={SKELETON}>
+              <FirstValueFlow />
+            </Suspense>
+          </OnboardingGuard>
+        } />
 
-        {/* Main app — auth + first value completed + shell */}
+        {/* Main app — requires auth + completed onboarding */}
         <Route element={
-          <AuthGate>
-            <FirstValueRedirect>
-              <AppShellV2 />
-            </FirstValueRedirect>
-          </AuthGate>
+          <AppGuard>
+            <AppShellV2 />
+          </AppGuard>
         }>
           <Route path="/hoy" element={<TodayPage />} />
           <Route path="/plan" element={<PlanPage />} />
@@ -258,18 +245,18 @@ export default function App() {
           <Route path="/fuentes" element={<SourceManagerPage />} />
         </Route>
 
-        {/* Execution page — auth, no shell */}
+        {/* Execution — auth + guard, no shell */}
         <Route path="/ejecutar/:recommendationId" element={
-          <AuthGate>
+          <AppGuard>
             <div className="min-h-screen bg-v2-bg-primary font-v2">
               <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
                 <ExecutionPage />
               </div>
             </div>
-          </AuthGate>
+          </AppGuard>
         } />
 
-        {/* Legacy V2 prefix redirects for bookmarks */}
+        {/* Legacy redirects */}
         <Route path="/app-v2" element={<Navigate to="/hoy" replace />} />
         <Route path="/app-v2/hoy" element={<Navigate to="/hoy" replace />} />
         <Route path="/app-v2/plan" element={<Navigate to="/plan" replace />} />
