@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import AppShellV2 from './app-v2/layouts/AppShellV2';
 import { useAuth } from './hooks/useAuth';
 import { LoadingState } from './components/ui';
@@ -29,13 +29,20 @@ const CopilotLanding = lazy(() => import('./components/CopilotLanding'));
 const MetaAdsLanding = lazy(() => import('./components/MetaAdsLanding'));
 const AdminDashboard = lazy(() => import('./legacy/components/AdminDashboard'));
 
+// ─── Root: landing for anon, redirect for logged-in ─────────────────────────
+
 function RootRedirect() {
   const { session, loading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+  const [loginMode, setLoginMode] = useState<'login' | 'signup'>('login');
   const [loginEmail, setLoginEmail] = useState('');
 
   useEffect(() => {
     if (window.location.hash === '#login') {
+      setLoginMode('login');
+      setShowLogin(true);
+    } else if (window.location.hash === '#registro') {
+      setLoginMode('signup');
       setShowLogin(true);
     }
   }, []);
@@ -57,14 +64,23 @@ function RootRedirect() {
       <LandingPage
         onLoginClick={(email?: string) => {
           if (email) setLoginEmail(email);
+          setLoginMode('login');
           setShowLogin(true);
         }}
-        onSubscribeClick={() => setShowLogin(true)}
+        onSignupClick={() => {
+          setLoginMode('signup');
+          setShowLogin(true);
+        }}
+        onSubscribeClick={() => {
+          setLoginMode('signup');
+          setShowLogin(true);
+        }}
       />
       {showLogin && (
         <Suspense fallback={null}>
           <LoginModal
             onClose={() => { setShowLogin(false); setLoginEmail(''); window.history.replaceState(null, '', '/'); }}
+            initialMode={loginMode}
             initialEmail={loginEmail}
           />
         </Suspense>
@@ -72,6 +88,60 @@ function RootRedirect() {
     </Suspense>
   );
 }
+
+// ─── /registro and /login standalone routes ─────────────────────────────────
+
+function AuthPageRoute({ mode }: { mode: 'login' | 'signup' }) {
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
+        <LoadingState message="Cargando..." />
+      </div>
+    );
+  }
+
+  if (session) {
+    return <Navigate to={mode === 'signup' ? '/empezar' : '/hoy'} replace />;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <LoginModal
+        onClose={() => navigate('/')}
+        initialMode={mode}
+      />
+    </Suspense>
+  );
+}
+
+// ─── /empezar guard: redirect to /registro if not authenticated ─────────────
+
+function OnboardingRoute() {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
+        <LoadingState message="Cargando..." />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Navigate to="/registro" replace />;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <FirstValueFlow />
+    </Suspense>
+  );
+}
+
+// ─── Admin ──────────────────────────────────────────────────────────────────
 
 function AdminRoute() {
   const { session, loading } = useAuth();
@@ -96,6 +166,8 @@ function AdminRoute() {
   );
 }
 
+// ─── Meta Ads landing with login ────────────────────────────────────────────
+
 function MetaAdsRoute() {
   const [showLogin, setShowLogin] = useState(false);
 
@@ -104,12 +176,14 @@ function MetaAdsRoute() {
       <MetaAdsLanding onUnlock={() => setShowLogin(true)} />
       {showLogin && (
         <Suspense fallback={null}>
-          <LoginModal onClose={() => setShowLogin(false)} />
+          <LoginModal onClose={() => setShowLogin(false)} initialMode="signup" />
         </Suspense>
       )}
     </Suspense>
   );
 }
+
+// ─── Demo shell (no auth) ───────────────────────────────────────────────────
 
 function DemoShell() {
   useEffect(() => {
@@ -126,6 +200,8 @@ function DemoShell() {
   return <AppShellV2 />;
 }
 
+// ─── App ────────────────────────────────────────────────────────────────────
+
 export default function App() {
   return (
     <Suspense fallback={
@@ -136,6 +212,10 @@ export default function App() {
       <Routes>
         {/* Root — authenticated users go to dashboard, others see landing */}
         <Route path="/" element={<RootRedirect />} />
+
+        {/* Direct auth routes */}
+        <Route path="/registro" element={<AuthPageRoute mode="signup" />} />
+        <Route path="/login" element={<AuthPageRoute mode="login" />} />
 
         {/* Public landing pages (marketing/SEO) */}
         <Route path="/beta" element={<BetaLanding />} />
@@ -158,10 +238,8 @@ export default function App() {
           <Route path="/demo/fuentes" element={<SourceManagerPage />} />
         </Route>
 
-        {/* First Value onboarding — auth required, no shell */}
-        <Route path="/empezar" element={
-          <AuthGate><FirstValueFlow /></AuthGate>
-        } />
+        {/* First Value onboarding — redirects to /registro if not authenticated */}
+        <Route path="/empezar" element={<OnboardingRoute />} />
 
         {/* Main app — auth + first value completed + shell */}
         <Route element={

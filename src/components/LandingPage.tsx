@@ -15,6 +15,7 @@ import { isInAppBrowser } from '../lib/socialWebView';
 
 interface LandingPageProps {
   onLoginClick: (email?: string) => void;
+  onSignupClick: () => void;
   onSubscribeClick: () => void;
   scrollToPricing?: boolean;
 }
@@ -1504,7 +1505,7 @@ const PrimaryBtn = memo(function PrimaryBtn({
 });
 
 // ─── Main landing page ─────────────────────────────────────────────────────────
-export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingPageProps) {
+export default function LandingPage({ onLoginClick, onSignupClick, onSubscribeClick }: LandingPageProps) {
   const { t } = useI18n();
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
   const [analysisPhase, setAnalysisPhase] = useState<VPhase>('idle');
@@ -1565,8 +1566,56 @@ export default function LandingPage({ onLoginClick, onSubscribeClick }: LandingP
   return (
     <div className="min-h-screen bg-white text-slate-800 overflow-x-hidden pb-20 sm:pb-0">
 
+      {/* ════════════════════════════ STICKY HEADER */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14 sm:h-16">
+          <div className="flex items-center gap-2.5">
+            <LogoIcon size={28} />
+            <span className="font-bold text-slate-900 text-base sm:text-lg tracking-tight">LocalSEOHub</span>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => onLoginClick()}
+              className="text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Iniciar sesion
+            </button>
+            <button
+              onClick={onSignupClick}
+              className="text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg transition-colors shadow-sm"
+            >
+              Crear cuenta gratis
+            </button>
+          </div>
+        </div>
+      </header>
+
       {/* ════════════════════════════ INTERACTIVE HERO (VisibilityChecker) */}
       <VisibilityChecker onUnlock={onSubscribeClick} onPhaseChange={setAnalysisPhase} />
+
+      {/* ══════════════════════════════════════════════ CTA PRINCIPAL */}
+      <section className="py-16 px-5 bg-gradient-to-b from-slate-50 to-white border-t border-slate-100">
+        <div className="max-w-xl mx-auto text-center">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
+            Empieza hoy a mejorar tu visibilidad local
+          </h2>
+          <p className="text-slate-500 text-base mb-8">
+            Crea tu cuenta en 30 segundos. Sin tarjeta. 7 dias gratis.
+          </p>
+          <button
+            onClick={onSignupClick}
+            className="inline-flex items-center gap-2 text-base font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-8 py-4 rounded-xl transition-colors shadow-lg shadow-emerald-600/20"
+          >
+            Crear mi cuenta gratis
+          </button>
+          <p className="text-xs text-slate-400 mt-4">
+            Ya tienes cuenta?{' '}
+            <button onClick={() => onLoginClick()} className="text-emerald-600 hover:text-emerald-700 font-medium">
+              Inicia sesion
+            </button>
+          </p>
+        </div>
+      </section>
 
       {/* ══════════════════════════════════════════════ CÓMO FUNCIONA */}
       <section className="py-28 px-5 border-t border-slate-200">
