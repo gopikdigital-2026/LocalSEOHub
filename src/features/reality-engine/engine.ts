@@ -132,6 +132,14 @@ export function clearStoredOAuthState(): void {
   sessionStorage.removeItem(GBP_STATE_KEY);
 }
 
+export async function resetGBPStatus(businessId = 'default'): Promise<void> {
+  await upsertSource('google_business', {
+    status: 'disconnected',
+    last_error: null,
+    metadata: {},
+  }, businessId);
+}
+
 export async function selectGBPLocation(
   accountId: string,
   locationId: string,

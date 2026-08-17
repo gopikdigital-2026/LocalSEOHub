@@ -4,6 +4,7 @@ import { Loader2, AlertCircle, MapPin, CheckCircle2, ChevronRight } from 'lucide
 import {
   clearStoredOAuthState,
   selectGBPLocation,
+  resetGBPStatus,
 } from '../../features/reality-engine/engine';
 import { supabase } from '../../lib/supabase';
 
@@ -29,6 +30,7 @@ export default function GBPCallbackPage() {
     setError(msg);
     setPhase('error');
     clearStoredOAuthState();
+    resetGBPStatus();
   }, []);
 
   // The edge function already exchanged the code for tokens and fetched accounts.

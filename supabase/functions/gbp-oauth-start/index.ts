@@ -71,7 +71,11 @@ Deno.serve(async (req: Request) => {
       .join("");
 
     // Persist state in DB for server-side CSRF validation
-    await supabaseAdmin
+    console.log("[gbp-oauth-start] state generated:", state.substring(0, 8) + "...");
+    console.log("[gbp-oauth-start] user_id:", user.id);
+    console.log("[gbp-oauth-start] table: connected_sources, column: metadata->>oauth_state");
+
+    const { error: upsertError } = await supabaseAdmin
       .from("connected_sources")
       .upsert(
         {
@@ -84,6 +88,8 @@ Deno.serve(async (req: Request) => {
         },
         { onConflict: "user_id,business_id,source_type" }
       );
+
+    console.log("[gbp-oauth-start] upsert result:", upsertError ? `ERROR: ${upsertError.message}` : "OK");
 
     const scopes = [
       "https://www.googleapis.com/auth/business.manage",

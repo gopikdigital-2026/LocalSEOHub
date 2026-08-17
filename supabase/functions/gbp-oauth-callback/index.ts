@@ -8,10 +8,6 @@ const corsHeaders = {
     "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-// Google redirects here via GET — no JWT is present.
-// The user is identified by the oauth_state stored in connected_sources
-// during gbp-oauth-start.
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -22,6 +18,7 @@ Deno.serve(async (req: Request) => {
 
   function redirectWithError(msg: string): Response {
     const url = `${frontendCallback}?error=${encodeURIComponent(msg)}`;
+    console.log("[gbp-oauth-callback] Redirecting with error:", msg);
     return new Response(null, { status: 302, headers: { Location: url } });
   }
 
@@ -34,8 +31,6 @@ Deno.serve(async (req: Request) => {
       return redirectWithError("Google API no configurado en el servidor");
     }
 
-    // Extract code and state from query params (GET redirect from Google)
-    // or from JSON body (POST call from frontend)
     let code: string | null = null;
     let state: string | null = null;
 
@@ -44,7 +39,6 @@ Deno.serve(async (req: Request) => {
       code = url.searchParams.get("code");
       state = url.searchParams.get("state");
 
-      // Google may send an error param instead of code
       const googleError = url.searchParams.get("error");
       if (googleError) {
         return redirectWithError(`Google denego el acceso: ${googleError}`);
@@ -59,6 +53,9 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    console.log("[gbp-oauth-callback] state received:", state ? `${state.substring(0, 8)}...` : "null");
+    console.log("[gbp-oauth-callback] code received:", code ? "yes" : "no");
+
     if (!code || !state) {
       return redirectWithError("Faltan parametros de autorizacion (code/state)");
     }
@@ -68,27 +65,34 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // ── CSRF: look up the user by the stored oauth_state ──
-    // The state was saved in connected_sources.metadata.oauth_state
-    // by gbp-oauth-start, keyed to the authenticated user.
+    // Look up the user by matching the exact oauth_state value.
+    // This is the key fix: filter by metadata->>oauth_state = state
+    // instead of just source_type + status, which fails when multiple
+    // users are connecting simultaneously (maybeSingle returns error).
     const { data: sourceRow, error: lookupError } = await supabaseAdmin
       .from("connected_sources")
       .select("user_id, metadata")
       .eq("source_type", "google_business")
       .eq("status", "connecting")
+      .eq("metadata->>oauth_state", state)
       .maybeSingle();
 
-    if (lookupError || !sourceRow) {
+    console.log("[gbp-oauth-callback] DB lookup result:", {
+      found: !!sourceRow,
+      lookupError: lookupError?.message ?? null,
+      user_id: sourceRow?.user_id ?? null,
+    });
+
+    if (lookupError) {
+      console.error("[gbp-oauth-callback] DB lookup error:", lookupError.message);
       return redirectWithError(
-        "No se encontro una conexion en curso. Vuelve a iniciar la conexion desde Fuentes."
+        "Error al buscar la conexion en curso. Vuelve a iniciar la conexion desde Fuentes."
       );
     }
 
-    const storedState = (sourceRow.metadata as Record<string, unknown>)
-      ?.oauth_state;
-    if (!storedState || storedState !== state) {
+    if (!sourceRow) {
       return redirectWithError(
-        "La verificacion de seguridad ha fallado (state no coincide). Vuelve a iniciar la conexion."
+        "No se encontro una conexion en curso. Vuelve a iniciar la conexion desde Fuentes."
       );
     }
 
@@ -112,16 +116,17 @@ Deno.serve(async (req: Request) => {
 
     if (!tokenResponse.ok) {
       const errBody = await tokenResponse.text();
-      console.error("Token exchange failed:", errBody);
+      console.error("[gbp-oauth-callback] Token exchange failed:", errBody);
       return redirectWithError(
         "Error al intercambiar el codigo de autorizacion con Google"
       );
     }
 
     const tokens = await tokenResponse.json();
+    console.log("[gbp-oauth-callback] Token exchange success for user:", userId);
 
     // ── Store tokens (service_role bypasses column restrictions) ──
-    await supabaseAdmin
+    const { error: upsertError } = await supabaseAdmin
       .from("connected_sources")
       .upsert(
         {
@@ -143,6 +148,10 @@ Deno.serve(async (req: Request) => {
         { onConflict: "user_id,business_id,source_type" }
       );
 
+    if (upsertError) {
+      console.error("[gbp-oauth-callback] Token upsert failed:", upsertError.message);
+    }
+
     // ── Fetch GBP accounts ──
     const accountsResponse = await fetch(
       "https://mybusinessaccountmanagement.googleapis.com/v1/accounts",
@@ -153,7 +162,7 @@ Deno.serve(async (req: Request) => {
 
     if (!accountsResponse.ok) {
       const body = await accountsResponse.text();
-      console.error("GBP accounts fetch failed:", body);
+      console.error("[gbp-oauth-callback] GBP accounts fetch failed:", body);
       return redirectWithError(
         "No se pudieron obtener las cuentas de Google Business Profile"
       );
@@ -167,7 +176,8 @@ Deno.serve(async (req: Request) => {
       })
     );
 
-    // Redirect to frontend with accounts encoded in the URL
+    console.log("[gbp-oauth-callback] Accounts found:", accounts.length);
+
     const accountsParam = encodeURIComponent(JSON.stringify(accounts));
     const successUrl = `${frontendCallback}?accounts=${accountsParam}`;
     return new Response(null, {
@@ -176,7 +186,7 @@ Deno.serve(async (req: Request) => {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Error interno";
-    console.error("gbp-oauth-callback error:", msg);
+    console.error("[gbp-oauth-callback] Unhandled error:", msg);
     return redirectWithError(msg);
   }
 });
