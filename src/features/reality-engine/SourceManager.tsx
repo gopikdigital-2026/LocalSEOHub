@@ -4,6 +4,7 @@ import type { ConnectedSource, SyncEvent, SourceType, ManualEntryData } from './
 import { SOURCE_REGISTRY, getSourceEntry } from './registry';
 import { loadSources, loadSyncEvents } from './repositories';
 import { connectWebsite, saveManualEntry, disconnectSource, startGBPConnection, formatRelativeTime } from './engine';
+import type { GBPStartResult } from './engine';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   'map-pin': MapPin,
@@ -61,11 +62,18 @@ export default function SourceManager() {
     setBusySource(null);
   };
 
+  const [gbpNotConfigured, setGbpNotConfigured] = useState(false);
+
   const handleGBPConnect = async () => {
     setBusySource('google_business');
-    const result = await startGBPConnection();
-    if ('error' in result) {
-      setError(result.error);
+    const result: GBPStartResult = await startGBPConnection();
+    if (result.status === 'not_configured') {
+      setGbpNotConfigured(true);
+      setBusySource(null);
+      return;
+    }
+    if (result.status === 'error') {
+      setError(result.message);
       setBusySource(null);
       return;
     }
@@ -98,6 +106,24 @@ export default function SourceManager() {
         hasVerified={hasVerified}
         hasManual={hasManual}
       />
+
+      {/* GBP not configured notice */}
+      {gbpNotConfigured && (
+        <div className="flex items-start gap-3 p-4 rounded-v2-xl bg-v2-warning-50 border border-v2-warning-200">
+          <MapPin size={16} className="text-v2-warning-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-v2-xs font-semibold text-v2-warning-700">
+              La conexion con Google Business esta pendiente de configuracion.
+            </p>
+            <p className="text-v2-xs text-v2-warning-600 mt-1">
+              Estamos preparando la integracion. Mientras tanto, puedes conectar tu sitio web o completar la entrada manual.
+            </p>
+          </div>
+          <button onClick={() => setGbpNotConfigured(false)} className="ml-auto shrink-0">
+            <X size={14} className="text-v2-warning-400" />
+          </button>
+        </div>
+      )}
 
       {/* Error banner */}
       {error && (

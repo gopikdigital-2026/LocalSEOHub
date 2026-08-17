@@ -17,6 +17,7 @@ const BusinessMemoryPage = lazy(() => import('./features/business-memory/Busines
 const WeeklySummaryPage = lazy(() => import('./features/business-memory/WeeklySummaryPage'));
 const SourceManagerPage = lazy(() => import('./features/reality-engine/SourceManager'));
 const FirstValueFlow = lazy(() => import('./features/first-value/FirstValueFlow'));
+const GBPCallbackPage = lazy(() => import('./features/reality-engine/GBPCallbackPage'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
@@ -142,6 +143,15 @@ export default function App() {
           <Route path="/negocio/memoria" element={<BusinessMemoryPage />} />
           <Route path="/fuentes" element={<SourceManagerPage />} />
         </Route>
+
+        {/* ── OAuth callbacks (auth, no shell) ── */}
+        <Route path="/oauth/google-business/callback" element={
+          <AppGuard>
+            <Suspense fallback={SKELETON}>
+              <GBPCallbackPage />
+            </Suspense>
+          </AppGuard>
+        } />
 
         {/* ── Execution (auth, no shell) ── */}
         <Route path="/ejecutar/:recommendationId" element={

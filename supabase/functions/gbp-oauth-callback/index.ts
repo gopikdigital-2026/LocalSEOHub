@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
 
     if (!clientId || !clientSecret || !redirectUri) {
       return new Response(
-        JSON.stringify({ error: "Google API no configurado" }),
+        JSON.stringify({ error: "Google API no configurado en el servidor" }),
         {
           status: 503,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -50,7 +50,52 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Exchange code for tokens
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const jwt = authHeader.replace("Bearer ", "");
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseAdmin.auth.getUser(jwt);
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Sesion no valida" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // ── CSRF: validate state against DB ──
+    const { data: sourceRow } = await supabaseAdmin
+      .from("connected_sources")
+      .select("metadata")
+      .eq("user_id", user.id)
+      .eq("business_id", "default")
+      .eq("source_type", "google_business")
+      .maybeSingle();
+
+    const storedState = (sourceRow?.metadata as Record<string, unknown>)
+      ?.oauth_state;
+    if (!storedState || storedState !== state) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "La verificacion de seguridad ha fallado (state no coincide). Vuelve a iniciar la conexion.",
+        }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // ── Exchange code for tokens ──
     const tokenResponse = await fetch(
       "https://oauth2.googleapis.com/token",
       {
@@ -70,7 +115,7 @@ Deno.serve(async (req: Request) => {
       const errBody = await tokenResponse.text();
       return new Response(
         JSON.stringify({
-          error: "Error al intercambiar el codigo de autorizacion",
+          error: "Error al intercambiar el codigo de autorizacion con Google",
           details: errBody,
         }),
         {
@@ -82,29 +127,10 @@ Deno.serve(async (req: Request) => {
 
     const tokens = await tokenResponse.json();
 
-    // Get user ID from JWT
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    const jwt = authHeader.replace("Bearer ", "");
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseAdmin.auth.getUser(jwt);
-
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Usuario no autenticado" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Store encrypted tokens in the database (service_role bypasses RLS and column restrictions)
+    // ── Store tokens (service_role bypasses column restrictions) ──
+    // NOTE: Tokens are stored as-is. For production, encrypt with a KMS
+    // or Vault service before persisting. The column names reflect the
+    // intended target state, not the current implementation.
     await supabaseAdmin
       .from("connected_sources")
       .upsert(
@@ -120,12 +146,13 @@ Deno.serve(async (req: Request) => {
                 Date.now() + tokens.expires_in * 1000
               ).toISOString()
             : null,
+          metadata: { oauth_state: null, tokens_stored_at: new Date().toISOString() },
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id,business_id,source_type" }
       );
 
-    // Fetch GBP accounts using the access token
+    // ── Fetch GBP accounts ──
     const accountsResponse = await fetch(
       "https://mybusinessaccountmanagement.googleapis.com/v1/accounts",
       {
@@ -134,9 +161,11 @@ Deno.serve(async (req: Request) => {
     );
 
     if (!accountsResponse.ok) {
+      const body = await accountsResponse.text();
       return new Response(
         JSON.stringify({
-          error: "No se pudieron obtener las cuentas de Google Business",
+          error: "No se pudieron obtener las cuentas de Google Business Profile",
+          details: body,
         }),
         {
           status: 400,
