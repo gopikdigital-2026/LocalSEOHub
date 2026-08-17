@@ -2,9 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, AlertCircle, MapPin, CheckCircle2, ChevronRight } from 'lucide-react';
 import {
-  getStoredOAuthState,
   clearStoredOAuthState,
-  completeGBPConnection,
   selectGBPLocation,
 } from '../../features/reality-engine/engine';
 import { supabase } from '../../lib/supabase';
@@ -24,8 +22,8 @@ export default function GBPCallbackPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
-  const code = searchParams.get('code');
-  const stateParam = searchParams.get('state');
+  const accountsParam = searchParams.get('accounts');
+  const errorParam = searchParams.get('error');
 
   const handleError = useCallback((msg: string) => {
     setError(msg);
@@ -33,42 +31,42 @@ export default function GBPCallbackPage() {
     clearStoredOAuthState();
   }, []);
 
-  // Step 1: Validate state + exchange code
+  // The edge function already exchanged the code for tokens and fetched accounts.
+  // This page receives accounts (success) or error (failure) as query params.
   useEffect(() => {
     if (phase !== 'validating') return;
 
-    if (!code || !stateParam) {
-      handleError('Faltan parametros de autorizacion. Vuelve a intentar la conexion desde Fuentes.');
-      return;
-    }
-
-    const storedState = getStoredOAuthState();
-    if (!storedState || storedState !== stateParam) {
-      handleError('La verificacion de seguridad ha fallado (state no coincide). Vuelve a iniciar la conexion.');
-      return;
-    }
-
     clearStoredOAuthState();
 
-    completeGBPConnection(code, stateParam).then(result => {
-      if (!result.success) {
-        handleError(result.error ?? 'Error al completar la autorizacion');
+    if (errorParam) {
+      handleError(decodeURIComponent(errorParam));
+      return;
+    }
+
+    if (!accountsParam) {
+      handleError('No se recibieron datos de Google Business Profile. Vuelve a intentar desde Fuentes.');
+      return;
+    }
+
+    try {
+      const parsed: Account[] = JSON.parse(decodeURIComponent(accountsParam));
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        handleError('No se encontraron cuentas de Google Business Profile asociadas.');
         return;
       }
-      if (result.accounts && result.accounts.length > 0) {
-        setAccounts(result.accounts);
-        if (result.accounts.length === 1) {
-          handleSelectAccount(result.accounts[0]);
-        } else {
-          setPhase('select_account');
-        }
-      } else {
-        handleError('No se encontraron cuentas de Google Business Profile asociadas.');
-      }
-    });
-  }, [phase, code, stateParam, handleError]);
 
-  // Step 2: Load locations for selected account
+      setAccounts(parsed);
+      if (parsed.length === 1) {
+        handleSelectAccount(parsed[0]);
+      } else {
+        setPhase('select_account');
+      }
+    } catch {
+      handleError('Error al procesar la respuesta de Google. Vuelve a intentar desde Fuentes.');
+    }
+  }, [phase, accountsParam, errorParam, handleError]);
+
+  // Load locations for selected account
   const handleSelectAccount = async (account: Account) => {
     setSelectedAccount(account);
     setPhase('loading_locations');
@@ -79,7 +77,6 @@ export default function GBPCallbackPage() {
       });
 
       if (fnError || !data?.locations) {
-        // If no location listing available, let user proceed with account as location
         setLocations([{ name: `${account.id}/locations/default`, title: account.name }]);
         setPhase('select_location');
         return;
@@ -98,13 +95,12 @@ export default function GBPCallbackPage() {
         setPhase('select_location');
       }
     } catch {
-      // Fallback: use account as single location
       setLocations([{ name: `${account.id}/locations/default`, title: account.name }]);
       setPhase('select_location');
     }
   };
 
-  // Step 3: Sync selected location
+  // Sync selected location
   const handleSelectLocation = async (accountId: string, location: Location) => {
     setPhase('syncing');
     const result = await selectGBPLocation(accountId, location.name, location.title);
@@ -124,7 +120,7 @@ export default function GBPCallbackPage() {
           <div className="text-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-v2-primary-600 mx-auto mb-4" />
             <p className="text-v2-sm font-semibold text-v2-text-primary">
-              {phase === 'validating' && 'Verificando autorizacion...'}
+              {phase === 'validating' && 'Procesando autorizacion...'}
               {phase === 'loading_locations' && 'Cargando ubicaciones...'}
               {phase === 'syncing' && 'Sincronizando datos del negocio...'}
             </p>

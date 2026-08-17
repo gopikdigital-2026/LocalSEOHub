@@ -128,32 +128,8 @@ export async function startGBPConnection(): Promise<GBPStartResult> {
   return { status: 'redirect', url: data.url };
 }
 
-export function getStoredOAuthState(): string | null {
-  return sessionStorage.getItem(GBP_STATE_KEY);
-}
-
 export function clearStoredOAuthState(): void {
   sessionStorage.removeItem(GBP_STATE_KEY);
-}
-
-export async function completeGBPConnection(
-  code: string,
-  state: string,
-): Promise<{ success: boolean; error?: string; accounts?: Array<{ id: string; name: string }> }> {
-  const { data, error } = await invokeEdge<{ accounts: Array<{ id: string; name: string }> }>(
-    'gbp-oauth-callback',
-    { code, state }
-  );
-
-  if (error) {
-    return { success: false, error };
-  }
-
-  if (data?.accounts) {
-    return { success: true, accounts: data.accounts };
-  }
-
-  return { success: false, error: 'Respuesta inesperada del servidor' };
 }
 
 export async function selectGBPLocation(
