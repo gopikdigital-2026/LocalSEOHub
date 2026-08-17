@@ -3,6 +3,8 @@ import type { ConnectedSource, SyncEvent, SyncEventType, SourceType } from './ty
 
 // ─── Load all sources for current user ──────────────────────────────────────
 
+const STALE_CONNECTING_MS = 10 * 60 * 1000; // 10 minutes
+
 export async function loadSources(businessId = 'default'): Promise<ConnectedSource[]> {
   const { data, error } = await supabase
     .from('connected_sources')
@@ -15,7 +17,22 @@ export async function loadSources(businessId = 'default'): Promise<ConnectedSour
     throw new Error(error.message);
   }
 
-  return (data ?? []) as ConnectedSource[];
+  const sources = (data ?? []) as ConnectedSource[];
+
+  for (const src of sources) {
+    if (src.status !== 'connecting') continue;
+    const age = Date.now() - new Date(src.updated_at).getTime();
+    if (age < STALE_CONNECTING_MS) continue;
+    src.status = 'disconnected';
+    src.last_error = 'El intento de conexion expiro. Pulsa Conectar para reintentar.';
+    supabase
+      .from('connected_sources')
+      .update({ status: 'disconnected', last_error: src.last_error, metadata: {}, updated_at: new Date().toISOString() })
+      .eq('id', src.id)
+      .then();
+  }
+
+  return sources;
 }
 
 // ─── Upsert a source ────────────────────────────────────────────────────────
