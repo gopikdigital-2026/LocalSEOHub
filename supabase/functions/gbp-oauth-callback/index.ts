@@ -8,9 +8,21 @@ const corsHeaders = {
     "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+// Google redirects here via GET — no JWT is present.
+// The user is identified by the oauth_state stored in connected_sources
+// during gbp-oauth-start.
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  const SITE_URL = Deno.env.get("SITE_URL") || "https://localseohub.io";
+  const frontendCallback = `${SITE_URL}/oauth/google-business/callback`;
+
+  function redirectWithError(msg: string): Response {
+    const url = `${frontendCallback}?error=${encodeURIComponent(msg)}`;
+    return new Response(null, { status: 302, headers: { Location: url } });
   }
 
   try {
@@ -19,35 +31,36 @@ Deno.serve(async (req: Request) => {
     const redirectUri = Deno.env.get("GOOGLE_REDIRECT_URI");
 
     if (!clientId || !clientSecret || !redirectUri) {
-      return new Response(
-        JSON.stringify({ error: "Google API no configurado en el servidor" }),
-        {
-          status: 503,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return redirectWithError("Google API no configurado en el servidor");
     }
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "No autorizado" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    // Extract code and state from query params (GET redirect from Google)
+    // or from JSON body (POST call from frontend)
+    let code: string | null = null;
+    let state: string | null = null;
+
+    if (req.method === "GET") {
+      const url = new URL(req.url);
+      code = url.searchParams.get("code");
+      state = url.searchParams.get("state");
+
+      // Google may send an error param instead of code
+      const googleError = url.searchParams.get("error");
+      if (googleError) {
+        return redirectWithError(`Google denego el acceso: ${googleError}`);
+      }
+    } else {
+      try {
+        const body = await req.json();
+        code = body.code ?? null;
+        state = body.state ?? null;
+      } catch {
+        return redirectWithError("Solicitud invalida");
+      }
     }
 
-    const { code, state } = await req.json();
     if (!code || !state) {
-      return new Response(
-        JSON.stringify({ error: "Codigo y estado requeridos" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return redirectWithError("Faltan parametros de autorizacion (code/state)");
     }
 
     const supabaseAdmin = createClient(
@@ -55,45 +68,31 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const jwt = authHeader.replace("Bearer ", "");
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseAdmin.auth.getUser(jwt);
-
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Sesion no valida" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // ── CSRF: validate state against DB ──
-    const { data: sourceRow } = await supabaseAdmin
+    // ── CSRF: look up the user by the stored oauth_state ──
+    // The state was saved in connected_sources.metadata.oauth_state
+    // by gbp-oauth-start, keyed to the authenticated user.
+    const { data: sourceRow, error: lookupError } = await supabaseAdmin
       .from("connected_sources")
-      .select("metadata")
-      .eq("user_id", user.id)
-      .eq("business_id", "default")
+      .select("user_id, metadata")
       .eq("source_type", "google_business")
+      .eq("status", "connecting")
       .maybeSingle();
 
-    const storedState = (sourceRow?.metadata as Record<string, unknown>)
-      ?.oauth_state;
-    if (!storedState || storedState !== state) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "La verificacion de seguridad ha fallado (state no coincide). Vuelve a iniciar la conexion.",
-        }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+    if (lookupError || !sourceRow) {
+      return redirectWithError(
+        "No se encontro una conexion en curso. Vuelve a iniciar la conexion desde Fuentes."
       );
     }
+
+    const storedState = (sourceRow.metadata as Record<string, unknown>)
+      ?.oauth_state;
+    if (!storedState || storedState !== state) {
+      return redirectWithError(
+        "La verificacion de seguridad ha fallado (state no coincide). Vuelve a iniciar la conexion."
+      );
+    }
+
+    const userId = sourceRow.user_id;
 
     // ── Exchange code for tokens ──
     const tokenResponse = await fetch(
@@ -113,40 +112,32 @@ Deno.serve(async (req: Request) => {
 
     if (!tokenResponse.ok) {
       const errBody = await tokenResponse.text();
-      return new Response(
-        JSON.stringify({
-          error: "Error al intercambiar el codigo de autorizacion con Google",
-          details: errBody,
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+      console.error("Token exchange failed:", errBody);
+      return redirectWithError(
+        "Error al intercambiar el codigo de autorizacion con Google"
       );
     }
 
     const tokens = await tokenResponse.json();
 
     // ── Store tokens (service_role bypasses column restrictions) ──
-    // NOTE: Tokens are stored as-is. For production, encrypt with a KMS
-    // or Vault service before persisting. The column names reflect the
-    // intended target state, not the current implementation.
     await supabaseAdmin
       .from("connected_sources")
       .upsert(
         {
-          user_id: user.id,
+          user_id: userId,
           business_id: "default",
           source_type: "google_business",
           status: "connecting",
           access_token_encrypted: tokens.access_token,
           refresh_token_encrypted: tokens.refresh_token ?? null,
           token_expires_at: tokens.expires_in
-            ? new Date(
-                Date.now() + tokens.expires_in * 1000
-              ).toISOString()
+            ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
             : null,
-          metadata: { oauth_state: null, tokens_stored_at: new Date().toISOString() },
+          metadata: {
+            oauth_state: null,
+            tokens_stored_at: new Date().toISOString(),
+          },
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id,business_id,source_type" }
@@ -162,15 +153,9 @@ Deno.serve(async (req: Request) => {
 
     if (!accountsResponse.ok) {
       const body = await accountsResponse.text();
-      return new Response(
-        JSON.stringify({
-          error: "No se pudieron obtener las cuentas de Google Business Profile",
-          details: body,
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+      console.error("GBP accounts fetch failed:", body);
+      return redirectWithError(
+        "No se pudieron obtener las cuentas de Google Business Profile"
       );
     }
 
@@ -182,14 +167,16 @@ Deno.serve(async (req: Request) => {
       })
     );
 
-    return new Response(JSON.stringify({ accounts }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Redirect to frontend with accounts encoded in the URL
+    const accountsParam = encodeURIComponent(JSON.stringify(accounts));
+    const successUrl = `${frontendCallback}?accounts=${accountsParam}`;
+    return new Response(null, {
+      status: 302,
+      headers: { Location: successUrl },
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Error interno";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("gbp-oauth-callback error:", msg);
+    return redirectWithError(msg);
   }
 });
