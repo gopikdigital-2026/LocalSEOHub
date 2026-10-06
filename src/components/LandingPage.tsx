@@ -268,18 +268,34 @@ function RegistrationGate({
 }
 
 // ─── Tool demo result renderers ───────────────────────────────────────────────
+// Scores below are fixed illustrative values, never derived from the business; always shown under DemoNotice.
+const EXAMPLE_SCORE = { seo: 52, maps: 47, twin: 54, radar: 41 };
+
+function DemoNotice() {
+  const { t } = useI18n();
+  return (
+    <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5" data-testid="demo-notice">
+      <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-amber-800">{t('demo_notice_title')}</p>
+        <p className="text-xs text-amber-800 leading-relaxed">{t('demo_notice_body')}</p>
+      </div>
+    </div>
+  );
+}
+
 function SeoResult({ input1, input2 }: { input1: string; input2: string }) {
   const biz = input1 || 'tu negocio';
   const city = input2 || 'tu ciudad';
   const title = `${biz} en ${city} — Expertos Locales · Reserva Online · Resultados Garantizados`;
   const desc = `¿Buscas ${biz.toLowerCase()} en ${city}? Somos especialistas con más de 10 años de experiencia. Ofrecemos atención personalizada, presupuesto sin compromiso y el mejor servicio de la zona.`;
   const kws = [`${biz.toLowerCase()} ${city}`, `mejor ${biz.toLowerCase()} ${city}`];
-  const score = Math.floor(38 + Math.random() * 28);
+  const score = EXAMPLE_SCORE.seo;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Resultado generado</p>
+        <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Propuesta de ejemplo</p>
         <span className="text-[9px] bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full px-2 py-0.5 font-semibold uppercase">Gratis</span>
       </div>
       <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3.5">
@@ -303,7 +319,7 @@ function SeoResult({ input1, input2 }: { input1: string; input2: string }) {
       </div>
       <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
         <AlertCircle size={14} className="text-amber-500 shrink-0" />
-        <p className="text-amber-700 text-xs">Tu ficha actual tiene un score estimado de <strong>{score}/100</strong>. Con las optimizaciones completas puedes llegar a 85+.</p>
+        <p className="text-amber-700 text-xs">Ejemplo: una ficha típica sin optimizar ronda <strong>{score}/100</strong>. Regístrate para analizar la tuya con datos reales.</p>
       </div>
     </div>
   );
@@ -312,14 +328,14 @@ function SeoResult({ input1, input2 }: { input1: string; input2: string }) {
 function MapsResult({ input1, input2 }: { input1: string; input2: string }) {
   const biz = input1 || 'tu negocio';
   const city = input2 || 'tu ciudad';
-  const score = Math.floor(32 + Math.random() * 30);
+  const score = EXAMPLE_SCORE.maps;
   const title = `${biz} en ${city} — Abierto hoy | Atención personalizada | Reserva online`;
 
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">Puntuación de optimización</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-0.5">Puntuación de ejemplo</p>
           <p className="text-slate-900 font-bold text-sm">{biz} · {city}</p>
         </div>
         <div className="text-right shrink-0">
@@ -372,13 +388,13 @@ function MapsResult({ input1, input2 }: { input1: string; input2: string }) {
 function TwinResult({ input1, input2 }: { input1: string; input2: string }) {
   const biz = input1 || 'tu negocio';
   const cat = input2 || 'negocio local';
-  const score = Math.floor(40 + Math.random() * 28);
+  const score = EXAMPLE_SCORE.twin;
 
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] text-cyan-600 font-bold uppercase tracking-wider mb-0.5">Gemelo Digital creado</p>
+          <p className="text-[10px] text-cyan-600 font-bold uppercase tracking-wider mb-0.5">Gemelo Digital de ejemplo</p>
           <p className="text-slate-900 font-bold text-sm">{biz} · {cat}</p>
         </div>
         <div className="text-right shrink-0">
@@ -434,11 +450,11 @@ function TwinResult({ input1, input2 }: { input1: string; input2: string }) {
 function RadarResult({ input1, input2 }: { input1: string; input2: string }) {
   const biz = input1 || 'Tu negocio';
   const city = input2 || 'tu ciudad';
-  const myScore = Math.floor(30 + Math.random() * 25);
+  const myScore = EXAMPLE_SCORE.radar;
   const comps = [
-    { score: myScore + 42 + Math.floor(Math.random() * 10), reviews: 142 },
-    { score: myScore + 28 + Math.floor(Math.random() * 8), reviews: 97 },
-    { score: myScore + 15 + Math.floor(Math.random() * 6), reviews: 63 },
+    { score: myScore + 46, reviews: 142 },
+    { score: myScore + 31, reviews: 97 },
+    { score: myScore + 17, reviews: 63 },
   ];
 
   return (
@@ -446,7 +462,7 @@ function RadarResult({ input1, input2 }: { input1: string; input2: string }) {
       <div className="flex items-center gap-3">
         <div className="text-center shrink-0">
           <div className="text-2xl font-extrabold text-orange-500 tabular-nums">{myScore}</div>
-          <div className="text-[9px] text-slate-500">Tu score</div>
+          <div className="text-[9px] text-slate-500">Ejemplo</div>
         </div>
         <div className="flex-1">
           <p className="text-slate-900 font-bold text-sm">{biz}</p>
@@ -526,7 +542,7 @@ function AdvisorResult({ input1, input2 }: { input1: string; input2: string }) {
       </div>
       <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-50 border border-rose-200">
         <AlertCircle size={14} className="text-rose-500 shrink-0" />
-        <p className="text-rose-700 text-xs">Sin un plan estructurado, la mayoría de negocios locales pierden entre el 60% y el 80% de sus clientes potenciales ante competidores mejor posicionados.</p>
+        <p className="text-rose-700 text-xs">Sin un plan estructurado, es habitual que los clientes potenciales acaben eligiendo a competidores mejor posicionados en Google.</p>
       </div>
     </div>
   );
@@ -665,7 +681,7 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
               </div>
               <div className="text-center space-y-1">
                 <p className="text-slate-900 font-bold text-sm">{tool.scanMsg}</p>
-                <p className="text-slate-500 text-xs">Analizando: <span className="text-slate-700">"{lockedInput1}"</span></p>
+                <p className="text-slate-500 text-xs">Preparando ejemplo para: <span className="text-slate-700">"{lockedInput1}"</span></p>
               </div>
               <div className="w-full max-w-xs bg-slate-200 rounded-full h-1.5 overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
@@ -683,6 +699,7 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
                 {t('trial_analyze_other')}
               </button>
 
+              <DemoNotice />
               {activeTool === 0 && <SeoResult input1={lockedInput1} input2={lockedInput2} />}
               {activeTool === 1 && <MapsResult input1={lockedInput1} input2={lockedInput2} />}
               {activeTool === 2 && <TwinResult input1={lockedInput1} input2={lockedInput2} />}
@@ -948,18 +965,16 @@ interface VResult {
   actions: { title: string; impact: 'Alto' | 'Medio'; time: string; diff: 'Fácil' | 'Medio' }[];
 }
 
-// Deterministic result from business name (replace this fn with real API call later)
+// Fixed demo values: never derived from the business name, so they cannot pass as a real analysis.
 function buildResult(name: string): VResult {
-  const h = Array.from(name.toLowerCase()).reduce((a, c) => a + c.charCodeAt(0), 0);
-  const j = (b: number, r: number) => Math.min(97, Math.max(28, b + (h % r) - Math.floor(r / 2)));
   return {
     name,
-    overall: j(70, 30),
+    overall: 64,
     subs: [
-      { label: 'Google Business', score: j(76, 22), Icon: Globe,     clr: 'sky'     },
-      { label: 'Reseñas',         score: j(62, 26), Icon: Star,      clr: 'amber'   },
-      { label: 'Competidores',    score: j(52, 24), Icon: Target,    clr: 'orange'  },
-      { label: 'SEO Técnico',     score: j(86, 16), Icon: BarChart3, clr: 'emerald' },
+      { label: 'Google Business (ejemplo)', score: 72, Icon: Globe,     clr: 'sky'     },
+      { label: 'Reseñas (ejemplo)',         score: 58, Icon: Star,      clr: 'amber'   },
+      { label: 'Competidores (ejemplo)',    score: 49, Icon: Target,    clr: 'orange'  },
+      { label: 'SEO Técnico (ejemplo)',     score: 80, Icon: BarChart3, clr: 'emerald' },
     ],
     actions: [
       { title: 'Añadir más fotos al perfil',              impact: 'Alto',  time: '15 min', diff: 'Fácil'  },
@@ -1042,14 +1057,14 @@ function SubScoreCard({ label, score, Icon, clr }: { label: string; score: numbe
 
 // ── Loading messages + stages ─────────────────────────────────────────────────
 const LOAD_MSGS = [
-  'Buscando ficha de Google…',
-  'Verificando información del negocio…',
-  'Analizando reseñas…',
-  'Calculando Local Score…',
-  'Buscando competidores en tu zona…',
-  'Analizando categorías…',
-  'Detectando oportunidades de crecimiento…',
-  'Generando informe personalizado…',
+  'Preparando ejemplo de diagnóstico…',
+  'Cargando datos de demostración…',
+  'Ejemplo: reseñas',
+  'Ejemplo: Local Score',
+  'Ejemplo: competidores',
+  'Ejemplo: categorías',
+  'Ejemplo: oportunidades',
+  'Mostrando ejemplo…',
 ];
 
 // 3.5 s total — gives credibility without killing conversion
@@ -1278,7 +1293,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: ()
                 </motion.div>
               </div>
               <div>
-                <p className="text-slate-500 text-sm">Analizando</p>
+                <p className="text-slate-500 text-sm">Preparando ejemplo para</p>
                 <p className="text-slate-900 font-bold text-xl mt-1 px-4 break-words">"{name}"</p>
               </div>
             </div>
@@ -1328,7 +1343,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: ()
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16,1,0.3,1] }}
                 className="bg-white border border-slate-200 shadow-sm rounded-2xl p-5">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-3">Vista previa — puntuación detectada</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-3">Ejemplo de diagnóstico — datos de demostración</p>
                 <div className="flex items-center gap-5">
                   <ScoreRing score={earlyResult.overall} />
                   <div className="flex-1 space-y-2">
@@ -1356,6 +1371,8 @@ function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: ()
 
           <div className="relative max-w-2xl mx-auto">
 
+            <div className="mb-6"><DemoNotice /></div>
+
             {/* Back */}
             <button onClick={reset}
               className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 text-sm mb-8 transition-colors group">
@@ -1371,7 +1388,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: ()
               {/* Card header */}
               <div className="px-7 pt-6 pb-5 border-b border-slate-200 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-[0.18em] font-semibold mb-1">Informe de Visibilidad</p>
+                  <p className="text-[10px] text-amber-700 uppercase tracking-[0.18em] font-semibold mb-1">Ejemplo de diagnóstico</p>
                   <p className="text-slate-900 font-bold text-xl leading-snug">{result.name}</p>
                   <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-1">
                     <MapPin size={10} />Google Maps · España
@@ -1390,7 +1407,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: ()
                     <ScoreRing score={result.overall} />
                     <div className="text-center">
                       <p className="text-slate-900 font-bold text-sm">Visibilidad Local</p>
-                      <p className="text-slate-500 text-xs mt-0.5">4 factores analizados</p>
+                      <p className="text-slate-500 text-xs mt-0.5">Valores de ejemplo</p>
                     </div>
                   </div>
                   <div className="flex-1 grid grid-cols-2 gap-3 w-full">

@@ -1,8 +1,9 @@
 import { useMemo, useEffect } from 'react';
-import type { TimelineEvent, BusinessInsight, BusinessPreference } from './types';
+import { Link } from 'react-router-dom';
+import type { TimelineEvent, BusinessInsight } from './types';
 import { createLocalRepository } from './repository';
 import { generateInsights, inferPreferences } from './engine';
-import { trackTimelineView } from '../../services/analytics/v2Analytics';
+import { trackTimelineView, trackEmptyStateViewed } from '../../services/analytics/v2Analytics';
 import {
   Check,
   Target,
@@ -12,40 +13,21 @@ import {
   AlertTriangle,
   Info,
   Brain,
-  FlaskConical,
 } from 'lucide-react';
 
-function DemoBadge() {
+function SectionEmpty({ surface, text }: { surface: string; text: string }) {
+  useEffect(() => { trackEmptyStateViewed(surface); }, [surface]);
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-v2-xs font-medium rounded-full border bg-v2-neutral-100 text-v2-neutral-600 border-v2-neutral-200">
-      <FlaskConical size={11} /> Datos de ejemplo
-    </span>
+    <div data-testid="no-data-state" className="rounded-v2-xl border border-dashed border-v2-border-light bg-white p-5">
+      <p className="text-v2-sm text-v2-text-secondary leading-relaxed">{text}</p>
+      <Link to="/plan" className="inline-block mt-3 text-v2-xs font-semibold text-v2-primary-600 hover:text-v2-primary-700">
+        Ir a mi plan
+      </Link>
+    </div>
   );
 }
 
 const repo = createLocalRepository();
-
-// ─── Demo Timeline Data ─────────────────────────────────────────────────────
-
-const DEMO_TIMELINE: TimelineEvent[] = [
-  { id: 'demo-evt-1', timestamp: '2026-07-28T09:30:00Z', type: 'action_completed', title: 'Respondiste 8 resenas', actionType: 'respond_reviews', impact: 'high', durationMinutes: 12 },
-  { id: 'demo-evt-2', timestamp: '2026-07-29T10:15:00Z', type: 'action_completed', title: 'Publicaste una actualizacion', actionType: 'publish_post', impact: 'medium', durationMinutes: 8 },
-  { id: 'demo-evt-3', timestamp: '2026-07-30T11:00:00Z', type: 'action_completed', title: 'Anadiste 3 fotografias', actionType: 'add_photos', impact: 'low', durationMinutes: 5 },
-  { id: 'demo-evt-4', timestamp: '2026-07-31T14:20:00Z', type: 'profile_updated', title: 'Actualizaste los servicios' },
-  { id: 'demo-evt-5', timestamp: '2026-07-31T08:00:00Z', type: 'goal_set', title: 'Objetivo definido: Mas resenas' },
-];
-
-const DEMO_INSIGHTS: BusinessInsight[] = [
-  { id: 'demo-insight-1', text: 'Esta semana has completado 4 acciones. Es un buen ritmo para mantener tu perfil activo.', type: 'positive', generatedAt: '2026-07-31T08:00:00Z', basedOn: 'Acciones completadas esta semana' },
-  { id: 'demo-insight-2', text: 'Llevas 3 dias sin publicar contenido. Una publicacion semanal mantiene tu perfil visible.', type: 'warning', generatedAt: '2026-07-31T08:00:00Z', basedOn: 'Dias desde la ultima publicacion' },
-  { id: 'demo-insight-3', text: 'Has respondido resenas 2 veces esta semana. Mantener esta frecuencia mejora tu reputacion.', type: 'positive', generatedAt: '2026-07-31T08:00:00Z', basedOn: 'Acciones de tipo resena' },
-];
-
-const DEMO_PREFERENCES: BusinessPreference[] = [
-  { id: 'demo-pref-1', label: 'Completa tareas por la manana', inferredFrom: '6 acciones en horario de manana', confidence: 'high' },
-  { id: 'demo-pref-2', label: 'Prefiere tareas rapidas (menos de 15 min)', inferredFrom: '80% de acciones son cortas', confidence: 'medium' },
-  { id: 'demo-pref-3', label: 'Suele trabajar los lunes', inferredFrom: '4 acciones completadas ese dia', confidence: 'medium' },
-];
 
 // ─── Timeline Component ─────────────────────────────────────────────────────
 
@@ -70,21 +52,21 @@ function EventIcon({ type }: { type: TimelineEvent['type'] }) {
 
 export function BusinessTimeline() {
   const state = repo.load();
-  const isDemo = state.timeline.length === 0;
-  const timeline = isDemo ? DEMO_TIMELINE : state.timeline;
+  const timeline = state.timeline;
   const grouped = groupByDay(timeline);
 
   useEffect(() => { trackTimelineView(); }, []);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-v2-lg font-bold text-v2-text-primary">Cronologia</h2>
-          <p className="text-v2-xs text-v2-text-tertiary mt-1">Historial de acciones de tu negocio</p>
-        </div>
-        {isDemo && <DemoBadge />}
+      <div>
+        <h2 className="text-v2-lg font-bold text-v2-text-primary">Cronologia</h2>
+        <p className="text-v2-xs text-v2-text-tertiary mt-1">Historial de acciones de tu negocio</p>
       </div>
+
+      {timeline.length === 0 && (
+        <SectionEmpty surface="business_timeline" text="Aún no hay actividad registrada. Cada acción que completes en LocalSEOHub aparecerá aquí con su fecha." />
+      )}
 
       <div className="space-y-6">
         {Object.entries(grouped).map(([day, events]) => (
@@ -129,19 +111,18 @@ function InsightIcon({ type }: { type: BusinessInsight['type'] }) {
 
 export function BusinessInsights() {
   const state = repo.load();
-  const liveInsights = useMemo(() => generateInsights(state), [state]);
-  const isDemo = liveInsights.length === 0;
-  const insights = isDemo ? DEMO_INSIGHTS : liveInsights;
+  const insights = useMemo(() => generateInsights(state), [state]);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Lightbulb size={16} className="text-v2-warning-500" />
-          <h2 className="text-v2-base font-semibold text-v2-text-primary">Insights</h2>
-        </div>
-        {isDemo && <DemoBadge />}
+      <div className="flex items-center gap-2">
+        <Lightbulb size={16} className="text-v2-warning-500" />
+        <h2 className="text-v2-base font-semibold text-v2-text-primary">Insights</h2>
       </div>
+
+      {insights.length === 0 && (
+        <SectionEmpty surface="business_insights" text="Todavía no tenemos suficiente actividad tuya para sacar conclusiones. Completa algunas acciones y te mostraremos observaciones basadas en lo que has hecho." />
+      )}
 
       <div className="space-y-2">
         {insights.map((insight) => (
@@ -168,20 +149,19 @@ export function BusinessInsights() {
 
 export function BusinessPreferencesView() {
   const state = repo.load();
-  const livePrefs = useMemo(() => inferPreferences(state), [state]);
-  const isDemo = livePrefs.length === 0;
-  const preferences = isDemo ? DEMO_PREFERENCES : livePrefs;
+  const preferences = useMemo(() => inferPreferences(state), [state]);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Brain size={16} className="text-v2-primary-500" />
-          <h2 className="text-v2-base font-semibold text-v2-text-primary">Preferencias detectadas</h2>
-        </div>
-        {isDemo && <DemoBadge />}
+      <div className="flex items-center gap-2">
+        <Brain size={16} className="text-v2-primary-500" />
+        <h2 className="text-v2-base font-semibold text-v2-text-primary">Preferencias detectadas</h2>
       </div>
       <p className="text-v2-xs text-v2-text-tertiary">Se actualizan automaticamente segun tu uso de la aplicacion.</p>
+
+      {preferences.length === 0 && (
+        <SectionEmpty surface="business_preferences" text="Aún no hemos detectado preferencias. Las iremos deduciendo de cómo y cuándo completas tus acciones." />
+      )}
 
       <div className="space-y-2">
         {preferences.map((pref) => (

@@ -1,5 +1,7 @@
 import { ArrowRight, Clock, CheckCircle2, Target } from 'lucide-react';
 import type { DashboardAction } from './types';
+import { OriginLabel } from '../../components/DataIntegrity';
+import { recommendationOrigin } from '../../domain/dataIntegrity';
 
 interface TodaysMissionsProps {
   actions: DashboardAction[];
@@ -67,7 +69,7 @@ export default function TodaysMissions({ actions, onExecute }: TodaysMissionsPro
                 <span className="flex items-center gap-1 text-[11px] text-v2-text-tertiary">
                   <Clock size={11} /> {action.estimatedMinutes} min
                 </span>
-                <span className="text-[11px] text-v2-text-tertiary">{action.source}</span>
+                <OriginLabel origin={recommendationOrigin(action)} />
               </div>
             </div>
 

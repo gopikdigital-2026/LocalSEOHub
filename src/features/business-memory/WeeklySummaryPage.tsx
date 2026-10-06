@@ -1,9 +1,10 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import type { WeeklySummaryData } from './types';
 import { AVAILABLE_GOALS, generateWeeklySummary } from './engine';
 import { createLocalRepository } from './repository';
-import { trackWeeklySummaryView } from '../../services/analytics/v2Analytics';
-import { BarChart2, Clock, Target, TrendingUp, ArrowRight, Calendar, Info } from 'lucide-react';
+import { trackWeeklySummaryView, trackDemoViewed, trackRealDataViewed } from '../../services/analytics/v2Analytics';
+import { DemoModeBanner, NoDataState } from '../../components/DataIntegrity';
+import { BarChart2, Clock, Target, TrendingUp, ArrowRight, Calendar } from 'lucide-react';
 
 const repo = createLocalRepository();
 
@@ -33,35 +34,51 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 export default function WeeklySummaryPage() {
   const state = repo.load();
   const liveSummary = useMemo(() => generateWeeklySummary(state), [state]);
-  const isDemo = liveSummary.actionsCompleted === 0;
-  const summary = isDemo ? DEMO_SUMMARY : liveSummary;
+  const hasRealData = liveSummary.actionsCompleted > 0;
+  const [showExample, setShowExample] = useState(false);
 
   useEffect(() => { trackWeeklySummaryView(); }, []);
+  useEffect(() => { if (hasRealData) trackRealDataViewed('weekly_summary'); }, [hasRealData]);
 
+  if (!hasRealData && !showExample) {
+    return (
+      <div className="space-y-6 sm:space-y-8 pb-8">
+        <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">Resumen semanal</h1>
+        <NoDataState
+          surface="weekly_summary"
+          icon={<BarChart2 size={20} />}
+          title="Tu primer informe todavía no está disponible."
+          description="Completa acciones en LocalSEOHub y aquí verás tu progreso semanal. Solo mostramos lo que has hecho de verdad, nunca cifras inventadas."
+          primaryLabel="Ir a mi plan"
+          primaryTo="/plan"
+          onShowExample={() => { setShowExample(true); trackDemoViewed('weekly_summary'); }}
+          exampleLabel="Ver informe de ejemplo"
+        />
+      </div>
+    );
+  }
+
+  const isDemo = !hasRealData;
+  const summary = isDemo ? DEMO_SUMMARY : liveSummary;
   const weekLabel = `${new Date(summary.weekStart).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${new Date(summary.weekEnd).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-8">
       <div>
         <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">
-          Resumen semanal
+          {isDemo ? 'Resumen semanal (ejemplo)' : 'Resumen semanal'}
         </h1>
         <div className="flex items-center gap-2 mt-2">
           <Calendar size={14} className="text-v2-neutral-400" />
-          <p className="text-v2-sm text-v2-text-secondary">{weekLabel}</p>
+          <p className="text-v2-sm text-v2-text-secondary">{isDemo ? 'Semana de ejemplo' : weekLabel}</p>
         </div>
       </div>
 
       {isDemo && (
-        <div className="flex items-start gap-3 rounded-v2-xl border border-v2-warning-200 bg-v2-warning-50/50 px-4 py-3">
-          <Info size={15} className="text-v2-warning-500 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-v2-sm font-medium text-v2-text-primary">Modo demostracion</p>
-            <p className="text-v2-xs text-v2-text-secondary leading-relaxed mt-0.5">
-              Estos datos son de ejemplo. Completa acciones desde tu plan semanal para ver tu resumen real.
-            </p>
-          </div>
-        </div>
+        <DemoModeBanner
+          onExit={() => setShowExample(false)}
+          message="Este informe es un ejemplo con cifras inventadas. No refleja la actividad de tu negocio."
+        />
       )}
 
       {/* Stats grid */}

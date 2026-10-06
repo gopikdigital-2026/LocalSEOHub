@@ -444,8 +444,10 @@ const translations = {
     trial_radar_label: 'Radar de Competencia', trial_radar_ph1: 'Nombre de tu negocio', trial_radar_ph2: 'Tu ciudad', trial_radar_btn: 'Analizar mis competidores gratis', trial_radar_scan: 'Escaneando competidores en tu zona…',
     trial_advisor_label: 'AI Advisor', trial_advisor_ph1: 'Nombre de tu negocio', trial_advisor_ph2: 'Tu mayor reto de captación ahora mismo', trial_advisor_btn: 'Obtener consejo gratis', trial_advisor_scan: 'Analizando tu situación con IA…',
     trial_pick: 'Elige una herramienta y pruébala gratis ahora',
-    trial_free_label: 'Análisis gratuito — sin registro',
+    trial_free_label: 'Ejemplo gratuito — sin registro',
     trial_analyze_other: 'Analizar otro negocio',
+    demo_notice_title: 'Ejemplo de diagnóstico',
+    demo_notice_body: 'Datos de demostración. Conecta o configura tu negocio para obtener resultados reales.',
 
     // Tools showcase (Landing grid)
     ts_1_name: 'Generador de Contenido SEO', ts_1_desc: 'Genera títulos, descripciones y keywords optimizadas para Google Business, Etsy, Shopify, Amazon y 13 plataformas más. La IA adapta el copy a tu categoría, ciudad y algoritmo específico.', ts_1_badge: '16+ plataformas',
@@ -1074,8 +1076,10 @@ const translations = {
     trial_radar_label: 'Competitor Radar', trial_radar_ph1: 'Your business name', trial_radar_ph2: 'Your city', trial_radar_btn: 'Analyze my competitors for free', trial_radar_scan: 'Scanning competitors in your area…',
     trial_advisor_label: 'AI Advisor', trial_advisor_ph1: 'Your business name', trial_advisor_ph2: 'Your biggest customer acquisition challenge right now', trial_advisor_btn: 'Get free advice', trial_advisor_scan: 'Analyzing your situation with AI…',
     trial_pick: 'Choose a tool and try it free now',
-    trial_free_label: 'Free analysis — no sign-up required',
+    trial_free_label: 'Free example — no sign-up required',
     trial_analyze_other: 'Analyze another business',
+    demo_notice_title: 'Sample diagnosis',
+    demo_notice_body: 'Demo data. Connect or set up your business to get real results.',
 
     // Tools showcase (Landing grid)
     ts_1_name: 'SEO Content Generator', ts_1_desc: 'Generate optimized titles, descriptions and keywords for Google Business, Etsy, Shopify, Amazon and 13 more platforms. AI adapts copy to your category, city and specific algorithm.', ts_1_badge: '16+ platforms',

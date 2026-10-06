@@ -7,6 +7,7 @@ import {
   resetGBPStatus,
 } from '../../features/reality-engine/engine';
 import { supabase } from '../../lib/supabase';
+import { LOCATIONS_UNAVAILABLE_MSG, isRealLocationName } from './gbpStatus';
 
 type Phase = 'validating' | 'select_account' | 'loading_locations' | 'select_location' | 'syncing' | 'done' | 'error';
 
@@ -78,13 +79,13 @@ export default function GBPCallbackPage() {
         body: { accountId: account.id },
       });
 
-      if (fnError || !data?.locations) {
-        setLocations([{ name: `${account.id}/locations/default`, title: account.name }]);
-        setPhase('select_location');
+      if (fnError || !Array.isArray(data?.locations)) {
+        console.warn('[gbp-callback] locations unavailable:', fnError?.message ?? 'invalid response');
+        handleError(LOCATIONS_UNAVAILABLE_MSG);
         return;
       }
 
-      const locs = (data.locations as Location[]);
+      const locs = (data.locations as Location[]).filter((l) => typeof l?.name === 'string' && isRealLocationName(l.name));
       if (locs.length === 0) {
         handleError('No se encontraron ubicaciones en esta cuenta. Verifica que tu negocio este registrado en Google Business Profile.');
         return;
@@ -97,8 +98,7 @@ export default function GBPCallbackPage() {
         setPhase('select_location');
       }
     } catch {
-      setLocations([{ name: `${account.id}/locations/default`, title: account.name }]);
-      setPhase('select_location');
+      handleError(LOCATIONS_UNAVAILABLE_MSG);
     }
   };
 

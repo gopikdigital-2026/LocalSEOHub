@@ -12,9 +12,7 @@ import DashboardHeader from '../../features/dashboard/DashboardHeader';
 import BusinessHealthCard from '../../features/dashboard/BusinessHealthCard';
 import TodaysMissions from '../../features/dashboard/TodaysMissions';
 import AIInsights from '../../features/dashboard/AIInsights';
-import type { AIInsight } from '../../features/dashboard/AIInsights';
 import CompetitorAlerts from '../../features/dashboard/CompetitorAlerts';
-import type { CompetitorAlert } from '../../features/dashboard/CompetitorAlerts';
 import GrowthTimeline from '../../features/dashboard/GrowthTimeline';
 import type { GrowthMilestone } from '../../features/dashboard/GrowthTimeline';
 import QuickActions from '../../features/dashboard/QuickActions';
@@ -83,40 +81,32 @@ function useDashboardData() {
 
   const recs = getDailyActions(demoRecommendations, 5);
   const actions = recs.map(recToAction);
+  const completedActions = memory.timeline.filter((e) => e.type === 'action_completed').length;
 
-  return { profile, hasProfile, connections, actions };
+  return { profile, hasProfile, connections, actions, completedActions };
 }
 
-const demoInsights: AIInsight[] = [
-  { id: 'ins-1', title: 'Tu competidor principal ha publicado 3 posts esta semana', description: 'Mantener una frecuencia de publicacion similar te ayudara a no perder visibilidad.', category: 'warning' },
-  { id: 'ins-2', title: 'Oportunidad: horario extendido los sabados', description: 'Negocios similares en tu zona que abren los sabados reciben un 23% mas de visitas.', category: 'opportunity' },
-  { id: 'ins-3', title: 'Responder resenas mejora tu posicionamiento', description: 'Los negocios que responden el 100% de sus resenas suben de media 2 posiciones.', category: 'tip' },
-];
-
-const demoAlerts: CompetitorAlert[] = [
-  { id: 'alert-1', competitorName: 'Competidor A', event: 'Ha actualizado su descripcion con nuevas palabras clave', severity: 'medium', timestamp: new Date(Date.now() - 7200000).toISOString() },
-  { id: 'alert-2', competitorName: 'Competidor B', event: 'Ha recibido 4 resenas nuevas de 5 estrellas', severity: 'high', timestamp: new Date(Date.now() - 86400000).toISOString() },
-];
-
-const demoMilestones: GrowthMilestone[] = [
-  { id: 'm-1', title: 'Perfil configurado', description: 'Datos basicos del negocio', completed: true, date: 'Completado' },
-  { id: 'm-2', title: 'Primera fuente conectada', description: 'Google Business Profile', completed: true, date: 'Completado' },
-  { id: 'm-3', title: 'Primera recomendacion ejecutada', description: '', completed: false },
-  { id: 'm-4', title: 'Todas las resenas respondidas', description: '', completed: false },
-  { id: 'm-5', title: '5 publicaciones en 30 dias', description: '', completed: false },
-];
+function buildMilestones(connectedCount: number, completedActions: number): GrowthMilestone[] {
+  return [
+    { id: 'm-1', title: 'Perfil configurado', description: 'Datos basicos del negocio', completed: true, date: 'Completado' },
+    { id: 'm-2', title: 'Primera fuente conectada', description: 'Google Business Profile o sitio web', completed: connectedCount > 0, date: connectedCount > 0 ? 'Completado' : undefined },
+    { id: 'm-3', title: 'Primera recomendacion ejecutada', description: '', completed: completedActions > 0, date: completedActions > 0 ? 'Completado' : undefined },
+    { id: 'm-4', title: '5 acciones completadas', description: '', completed: completedActions >= 5, date: completedActions >= 5 ? 'Completado' : undefined },
+  ];
+}
 
 export default function TodayPage() {
   const navigate = useNavigate();
-  const { profile, hasProfile, connections, actions } = useDashboardData();
+  const { profile, hasProfile, connections, actions, completedActions } = useDashboardData();
 
   if (!hasProfile) {
     return <DashboardEmptyState onSetup={() => navigate('/empezar')} />;
   }
 
-  const healthScore = 42;
+  // No scoring model reads real data yet, so the score stays unavailable instead of a placeholder number.
+  const healthScore: number | null = null;
   const connectedCount = connections.filter(c => c.status === 'connected').length;
-  const healthTrend: 'up' | 'down' | 'stable' = connectedCount > 0 ? 'up' : 'stable';
+  const healthTrend: 'up' | 'down' | 'stable' = 'stable';
 
   const quickActions: QuickAction[] = [
     { id: 'qa-edit', label: 'Editar negocio', icon: 'edit', onClick: () => navigate('/negocio') },
@@ -133,8 +123,9 @@ export default function TodayPage() {
     { id: 's-location', label: 'Ciudad', value: profile.city || '--', icon: 'location' },
   ];
 
-  const completedMilestones = demoMilestones.filter(m => m.completed).length;
-  const overallProgress = Math.round((completedMilestones / demoMilestones.length) * 100);
+  const milestones = buildMilestones(connectedCount, completedActions);
+  const completedMilestones = milestones.filter(m => m.completed).length;
+  const overallProgress = Math.round((completedMilestones / milestones.length) * 100);
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-8 max-w-5xl">
@@ -156,17 +147,17 @@ export default function TodayPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
         <div className="lg:col-span-2">
-          <AIInsights insights={demoInsights} />
+          <AIInsights insights={[]} />
         </div>
         <div>
-          <CompetitorAlerts alerts={demoAlerts} />
+          <CompetitorAlerts alerts={[]} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
         <div className="lg:col-span-2 space-y-5">
           <GrowthTimeline
-            milestones={demoMilestones}
+            milestones={milestones}
             overallProgress={overallProgress}
             onViewDetails={() => navigate('/informes')}
           />

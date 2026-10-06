@@ -42,6 +42,18 @@ export function trackDemoBadgeView() {
   trackViewOnce('v2_demo_badge_view', {});
 }
 
+export function trackDemoViewed(surface: string) {
+  track('demo_viewed', { surface });
+}
+
+export function trackEmptyStateViewed(surface: string) {
+  trackViewOnce('empty_state_viewed', { route: surface });
+}
+
+export function trackRealDataViewed(surface: string) {
+  trackViewOnce('real_data_viewed', { route: surface });
+}
+
 export function trackOnboardingStart() {
   track('v2_onboarding_start', {});
 }

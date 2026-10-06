@@ -9,11 +9,11 @@ export const demoRecommendations: Recommendation[] = [
   {
     id: 'rec-demo-001',
     businessId: 'demo-biz-001',
-    title: 'Responder 5 resenas pendientes',
-    summary: 'Tienes resenas sin responder que afectan tu reputacion online.',
+    title: 'Responder a las resenas de tus clientes',
+    summary: 'Responder a las resenas, positivas y negativas, ayuda a cuidar tu reputacion online.',
     explanation: 'Los clientes valoran que un negocio responda. Responder demuestra actividad y confianza.',
-    reason: 'Las resenas sin respuesta reducen la confianza de nuevos clientes potenciales.',
-    source: 'Google Business Profile',
+    reason: 'Buena practica general: las resenas sin respuesta suelen reducir la confianza de nuevos clientes.',
+    source: 'Recomendacion general',
     sourceType: 'google_business',
     sourceUpdatedAt: null,
     confidence: 'demo',
@@ -28,10 +28,10 @@ export const demoRecommendations: Recommendation[] = [
     id: 'rec-demo-002',
     businessId: 'demo-biz-001',
     title: 'Publicar una actualizacion semanal',
-    summary: 'Tu perfil lleva mas de 7 dias sin actividad de publicaciones.',
+    summary: 'Publicar con regularidad mantiene tu perfil activo ante Google y tus clientes.',
     explanation: 'Los perfiles con publicaciones recientes reciben mas clics. Un post semanal mantiene tu perfil activo.',
-    reason: 'La ausencia de publicaciones recientes indica inactividad.',
-    source: 'Google Business Profile',
+    reason: 'Buena practica general: un perfil sin publicaciones recientes puede parecer inactivo.',
+    source: 'Recomendacion general',
     sourceType: 'google_business',
     sourceUpdatedAt: null,
     confidence: 'demo',
@@ -45,11 +45,11 @@ export const demoRecommendations: Recommendation[] = [
   {
     id: 'rec-demo-003',
     businessId: 'demo-biz-001',
-    title: 'Optimizar la descripcion del negocio',
-    summary: 'Tu descripcion puede incluir palabras clave locales que mejoren tu posicionamiento.',
+    title: 'Revisar la descripcion del negocio',
+    summary: 'Una descripcion con palabras clave locales puede mejorar tu posicionamiento.',
     explanation: 'Una descripcion con tu ciudad, barrio y servicios especificos ayuda a que aparezcas en busquedas relevantes.',
-    reason: 'La descripcion actual no menciona la ubicacion ni los servicios diferenciadores.',
-    source: 'Sitio web',
+    reason: 'Buena practica general: mencionar tu ubicacion y tus servicios diferenciadores en la descripcion.',
+    source: 'Recomendacion general',
     sourceType: 'website',
     sourceUpdatedAt: null,
     confidence: 'demo',
@@ -63,11 +63,11 @@ export const demoRecommendations: Recommendation[] = [
   {
     id: 'rec-demo-004',
     businessId: 'demo-biz-001',
-    title: 'Subir 3 fotos nuevas del negocio',
+    title: 'Subir fotos actuales del negocio',
     summary: 'Las fotos actualizadas generan confianza visual para nuevos clientes.',
     explanation: 'Los clientes quieren ver el estado real del negocio antes de visitarlo.',
-    reason: 'No se han subido fotos nuevas en las ultimas semanas.',
-    source: 'Google Business Profile',
+    reason: 'Buena practica general: renovar las fotos cada pocas semanas.',
+    source: 'Recomendacion general',
     sourceType: 'google_business',
     sourceUpdatedAt: null,
     confidence: 'demo',
@@ -81,11 +81,11 @@ export const demoRecommendations: Recommendation[] = [
   {
     id: 'rec-demo-005',
     businessId: 'demo-biz-001',
-    title: 'Verificar horario de verano',
-    summary: 'Es temporada de cambio de horarios. Verificar que el horario publicado sea correcto.',
+    title: 'Verificar tu horario publicado',
+    summary: 'Comprueba que el horario publicado coincide con tu horario real, sobre todo en cambios de temporada.',
     explanation: 'Un horario incorrecto frustra a clientes que llegan y encuentran cerrado.',
-    reason: 'El horario no se ha actualizado recientemente.',
-    source: 'Google Business Profile',
+    reason: 'Buena practica general: revisar el horario en cada cambio de temporada o festivo.',
+    source: 'Recomendacion general',
     sourceType: 'google_business',
     sourceUpdatedAt: null,
     confidence: 'demo',
@@ -97,21 +97,3 @@ export const demoRecommendations: Recommendation[] = [
     dataMode: DEMO_MODE,
   },
 ];
-
-export interface DailyBriefingData {
-  goal: Recommendation | null;
-  actions: Recommendation[];
-  completedToday: number;
-  timeInvestedMinutes: number;
-  weeklyProgress: { completed: number; total: number };
-  tomorrowTopics: string[];
-}
-
-export const demoDailyBriefing: DailyBriefingData = {
-  goal: demoRecommendations[0],
-  actions: demoRecommendations.slice(0, 3),
-  completedToday: 0,
-  timeInvestedMinutes: 0,
-  weeklyProgress: { completed: 0, total: 5 },
-  tomorrowTopics: ['Presencia local', 'Resenas', 'Contenido'],
-};

@@ -22,7 +22,7 @@ interface WorkspaceLayoutProps {
   sidebar: React.ReactNode;
   children: React.ReactNode;
   onBack: () => void;
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 export function WorkspaceLayout({
@@ -45,7 +45,7 @@ export function WorkspaceLayout({
           {children}
         </div>
       </div>
-      {executionState.status !== 'completed' && executionState.status !== 'verified' && (
+      {onComplete && executionState.status !== 'completed' && executionState.status !== 'verified' && (
         <div className="lg:hidden fixed bottom-0 inset-x-0 p-4 bg-white border-t border-v2-border-light safe-area-pb z-20">
           <Button className="w-full" onClick={onComplete} icon={<Check size={16} />}>
             Marcar como completada

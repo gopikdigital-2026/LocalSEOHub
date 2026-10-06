@@ -4,6 +4,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { createFirstValueRepository } from '../../features/first-value/repository';
 import { getGoalLabel } from '../../features/first-value/engine';
 import { LoadingState } from '../../components/ui';
+import { OriginLabel } from '../../components/DataIntegrity';
+import type { DataOrigin } from '../../domain/dataIntegrity';
 import type { FirstRecommendationData } from '../../features/first-value/types';
 import type { GoalId } from '../../features/business-memory/types';
 import {
@@ -27,6 +29,15 @@ interface PlanAction {
   sourceName: string;
   status: 'completed' | 'pending';
   actionType: string;
+}
+
+function planOrigin(dataMode: string): DataOrigin {
+  switch (dataMode) {
+    case 'real': return 'real';
+    case 'manual': return 'user_provided';
+    case 'estimated': return 'estimated';
+    default: return 'general';
+  }
 }
 
 function generateFollowUpActions(goalId: GoalId, completedAction: FirstRecommendationData | null): PlanAction[] {
@@ -88,8 +99,8 @@ function generateFollowUpActions(goalId: GoalId, completedAction: FirstRecommend
       impact: i === 0 ? 'high' : 'medium',
       estimatedMinutes: i === 0 ? 5 : 4,
       confidence: 'low',
-      dataMode: 'estimated',
-      sourceName: 'Recomendacion estimada',
+      dataMode: 'general',
+      sourceName: 'Recomendacion general',
       status: 'pending',
       actionType: p.actionType,
     });
@@ -173,7 +184,7 @@ export default function PlanPage() {
       <div className="flex items-start gap-2 p-3 rounded-v2-lg bg-v2-warning-50/50 border border-v2-warning-200">
         <Info size={14} className="text-v2-warning-500 mt-0.5 shrink-0" />
         <p className="text-v2-xs text-v2-text-secondary">
-          Las acciones pendientes son estimaciones basadas en tu objetivo y categoria. Conecta Google Business para obtener recomendaciones verificadas con datos reales.
+          Las acciones pendientes son recomendaciones generales elegidas segun tu objetivo; no se basan en datos leidos de tu negocio. Conecta Google Business para obtener recomendaciones basadas en tus datos.
         </p>
       </div>
 
@@ -208,7 +219,7 @@ export default function PlanPage() {
                     <span className={`font-medium ${action.impact === 'high' ? 'text-v2-error-500' : action.impact === 'medium' ? 'text-v2-warning-500' : 'text-v2-neutral-500'}`}>
                       Impacto {action.impact === 'high' ? 'alto' : action.impact === 'medium' ? 'medio' : 'bajo'}
                     </span>
-                    <span className="flex items-center gap-1"><AlertTriangle size={11} /> {action.dataMode === 'estimated' ? 'Estimacion' : action.dataMode === 'manual' ? 'Dato manual' : action.dataMode === 'demo' ? 'Demo' : 'Verificado'}</span>
+                    <OriginLabel origin={planOrigin(action.dataMode)} />
                   </div>
                 </div>
               </div>
