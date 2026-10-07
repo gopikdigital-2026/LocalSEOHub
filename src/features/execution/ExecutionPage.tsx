@@ -12,12 +12,13 @@ import { FirstSuccessNotice } from '../activation/ActivationNotices';
 import { AlertTriangle } from 'lucide-react';
 import type { BusinessAction } from '../actions/types';
 import { useI18n } from '../../lib/i18n';
+import { PaywallNotice } from '../billing/BillingNotices';
 
 export default function ExecutionPage() {
   const { recommendationId } = useParams<{ recommendationId: string }>();
   const navigate = useNavigate();
   const { lang } = useI18n();
-  const { actions, complete, firstSuccess, clearFirstSuccess } = useActions();
+  const { actions, complete, firstSuccess, clearFirstSuccess, locked } = useActions();
   const [saveError, setSaveError] = useState(false);
   const cached = actions.find((a) => a.id === recommendationId) ?? null;
   const [fetched, setFetched] = useState<BusinessAction | null>(null);
@@ -84,11 +85,12 @@ export default function ExecutionPage() {
     }
   })();
 
-  if (!showSuccess && !saveError) return workspace;
+  if (!showSuccess && !saveError && !locked) return workspace;
 
   return (
     <div className="space-y-5">
-      {saveError && (
+      {locked && <PaywallNotice surface="execution" />}
+      {saveError && !locked && (
         <div role="alert" className="flex items-start gap-2.5 rounded-v2-lg border border-v2-error-200 bg-v2-error-50 px-4 py-3">
           <AlertTriangle size={14} className="text-v2-error-500 mt-0.5 shrink-0" />
           <p className="text-v2-xs text-v2-error-600">

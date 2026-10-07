@@ -9,9 +9,11 @@ import {
   Building2,
   LogOut,
   Wifi,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { trackNavigationClick } from '../../services/analytics/v2Analytics';
+import { TrialBanner } from '../../features/billing/BillingNotices';
 
 interface NavItem {
   id: string;
@@ -26,6 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'informes', label: 'Resumen', path: '/informes', icon: <BarChart2 size={18} /> },
   { id: 'negocio', label: 'Mi negocio', path: '/negocio', icon: <Building2 size={18} /> },
   { id: 'fuentes', label: 'Fuentes', path: '/fuentes', icon: <Wifi size={18} /> },
+  { id: 'facturacion', label: 'Facturación', path: '/facturacion', icon: <CreditCard size={18} /> },
 ];
 
 function SidebarNav() {
@@ -197,6 +200,7 @@ export default function AppShellV2() {
       {/* Main content */}
       <main className="lg:pl-64 pt-14 lg:pt-0 pb-20 lg:pb-0">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <TrialBanner />
           <Outlet />
         </div>
       </main>

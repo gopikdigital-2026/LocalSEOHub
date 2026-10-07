@@ -19,6 +19,7 @@ const WeeklySummaryPage = lazy(() => import('./features/business-memory/WeeklySu
 const SourceManagerPage = lazy(() => import('./features/reality-engine/SourceManager'));
 const FirstValueFlow = lazy(() => import('./features/first-value/FirstValueFlow'));
 const GBPCallbackPage = lazy(() => import('./features/reality-engine/GBPCallbackPage'));
+const BillingPage = lazy(() => import('./features/billing/BillingPage'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
@@ -150,6 +151,7 @@ export default function App() {
           <Route path="/negocio/objetivos" element={<BusinessGoalsPage />} />
           <Route path="/negocio/memoria" element={<BusinessMemoryPage />} />
           <Route path="/fuentes" element={<SourceManagerPage />} />
+          <Route path="/facturacion" element={<BillingPage />} />
         </Route>
 
         {/* ── OAuth callbacks (auth, no shell) ── */}

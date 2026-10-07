@@ -113,9 +113,10 @@ const GOAL_OPTIONS: { id: GoalId; icon: React.ReactNode; es: [string, string]; e
   { id: 'more_web_visits', icon: <Globe size={18} />, es: ['Mejorar la página web', 'Atraer más visitas y convertirlas en clientes.'], en: ['Improve the website', 'Attract more visits and turn them into customers.'] },
 ];
 
-export function PrimaryGoalStep({ initial, onContinue, onBack, lang, busy, error }: StepActionProps & {
+export function PrimaryGoalStep({ initial, onContinue, onBack, lang, busy, error, startsTrial = false }: StepActionProps & {
   initial: GoalId | null;
   onContinue: (goalId: GoalId) => void;
+  startsTrial?: boolean;
 }) {
   const c = onboardingCopy(lang);
   const [selected, setSelected] = useState<GoalId | null>(initial);
@@ -144,10 +145,11 @@ export function PrimaryGoalStep({ initial, onContinue, onBack, lang, busy, error
         })}
       </div>
       <StepError message={error} />
+      {startsTrial && <p className="mt-6 text-v2-xs text-v2-text-secondary">{c.trialNotice}</p>}
       <div className="flex items-center gap-3 mt-8">
         <Button variant="ghost" onClick={onBack} disabled={busy} icon={<ArrowLeft size={14} />}>{c.back}</Button>
         <Button onClick={() => selected && !busy && onContinue(selected)} disabled={!selected || busy} icon={<ArrowRight size={16} />}>
-          {busy ? c.saving : c.finish}
+          {busy ? c.saving : startsTrial ? c.trialFinish : c.finish}
         </Button>
       </div>
     </div>

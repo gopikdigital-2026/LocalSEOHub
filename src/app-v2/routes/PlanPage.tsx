@@ -14,6 +14,7 @@ import {
 } from '../../features/actions/engine';
 import type { ActionCategory, BusinessAction } from '../../features/actions/types';
 import { useI18n } from '../../lib/i18n';
+import { PaywallNotice } from '../../features/billing/BillingNotices';
 import { Target, Check, Clock, ArrowRight, Calendar, Info, AlertTriangle, X, RefreshCw } from 'lucide-react';
 
 const L = {
@@ -105,7 +106,7 @@ export default function PlanPage() {
   const { lang } = useI18n();
   const l = L[lang];
   const navigate = useNavigate();
-  const { actions, loading: actionsLoading, error, ensureFresh, refresh, start, complete, dismiss } = useActions();
+  const { actions, loading: actionsLoading, error, ensureFresh, refresh, start, complete, dismiss, locked } = useActions();
   const [goalId, setGoalId] = useState<GoalId | null>(null);
   const [firstRec, setFirstRec] = useState<FirstRecommendationData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -195,6 +196,7 @@ export default function PlanPage() {
           </p>
         )}
       </div>
+      {locked && <PaywallNotice surface="plan" />}
 
       <div className="rounded-v2-xl border border-v2-border-light bg-white p-5">
         <div className="flex items-center justify-between mb-3">

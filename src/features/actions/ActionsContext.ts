@@ -8,6 +8,8 @@ export interface ActionsContextValue {
   /** True once the first sync attempt for the current business has finished (success or failure). */
   ready: boolean;
   error: string | null;
+  /** True when the server says this user has neither an active trial nor a subscription; actions stay readable. */
+  locked: boolean;
   milestones: Milestones | null;
   /** Set only after the user's first useful action is confirmed COMPLETED and persisted as a milestone. */
   firstSuccess: BusinessAction | null;
@@ -24,6 +26,7 @@ export const ActionsContext = createContext<ActionsContextValue>({
   loading: false,
   ready: false,
   error: null,
+  locked: false,
   milestones: null,
   firstSuccess: null,
   clearFirstSuccess: () => {},

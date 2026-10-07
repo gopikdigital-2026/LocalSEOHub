@@ -15,6 +15,7 @@ import { WelcomeStep, BusinessSetupStep, PrimaryGoalStep, FinishingStep, ErrorRe
 import { onboardingCopy } from './onboardingCopy';
 import { trackOnboardingStarted, trackOnboardingStepCompleted } from '../../services/analytics/v2Analytics';
 import { useAuth } from '../../hooks/useAuth';
+import { useBilling } from '../billing/BillingContext';
 import { useI18n } from '../../lib/i18n';
 import { LoadingState } from '../../components/ui';
 
@@ -52,6 +53,8 @@ export default function FirstValueFlow() {
   const userId = session?.user?.id ?? '';
   const { currentBusiness, businessId: resolvedBusinessId, updateBusiness, loading: businessLoading, error: businessError } = useBusiness();
   const businessId = resolvedBusinessId ?? '';
+  const billing = useBilling();
+  const startsTrial = billing.status?.state === 'TRIAL_NOT_STARTED';
 
   const [state, setState] = useState<FirstValueState | null>(null);
   const [screen, setScreen] = useState<OnboardingScreen>('welcome');
@@ -103,6 +106,9 @@ export default function FirstValueFlow() {
     setScreen('finishing');
     setStepError(null);
     try {
+      // The goal step tells the user that finishing starts the free trial; the server only creates it once.
+      const billingNow = billing.status ?? (await billing.refresh());
+      if (billingNow?.state === 'TRIAL_NOT_STARTED') await billing.startTrial();
       const goal = s.selectedGoalId as GoalId;
       const completedAt = new Date().toISOString();
       const updated = await updateBusiness({
@@ -124,7 +130,7 @@ export default function FirstValueFlow() {
       setStepError(copy.finishError);
       finishingRef.current = false;
     }
-  }, [updateBusiness, currentBusiness, persist, userId, navigate, copy.finishError]);
+  }, [updateBusiness, currentBusiness, persist, userId, navigate, copy.finishError, billing]);
 
   useEffect(() => {
     if (screen === 'finishing' && state && !stepError && !finishingRef.current) void finish(state);
@@ -194,6 +200,7 @@ export default function FirstValueFlow() {
           busy={busy}
           error={stepError}
           initial={state.selectedGoalId}
+          startsTrial={startsTrial}
           onBack={() => { setStepError(null); setScreen('business_setup'); }}
           onContinue={(goalId) => runStep(async () => {
             const next = { ...state, currentStep: 'primary_goal' as const, selectedGoalId: goalId };

@@ -27,19 +27,22 @@ import QuickActions from '../../features/dashboard/QuickActions';
 import type { QuickAction } from '../../features/dashboard/QuickActions';
 import BusinessSnapshot from '../../features/dashboard/BusinessSnapshot';
 import type { SnapshotStat } from '../../features/dashboard/BusinessSnapshot';
-import UpgradeCard from '../../features/dashboard/UpgradeCard';
+import { PaywallNotice, PlanCard, TrialStartCard } from '../../features/billing/BillingNotices';
+import { PremiumRequiredError } from '../../features/billing/model';
 
 const ACTION_ERRORS = {
   es: {
     start: 'No hemos podido empezar esta acción. Inténtalo de nuevo.',
     complete: 'No hemos podido marcarla como completada. Sigue pendiente; inténtalo de nuevo.',
     dismiss: 'No hemos podido descartarla. Inténtalo de nuevo.',
+    locked: 'Para esto necesitas una prueba activa o una suscripción. Tus acciones siguen guardadas.',
     close: 'Cerrar',
   },
   en: {
     start: "We couldn't start this action. Please try again.",
     complete: "We couldn't mark it as completed. It is still pending; please try again.",
     dismiss: "We couldn't dismiss it. Please try again.",
+    locked: 'This needs an active trial or subscription. Your actions are still saved.',
     close: 'Close',
   },
 };
@@ -111,10 +114,12 @@ export default function TodayPage() {
   const { lang } = useI18n();
   const {
     actions: allActions, loading, error, ready, milestones: activation, firstSuccess, clearFirstSuccess,
-    ensureFresh, refresh, start, complete, dismiss,
+    ensureFresh, refresh, start, complete, dismiss, locked,
   } = useActions();
   const [actionError, setActionError] = useState<string | null>(null);
   const errors = ACTION_ERRORS[lang];
+  const failWith = (fallback: string) => (err: unknown) =>
+    setActionError(err instanceof PremiumRequiredError ? errors.locked : fallback);
 
   useEffect(() => { ensureFresh(); }, [ensureFresh]);
 
@@ -135,8 +140,8 @@ export default function TodayPage() {
     if (action.status === 'PENDING') {
       try {
         await start(action);
-      } catch {
-        setActionError(errors.start);
+      } catch (err) {
+        failWith(errors.start)(err);
         return;
       }
     }
@@ -146,13 +151,13 @@ export default function TodayPage() {
     const a = byId(item.id);
     if (!a) return;
     setActionError(null);
-    complete(a).catch(() => setActionError(errors.complete));
+    complete(a).catch(failWith(errors.complete));
   };
   const onDismiss = (item: DashboardAction) => {
     const a = byId(item.id);
     if (!a) return;
     setActionError(null);
-    dismiss(a).catch(() => setActionError(errors.dismiss));
+    dismiss(a).catch(failWith(errors.dismiss));
   };
 
   // No scoring model reads real data yet, so the score stays unavailable instead of a placeholder number.
@@ -191,6 +196,8 @@ export default function TodayPage() {
         />
       )}
       {showIntro && <FirstPlanIntro lang={lang} businessName={business?.name ?? null} goal={business?.primary_goal ?? null} />}
+      <TrialStartCard />
+      {locked && <PaywallNotice surface="today" />}
       {actionError && (
         <div role="alert" className="flex items-start gap-2.5 rounded-v2-lg border border-v2-error-200 bg-v2-error-50 px-4 py-3">
           <AlertTriangle size={14} className="text-v2-error-500 mt-0.5 shrink-0" />
@@ -247,7 +254,7 @@ export default function TodayPage() {
             city={profile.city}
             stats={snapshotStats}
           />
-          <UpgradeCard currentPlan="free" onUpgrade={() => {}} />
+          <PlanCard />
         </div>
       </div>
     </div>

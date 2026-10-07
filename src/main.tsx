@@ -5,6 +5,7 @@ import { I18nProvider } from './lib/i18n';
 import App from './App.tsx';
 import { BusinessProvider } from './features/business-memory/BusinessContext';
 import ActionsProvider from './features/actions/ActionsProvider';
+import BillingProvider from './features/billing/BillingProvider';
 import './index.css';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -33,9 +34,11 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <I18nProvider>
           <BusinessProvider>
-            <ActionsProvider>
-              <App />
-            </ActionsProvider>
+            <BillingProvider>
+              <ActionsProvider>
+                <App />
+              </ActionsProvider>
+            </BillingProvider>
           </BusinessProvider>
         </I18nProvider>
       </BrowserRouter>

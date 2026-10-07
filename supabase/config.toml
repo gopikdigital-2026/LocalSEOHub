@@ -9,3 +9,15 @@ verify_jwt = true
 
 [functions.gbp-sync]
 verify_jwt = true
+
+[functions.stripe-billing]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.stripe-checkout]
+verify_jwt = true
+
+[functions.stripe-cancel-subscription]
+verify_jwt = true

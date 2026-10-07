@@ -12,8 +12,10 @@ import { advanceActivation } from '../activation/service';
 import type { ActivationEvent, Milestones } from '../activation/milestones';
 import { ActionsContext, type ActionsContextValue } from './ActionsContext';
 import { openActions } from './engine';
-import { syncActions, transitionAction } from './repository';
+import { syncActions, transitionAction, loadActions } from './repository';
 import type { BusinessAction, SourceSnapshot } from './types';
+import { useBilling } from '../billing/BillingContext';
+import { PremiumRequiredError } from '../billing/model';
 
 function fingerprint(updatedAt: string, sources: SourceSnapshot[]): string {
   return [updatedAt, ...sources.map((s) => `${s.sourceType}:${s.status}:${s.lastSyncAt ?? ''}`).sort()].join('|');
@@ -21,6 +23,9 @@ function fingerprint(updatedAt: string, sources: SourceSnapshot[]): string {
 
 export default function ActionsProvider({ children }: { children: React.ReactNode }) {
   const { currentBusiness, userId } = useBusiness();
+  const { hasPremium, error: billingError } = useBilling();
+  const billingSettled = hasPremium !== null || billingError;
+  const canWrite = hasPremium === true;
   const [actions, setActions] = useState<BusinessAction[]>([]);
   const [loading, setLoading] = useState(false);
   const [readyFor, setReadyFor] = useState<string | null>(null);
@@ -45,11 +50,18 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
   }, [userId, currentBusiness]);
 
   const run = useCallback(async (force: boolean) => {
-    if (!currentBusiness?.onboarding_completed) return;
+    if (!currentBusiness?.onboarding_completed || !billingSettled) return;
     if (inFlight.current) return inFlight.current;
     const job = (async () => {
       setLoading(true);
       try {
+        if (!canWrite) {
+          // Without a trial or subscription the plan is shown as it was saved; nothing new is written.
+          setActions(await loadActions(currentBusiness.id));
+          lastSynced.current = null;
+          setError(null);
+          return;
+        }
         const sources: SourceSnapshot[] = (await loadSources(currentBusiness.id)).map((s) => ({
           sourceType: s.source_type,
           status: s.status,
@@ -74,7 +86,7 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
     })();
     inFlight.current = job;
     return job;
-  }, [currentBusiness, activate]);
+  }, [currentBusiness, activate, billingSettled, canWrite]);
 
   useEffect(() => {
     if (!currentBusiness) {
@@ -101,6 +113,7 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
     setActions((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
 
   const transition = useCallback(async (action: BusinessAction, to: 'IN_PROGRESS' | 'COMPLETED' | 'DISMISSED') => {
+    if (!canWrite) throw new PremiumRequiredError();
     const updated = await transitionAction(action.id, to);
     replace(updated);
     if (updated.status !== to) return;
@@ -115,13 +128,14 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
     }
     if (to === 'DISMISSED') trackRecommendationDismissed(updated);
     if (to !== 'IN_PROGRESS') await run(true);
-  }, [run, activate]);
+  }, [run, activate, canWrite]);
 
   const value = useMemo<ActionsContextValue>(() => ({
     actions,
     loading,
     ready: readyFor !== null && readyFor === businessKey,
     error,
+    locked: hasPremium === false,
     milestones,
     firstSuccess,
     clearFirstSuccess: () => setFirstSuccess(null),
@@ -130,7 +144,7 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
     start: (a) => transition(a, 'IN_PROGRESS'),
     complete: (a) => transition(a, 'COMPLETED'),
     dismiss: (a) => transition(a, 'DISMISSED'),
-  }), [actions, loading, readyFor, businessKey, error, milestones, firstSuccess, run, transition]);
+  }), [actions, loading, readyFor, businessKey, error, hasPremium, milestones, firstSuccess, run, transition]);
 
   return <ActionsContext.Provider value={value}>{children}</ActionsContext.Provider>;
 }
