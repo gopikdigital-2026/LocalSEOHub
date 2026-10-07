@@ -7,65 +7,14 @@ import {
   FileText, Check, Sparkles, AlertTriangle, Info,
 } from 'lucide-react';
 
-export type Lang = 'es' | 'en';
-
-const COPY = {
-  es: {
-    welcomeTitle: 'Vamos a preparar tus primeras acciones',
-    welcomeText: 'LocalSEOHub te indica qué hacer, paso a paso, para que más clientes de tu zona encuentren tu negocio.',
-    welcomeTime: 'Menos de 2 minutos',
-    welcomeItems: ['Dos preguntas rápidas sobre tu negocio', 'Tus primeras acciones, ordenadas por prioridad', 'No necesitas conectar Google para empezar'],
-    start: 'Empezar',
-    step: (n: number, total: number) => `Paso ${n} de ${total}`,
-    bizTitle: 'Tu negocio',
-    bizHelper: 'Con esto adaptamos las recomendaciones a tu tipo de negocio y a tu zona.',
-    name: 'Nombre del negocio', namePh: 'Ej: Clínica Dental Sonríe', nameErr: 'El nombre es necesario',
-    category: 'Actividad', categoryPh: 'Ej: Restaurante, Clínica, Peluquería...', categoryErr: 'Indica a qué se dedica tu negocio',
-    city: 'Ciudad o zona', cityPh: 'Ej: Madrid', cityErr: 'Indica la ciudad o zona donde trabajas',
-    website: 'Sitio web (opcional)', websiteHelper: 'Si tienes web la tendremos en cuenta. Puedes añadirla más tarde.',
-    goalTitle: '¿Cuál es tu objetivo principal?',
-    goalHelper: 'Lo utilizaremos para priorizar las acciones que más pueden ayudarte. Podrás cambiarlo cuando quieras.',
-    back: 'Atrás', next: 'Continuar', finish: 'Ver mis acciones', saving: 'Guardando...',
-    saveError: 'No hemos podido guardar este paso. Tus datos siguen aquí; inténtalo de nuevo.',
-    finishingTitle: 'Preparando tu primer plan',
-    finishingText: 'Estamos guardando tu negocio y ordenando tus primeras acciones.',
-    finishError: 'No hemos podido guardar tu negocio. No se ha perdido nada de lo que has escrito.',
-    retry: 'Reintentar', reset: 'Empezar de nuevo',
-  },
-  en: {
-    welcomeTitle: "Let's prepare your first actions",
-    welcomeText: 'LocalSEOHub tells you what to do, step by step, so more customers near you find your business.',
-    welcomeTime: 'Under 2 minutes',
-    welcomeItems: ['Two quick questions about your business', 'Your first actions, ordered by priority', 'No need to connect Google to get started'],
-    start: 'Start',
-    step: (n: number, total: number) => `Step ${n} of ${total}`,
-    bizTitle: 'Your business',
-    bizHelper: 'This lets us tailor recommendations to your type of business and your area.',
-    name: 'Business name', namePh: 'E.g. Smile Dental Clinic', nameErr: 'The name is required',
-    category: 'Activity', categoryPh: 'E.g. Restaurant, Clinic, Hair salon...', categoryErr: 'Tell us what your business does',
-    city: 'City or area', cityPh: 'E.g. Madrid', cityErr: 'Tell us the city or area you work in',
-    website: 'Website (optional)', websiteHelper: 'If you have a website we will take it into account. You can add it later.',
-    goalTitle: 'What is your main goal?',
-    goalHelper: 'We use it to prioritise the actions that can help you most. You can change it at any time.',
-    back: 'Back', next: 'Continue', finish: 'See my actions', saving: 'Saving...',
-    saveError: "We couldn't save this step. Your details are still here; please try again.",
-    finishingTitle: 'Preparing your first plan',
-    finishingText: 'We are saving your business and ordering your first actions.',
-    finishError: "We couldn't save your business. Nothing you typed has been lost.",
-    retry: 'Retry', reset: 'Start over',
-  },
-};
-
-export function onboardingCopy(lang: Lang) {
-  return COPY[lang];
-}
+import { onboardingCopy, type Lang } from './onboardingCopy';
 
 // ─── Progress ───────────────────────────────────────────────────────────────
 
 export function StepProgress({ step, total, lang }: { step: number; total: number; lang: Lang }) {
   return (
     <div className="flex items-center justify-center gap-2 mb-8" data-testid="onboarding-progress">
-      <span className="text-v2-xs text-v2-text-tertiary font-medium">{COPY[lang].step(step, total)}</span>
+      <span className="text-v2-xs text-v2-text-tertiary font-medium">{onboardingCopy(lang).step(step, total)}</span>
       <div className="flex gap-1">
         {Array.from({ length: total }, (_, i) => (
           <div key={i} className={`w-8 h-1 rounded-full transition-colors duration-300 ${i < step ? 'bg-v2-primary-500' : 'bg-v2-neutral-100'}`} />
@@ -78,7 +27,7 @@ export function StepProgress({ step, total, lang }: { step: number; total: numbe
 // ─── WelcomeStep ────────────────────────────────────────────────────────────
 
 export function WelcomeStep({ lang, onContinue }: { lang: Lang; onContinue: () => void }) {
-  const c = COPY[lang];
+  const c = onboardingCopy(lang);
   return (
     <div className="flex flex-col items-center text-center max-w-md mx-auto v2-fade-in">
       <div className="w-16 h-16 rounded-v2-2xl bg-v2-primary-50 border border-v2-primary-200 flex items-center justify-center mb-6">
@@ -116,7 +65,7 @@ export function BusinessSetupStep({ initial, onContinue, onBack, lang, busy, err
   initial: BusinessSetupData | null;
   onContinue: (data: BusinessSetupData) => void;
 }) {
-  const c = COPY[lang];
+  const c = onboardingCopy(lang);
   const [form, setForm] = useState<BusinessSetupData>(initial ?? { name: '', category: '', city: '', website: '' });
   const [errors, setErrors] = useState<Partial<Record<keyof BusinessSetupData, string>>>({});
 
@@ -168,7 +117,7 @@ export function PrimaryGoalStep({ initial, onContinue, onBack, lang, busy, error
   initial: GoalId | null;
   onContinue: (goalId: GoalId) => void;
 }) {
-  const c = COPY[lang];
+  const c = onboardingCopy(lang);
   const [selected, setSelected] = useState<GoalId | null>(initial);
 
   return (
@@ -208,7 +157,7 @@ export function PrimaryGoalStep({ initial, onContinue, onBack, lang, busy, error
 // ─── FinishingStep ──────────────────────────────────────────────────────────
 
 export function FinishingStep({ lang, error, onRetry }: { lang: Lang; error: string | null; onRetry: () => void }) {
-  const c = COPY[lang];
+  const c = onboardingCopy(lang);
   if (error) {
     return <ErrorRecovery lang={lang} title={c.finishingTitle} message={error} onRetry={onRetry} />;
   }
@@ -232,7 +181,7 @@ export function ErrorRecovery({ lang, title, message, onRetry, onReset }: {
   onRetry?: () => void;
   onReset?: () => void;
 }) {
-  const c = COPY[lang];
+  const c = onboardingCopy(lang);
   return (
     <div className="max-w-md mx-auto text-center">
       <div className="w-14 h-14 rounded-full bg-v2-error-50 border border-v2-error-200 flex items-center justify-center mx-auto mb-6">

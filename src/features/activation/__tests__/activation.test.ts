@@ -233,7 +233,7 @@ describe('onboarding', () => {
 
   it('17. the onboarding never requires connecting Google and offers copy in both languages', () => {
     const flow = src('src/features/first-value/FirstValueFlow.tsx');
-    const steps = src('src/features/first-value/steps.tsx');
+    const steps = src('src/features/first-value/steps.tsx') + src('src/features/first-value/onboardingCopy.ts');
     expect(flow + steps).not.toMatch(/startGBPConnection|SourceSetupStep|InitialAnalysisStep|demo/i);
     expect(steps).toMatch(/Paso \$\{n\} de \$\{total\}/);
     expect(steps).toMatch(/Step \$\{n\} of \$\{total\}/);
