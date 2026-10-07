@@ -1,7 +1,10 @@
 import { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { TimelineEvent, BusinessInsight } from './types';
-import { createLocalRepository } from './repository';
+import { createMemoryRepository } from './repository';
+import { useBusiness } from './BusinessContext';
+import { useActions } from '../actions/ActionsContext';
+import { withActionHistory } from '../actions/engine';
 import { generateInsights, inferPreferences } from './engine';
 import { trackTimelineView, trackEmptyStateViewed } from '../../services/analytics/v2Analytics';
 import {
@@ -27,7 +30,11 @@ function SectionEmpty({ surface, text }: { surface: string; text: string }) {
   );
 }
 
-const repo = createLocalRepository();
+function useMemoryState() {
+  const { currentBusiness } = useBusiness();
+  const { actions } = useActions();
+  return useMemo(() => withActionHistory(createMemoryRepository(currentBusiness).load(), actions), [currentBusiness, actions]);
+}
 
 // ─── Timeline Component ─────────────────────────────────────────────────────
 
@@ -51,7 +58,7 @@ function EventIcon({ type }: { type: TimelineEvent['type'] }) {
 }
 
 export function BusinessTimeline() {
-  const state = repo.load();
+  const state = useMemoryState();
   const timeline = state.timeline;
   const grouped = groupByDay(timeline);
 
@@ -110,7 +117,7 @@ function InsightIcon({ type }: { type: BusinessInsight['type'] }) {
 }
 
 export function BusinessInsights() {
-  const state = repo.load();
+  const state = useMemoryState();
   const insights = useMemo(() => generateInsights(state), [state]);
 
   return (
@@ -148,7 +155,7 @@ export function BusinessInsights() {
 // ─── Preferences Component ──────────────────────────────────────────────────
 
 export function BusinessPreferencesView() {
-  const state = repo.load();
+  const state = useMemoryState();
   const preferences = useMemo(() => inferPreferences(state), [state]);
 
   return (

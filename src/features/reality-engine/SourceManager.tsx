@@ -5,6 +5,8 @@ import { SOURCE_REGISTRY, getSourceEntry } from './registry';
 import { loadSources, loadSyncEvents } from './repositories';
 import { connectWebsite, saveManualEntry, disconnectSource, startGBPConnection, formatRelativeTime } from './engine';
 import type { GBPStartResult } from './engine';
+import { useBusiness } from '../business-memory/BusinessContext';
+import { useI18n } from '../../lib/i18n';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   'map-pin': MapPin,
@@ -18,6 +20,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
 // ─── Main SourceManager page ────────────────────────────────────────────────
 
 export default function SourceManager() {
+  const { businessId, loading: businessLoading, error: businessError } = useBusiness();
+  const { lang } = useI18n();
   const [sources, setSources] = useState<ConnectedSource[]>([]);
   const [events, setEvents] = useState<SyncEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,8 +36,14 @@ export default function SourceManager() {
   const [busySource, setBusySource] = useState<SourceType | null>(null);
 
   const refresh = useCallback(async () => {
+    if (businessLoading) return;
+    if (!businessId) {
+      setError(businessError ?? 'No se pudo cargar tu negocio');
+      setLoading(false);
+      return;
+    }
     try {
-      const [s, e] = await Promise.all([loadSources(), loadSyncEvents(30)]);
+      const [s, e] = await Promise.all([loadSources(businessId), loadSyncEvents(30)]);
       setSources(s);
       setEvents(e);
       setError(null);
@@ -42,7 +52,7 @@ export default function SourceManager() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [businessId, businessLoading, businessError]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -65,8 +75,9 @@ export default function SourceManager() {
   const [gbpNotConfigured, setGbpNotConfigured] = useState(false);
 
   const handleGBPConnect = async () => {
+    if (!businessId) return;
     setBusySource('google_business');
-    const result: GBPStartResult = await startGBPConnection();
+    const result: GBPStartResult = await startGBPConnection(businessId);
     if (result.status === 'not_configured') {
       setGbpNotConfigured(true);
       setBusySource(null);
@@ -96,7 +107,14 @@ export default function SourceManager() {
           Fuentes de datos
         </h1>
         <p className="text-v2-sm text-v2-text-secondary mt-1">
-          Conecta tus cuentas para obtener recomendaciones basadas en datos reales.
+          {lang === 'en'
+            ? 'Connecting Google Business Profile lets us verify your data and offer more precise recommendations.'
+            : 'Conectar Google Business Profile permite verificar datos y ofrecer recomendaciones más precisas.'}
+        </p>
+        <p className="text-v2-xs text-v2-text-tertiary mt-1">
+          {lang === 'en'
+            ? 'It is recommended, not required: you already receive actions based on your business details.'
+            : 'Es recomendable, no obligatorio: ya recibes acciones basadas en los datos de tu negocio.'}
         </p>
       </div>
 
@@ -185,16 +203,18 @@ export default function SourceManager() {
       </div>
 
       {/* Website modal */}
-      {websiteModal && (
+      {websiteModal && businessId && (
         <WebsiteModal
+          businessId={businessId}
           onClose={() => setWebsiteModal(false)}
           onSuccess={() => { setWebsiteModal(false); refresh(); }}
         />
       )}
 
       {/* Manual entry modal */}
-      {manualModal && (
+      {manualModal && businessId && (
         <ManualEntryModal
+          businessId={businessId}
           existingData={(getSource('manual')?.metadata ?? {}) as Partial<ManualEntryData>}
           onClose={() => setManualModal(false)}
           onSuccess={() => { setManualModal(false); refresh(); }}
@@ -419,7 +439,7 @@ function SyncEventRow({ event }: { event: SyncEvent }) {
 
 // ─── Website modal ──────────────────────────────────────────────────────────
 
-function WebsiteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+function WebsiteModal({ businessId, onClose, onSuccess }: { businessId: string; onClose: () => void; onSuccess: () => void }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -444,7 +464,7 @@ function WebsiteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
     setError('');
 
     const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
-    const result = await connectWebsite(normalizedUrl);
+    const result = await connectWebsite(normalizedUrl, businessId);
 
     if (result.success) {
       onSuccess();
@@ -521,7 +541,8 @@ const MANUAL_FIELDS: { key: keyof ManualEntryData; label: string; placeholder: s
   { key: 'communicationTone', label: 'Tono de comunicacion', placeholder: 'Profesional, cercano, formal, informal...' },
 ];
 
-function ManualEntryModal({ existingData, onClose, onSuccess }: {
+function ManualEntryModal({ businessId, existingData, onClose, onSuccess }: {
+  businessId: string;
   existingData: Partial<ManualEntryData>;
   onClose: () => void;
   onSuccess: () => void;
@@ -545,7 +566,7 @@ function ManualEntryModal({ existingData, onClose, onSuccess }: {
     setLoading(true);
     setError('');
     try {
-      await saveManualEntry(form as unknown as Record<string, string>);
+      await saveManualEntry(form as unknown as Record<string, string>, businessId);
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar');

@@ -30,7 +30,7 @@ async function invokeEdge<T = Record<string, unknown>>(
 
 // ─── Website connection ─────────────────────────────────────────────────────
 
-export async function connectWebsite(url: string, businessId = 'default') {
+export async function connectWebsite(url: string, businessId: string) {
   const source = await upsertSource('website', {
     status: 'connecting',
     metadata: { url },
@@ -79,7 +79,7 @@ export async function connectWebsite(url: string, businessId = 'default') {
 
 export async function saveManualEntry(
   entryData: Record<string, string>,
-  businessId = 'default'
+  businessId: string
 ) {
   const source = await upsertSource('manual', {
     status: 'connected',
@@ -108,8 +108,8 @@ export type GBPStartResult =
   | { status: 'not_configured' }
   | { status: 'error'; message: string };
 
-export async function startGBPConnection(): Promise<GBPStartResult> {
-  const { data, error } = await invokeEdge<{ url: string; state: string }>('gbp-oauth-start', {});
+export async function startGBPConnection(businessId: string): Promise<GBPStartResult> {
+  const { data, error } = await invokeEdge<{ url: string; state: string }>('gbp-oauth-start', { businessId });
 
   if (error) {
     if (error.includes('pendiente de configuracion') || error.includes('no esta configurado')) {
@@ -132,7 +132,7 @@ export function clearStoredOAuthState(): void {
   sessionStorage.removeItem(GBP_STATE_KEY);
 }
 
-export async function resetGBPStatus(businessId = 'default'): Promise<void> {
+export async function resetGBPStatus(businessId: string): Promise<void> {
   await upsertSource('google_business', {
     status: 'disconnected',
     last_error: null,
@@ -144,7 +144,7 @@ export async function selectGBPLocation(
   accountId: string,
   locationId: string,
   locationName: string,
-  businessId = 'default'
+  businessId: string
 ): Promise<{ success: boolean; error?: string }> {
   const source = await upsertSource('google_business', {
     status: 'syncing',
@@ -157,7 +157,7 @@ export async function selectGBPLocation(
 
   const { data, error } = await invokeEdge<{ success: boolean; error?: string; profile?: Record<string, unknown>; recordCount?: number; reviewCount?: number }>(
     'gbp-sync',
-    { accountId, locationId }
+    { accountId, locationId, businessId }
   );
 
   if (error || !data?.success) {

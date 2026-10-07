@@ -1,12 +1,14 @@
 import { useMemo, useEffect, useState } from 'react';
 import type { WeeklySummaryData } from './types';
 import { AVAILABLE_GOALS, generateWeeklySummary } from './engine';
-import { createLocalRepository } from './repository';
+import { createMemoryRepository } from './repository';
+import { useBusiness } from './BusinessContext';
+import { useActions } from '../actions/ActionsContext';
+import { CATEGORY_LABELS, buildActionReport, withActionHistory } from '../actions/engine';
+import { useI18n } from '../../lib/i18n';
 import { trackWeeklySummaryView, trackDemoViewed, trackRealDataViewed } from '../../services/analytics/v2Analytics';
 import { DemoModeBanner, NoDataState } from '../../components/DataIntegrity';
 import { BarChart2, Clock, Target, TrendingUp, ArrowRight, Calendar } from 'lucide-react';
-
-const repo = createLocalRepository();
 
 const DEMO_SUMMARY: WeeklySummaryData = {
   weekStart: '2026-07-28T00:00:00Z',
@@ -32,9 +34,13 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 }
 
 export default function WeeklySummaryPage() {
-  const state = repo.load();
+  const { currentBusiness } = useBusiness();
+  const { actions } = useActions();
+  const { lang } = useI18n();
+  const state = useMemo(() => withActionHistory(createMemoryRepository(currentBusiness).load(), actions), [currentBusiness, actions]);
   const liveSummary = useMemo(() => generateWeeklySummary(state), [state]);
-  const hasRealData = liveSummary.actionsCompleted > 0;
+  const report = useMemo(() => buildActionReport(actions), [actions]);
+  const hasRealData = liveSummary.actionsCompleted > 0 || report.pending > 0 || report.completionRate !== null;
   const [showExample, setShowExample] = useState(false);
 
   useEffect(() => { trackWeeklySummaryView(); }, []);
@@ -88,6 +94,36 @@ export default function WeeklySummaryPage() {
         <StatCard icon={<BarChart2 size={14} />} label="Alto impacto" value={String(summary.impactAchieved.high)} sub="acciones" />
         <StatCard icon={<Target size={14} />} label="Objetivos" value={`${summary.goalsProgress.length}`} sub="en progreso" />
       </div>
+
+      {/* Action engine report: real persisted counts only */}
+      {!isDemo && (
+        <div data-testid="action-report" className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6 space-y-4">
+          <h2 className="text-v2-base font-semibold text-v2-text-primary">Tus acciones</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <p className="text-v2-xl font-bold text-v2-text-primary">{report.completedThisWeek}</p>
+              <p className="text-v2-xs text-v2-text-tertiary">completadas esta semana</p>
+            </div>
+            <div>
+              <p className="text-v2-xl font-bold text-v2-text-primary">{report.pending}</p>
+              <p className="text-v2-xs text-v2-text-tertiary">pendientes</p>
+            </div>
+            <div>
+              <p className="text-v2-xl font-bold text-v2-text-primary">{report.completionRate === null ? '--' : `${report.completionRate}%`}</p>
+              <p className="text-v2-xs text-v2-text-tertiary">completado del plan</p>
+            </div>
+          </div>
+          {report.byCategory.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {report.byCategory.map((c) => (
+                <span key={c.category} className="inline-flex items-center gap-1 rounded-full border border-v2-border-light bg-v2-neutral-50 px-2.5 py-1 text-v2-xs text-v2-text-secondary">
+                  {CATEGORY_LABELS[lang][c.category]}: {c.completed}/{c.completed + c.pending}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Goals progress */}
       {summary.goalsProgress.length > 0 && (

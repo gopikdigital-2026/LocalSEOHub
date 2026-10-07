@@ -1,12 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createLocalRepository } from '../../features/business-memory/repository';
+import { createMemoryRepository } from '../../features/business-memory/repository';
+import { useBusiness } from '../../features/business-memory/BusinessContext';
 import { loadSources as loadConnectedSources } from '../../features/reality-engine/repositories';
 import type { ConnectedSource } from '../../features/reality-engine/types';
-import { getDailyActions } from '../../features/daily-briefing/engine';
-import { demoRecommendations } from '../demo/demoData';
 import type { ConnectionEntry, DashboardAction } from '../../features/dashboard/types';
-import type { Recommendation } from '../../domain/types';
+import { useActions } from '../../features/actions/ActionsContext';
+import {
+  PRIORITY_LABELS, actionOrigin, actionTarget, ctaLabel, localizeAction, openActions, selectTodayActions, type ActionLang,
+} from '../../features/actions/engine';
+import type { BusinessAction } from '../../features/actions/types';
+import { trackRecommendationViewed } from '../../services/analytics/v2Analytics';
+import { useI18n } from '../../lib/i18n';
+import { activationStage, resolveTodayState } from '../../features/activation/milestones';
+import { FirstPlanIntro, FirstSuccessNotice } from '../../features/activation/ActivationNotices';
+import { AlertTriangle, X } from 'lucide-react';
 
 import DashboardHeader from '../../features/dashboard/DashboardHeader';
 import BusinessHealthCard from '../../features/dashboard/BusinessHealthCard';
@@ -20,32 +28,37 @@ import type { QuickAction } from '../../features/dashboard/QuickActions';
 import BusinessSnapshot from '../../features/dashboard/BusinessSnapshot';
 import type { SnapshotStat } from '../../features/dashboard/BusinessSnapshot';
 import UpgradeCard from '../../features/dashboard/UpgradeCard';
-import DashboardEmptyState from '../../features/dashboard/DashboardEmptyState';
 
-function mapCtaLabel(actionType: string): string {
-  switch (actionType) {
-    case 'respond_reviews': return 'Preparar respuestas';
-    case 'publish_post': return 'Preparar publicacion';
-    case 'update_description': return 'Revisar descripcion';
-    case 'add_photos': return 'Preparar fotos';
-    case 'create_content': return 'Preparar contenido';
-    default: return 'Preparar accion';
-  }
-}
+const ACTION_ERRORS = {
+  es: {
+    start: 'No hemos podido empezar esta acción. Inténtalo de nuevo.',
+    complete: 'No hemos podido marcarla como completada. Sigue pendiente; inténtalo de nuevo.',
+    dismiss: 'No hemos podido descartarla. Inténtalo de nuevo.',
+    close: 'Cerrar',
+  },
+  en: {
+    start: "We couldn't start this action. Please try again.",
+    complete: "We couldn't mark it as completed. It is still pending; please try again.",
+    dismiss: "We couldn't dismiss it. Please try again.",
+    close: 'Close',
+  },
+};
 
-function recToAction(rec: Recommendation): DashboardAction {
+const PRIORITY_IMPACT = { HIGH: 'high', MEDIUM: 'medium', LOW: 'low' } as const;
+
+function toDashboardAction(action: BusinessAction, lang: ActionLang): DashboardAction {
+  const copy = localizeAction(action, lang);
   return {
-    id: rec.id,
-    title: rec.title,
-    explanation: rec.explanation,
-    reason: rec.reason,
-    impact: rec.impact,
-    estimatedMinutes: rec.estimatedTimeMinutes,
-    source: rec.source,
-    confidence: rec.confidence,
-    dataMode: rec.dataMode,
-    actionType: rec.actionType,
-    ctaLabel: mapCtaLabel(rec.actionType),
+    id: action.id,
+    title: copy.title,
+    explanation: copy.description,
+    reason: copy.reason,
+    value: copy.value,
+    impact: PRIORITY_IMPACT[action.priority],
+    priorityLabel: PRIORITY_LABELS[lang][action.priority],
+    estimatedMinutes: action.effortMinutes,
+    origin: actionOrigin(action.sourceType),
+    ctaLabel: ctaLabel(action, lang),
   };
 }
 
@@ -61,16 +74,17 @@ function sourceToConnection(s: ConnectedSource): ConnectionEntry {
 }
 
 function useDashboardData() {
-  const memoryRepo = useMemo(() => createLocalRepository(), []);
+  const { currentBusiness, businessId } = useBusiness();
+  const memoryRepo = useMemo(() => createMemoryRepository(currentBusiness), [currentBusiness]);
   const [connectedSources, setConnectedSources] = useState<ConnectedSource[]>([]);
 
   useEffect(() => {
-    loadConnectedSources().then(setConnectedSources).catch(() => {});
-  }, []);
+    if (!businessId) return;
+    loadConnectedSources(businessId).then(setConnectedSources).catch(() => {});
+  }, [businessId]);
 
   const memory = memoryRepo.load();
   const profile = memory.profile;
-  const hasProfile = Boolean(profile.name);
 
   const connections: ConnectionEntry[] = connectedSources.length > 0
     ? connectedSources.map(sourceToConnection)
@@ -79,11 +93,7 @@ function useDashboardData() {
         { id: 'website', label: 'Sitio Web', status: 'not_connected', lastSync: null },
       ];
 
-  const recs = getDailyActions(demoRecommendations, 5);
-  const actions = recs.map(recToAction);
-  const completedActions = memory.timeline.filter((e) => e.type === 'action_completed').length;
-
-  return { profile, hasProfile, connections, actions, completedActions };
+  return { profile, connections, business: currentBusiness };
 }
 
 function buildMilestones(connectedCount: number, completedActions: number): GrowthMilestone[] {
@@ -97,11 +107,53 @@ function buildMilestones(connectedCount: number, completedActions: number): Grow
 
 export default function TodayPage() {
   const navigate = useNavigate();
-  const { profile, hasProfile, connections, actions, completedActions } = useDashboardData();
+  const { profile, connections, business } = useDashboardData();
+  const { lang } = useI18n();
+  const {
+    actions: allActions, loading, error, ready, milestones: activation, firstSuccess, clearFirstSuccess,
+    ensureFresh, refresh, start, complete, dismiss,
+  } = useActions();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const errors = ACTION_ERRORS[lang];
 
-  if (!hasProfile) {
-    return <DashboardEmptyState onSetup={() => navigate('/empezar')} />;
-  }
+  useEffect(() => { ensureFresh(); }, [ensureFresh]);
+
+  const today = useMemo(() => selectTodayActions(allActions), [allActions]);
+  const pendingCount = openActions(allActions).length;
+  const completedActions = allActions.filter((a) => a.status === 'COMPLETED').length;
+  const byId = (id: string) => today.find((a) => a.id === id);
+  const todayState = resolveTodayState({ ready, loading, error, todayCount: today.length, history: allActions, business });
+  const showIntro = activationStage(activation) === 'first_plan' && todayState === 'ACTIONS' && !firstSuccess;
+  const nextAction = today[0] ?? null;
+
+  useEffect(() => { today.forEach((a) => trackRecommendationViewed(a)); }, [today]);
+
+  const onExecute = async (item: DashboardAction) => {
+    const action = byId(item.id);
+    if (!action) return;
+    setActionError(null);
+    if (action.status === 'PENDING') {
+      try {
+        await start(action);
+      } catch {
+        setActionError(errors.start);
+        return;
+      }
+    }
+    navigate(actionTarget(action));
+  };
+  const onComplete = (item: DashboardAction) => {
+    const a = byId(item.id);
+    if (!a) return;
+    setActionError(null);
+    complete(a).catch(() => setActionError(errors.complete));
+  };
+  const onDismiss = (item: DashboardAction) => {
+    const a = byId(item.id);
+    if (!a) return;
+    setActionError(null);
+    dismiss(a).catch(() => setActionError(errors.dismiss));
+  };
 
   // No scoring model reads real data yet, so the score stays unavailable instead of a placeholder number.
   const healthScore: number | null = null;
@@ -131,16 +183,41 @@ export default function TodayPage() {
     <div className="space-y-6 sm:space-y-8 pb-8 max-w-5xl">
       <DashboardHeader businessName={profile.name} />
 
+      {firstSuccess && (
+        <FirstSuccessNotice
+          lang={lang}
+          onNext={nextAction ? () => { clearFirstSuccess(); navigate(actionTarget(nextAction)); } : null}
+          onBack={clearFirstSuccess}
+        />
+      )}
+      {showIntro && <FirstPlanIntro lang={lang} businessName={business?.name ?? null} goal={business?.primary_goal ?? null} />}
+      {actionError && (
+        <div role="alert" className="flex items-start gap-2.5 rounded-v2-lg border border-v2-error-200 bg-v2-error-50 px-4 py-3">
+          <AlertTriangle size={14} className="text-v2-error-500 mt-0.5 shrink-0" />
+          <p className="flex-1 text-v2-xs text-v2-error-600">{actionError}</p>
+          <button onClick={() => setActionError(null)} aria-label={errors.close} className="text-v2-error-400 hover:text-v2-error-600"><X size={14} /></button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
         <div className="lg:col-span-2">
-          <TodaysMissions actions={actions} onExecute={(action) => navigate(`/ejecutar/${action.id}`)} />
+          <TodaysMissions
+            actions={today.map((a) => toDashboardAction(a, lang))}
+            state={todayState}
+            lang={lang}
+            onRetry={refresh}
+            onNavigate={navigate}
+            onExecute={onExecute}
+            onComplete={onComplete}
+            onDismiss={onDismiss}
+          />
         </div>
         <div>
           <BusinessHealthCard
             score={healthScore}
             trend={healthTrend}
             connections={connections}
-            pendingActions={actions.length}
+            pendingActions={pendingCount}
           />
         </div>
       </div>

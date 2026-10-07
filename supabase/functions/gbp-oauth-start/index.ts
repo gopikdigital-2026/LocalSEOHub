@@ -63,6 +63,35 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Resolve the caller's own business; a supplied businessId must belong to them.
+    let requestedBusinessId: unknown = null;
+    try {
+      const body = await req.json();
+      requestedBusinessId = body?.businessId ?? null;
+    } catch {
+      requestedBusinessId = null;
+    }
+
+    const { data: business, error: businessError } = await supabaseAdmin
+      .from("businesses")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (businessError || !business) {
+      return new Response(
+        JSON.stringify({ error: "No se encontro tu negocio. Completa la configuracion inicial." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (requestedBusinessId !== null && requestedBusinessId !== business.id) {
+      return new Response(
+        JSON.stringify({ error: "Negocio no valido" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Generate a random state token for CSRF protection
     const stateBytes = new Uint8Array(32);
     crypto.getRandomValues(stateBytes);
@@ -70,17 +99,12 @@ Deno.serve(async (req: Request) => {
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-    // Persist state in DB for server-side CSRF validation
-    console.log("[gbp-oauth-start] state generated:", state.substring(0, 8) + "...");
-    console.log("[gbp-oauth-start] user_id:", user.id);
-    console.log("[gbp-oauth-start] table: connected_sources, column: metadata->>oauth_state");
-
     const { error: upsertError } = await supabaseAdmin
       .from("connected_sources")
       .upsert(
         {
           user_id: user.id,
-          business_id: "default",
+          business_id: business.id,
           source_type: "google_business",
           status: "connecting",
           metadata: { oauth_state: state, oauth_started_at: new Date().toISOString() },
@@ -89,7 +113,13 @@ Deno.serve(async (req: Request) => {
         { onConflict: "user_id,business_id,source_type" }
       );
 
-    console.log("[gbp-oauth-start] upsert result:", upsertError ? `ERROR: ${upsertError.message}` : "OK");
+    if (upsertError) {
+      console.error("[gbp-oauth-start] state upsert failed:", upsertError.code ?? "unknown");
+      return new Response(
+        JSON.stringify({ error: "No se pudo iniciar la conexion. Vuelve a intentarlo." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const scopes = [
       "https://www.googleapis.com/auth/business.manage",

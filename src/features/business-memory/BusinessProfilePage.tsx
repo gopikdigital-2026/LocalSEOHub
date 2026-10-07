@@ -1,16 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { BusinessProfile } from './types';
-import { createLocalRepository } from './repository';
+import { createMemoryRepository } from './repository';
 import { registerProfileUpdated } from './engine';
-import { Button } from '../../components/ui';
+import { useBusiness } from './BusinessContext';
+import { profileToPatch, toProfile } from './businessRecord';
+import { Button, LoadingState } from '../../components/ui';
 import { trackBusinessProfileUpdated } from '../../services/analytics/v2Analytics';
+import { useI18n } from '../../lib/i18n';
 import { Check, Building2, MapPin, Globe, Phone, Clock, Users, Briefcase } from 'lucide-react';
-
-const repo = createLocalRepository();
-
-function getProfile(): BusinessProfile {
-  return repo.load().profile;
-}
 
 interface FieldBlockProps {
   icon: React.ReactNode;
@@ -92,25 +89,57 @@ function ServicesBlock({ services, onChange }: { services: string[]; onChange: (
 }
 
 export default function BusinessProfilePage() {
-  const [profile, setProfile] = useState<BusinessProfile>(getProfile);
+  const { currentBusiness, loading, error: loadError, updateBusiness, refresh } = useBusiness();
+  const { lang } = useI18n();
+  const repo = useMemo(() => createMemoryRepository(currentBusiness), [currentBusiness]);
+  const [profile, setProfile] = useState<BusinessProfile | null>(currentBusiness ? toProfile(currentBusiness) : null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const loadedId = currentBusiness?.id;
+  useEffect(() => {
+    if (currentBusiness && !profile) setProfile(toProfile(currentBusiness));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedId]);
 
   function handleChange(field: keyof BusinessProfile, value: string) {
-    setProfile((prev) => ({ ...prev, [field]: value }));
+    setProfile((prev) => (prev ? { ...prev, [field]: value } : prev));
     setSaved(false);
   }
 
   function handleServicesChange(services: string[]) {
-    setProfile((prev) => ({ ...prev, services }));
+    setProfile((prev) => (prev ? { ...prev, services } : prev));
     setSaved(false);
   }
 
-  function handleSave() {
-    repo.updateProfile(profile);
-    registerProfileUpdated(repo, 'perfil completo');
-    trackBusinessProfileUpdated();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  async function handleSave() {
+    if (!profile) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const updated = await updateBusiness(profileToPatch(profile));
+      setProfile(toProfile(updated));
+      registerProfileUpdated(repo, 'perfil completo');
+      trackBusinessProfileUpdated();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setSaveError('No se pudieron guardar los cambios. Comprueba tu conexion e intentalo de nuevo.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading && !profile) return <LoadingState message="Cargando tu negocio..." />;
+
+  if (!profile) {
+    return (
+      <div className="rounded-v2-xl border border-v2-error-200 bg-v2-error-50 p-6">
+        <p className="text-v2-sm text-v2-error-600 mb-4">{loadError ?? 'No se pudo cargar tu negocio.'}</p>
+        <Button variant="secondary" onClick={() => refresh()}>Reintentar</Button>
+      </div>
+    );
   }
 
   return (
@@ -120,7 +149,9 @@ export default function BusinessProfilePage() {
           Tu negocio
         </h1>
         <p className="text-v2-sm text-v2-text-secondary mt-2 leading-relaxed">
-          Cuanto mas sepamos de tu negocio, mejores seran las recomendaciones.
+          {lang === 'en'
+            ? 'The more complete your details, the better tailored your recommendations. Every field is optional except name, activity and city.'
+            : 'Cuanto más completos estén tus datos, mejor adaptadas estarán tus recomendaciones. Todos los campos son opcionales salvo el nombre, la actividad y la ciudad.'}
         </p>
       </div>
 
@@ -140,10 +171,11 @@ export default function BusinessProfilePage() {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button onClick={handleSave} icon={saved ? <Check size={16} /> : undefined}>
-          {saved ? 'Guardado' : 'Guardar cambios'}
+        <Button onClick={handleSave} disabled={saving} icon={saved ? <Check size={16} /> : undefined}>
+          {saving ? 'Guardando...' : saved ? 'Guardado' : 'Guardar cambios'}
         </Button>
         {saved && <span className="text-v2-xs text-v2-success-600 font-medium">Perfil actualizado correctamente</span>}
+        {saveError && <span role="alert" className="text-v2-xs text-v2-error-600 font-medium">{saveError}</span>}
       </div>
     </div>
   );

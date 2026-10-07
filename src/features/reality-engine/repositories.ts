@@ -5,7 +5,7 @@ import type { ConnectedSource, SyncEvent, SyncEventType, SourceType } from './ty
 
 const STALE_CONNECTING_MS = 10 * 60 * 1000; // 10 minutes
 
-export async function loadSources(businessId = 'default'): Promise<ConnectedSource[]> {
+export async function loadSources(businessId: string): Promise<ConnectedSource[]> {
   const { data, error } = await supabase
     .from('connected_sources')
     .select('id, user_id, business_id, source_type, status, external_account_id, external_location_id, token_expires_at, last_sync_at, last_error, metadata, created_at, updated_at')
@@ -40,7 +40,7 @@ export async function loadSources(businessId = 'default'): Promise<ConnectedSour
 export async function upsertSource(
   sourceType: SourceType,
   patch: Partial<Pick<ConnectedSource, 'status' | 'external_account_id' | 'external_location_id' | 'last_sync_at' | 'last_error' | 'metadata'>>,
-  businessId = 'default'
+  businessId: string
 ): Promise<ConnectedSource> {
   const { data, error } = await supabase
     .from('connected_sources')

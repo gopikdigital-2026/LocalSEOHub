@@ -7,6 +7,7 @@ import {
   resetGBPStatus,
 } from '../../features/reality-engine/engine';
 import { supabase } from '../../lib/supabase';
+import { useBusiness } from '../business-memory/BusinessContext';
 import { LOCATIONS_UNAVAILABLE_MSG, isRealLocationName } from './gbpStatus';
 
 type Phase = 'validating' | 'select_account' | 'loading_locations' | 'select_location' | 'syncing' | 'done' | 'error';
@@ -17,7 +18,7 @@ interface Location { name: string; title: string }
 export default function GBPCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
+  const { businessId, loading: businessLoading } = useBusiness();
   const [phase, setPhase] = useState<Phase>('validating');
   const [error, setError] = useState('');
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -31,15 +32,20 @@ export default function GBPCallbackPage() {
     setError(msg);
     setPhase('error');
     clearStoredOAuthState();
-    resetGBPStatus();
-  }, []);
+    if (businessId) resetGBPStatus(businessId).catch(() => undefined);
+  }, [businessId]);
 
   // The edge function already exchanged the code for tokens and fetched accounts.
   // This page receives accounts (success) or error (failure) as query params.
   useEffect(() => {
-    if (phase !== 'validating') return;
+    if (phase !== 'validating' || businessLoading) return;
 
     clearStoredOAuthState();
+
+    if (!businessId) {
+      handleError('No se pudo identificar tu negocio. Vuelve a intentar desde Fuentes.');
+      return;
+    }
 
     if (errorParam) {
       handleError(decodeURIComponent(errorParam));
@@ -67,7 +73,7 @@ export default function GBPCallbackPage() {
     } catch {
       handleError('Error al procesar la respuesta de Google. Vuelve a intentar desde Fuentes.');
     }
-  }, [phase, accountsParam, errorParam, handleError]);
+  }, [phase, accountsParam, errorParam, handleError, businessId, businessLoading]);
 
   // Load locations for selected account
   const handleSelectAccount = async (account: Account) => {
@@ -76,12 +82,12 @@ export default function GBPCallbackPage() {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('gbp-list-locations', {
-        body: { accountId: account.id },
+        body: { accountId: account.id, businessId },
       });
 
       if (fnError || !Array.isArray(data?.locations)) {
-        console.warn('[gbp-callback] locations unavailable:', fnError?.message ?? 'invalid response');
-        handleError(LOCATIONS_UNAVAILABLE_MSG);
+        console.warn('[gbp-callback] locations unavailable:', typeof data?.code === 'string' ? data.code : 'invalid response');
+        handleError(data?.success === false && typeof data.message === 'string' ? data.message : LOCATIONS_UNAVAILABLE_MSG);
         return;
       }
 
@@ -104,8 +110,12 @@ export default function GBPCallbackPage() {
 
   // Sync selected location
   const handleSelectLocation = async (accountId: string, location: Location) => {
+    if (!businessId) {
+      handleError('No se pudo identificar tu negocio. Vuelve a intentar desde Fuentes.');
+      return;
+    }
     setPhase('syncing');
-    const result = await selectGBPLocation(accountId, location.name, location.title);
+    const result = await selectGBPLocation(accountId, location.name, location.title, businessId);
     if (result.success) {
       setPhase('done');
     } else {

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { destinationFor, returnPathFromLocation } from './returnTo';
 import { useOnboardingStatus } from '../hooks/useOnboardingStatus';
 import { LoadingState } from '../components/ui';
 
@@ -34,12 +35,13 @@ const ERROR_SCREEN = (
  */
 export function AppGuard({ children }: { children: React.ReactNode }) {
   const { status, authenticated } = useOnboardingStatus();
+  const location = useLocation();
 
   if (status === 'loading') return SKELETON;
   if (status === 'error') return ERROR_SCREEN;
 
   if (!authenticated) {
-    const next = window.location.pathname;
+    const next = `${location.pathname}${location.search}`;
     return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />;
   }
 
@@ -79,10 +81,10 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
  */
 export function useAuthRedirect(): string | null {
   const { status, authenticated } = useOnboardingStatus();
+  const location = useLocation();
 
   if (status === 'loading') return null;
   if (!authenticated) return null;
 
-  if (status === 'completed') return '/hoy';
-  return '/empezar';
+  return destinationFor(status, returnPathFromLocation(location.search));
 }

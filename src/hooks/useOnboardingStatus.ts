@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
+import { useBusiness } from '../features/business-memory/BusinessContext';
 
 export type OnboardingStatus = 'loading' | 'not_started' | 'in_progress' | 'completed' | 'error';
 
@@ -12,70 +12,55 @@ interface OnboardingResult {
 }
 
 export function useOnboardingStatus(): OnboardingResult {
-  const { session, loading: sessionLoading } = useAuth();
-  const userId = session?.user?.id ?? null;
+  const { userId, authenticated, currentBusiness, businessId, loading, error } = useBusiness();
   const [status, setStatus] = useState<OnboardingStatus>('loading');
 
   useEffect(() => {
-    if (sessionLoading) {
+    if (loading) {
       setStatus('loading');
       return;
     }
-
     if (!userId) {
       setStatus('not_started');
       return;
     }
+    if (error || !businessId) {
+      setStatus('error');
+      return;
+    }
+    if (currentBusiness?.onboarding_completed) {
+      setStatus('completed');
+      return;
+    }
 
     let cancelled = false;
-
-    supabase
-      .from('first_value_progress')
-      .select('completed, completed_at, current_step')
-      .eq('user_id', userId)
-      .eq('business_id', 'default')
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-
-        if (error) {
-          if (import.meta.env.DEV) console.error('[onboarding] status check error:', error);
-          setStatus('error');
-          return;
-        }
-
-        if (!data) {
-          setStatus('not_started');
-          return;
-        }
-
-        if (data.completed === true && data.completed_at !== null) {
-          setStatus('completed');
-        } else {
-          setStatus('in_progress');
-        }
-      });
-
+    setStatus('loading');
+    getOnboardingStatusAsync(userId, businessId).then((s) => {
+      if (!cancelled) setStatus(s);
+    });
     return () => { cancelled = true; };
-  }, [userId, sessionLoading]);
+  }, [userId, businessId, currentBusiness?.onboarding_completed, loading, error]);
 
   return {
     status,
-    authenticated: !!session,
+    authenticated,
     userId,
-    sessionLoading,
+    sessionLoading: loading,
   };
 }
 
-export async function getOnboardingStatusAsync(userId: string): Promise<OnboardingStatus> {
+export async function getOnboardingStatusAsync(userId: string, businessId: string): Promise<OnboardingStatus> {
   const { data, error } = await supabase
     .from('first_value_progress')
     .select('completed, completed_at, current_step')
     .eq('user_id', userId)
-    .eq('business_id', 'default')
+    .eq('business_id', businessId)
     .maybeSingle();
 
-  if (error) return 'error';
+  if (error) {
+    if (import.meta.env.DEV) console.error('[onboarding] status check error:', error);
+    return 'error';
+  }
   if (!data) return 'not_started';
   if (data.completed === true && data.completed_at !== null) return 'completed';
   return 'in_progress';

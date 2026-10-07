@@ -199,3 +199,57 @@ export function trackBusinessEditClick() {
 export function trackBusinessSyncClick() {
   track('business_sync_click', {});
 }
+
+// ─── Action & recommendation engine events (no PII: rule metadata only) ────
+
+interface ActionEventInput {
+  ruleId: string;
+  category: string;
+  priority: string;
+  sourceType: string;
+}
+
+function actionProps(a: ActionEventInput) {
+  return { rule_id: a.ruleId, category: a.category, priority: a.priority, source_type: a.sourceType };
+}
+
+export function trackRecommendationGenerated(a: ActionEventInput) {
+  track('recommendation_generated', actionProps(a));
+}
+
+export function trackRecommendationViewed(a: ActionEventInput & { id: string }) {
+  trackViewOnce('recommendation_viewed', { ...actionProps(a), route: a.id });
+}
+
+export function trackRecommendationStarted(a: ActionEventInput) {
+  track('recommendation_started', actionProps(a));
+}
+
+export function trackRecommendationCompleted(a: ActionEventInput) {
+  track('recommendation_completed', actionProps(a));
+}
+
+export function trackRecommendationDismissed(a: ActionEventInput) {
+  track('recommendation_dismissed', actionProps(a));
+}
+
+// ─── Activation funnel ──────────────────────────────────────────────────────
+
+export function trackOnboardingStarted() {
+  trackViewOnce('onboarding_started');
+}
+
+export function trackOnboardingStepCompleted(step: string, goalId?: string | null) {
+  track('onboarding_step_completed', goalId ? { step, goal_id: goalId } : { step });
+}
+
+export function trackOnboardingCompleted(goalId: string | null) {
+  track('onboarding_completed', goalId ? { goal_id: goalId } : {});
+}
+
+export type ActivationMilestoneEvent = 'first_recommendations_generated' | 'first_action_started' | 'first_action_completed' | 'first_value_reached';
+
+/** Called only when a milestone is newly persisted, so it cannot repeat on re-render or reload. */
+export function trackActivationMilestone(event: ActivationMilestoneEvent, action?: ActionEventInput | null) {
+  track(event, action ? { action_rule_id: action.ruleId, action_category: action.category, source_type: action.sourceType } : {});
+}

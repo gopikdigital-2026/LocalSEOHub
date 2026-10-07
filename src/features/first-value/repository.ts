@@ -31,7 +31,7 @@ export function createDefaultState(userId: string, businessId: string): FirstVal
 
 // ─── Supabase-backed repository (per user + business) ───────────────────────
 
-export function createFirstValueRepository(userId: string, businessId: string = 'default'): FirstValueRepository {
+export function createFirstValueRepository(userId: string, businessId: string): FirstValueRepository {
 
   async function load(): Promise<FirstValueState | null> {
     const { data, error } = await supabase

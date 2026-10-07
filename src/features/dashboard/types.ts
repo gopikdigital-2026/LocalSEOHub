@@ -1,4 +1,4 @@
-import type { ConfidenceLevel, DataMode } from '../../domain/types';
+import type { DataOrigin } from '../../domain/dataIntegrity';
 
 export type ConnectionStatus = 'connected' | 'pending' | 'not_connected';
 
@@ -14,11 +14,10 @@ export interface DashboardAction {
   title: string;
   explanation: string;
   reason: string;
+  value: string;
   impact: 'high' | 'medium' | 'low';
+  priorityLabel: string;
   estimatedMinutes: number;
-  source: string;
-  confidence: ConfidenceLevel;
-  dataMode: DataMode;
-  actionType: string;
+  origin: DataOrigin;
   ctaLabel: string;
 }

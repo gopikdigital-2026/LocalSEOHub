@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { accountId, locationId } = await req.json();
+    const { accountId, locationId, businessId } = await req.json();
     if (!accountId || !locationId) {
       return new Response(
         JSON.stringify({ error: "accountId y locationId requeridos" }),
@@ -57,12 +57,24 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Fetch stored access token (service_role can read token columns)
+    const { data: business, error: businessError } = await supabaseAdmin
+      .from("businesses")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (businessError || !business || (businessId != null && businessId !== business.id)) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Negocio no valido" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: sourceRow, error: sourceError } = await supabaseAdmin
       .from("connected_sources")
       .select("access_token_encrypted, refresh_token_encrypted, token_expires_at")
       .eq("user_id", user.id)
-      .eq("business_id", "default")
+      .eq("business_id", business.id)
       .eq("source_type", "google_business")
       .maybeSingle();
 
@@ -144,9 +156,10 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Error interno";
+    const msg = err instanceof Error ? err.name : "Error interno";
+    console.error("[gbp-sync] Unhandled error:", msg);
     return new Response(
-      JSON.stringify({ error: msg, success: false }),
+      JSON.stringify({ error: "Error interno de sincronizacion", success: false }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

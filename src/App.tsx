@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { returnPathFromLocation } from './app-v2/returnTo';
 import AppShellV2 from './app-v2/layouts/AppShellV2';
 import { useAuth } from './hooks/useAuth';
 import { useOnboardingStatus } from './hooks/useOnboardingStatus';
@@ -100,15 +101,22 @@ function RootRoute() {
 function AuthRoute({ mode }: { mode: 'login' | 'signup' }) {
   const redirect = useAuthRedirect();
   const navigate = useNavigate();
+  const location = useLocation();
   const { status } = useOnboardingStatus();
 
   if (status === 'loading') return SKELETON;
 
   if (redirect) return <Navigate to={redirect} replace />;
 
+  // After sign-in the session change re-renders this route and useAuthRedirect sends the user on.
   return (
     <Suspense fallback={null}>
-      <LoginModal onClose={() => navigate('/')} initialMode={mode} />
+      <LoginModal
+        onClose={() => navigate('/')}
+        onSuccess={() => {}}
+        returnTo={returnPathFromLocation(location.search)}
+        initialMode={mode}
+      />
     </Suspense>
   );
 }

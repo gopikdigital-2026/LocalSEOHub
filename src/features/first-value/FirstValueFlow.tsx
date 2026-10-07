@@ -1,480 +1,213 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPendingBusinessName } from '../../App';
-import type { FirstValueState, SourceChoice, SourceChoiceType, ManualContextData } from './types';
-import { STEP_ORDER } from './types';
-import { createFirstValueRepository, createDefaultState } from './repository';
-import { generateFirstRecommendation, getGoalLabel, computeTimeToFirstValue } from './engine';
-import { createLocalRepository as createMemoryRepo } from '../business-memory/repository';
-import { registerActionCompleted } from '../business-memory/engine';
+import type { BusinessSetupData, FirstValueState } from './types';
+import type { GoalId } from '../business-memory/types';
+import { createFirstValueRepository, createDefaultState, type FirstValueRepository } from './repository';
 import {
-  WelcomeStep,
-  BusinessSetupStep,
-  PrimaryGoalStep,
-  SourceSetupStep,
-  ManualContextStep,
-  InitialAnalysisStep,
-  FirstRecommendationStep,
-  FirstExecutionInline,
-  FirstValueSuccess,
-  ErrorRecovery,
-} from './steps';
-import {
-  trackFirstValueStarted,
-  trackFirstValueResumed,
-  trackFirstValueStepViewed,
-  trackFirstValueCompleted,
-  trackBusinessSetupCompleted,
-  trackPrimaryGoalSelected,
-  trackManualContextCompleted,
-  trackInitialSourceSelected,
-  trackInitialAnalysisCompleted,
-  trackFirstRecommendationGenerated,
-  trackFirstRecommendationViewed,
-  trackFirstRecommendationAccepted,
-  trackFirstWorkspaceOpened,
-  trackFirstActionCompleted,
-} from './analytics';
+  ONBOARDING_TOTAL_STEPS, cleanBusinessData, initialBusinessData, resumeScreen, stepNumber, type OnboardingScreen,
+} from './onboarding';
+import { useBusiness } from '../business-memory/BusinessContext';
+import { goalsToPatch } from '../business-memory/businessRecord';
+import { advanceActivation } from '../activation/service';
+import { loadMilestones } from '../activation/repository';
+import { WelcomeStep, BusinessSetupStep, PrimaryGoalStep, FinishingStep, ErrorRecovery, StepProgress, onboardingCopy } from './steps';
+import { trackOnboardingStarted, trackOnboardingStepCompleted } from '../../services/analytics/v2Analytics';
 import { useAuth } from '../../hooks/useAuth';
+import { useI18n } from '../../lib/i18n';
 import { LoadingState } from '../../components/ui';
 
-// ─── Progress Indicator ─────────────────────────────────────────────────────
+const TEXT = {
+  es: {
+    noSession: 'Sesión no disponible', noSessionMsg: 'Necesitas iniciar sesión para continuar.', signIn: 'Iniciar sesión',
+    loadTitle: 'No se pudo cargar', loadMsg: 'No hemos podido cargar tu negocio. Comprueba tu conexión e inténtalo de nuevo.',
+    loading: 'Cargando...',
+  },
+  en: {
+    noSession: 'Session unavailable', noSessionMsg: 'You need to sign in to continue.', signIn: 'Sign in',
+    loadTitle: "Couldn't load", loadMsg: "We couldn't load your business. Check your connection and try again.",
+    loading: 'Loading...',
+  },
+};
 
-function FirstValueProgress({ currentStep }: { currentStep: string }) {
-  const visibleSteps = STEP_ORDER.filter((s) => s !== 'welcome' && s !== 'success');
-  const idx = visibleSteps.indexOf(currentStep as typeof visibleSteps[number]);
-  if (idx < 0) return null;
-
-  return (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      <span className="text-v2-xs text-v2-text-tertiary font-medium">
-        Paso {idx + 1} de {visibleSteps.length}
-      </span>
-      <div className="flex gap-1">
-        {visibleSteps.map((s, i) => (
-          <div key={s} className={`w-6 h-1 rounded-full transition-colors ${i <= idx ? 'bg-v2-primary-500' : 'bg-v2-neutral-100'}`} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Layout Shell ───────────────────────────────────────────────────────────
-
-function FlowShell({ children, progress }: { children: React.ReactNode; progress?: string }) {
+function FlowShell({ children, screen, lang }: { children: React.ReactNode; screen?: OnboardingScreen; lang: 'es' | 'en' }) {
+  const n = screen ? stepNumber(screen) : null;
   return (
     <div className="min-h-screen bg-v2-bg-primary font-v2 flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
-        {progress && <FirstValueProgress currentStep={progress} />}
+        {n !== null && <StepProgress step={n} total={ONBOARDING_TOTAL_STEPS} lang={lang} />}
         {children}
       </div>
     </div>
   );
 }
 
-// ─── Source choice builder ──────────────────────────────────────────────────
-
-function buildSourceChoice(type: SourceChoiceType): SourceChoice {
-  switch (type) {
-    case 'website_analysis':
-      return { type, sourceId: 'website', websiteStatus: 'website_provided', dataMode: 'estimated', confidence: 'low' };
-    case 'manual_entry':
-      return { type, sourceId: 'manual', websiteStatus: null, dataMode: 'manual', confidence: 'medium' };
-    case 'demo':
-      return { type, sourceId: 'manual', websiteStatus: null, dataMode: 'demo', confidence: 'low' };
-  }
-}
-
-// ─── Main Flow ──────────────────────────────────────────────────────────────
-
 export default function FirstValueFlow() {
   const navigate = useNavigate();
+  const { lang } = useI18n();
+  const t = TEXT[lang];
+  const copy = onboardingCopy(lang);
   const { session } = useAuth();
   const userId = session?.user?.id ?? '';
-  const businessId = 'default';
+  const { currentBusiness, businessId: resolvedBusinessId, updateBusiness, loading: businessLoading, error: businessError } = useBusiness();
+  const businessId = resolvedBusinessId ?? '';
 
   const [state, setState] = useState<FirstValueState | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const repoRef = useRef(userId ? createFirstValueRepository(userId, businessId) : null);
+  const [screen, setScreen] = useState<OnboardingScreen>('welcome');
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [stepError, setStepError] = useState<string | null>(null);
+  const repoRef = useRef<FirstValueRepository | null>(null);
   const initRef = useRef(false);
+  const finishingRef = useRef(false);
 
   useEffect(() => {
-    if (!userId || initRef.current) return;
+    if (!userId || !businessId || initRef.current) return;
     initRef.current = true;
-
     const repo = createFirstValueRepository(userId, businessId);
     repoRef.current = repo;
 
     repo.load().then((loaded) => {
-      const ctx = { userId, businessId };
-      const pendingName = getPendingBusinessName();
-      if (loaded) {
-        if (pendingName && !loaded.businessData?.name) {
-          loaded.businessData = { ...(loaded.businessData ?? { name: '', category: '', city: '', website: '' }), name: pendingName };
-        }
-        setState(loaded);
-        if (loaded.currentStep !== 'welcome') {
-          trackFirstValueResumed(ctx, loaded.currentStep);
-        }
-      } else {
-        const fresh = createDefaultState(userId, businessId);
-        if (pendingName) {
-          fresh.businessData = { name: pendingName, category: '', city: '', website: '' };
-        }
-        setState(fresh);
-        trackFirstValueStarted(ctx);
-      }
-      setLoading(false);
-    }).catch(() => {
-      setError('No se pudo cargar tu progreso. Comprueba tu conexion e intentalo de nuevo.');
-      setLoading(false);
-    });
-  }, [userId, businessId]);
+      const base = loaded ?? createDefaultState(userId, businessId);
+      const businessData = initialBusinessData(base.businessData, currentBusiness, getPendingBusinessName());
+      const goal = base.selectedGoalId ?? currentBusiness?.primary_goal ?? null;
+      setState({ ...base, businessData, selectedGoalId: goal });
+      setScreen(resumeScreen(loaded?.currentStep ?? null, businessData, goal));
+      trackOnboardingStarted();
+    }).catch(() => setLoadFailed(true));
+  }, [userId, businessId, currentBusiness]);
 
-  const save = useCallback(async (newState: FirstValueState): Promise<void> => {
-    setState(newState);
-    await repoRef.current?.save(newState);
+  const persist = useCallback(async (next: FirstValueState) => {
+    await repoRef.current?.save(next);
+    setState(next);
   }, []);
 
-  const trackCtx = useCallback(() => ({
-    userId,
-    businessId,
-    recommendationId: state?.recommendation?.id,
-    sourceType: state?.sourceChoice?.type,
-    dataMode: state?.sourceChoice?.dataMode,
-    confidence: state?.recommendation?.confidence,
-  }), [userId, businessId, state?.recommendation, state?.sourceChoice]);
+  /** Runs one save; on failure the user stays on the same screen with their input intact. */
+  const runStep = useCallback(async (work: () => Promise<void>) => {
+    setBusy(true);
+    setStepError(null);
+    try {
+      await work();
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('[onboarding] save failed:', err);
+      setStepError(copy.saveError);
+    } finally {
+      setBusy(false);
+    }
+  }, [copy.saveError]);
+
+  const finish = useCallback(async (s: FirstValueState) => {
+    if (finishingRef.current) return;
+    finishingRef.current = true;
+    setScreen('finishing');
+    setStepError(null);
+    try {
+      const goal = s.selectedGoalId as GoalId;
+      const completedAt = new Date().toISOString();
+      const updated = await updateBusiness({
+        ...(s.businessData ? cleanBusinessData(s.businessData) : {}),
+        ...goalsToPatch([goal, ...(currentBusiness?.secondary_goals ?? []).filter((g) => g !== goal)]),
+        onboarding_completed: true,
+        onboarding_completed_at: currentBusiness?.onboarding_completed_at ?? completedAt,
+      });
+      await persist({ ...s, currentStep: 'success', completedAt: s.completedAt ?? completedAt });
+      try {
+        const current = await loadMilestones(userId, updated.id);
+        await advanceActivation(userId, updated, current, { type: 'onboarding_completed' });
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('[onboarding] milestone record failed:', err);
+      }
+      navigate('/hoy', { replace: true });
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('[onboarding] finish failed:', err);
+      setStepError(copy.finishError);
+      finishingRef.current = false;
+    }
+  }, [updateBusiness, currentBusiness, persist, userId, navigate, copy.finishError]);
+
+  useEffect(() => {
+    if (screen === 'finishing' && state && !stepError && !finishingRef.current) void finish(state);
+  }, [screen, state, stepError, finish]);
 
   if (!userId) {
     return (
-      <FlowShell>
-        <ErrorRecovery
-          title="Sesion no disponible"
-          message="Necesitas iniciar sesion para comenzar el proceso."
-          onRetry={() => navigate('/signup')}
-        />
+      <FlowShell lang={lang}>
+        <ErrorRecovery lang={lang} title={t.noSession} message={t.noSessionMsg} onRetry={() => navigate('/login?next=%2Fempezar')} />
       </FlowShell>
     );
   }
 
-  if (loading) {
+  if (businessError || loadFailed) {
     return (
-      <FlowShell>
-        <LoadingState message="Cargando tu progreso..." />
+      <FlowShell lang={lang}>
+        <ErrorRecovery lang={lang} title={t.loadTitle} message={t.loadMsg} onRetry={() => window.location.reload()} />
       </FlowShell>
     );
   }
 
-  if (error || !state) {
+  if (!state || businessLoading) {
     return (
-      <FlowShell>
-        <ErrorRecovery
-          title="Error al cargar"
-          message={error ?? 'No se pudo cargar tu progreso.'}
-          onRetry={() => window.location.reload()}
-        />
+      <FlowShell lang={lang}>
+        <LoadingState message={t.loading} />
       </FlowShell>
     );
   }
 
-  const memRepo = createMemoryRepo();
-
-  function goTo(step: FirstValueState['currentStep']) {
-    if (!state) return;
-    const next = { ...state, currentStep: step };
-    save(next);
-    trackFirstValueStepViewed(trackCtx(), step);
-  }
-
-  // ─── Welcome ───────────────────────
-  if (state.currentStep === 'welcome') {
+  if (screen === 'welcome') {
     return (
-      <FlowShell>
-        <WelcomeStep onContinue={() => goTo('business_setup')} />
+      <FlowShell lang={lang}>
+        <WelcomeStep lang={lang} onContinue={() => {
+          setScreen('business_setup');
+          void repoRef.current?.save({ ...state, currentStep: 'business_setup' }).catch(() => {});
+        }} />
       </FlowShell>
     );
   }
 
-  // ─── Business Setup ─────────────────
-  if (state.currentStep === 'business_setup') {
+  if (screen === 'business_setup') {
     return (
-      <FlowShell progress={state.currentStep}>
+      <FlowShell screen={screen} lang={lang}>
         <BusinessSetupStep
+          lang={lang}
+          busy={busy}
+          error={stepError}
           initial={state.businessData}
-          onBack={() => goTo('welcome')}
-          onContinue={(data) => {
-            const next: FirstValueState = { ...state, currentStep: 'primary_goal', businessData: data };
-            save(next);
-            const memState = memRepo.load();
-            memRepo.updateProfile({ ...memState.profile, name: data.name, category: data.category, city: data.city, website: data.website });
-            trackBusinessSetupCompleted(trackCtx());
-            trackFirstValueStepViewed(trackCtx(), 'primary_goal');
-          }}
+          onBack={() => { setStepError(null); setScreen('welcome'); }}
+          onContinue={(data: BusinessSetupData) => runStep(async () => {
+            const clean = cleanBusinessData(data);
+            await updateBusiness(clean);
+            await persist({ ...state, currentStep: 'primary_goal', businessData: clean });
+            trackOnboardingStepCompleted('business_setup');
+            setScreen('primary_goal');
+          })}
         />
       </FlowShell>
     );
   }
 
-  // ─── Primary Goal ───────────────────
-  if (state.currentStep === 'primary_goal') {
+  if (screen === 'primary_goal') {
     return (
-      <FlowShell progress={state.currentStep}>
+      <FlowShell screen={screen} lang={lang}>
         <PrimaryGoalStep
+          lang={lang}
+          busy={busy}
+          error={stepError}
           initial={state.selectedGoalId}
-          onBack={() => goTo('business_setup')}
-          onContinue={(goalId) => {
-            const next: FirstValueState = { ...state, currentStep: 'source_setup', selectedGoalId: goalId };
-            save(next);
-            memRepo.setGoals([{ goalId, selectedAt: new Date().toISOString() }]);
-            trackPrimaryGoalSelected(trackCtx(), goalId);
-            trackFirstValueStepViewed(trackCtx(), 'source_setup');
-          }}
+          onBack={() => { setStepError(null); setScreen('business_setup'); }}
+          onContinue={(goalId) => runStep(async () => {
+            const next = { ...state, currentStep: 'primary_goal' as const, selectedGoalId: goalId };
+            await persist(next);
+            trackOnboardingStepCompleted('primary_goal', goalId);
+            await finish(next);
+          })}
         />
       </FlowShell>
     );
   }
 
-  // ─── Source Setup ───────────────────
-  if (state.currentStep === 'source_setup') {
-    return (
-      <FlowShell progress={state.currentStep}>
-        <SourceSetupStep
-          hasWebsite={!!state.businessData?.website}
-          onBack={() => goTo('primary_goal')}
-          onContinue={(choiceType: SourceChoiceType) => {
-            const choice = buildSourceChoice(choiceType);
-            const nextStep = choiceType === 'manual_entry' ? 'manual_context' : 'initial_analysis';
-            const next: FirstValueState = { ...state, currentStep: nextStep, sourceChoice: choice };
-            save(next);
-            trackInitialSourceSelected(trackCtx(), choiceType);
-            trackFirstValueStepViewed(trackCtx(), nextStep);
-          }}
-        />
-      </FlowShell>
-    );
-  }
-
-  // ─── Manual Context ─────────────────
-  if (state.currentStep === 'manual_context') {
-    return (
-      <FlowShell progress={state.currentStep}>
-        <ManualContextStep
-          initial={state.manualContext}
-          onBack={() => goTo('source_setup')}
-          onContinue={(data: ManualContextData) => {
-            const next: FirstValueState = { ...state, currentStep: 'initial_analysis', manualContext: data };
-            save(next);
-            trackManualContextCompleted(trackCtx());
-            trackFirstValueStepViewed(trackCtx(), 'initial_analysis');
-          }}
-        />
-      </FlowShell>
-    );
-  }
-
-  // ─── Initial Analysis ───────────────
-  if (state.currentStep === 'initial_analysis') {
-    return (
-      <FlowShell progress={state.currentStep}>
-        <InitialAnalysisStep
-          businessName={state.businessData?.name ?? 'tu negocio'}
-          sourceType={state.sourceChoice?.type ?? 'demo'}
-          onComplete={() => {
-            let rec = state.recommendation;
-            if (!rec) {
-              rec = generateFirstRecommendation({
-                userId,
-                businessId,
-                business: state.businessData!,
-                goalId: state.selectedGoalId!,
-                source: state.sourceChoice!,
-                manualContext: state.manualContext,
-              });
-              trackFirstRecommendationGenerated({
-                ...trackCtx(),
-                recommendationId: rec.id,
-                confidence: rec.confidence,
-                dataMode: rec.dataMode,
-              });
-            }
-            const next: FirstValueState = { ...state, currentStep: 'first_recommendation', recommendation: rec };
-            save(next);
-            trackInitialAnalysisCompleted(trackCtx());
-            trackFirstRecommendationViewed({ ...trackCtx(), recommendationId: rec.id });
-          }}
-        />
-      </FlowShell>
-    );
-  }
-
-  // ─── First Recommendation ───────────
-  if (state.currentStep === 'first_recommendation') {
-    if (!state.recommendation) {
-      return (
-        <FlowShell>
-          <ErrorRecovery
-            title="Recomendacion no encontrada"
-            message="No se encontro la recomendacion guardada. Puedes volver al paso anterior para generarla de nuevo."
-            onRetry={() => goTo('initial_analysis')}
-            onReset={() => { save(createDefaultState(userId, businessId)); }}
-          />
-        </FlowShell>
-      );
-    }
-
-    return (
-      <FlowShell progress={state.currentStep}>
-        <FirstRecommendationStep
-          recommendation={state.recommendation}
-          onBack={() => goTo('source_setup')}
-          onAccept={() => {
-            const now = new Date().toISOString();
-            const next: FirstValueState = {
-              ...state,
-              currentStep: 'first_execution',
-              recommendation: { ...state.recommendation!, status: 'accepted' },
-              executionPayload: { status: 'ready', startedAt: now, completedAt: null, editedContent: null },
-            };
-            save(next);
-            trackFirstRecommendationAccepted({ ...trackCtx(), recommendationId: state.recommendation!.id });
-            trackFirstWorkspaceOpened({ ...trackCtx(), recommendationId: state.recommendation!.id }, state.recommendation!.actionType);
-          }}
-        />
-      </FlowShell>
-    );
-  }
-
-  // ─── First Execution ────────────────
-  if (state.currentStep === 'first_execution') {
-    if (!state.recommendation) {
-      return (
-        <FlowShell>
-          <ErrorRecovery
-            title="Recomendacion no encontrada"
-            message="El contenido preparado no esta disponible. Puedes reiniciar el proceso."
-            onReset={() => { save(createDefaultState(userId, businessId)); }}
-          />
-        </FlowShell>
-      );
-    }
-
-    return (
-      <FlowShell progress={state.currentStep}>
-        <FirstExecutionInline
-          recommendation={state.recommendation}
-          onComplete={async () => {
-            setSaving(true);
-            setSaveError(null);
-
-            const rec = state.recommendation!;
-            registerActionCompleted(memRepo, rec.title, rec.actionType, rec.impact, rec.estimatedTimeMinutes);
-            const now = new Date().toISOString();
-
-            const executionStartedAt = state.executionPayload?.startedAt ?? now;
-            const ttfv = computeTimeToFirstValue(executionStartedAt);
-
-            const next: FirstValueState = {
-              ...state,
-              currentStep: 'success',
-              completedAt: now,
-              recommendation: { ...rec, status: 'completed', updatedAt: now },
-              executionPayload: { status: 'completed', startedAt: executionStartedAt, completedAt: now, editedContent: null },
-            };
-
-            try {
-              await save(next);
-
-              const confirmed = await repoRef.current!.isCompleted();
-              if (!confirmed) {
-                throw new Error('La base de datos no confirmo el estado completado.');
-              }
-
-              if (import.meta.env.DEV) console.log('[FV] completion confirmed, navigating allowed');
-
-              trackFirstActionCompleted({ ...trackCtx(), recommendationId: rec.id }, rec.actionType);
-              trackFirstValueCompleted({ ...trackCtx(), recommendationId: rec.id }, ttfv);
-              setSaving(false);
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : 'Error desconocido';
-              if (import.meta.env.DEV) console.error('[FV] completion save failed:', msg);
-              setSaveError(msg);
-              setSaving(false);
-            }
-          }}
-        />
-      </FlowShell>
-    );
-  }
-
-  // ─── Success ────────────────────────
-  if (state.currentStep === 'success') {
-    if (saving) {
-      return (
-        <FlowShell>
-          <LoadingState message="Guardando tu progreso..." />
-        </FlowShell>
-      );
-    }
-
-    if (saveError) {
-      return (
-        <FlowShell>
-          <ErrorRecovery
-            title="No hemos podido guardar tu progreso"
-            message={saveError}
-            onRetry={async () => {
-              setSaving(true);
-              setSaveError(null);
-              try {
-                await repoRef.current?.save(state);
-                const confirmed = await repoRef.current!.isCompleted();
-                if (!confirmed) throw new Error('La base de datos no confirmo el estado completado.');
-                setSaving(false);
-              } catch (err) {
-                const msg = err instanceof Error ? err.message : 'Error desconocido';
-                setSaveError(msg);
-                setSaving(false);
-              }
-            }}
-          />
-        </FlowShell>
-      );
-    }
-
-    const rec = state.recommendation;
-    const executionStartedAt = state.executionPayload?.startedAt ?? state.startedAt;
-    const ttfv = computeTimeToFirstValue(executionStartedAt);
-
-    return (
-      <FlowShell>
-        <FirstValueSuccess
-          goalLabel={getGoalLabel(state.selectedGoalId!)}
-          actionTitle={rec?.title ?? 'Accion completada'}
-          timeSeconds={ttfv}
-          onGoToPlan={() => {
-            if (import.meta.env.DEV) console.log('[FV] navigating to /plan');
-            navigate('/plan');
-          }}
-          onGoToToday={() => {
-            if (import.meta.env.DEV) console.log('[FV] navigating to /hoy');
-            navigate('/hoy');
-          }}
-        />
-      </FlowShell>
-    );
-  }
-
-  // ─── Unknown step — recovery ────────
   return (
-    <FlowShell>
-      <ErrorRecovery
-        title="Paso no reconocido"
-        message="Parece que tu progreso se ha corrompido. Puedes reiniciar el proceso."
-        onReset={() => { save(createDefaultState(userId, businessId)); }}
-      />
+    <FlowShell lang={lang}>
+      <FinishingStep lang={lang} error={stepError} onRetry={() => { void finish(state); }} />
     </FlowShell>
   );
 }

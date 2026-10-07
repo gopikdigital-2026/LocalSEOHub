@@ -18,7 +18,6 @@ Deno.serve(async (req: Request) => {
 
   function redirectWithError(msg: string): Response {
     const url = `${frontendCallback}?error=${encodeURIComponent(msg)}`;
-    console.log("[gbp-oauth-callback] Redirecting with error:", msg);
     return new Response(null, { status: 302, headers: { Location: url } });
   }
 
@@ -53,9 +52,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    console.log("[gbp-oauth-callback] state received:", state ? `${state.substring(0, 8)}...` : "null");
-    console.log("[gbp-oauth-callback] code received:", code ? "yes" : "no");
-
     if (!code || !state) {
       return redirectWithError("Faltan parametros de autorizacion (code/state)");
     }
@@ -71,20 +67,14 @@ Deno.serve(async (req: Request) => {
     // users are connecting simultaneously (maybeSingle returns error).
     const { data: sourceRow, error: lookupError } = await supabaseAdmin
       .from("connected_sources")
-      .select("user_id, metadata")
+      .select("user_id, business_id, metadata")
       .eq("source_type", "google_business")
       .eq("status", "connecting")
       .eq("metadata->>oauth_state", state)
       .maybeSingle();
 
-    console.log("[gbp-oauth-callback] DB lookup result:", {
-      found: !!sourceRow,
-      lookupError: lookupError?.message ?? null,
-      user_id: sourceRow?.user_id ?? null,
-    });
-
     if (lookupError) {
-      console.error("[gbp-oauth-callback] DB lookup error:", lookupError.message);
+      console.error("[gbp-oauth-callback] DB lookup error:", lookupError.code ?? "unknown");
       return redirectWithError(
         "Error al buscar la conexion en curso. Vuelve a iniciar la conexion desde Fuentes."
       );
@@ -97,6 +87,20 @@ Deno.serve(async (req: Request) => {
     }
 
     const userId = sourceRow.user_id;
+
+    // The business travels with the OAuth state row; confirm it is still this user's business.
+    const { data: business, error: businessError } = await supabaseAdmin
+      .from("businesses")
+      .select("id")
+      .eq("id", sourceRow.business_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (businessError || !business) {
+      return redirectWithError(
+        "No se encontro tu negocio. Vuelve a iniciar la conexion desde Fuentes."
+      );
+    }
 
     // ── Exchange code for tokens ──
     const tokenResponse = await fetch(
@@ -115,23 +119,23 @@ Deno.serve(async (req: Request) => {
     );
 
     if (!tokenResponse.ok) {
-      const errBody = await tokenResponse.text();
-      console.error("[gbp-oauth-callback] Token exchange failed:", errBody);
+      await tokenResponse.body?.cancel();
+      console.error("[gbp-oauth-callback] Token exchange failed, status:", tokenResponse.status);
       return redirectWithError(
         "Error al intercambiar el codigo de autorizacion con Google"
       );
     }
 
     const tokens = await tokenResponse.json();
-    console.log("[gbp-oauth-callback] Token exchange success for user:", userId);
 
-    // ── Store tokens (service_role bypasses column restrictions) ──
+    // Tokens are stored as plain text in the *_encrypted columns; they are protected by
+    // column grants (no client read access) and RLS, not by encryption.
     const { error: upsertError } = await supabaseAdmin
       .from("connected_sources")
       .upsert(
         {
           user_id: userId,
-          business_id: "default",
+          business_id: business.id,
           source_type: "google_business",
           status: "connecting",
           access_token_encrypted: tokens.access_token,
@@ -149,7 +153,8 @@ Deno.serve(async (req: Request) => {
       );
 
     if (upsertError) {
-      console.error("[gbp-oauth-callback] Token upsert failed:", upsertError.message);
+      console.error("[gbp-oauth-callback] Token upsert failed:", upsertError.code ?? "unknown");
+      return redirectWithError("No se pudo guardar la conexion con Google. Vuelve a intentarlo desde Fuentes.");
     }
 
     // ── Fetch GBP accounts ──
@@ -161,8 +166,8 @@ Deno.serve(async (req: Request) => {
     );
 
     if (!accountsResponse.ok) {
-      const body = await accountsResponse.text();
-      console.error("[gbp-oauth-callback] GBP accounts fetch failed:", body);
+      await accountsResponse.body?.cancel();
+      console.error("[gbp-oauth-callback] GBP accounts fetch failed, status:", accountsResponse.status);
       return redirectWithError(
         "No se pudieron obtener las cuentas de Google Business Profile"
       );
@@ -176,8 +181,6 @@ Deno.serve(async (req: Request) => {
       })
     );
 
-    console.log("[gbp-oauth-callback] Accounts found:", accounts.length);
-
     const accountsParam = encodeURIComponent(JSON.stringify(accounts));
     const successUrl = `${frontendCallback}?accounts=${accountsParam}`;
     return new Response(null, {
@@ -185,8 +188,7 @@ Deno.serve(async (req: Request) => {
       headers: { Location: successUrl },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Error interno";
-    console.error("[gbp-oauth-callback] Unhandled error:", msg);
-    return redirectWithError(msg);
+    console.error("[gbp-oauth-callback] Unhandled error:", err instanceof Error ? err.name : "unknown");
+    return redirectWithError("Error interno al conectar con Google. Vuelve a intentarlo desde Fuentes.");
   }
 });

@@ -35,6 +35,7 @@ interface WorkspaceProps {
   executionState: ExecutionState;
   onStateChange: (state: ExecutionState) => void;
   onBack: () => void;
+  onCompleted?: () => void;
 }
 
 function useDemoToggle(surface: string) {
@@ -46,10 +47,11 @@ function useDemoToggle(surface: string) {
   };
 }
 
-function useCompletion({ recommendation, executionState, onStateChange }: WorkspaceProps) {
+function useCompletion({ recommendation, executionState, onStateChange, onCompleted }: WorkspaceProps) {
   return () => {
     onStateChange(advanceExecution(advanceExecution(executionState, 'running'), 'completed'));
     trackWorkspaceComplete(recommendation.id);
+    onCompleted?.();
   };
 }
 

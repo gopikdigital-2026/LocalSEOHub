@@ -6,6 +6,10 @@ import { track } from '../lib/analytics';
 
 interface LoginModalProps {
   onClose: () => void;
+  /** Called after a successful sign-in instead of onClose, when the caller handles the redirect itself. */
+  onSuccess?: () => void;
+  /** Already-validated in-app path to come back to after Google sign-in. */
+  returnTo?: string | null;
   initialMode?: Mode;
   initialError?: string;
   initialEmail?: string;
@@ -22,7 +26,8 @@ function isAndroid(): boolean {
   return /Android/i.test(navigator.userAgent);
 }
 
-export default function LoginModal({ onClose, initialMode = 'login', initialError = '', initialEmail = '' }: LoginModalProps) {
+export default function LoginModal({ onClose, onSuccess, returnTo = null, initialMode = 'login', initialError = '', initialEmail = '' }: LoginModalProps) {
+  const finish = onSuccess ?? onClose;
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
@@ -71,7 +76,9 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: returnTo
+          ? `${window.location.origin}/login?next=${encodeURIComponent(returnTo)}`
+          : `${window.location.origin}/`,
         queryParams: { prompt: 'select_account' },
       },
     });
@@ -92,7 +99,7 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
       if (authError) {
         setError(translateError(authError.message));
       } else {
-        onClose();
+        finish();
       }
     } else {
       track('register_attempt', { method: 'email' });
@@ -106,7 +113,7 @@ export default function LoginModal({ onClose, initialMode = 'login', initialErro
       const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
       if (!loginErr) {
         trackCompleteRegistration();
-        onClose();
+        finish();
       } else {
         track('register_partial_failure', { step: 'auto_login', error: loginErr.message });
         setError(translateError(loginErr.message));

@@ -1,0 +1,39 @@
+import { createContext, useContext } from 'react';
+import type { BusinessAction } from './types';
+import type { Milestones } from '../activation/milestones';
+
+export interface ActionsContextValue {
+  actions: BusinessAction[];
+  loading: boolean;
+  /** True once the first sync attempt for the current business has finished (success or failure). */
+  ready: boolean;
+  error: string | null;
+  milestones: Milestones | null;
+  /** Set only after the user's first useful action is confirmed COMPLETED and persisted as a milestone. */
+  firstSuccess: BusinessAction | null;
+  clearFirstSuccess(): void;
+  ensureFresh(): Promise<void>;
+  refresh(): Promise<void>;
+  start(action: BusinessAction): Promise<void>;
+  complete(action: BusinessAction): Promise<void>;
+  dismiss(action: BusinessAction): Promise<void>;
+}
+
+export const ActionsContext = createContext<ActionsContextValue>({
+  actions: [],
+  loading: false,
+  ready: false,
+  error: null,
+  milestones: null,
+  firstSuccess: null,
+  clearFirstSuccess: () => {},
+  ensureFresh: async () => {},
+  refresh: async () => {},
+  start: async () => {},
+  complete: async () => {},
+  dismiss: async () => {},
+});
+
+export function useActions() {
+  return useContext(ActionsContext);
+}

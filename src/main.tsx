@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { I18nProvider } from './lib/i18n';
 import App from './App.tsx';
+import { BusinessProvider } from './features/business-memory/BusinessContext';
+import ActionsProvider from './features/actions/ActionsProvider';
 import './index.css';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -30,7 +32,11 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <BrowserRouter>
         <I18nProvider>
-          <App />
+          <BusinessProvider>
+            <ActionsProvider>
+              <App />
+            </ActionsProvider>
+          </BusinessProvider>
         </I18nProvider>
       </BrowserRouter>
     </ErrorBoundary>

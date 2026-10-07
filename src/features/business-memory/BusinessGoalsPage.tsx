@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import type { GoalId, SelectedGoal } from './types';
+import { useMemo, useState } from 'react';
+import type { GoalId } from './types';
 import { AVAILABLE_GOALS, registerGoalSet } from './engine';
-import { createLocalRepository } from './repository';
-import { Button } from '../../components/ui';
+import { createMemoryRepository } from './repository';
+import { useBusiness } from './BusinessContext';
+import { goalsToPatch, toGoals } from './businessRecord';
+import { Button, LoadingState } from '../../components/ui';
 import { trackGoalCreated } from '../../services/analytics/v2Analytics';
 import {
   Check,
@@ -16,8 +18,6 @@ import {
   Target,
 } from 'lucide-react';
 
-const repo = createLocalRepository();
-
 const ICON_MAP: Record<string, React.ReactNode> = {
   Phone: <Phone size={18} />,
   Star: <Star size={18} />,
@@ -29,12 +29,18 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 };
 
 export default function BusinessGoalsPage() {
-  const initialGoals = repo.load().goals;
-  const [selected, setSelected] = useState<GoalId[]>(initialGoals.map((g) => g.goalId));
+  const { currentBusiness, loading, updateBusiness } = useBusiness();
+  const repo = useMemo(() => createMemoryRepository(currentBusiness), [currentBusiness]);
+  const [selected, setSelected] = useState<GoalId[] | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const current = selected ?? (currentBusiness ? toGoals(currentBusiness).map((g) => g.goalId) : []);
 
   function toggleGoal(goalId: GoalId) {
-    setSelected((prev) => {
+    setSelected(() => {
+      const prev = current;
       if (prev.includes(goalId)) return prev.filter((id) => id !== goalId);
       if (prev.length >= 3) return prev;
       return [...prev, goalId];
@@ -42,22 +48,29 @@ export default function BusinessGoalsPage() {
     setSaved(false);
   }
 
-  function handleSave() {
-    const goals: SelectedGoal[] = selected.map((goalId) => ({
-      goalId,
-      selectedAt: new Date().toISOString(),
-    }));
-    repo.setGoals(goals);
-    selected.forEach((goalId) => {
-      const goal = AVAILABLE_GOALS.find((g) => g.id === goalId);
-      if (goal) {
-        registerGoalSet(repo, goalId, goal.label);
-        trackGoalCreated(goalId);
-      }
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  async function handleSave() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateBusiness(goalsToPatch(current));
+      current.forEach((goalId) => {
+        const goal = AVAILABLE_GOALS.find((g) => g.id === goalId);
+        if (goal) {
+          registerGoalSet(repo, goalId, goal.label);
+          trackGoalCreated(goalId);
+        }
+      });
+      setSelected(null);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setSaveError('No se pudieron guardar tus objetivos. Intentalo de nuevo.');
+    } finally {
+      setSaving(false);
+    }
   }
+
+  if (loading && !currentBusiness) return <LoadingState message="Cargando tus objetivos..." />;
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-8">
@@ -74,11 +87,11 @@ export default function BusinessGoalsPage() {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <Target size={16} className="text-v2-primary-500" />
-          <span className="text-v2-sm font-semibold text-v2-text-primary">{selected.length} de 3</span>
+          <span className="text-v2-sm font-semibold text-v2-text-primary">{current.length} de 3</span>
         </div>
         <div className="flex gap-1">
           {[0, 1, 2].map((i) => (
-            <div key={i} className={`w-8 h-1.5 rounded-full transition-colors ${i < selected.length ? 'bg-v2-primary-500' : 'bg-v2-neutral-100'}`} />
+            <div key={i} className={`w-8 h-1.5 rounded-full transition-colors ${i < current.length ? 'bg-v2-primary-500' : 'bg-v2-neutral-100'}`} />
           ))}
         </div>
       </div>
@@ -86,8 +99,8 @@ export default function BusinessGoalsPage() {
       {/* Goals grid */}
       <div className="grid gap-3 sm:grid-cols-2">
         {AVAILABLE_GOALS.map((goal) => {
-          const isSelected = selected.includes(goal.id);
-          const isDisabled = !isSelected && selected.length >= 3;
+          const isSelected = current.includes(goal.id);
+          const isDisabled = !isSelected && current.length >= 3;
 
           return (
             <button
@@ -118,10 +131,11 @@ export default function BusinessGoalsPage() {
 
       {/* Save */}
       <div className="flex items-center gap-4">
-        <Button onClick={handleSave} disabled={selected.length === 0} icon={saved ? <Check size={16} /> : undefined}>
-          {saved ? 'Guardado' : 'Guardar objetivos'}
+        <Button onClick={handleSave} disabled={current.length === 0 || saving || !currentBusiness} icon={saved ? <Check size={16} /> : undefined}>
+          {saving ? 'Guardando...' : saved ? 'Guardado' : 'Guardar objetivos'}
         </Button>
         {saved && <span className="text-v2-xs text-v2-success-600 font-medium">Objetivos actualizados</span>}
+        {saveError && <span role="alert" className="text-v2-xs text-v2-error-600 font-medium">{saveError}</span>}
       </div>
     </div>
   );

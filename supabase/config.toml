@@ -1,0 +1,11 @@
+[functions.gbp-list-locations]
+verify_jwt = true
+
+[functions.gbp-oauth-callback]
+verify_jwt = false
+
+[functions.gbp-oauth-start]
+verify_jwt = true
+
+[functions.gbp-sync]
+verify_jwt = true
