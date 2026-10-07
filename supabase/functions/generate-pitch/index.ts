@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requirePremium } from "./entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +22,9 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+
+  const access = await requirePremium(req, "generate-pitch", corsHeaders);
+  if (!access.ok) return access.response;
 
   try {
     const { portalName, portalDomain, portalType, businessName, sector, city, starProduct } = await req.json();

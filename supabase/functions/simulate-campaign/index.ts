@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requirePremium } from "./entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -90,6 +91,9 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  const access = await requirePremium(req, "simulate-campaign", corsHeaders);
+  if (!access.ok) return access.response;
+
   try {
     const { investment, canal, roiMonth6, roiMonth12 } = await req.json();
 
@@ -155,7 +159,8 @@ Aplica el modelo matemático del sistema, simula la optimización del agente aut
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Error desconocido";
-    return new Response(JSON.stringify({ error: message }), {
+    console.error("simulate-campaign failed", message);
+    return new Response(JSON.stringify({ error: "Error interno" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

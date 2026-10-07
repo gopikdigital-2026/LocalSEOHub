@@ -21,3 +21,54 @@ verify_jwt = true
 
 [functions.stripe-cancel-subscription]
 verify_jwt = true
+
+[functions.analyze-competitor-url]
+verify_jwt = true
+
+[functions.analyze-website]
+verify_jwt = true
+
+[functions.audit-maps-profile]
+verify_jwt = true
+
+[functions.audit-reviews]
+verify_jwt = true
+
+[functions.execute-tip-content]
+verify_jwt = true
+
+[functions.generate-business-audit]
+verify_jwt = true
+
+[functions.generate-content-plan]
+verify_jwt = true
+
+[functions.generate-countermeasure]
+verify_jwt = false
+
+[functions.generate-gbp-description]
+verify_jwt = true
+
+[functions.generate-geo-audit]
+verify_jwt = false
+
+[functions.generate-pitch]
+verify_jwt = true
+
+[functions.generate-seo]
+verify_jwt = true
+
+[functions.generate-voice-script]
+verify_jwt = false
+
+[functions.scan-directories]
+verify_jwt = true
+
+[functions.simulate-campaign]
+verify_jwt = true
+
+[functions.signup-instant]
+verify_jwt = false
+
+[functions.admin-stats]
+verify_jwt = true

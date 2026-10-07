@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requirePremium } from "./entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,9 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+
+  const access = await requirePremium(req, "generate-geo-audit", corsHeaders);
+  if (!access.ok) return access.response;
 
   try {
     const { businessName, sector, city, description } = await req.json();
@@ -104,7 +108,8 @@ Devuelve EXACTAMENTE este JSON (sin markdown, sin explicaciones):
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Error desconocido";
-    return new Response(JSON.stringify({ error: message }), {
+    console.error("generate-geo-audit failed", message);
+    return new Response(JSON.stringify({ error: "Error interno" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

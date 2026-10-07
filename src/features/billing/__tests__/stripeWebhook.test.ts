@@ -86,20 +86,20 @@ describe('stripe webhook', () => {
   it('W7. activation is tracked once from the status change, separately from checkout completion', async () => {
     const d = deps({ verify: vi.fn(async () => event('checkout.session.completed', { customer: 'cus_1', mode: 'subscription', payment_status: 'paid', customer_email: 'a@b.c' })) });
     await createWebhookHandler(d)(post());
-    const names = d.track.mock.calls.map((c) => c[1]);
+    const names = vi.mocked(d.track).mock.calls.map((c) => c[1]);
     expect(names).toEqual(['checkout_completed', 'subscription_activated']);
-    expect(JSON.stringify(d.track.mock.calls)).not.toMatch(/a@b\.c/);
+    expect(JSON.stringify(vi.mocked(d.track).mock.calls)).not.toMatch(/a@b\.c/);
   });
 
   it('W8. payment failures are tracked and processing failures return 500 with a redacted log', async () => {
     const failing = deps({ verify: vi.fn(async () => event('invoice.payment_failed', { customer: 'cus_1', billing_reason: 'subscription_cycle' })) });
     await createWebhookHandler(failing)(post());
-    expect(failing.track.mock.calls.map((c) => c[1])).toContain('payment_failed');
+    expect(vi.mocked(failing.track).mock.calls.map((c) => c[1])).toContain('payment_failed');
 
     const d = deps({ listSubscriptions: vi.fn(async () => { throw new Error('Invalid API Key provided: sk_live_abc123'); }) });
     const res = await createWebhookHandler(d)(post());
     expect(res.status).toBe(500);
-    const [, status, message] = d.finishEvent.mock.calls[0];
+    const [, status, message] = vi.mocked(d.finishEvent).mock.calls[0];
     expect(status).toBe('failed');
     expect(message).not.toMatch(/sk_live_abc123/);
   });

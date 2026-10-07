@@ -1,4 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requirePremium } from "./entitlement.ts";
+import { checkPublicUrl, denoResolve, fetchPublic } from "./urlSafety.ts";
+
+const fetchDeps = { fetch: (u: string, i?: RequestInit) => fetch(u, i), resolve: denoResolve };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +16,9 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  const access = await requirePremium(req, "analyze-website", corsHeaders);
+  if (!access.ok) return access.response;
+
   try {
     const { url } = await req.json();
     if (!url || typeof url !== "string") {
@@ -21,10 +28,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(url);
-    } catch {
+    const parsedUrl = checkPublicUrl(url);
+    if (!parsedUrl) {
       return new Response(
         JSON.stringify({ error: "URL no valida" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -40,14 +45,13 @@ Deno.serve(async (req: Request) => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch(parsedUrl.href, {
+      const { response } = await fetchPublic(parsedUrl.href, {
         signal: controller.signal,
         headers: {
           "User-Agent": "LocalSEOHub-Analyzer/1.0",
           "Accept": "text/html",
         },
-        redirect: "follow",
-      });
+      }, fetchDeps);
       clearTimeout(timeout);
 
       statusCode = response.status;
@@ -57,8 +61,9 @@ Deno.serve(async (req: Request) => {
         errors.push(`HTTP ${statusCode}`);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error de conexion";
-      errors.push(msg);
+      const msg = err instanceof Error && err.message === "blocked_url"
+        ? "URL no permitida"
+        : "No se pudo conectar con la web";
       return new Response(
         JSON.stringify({
           url: parsedUrl.href,
@@ -93,9 +98,9 @@ Deno.serve(async (req: Request) => {
     let hasRobotsTxt = false;
     try {
       const robotsUrl = `${parsedUrl.origin}/robots.txt`;
-      const r = await fetch(robotsUrl, {
+      const { response: r } = await fetchPublic(robotsUrl, {
         headers: { "User-Agent": "LocalSEOHub-Analyzer/1.0" },
-      });
+      }, fetchDeps);
       hasRobotsTxt = r.ok && (await r.text()).length > 10;
     } catch {
       // robots.txt not accessible
@@ -105,9 +110,9 @@ Deno.serve(async (req: Request) => {
     let hasSitemap = false;
     try {
       const sitemapUrl = `${parsedUrl.origin}/sitemap.xml`;
-      const s = await fetch(sitemapUrl, {
+      const { response: s } = await fetchPublic(sitemapUrl, {
         headers: { "User-Agent": "LocalSEOHub-Analyzer/1.0" },
-      });
+      }, fetchDeps);
       if (s.ok) {
         const body = await s.text();
         hasSitemap = body.includes("<urlset") || body.includes("<sitemapindex");
@@ -136,9 +141,9 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Error interno";
+    console.error("analyze-website failed", err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ error: msg }),
+      JSON.stringify({ error: "Error interno" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

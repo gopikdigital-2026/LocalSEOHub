@@ -30,6 +30,13 @@ async function invokeEdge<T = Record<string, unknown>>(
 
 // ─── Website connection ─────────────────────────────────────────────────────
 
+const ACCESS_ERROR_MESSAGES: Record<string, string> = {
+  unauthorized: 'Tu sesión ha caducado. Vuelve a iniciar sesión.',
+  premium_required: 'Tu prueba gratuita ha terminado. Activa tu suscripción para analizar tu web.',
+  rate_limited: 'Has hecho muchos análisis seguidos. Inténtalo de nuevo en un rato.',
+  unavailable: 'El servicio no está disponible ahora mismo. Inténtalo más tarde.',
+};
+
 export async function connectWebsite(url: string, businessId: string) {
   const source = await upsertSource('website', {
     status: 'connecting',
@@ -42,7 +49,7 @@ export async function connectWebsite(url: string, businessId: string) {
     const { data, error } = await invokeEdge<WebsiteAnalysis>('analyze-website', { url });
 
     if (error || !data) {
-      const msg = error ?? 'Sin respuesta del servidor';
+      const msg = (error && ACCESS_ERROR_MESSAGES[error]) ?? error ?? 'Sin respuesta del servidor';
       await upsertSource('website', {
         status: 'error',
         last_error: msg,

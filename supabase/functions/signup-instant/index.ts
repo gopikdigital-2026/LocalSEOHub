@@ -7,77 +7,75 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
+const IP_LIMIT = { limit: 10, windowSeconds: 3600 };
+const EMAIL_LIMIT = { limit: 5, windowSeconds: 3600 };
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function clientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return (forwarded || req.headers.get("x-real-ip") || "unknown").slice(0, 64);
+}
+
+async function withinLimit(url: string, key: string, bucket: string, cfg: { limit: number; windowSeconds: number }) {
+  const res = await fetch(`${url}/rest/v1/rpc/consume_rate_limit`, {
+    method: "POST",
+    headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_bucket: bucket, p_limit: cfg.limit, p_window_seconds: cfg.windowSeconds }),
+  });
+  if (!res.ok) throw new Error(`rate limit rpc ${res.status}`);
+  return (await res.json()) === true;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  const { email, password } = await req.json();
-
-  if (!email || !password) {
-    return new Response(JSON.stringify({ error: "email and password required" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  // Create user with email already confirmed — no email required
-  const { data: createData, error: createError } = await adminClient.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
-
-  if (createError) {
-    const alreadyExists = createError.message.toLowerCase().includes("already") ||
-      createError.message.toLowerCase().includes("exists") ||
-      createError.status === 422;
-
-    if (alreadyExists) {
-      // User exists but may be unconfirmed — find and confirm them
-      const { data: listData } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-      const existing = listData?.users?.find(
-        (u) => u.email?.toLowerCase() === email.toLowerCase()
-      );
-      if (existing && !existing.email_confirmed_at) {
-        const { error: updateError } = await adminClient.auth.admin.updateUserById(existing.id, {
-          email_confirm: true,
-          password,
-        });
-        if (updateError) {
-          return new Response(JSON.stringify({ error: updateError.message }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      }
-      return new Response(JSON.stringify({ exists: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+  try {
+    const body = await req.json().catch(() => null);
+    const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+    const password = typeof body?.password === "string" ? body.password : "";
+    if (!EMAIL_RE.test(email) || password.length < 6 || password.length > 72) {
+      return json({ error: "invalid_input" }, 400);
     }
 
-    return new Response(JSON.stringify({ error: createError.message }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  return new Response(JSON.stringify({ created: true, userId: createData.user?.id }), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+    const ipOk = await withinLimit(supabaseUrl, serviceRoleKey, `signup:ip:${clientIp(req)}`, IP_LIMIT);
+    const emailOk = ipOk && await withinLimit(supabaseUrl, serviceRoleKey, `signup:email:${email}`, EMAIL_LIMIT);
+    if (!ipOk || !emailOk) return json({ error: "rate_limited" }, 429);
+
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // An existing account is never modified here, and the response is identical either way.
+    const { error: createError } = await adminClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+
+    if (createError) {
+      const alreadyExists = createError.status === 422 || /already|exists/i.test(createError.message);
+      if (!alreadyExists) {
+        console.error("signup-instant create failed", createError.status);
+        return json({ error: "signup_failed" }, 400);
+      }
+    }
+
+    return json({ ok: true });
+  } catch (err) {
+    console.error("signup-instant failed", err instanceof Error ? err.message : "unknown");
+    return json({ error: "unavailable" }, 503);
+  }
 });

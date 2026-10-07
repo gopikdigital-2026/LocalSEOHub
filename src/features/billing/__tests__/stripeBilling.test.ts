@@ -58,7 +58,7 @@ describe('stripe billing function', () => {
   it('B3. ignores any client-sent price or return URL', async () => {
     const d = deps();
     await createBillingHandler(d)(call({ action: 'checkout', price_id: 'price_cheap', success_url: 'https://evil.example' }));
-    const params = d.createCheckout.mock.calls[0][0];
+    const params = vi.mocked(d.createCheckout).mock.calls[0][0];
     expect(params.priceId).toBe('price_ok');
     expect(params.successUrl).toBe('https://app.localseohub.com/facturacion?checkout=success');
     expect(params.cancelUrl).toBe('https://app.localseohub.com/facturacion?checkout=cancel');
@@ -93,10 +93,10 @@ describe('stripe billing function', () => {
     const trialEnd = Math.floor(NOW.getTime() / 1000) + 3 * 86400;
     const d = deps({ trialEndsAt: vi.fn(async () => trialEnd) });
     await createBillingHandler(d)(call({ action: 'checkout' }));
-    expect(d.createCheckout.mock.calls[0][0].billingAnchor).toBe(trialEnd);
+    expect(vi.mocked(d.createCheckout).mock.calls[0][0].billingAnchor).toBe(trialEnd);
     const expired = deps();
     await createBillingHandler(expired)(call({ action: 'checkout' }));
-    expect(expired.createCheckout.mock.calls[0][0].billingAnchor).toBeNull();
+    expect(vi.mocked(expired.createCheckout).mock.calls[0][0].billingAnchor).toBeNull();
   });
 
   it('B8. cancel schedules end-of-period cancellation; resume reverses it; both reconcile', async () => {

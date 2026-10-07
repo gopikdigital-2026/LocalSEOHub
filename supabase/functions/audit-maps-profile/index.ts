@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { requirePremium } from "./entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +30,9 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  const access = await requirePremium(req, "audit-maps-profile", corsHeaders);
+  if (!access.ok) return access.response;
+
   try {
     const apiKey = Deno.env.get("LocalSEO_KEY");
     if (!apiKey) {
@@ -56,40 +60,6 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const serviceSupabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
-    const inTrial = Date.now() < new Date(user.created_at).getTime() + 7 * 24 * 60 * 60 * 1000;
-
-    const { data: customer } = await serviceSupabase
-      .from("stripe_customers")
-      .select("customer_id")
-      .eq("user_id", user.id)
-      .is("deleted_at", null)
-      .maybeSingle();
-
-    if (customer?.customer_id) {
-      const { data: sub } = await serviceSupabase
-        .from("stripe_subscriptions")
-        .select("status")
-        .eq("customer_id", customer.customer_id)
-        .maybeSingle();
-
-      if (sub?.status !== "active" && sub?.status !== "trialing" && !inTrial) {
-        return new Response(
-          JSON.stringify({ error: "Se requiere una suscripción activa" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } else if (!inTrial) {
-      return new Response(
-        JSON.stringify({ error: "Se requiere una suscripción activa" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
