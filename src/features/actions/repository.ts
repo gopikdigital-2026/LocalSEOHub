@@ -81,7 +81,7 @@ export function toInsertRow(businessId: string, c: ScoredCandidate, now: Date = 
     effort_minutes: c.effortMinutes,
     status: 'PENDING',
     due_date: dueDateFor(c.priority, now),
-    metadata: { cta: c.cta, cta_to: c.ctaTo ?? null, cooldown_days: c.cooldownDays, value: c.copy.es.value, copy: c.copy },
+    metadata: { cta: c.cta, cta_to: c.ctaTo ?? null, cooldown_days: c.cooldownDays, value: c.copy.es.value, copy: c.copy, evidence: c.evidence ?? null },
   };
 }
 
@@ -110,6 +110,7 @@ export async function getAction(actionId: string, db: Db = supabase): Promise<Bu
 export interface SyncResult {
   actions: BusinessAction[];
   inserted: BusinessAction[];
+  resolved: BusinessAction[];
 }
 
 export async function syncActions(
@@ -143,7 +144,8 @@ export async function syncActions(
   }
 
   const changed = plan.toResolve.length > 0 || plan.toInsert.length > 0;
-  return { actions: changed ? await loadActions(business.id, db) : existing, inserted };
+  const resolved = plan.toResolve.filter((r) => r.status === 'COMPLETED').map((r) => r.action);
+  return { actions: changed ? await loadActions(business.id, db) : existing, inserted, resolved };
 }
 
 type Transition = 'IN_PROGRESS' | 'COMPLETED' | 'DISMISSED';
@@ -166,6 +168,7 @@ export async function transitionAction(actionId: string, to: Transition, db: Db 
   if (!data) {
     const current = await getAction(actionId, db);
     if (!current) throw new Error('Acción no encontrada');
+    if (current.status !== to) throw new Error('invalid_transition');
     return current;
   }
   return fromRow(data as ActionRow);

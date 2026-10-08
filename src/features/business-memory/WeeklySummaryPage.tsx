@@ -1,184 +1,216 @@
-import { useMemo, useEffect, useState } from 'react';
-import type { WeeklySummaryData } from './types';
-import { AVAILABLE_GOALS, generateWeeklySummary } from './engine';
-import { createMemoryRepository } from './repository';
+import { useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { GoalId } from './types';
 import { useBusiness } from './BusinessContext';
 import { useActions } from '../actions/ActionsContext';
-import { CATEGORY_LABELS, buildActionReport, withActionHistory } from '../actions/engine';
+import { CATEGORY_LABELS, actionTarget, buildActionReport, localizeAction, weekStart } from '../actions/engine';
+import { goalLabel } from '../activation/milestones';
 import { useI18n } from '../../lib/i18n';
-import { trackWeeklySummaryView, trackDemoViewed, trackRealDataViewed } from '../../services/analytics/v2Analytics';
-import { DemoModeBanner, NoDataState } from '../../components/DataIntegrity';
-import { BarChart2, Clock, Target, TrendingUp, ArrowRight, Calendar } from 'lucide-react';
+import { trackWeeklySummaryView, trackRealDataViewed } from '../../services/analytics/v2Analytics';
+import { NoDataState } from '../../components/DataIntegrity';
+import { LoadingState } from '../../components/ui';
+import { AlertTriangle, ArrowRight, BarChart2, Calendar, CheckCircle2, ClipboardCheck, Clock, ListTodo, RefreshCw, Target, Ban } from 'lucide-react';
 
-const DEMO_SUMMARY: WeeklySummaryData = {
-  weekStart: '2026-07-28T00:00:00Z',
-  weekEnd: '2026-08-03T23:59:59Z',
-  actionsCompleted: 6,
-  timeInvestedMinutes: 42,
-  goalsProgress: [
-    { goalId: 'more_reviews', progress: 75 },
-    { goalId: 'better_local_seo', progress: 50 },
-  ],
-  impactAchieved: { high: 2, medium: 3, low: 1 },
-  topRecommendation: 'Mantener la actividad actual para consolidar resultados.',
+const T = {
+  es: {
+    title: 'Resumen semanal', loading: 'Preparando tu resumen...',
+    errorTitle: 'No hemos podido cargar tu resumen', errorText: 'Tus datos están guardados. Inténtalo de nuevo en unos segundos.', retry: 'Reintentar',
+    emptyTitle: 'Tu primer informe todavía no está disponible.',
+    emptyText: 'Cuando tengas acciones en tu plan, aquí verás lo que has hecho cada semana. Solo mostramos actividad real, nunca cifras inventadas.',
+    goPlan: 'Ir a mi plan',
+    activity: 'Tu actividad esta semana',
+    activityNote: 'Esto es lo que has hecho en LocalSEOHub. No es una medición de resultados en Google ni en tus ventas.',
+    executed: 'Acciones hechas por ti', dataDone: 'Datos completados', pending: 'Pendientes', time: 'Tiempo estimado',
+    timeNote: 'Estimación según la duración prevista de cada acción hecha.',
+    byCategory: 'Por categoría', catLine: (e: number, d: number, p: number) => `${e} hechas · ${d} datos · ${p} pendientes`,
+    goal: 'Tu objetivo', goalLine: (c: number, p: number) => `${c} acciones relacionadas cerradas esta semana · ${p} pendientes`,
+    goalNote: 'Indica el trabajo dedicado a tu objetivo, no si ya lo has conseguido.', noGoal: 'Aún no has elegido un objetivo principal.', setGoal: 'Elegir objetivo',
+    results: 'Resultados externos', notMeasured: 'No medido',
+    visits: 'Visitas a tu web', visitsWhy: 'No hay ninguna herramienta de analítica conectada. La conexión con Google Analytics aún no está disponible.',
+    bookings: 'Reservas', bookingsWhy: 'No tenemos acceso a tu sistema de reservas.',
+    ranking: 'Posición en Google', rankingWhy: 'LocalSEOHub no mide posiciones en los resultados de búsqueda.',
+    conversions: 'Clientes y ventas', conversionsWhy: 'No vinculamos tus acciones con clientes o ingresos, así que no podemos atribuirles resultados.',
+    next: 'Siguiente acción recomendada', nextEmpty: 'No tienes acciones pendientes. Te avisaremos cuando haya algo nuevo que merezca tu tiempo.', open: 'Abrir',
+    dismissed: (n: number) => `${n} descartada${n === 1 ? '' : 's'} por ti esta semana`,
+  },
+  en: {
+    title: 'Weekly summary', loading: 'Preparing your summary...',
+    errorTitle: 'We could not load your summary', errorText: 'Your data is saved. Please try again in a few seconds.', retry: 'Retry',
+    emptyTitle: 'Your first report is not available yet.',
+    emptyText: 'Once you have actions in your plan, you will see what you did each week here. We only show real activity, never made-up numbers.',
+    goPlan: 'Go to my plan',
+    activity: 'Your activity this week',
+    activityNote: 'This is what you did in LocalSEOHub. It is not a measurement of results on Google or in your sales.',
+    executed: 'Actions done by you', dataDone: 'Details completed', pending: 'Pending', time: 'Estimated time',
+    timeNote: 'Estimate based on the expected duration of each completed action.',
+    byCategory: 'By category', catLine: (e: number, d: number, p: number) => `${e} done · ${d} details · ${p} pending`,
+    goal: 'Your goal', goalLine: (c: number, p: number) => `${c} related actions closed this week · ${p} pending`,
+    goalNote: 'Shows the work put into your goal, not whether you have achieved it.', noGoal: 'You have not chosen a main goal yet.', setGoal: 'Choose goal',
+    results: 'External results', notMeasured: 'Not measured',
+    visits: 'Website visits', visitsWhy: 'No analytics tool is connected. The Google Analytics connection is not available yet.',
+    bookings: 'Bookings', bookingsWhy: 'We do not have access to your booking system.',
+    ranking: 'Google ranking', rankingWhy: 'LocalSEOHub does not measure positions in search results.',
+    conversions: 'Customers and sales', conversionsWhy: 'We do not link your actions to customers or revenue, so we cannot attribute results to them.',
+    next: 'Next recommended action', nextEmpty: 'You have no pending actions. We will let you know when something new deserves your time.', open: 'Open',
+    dismissed: (n: number) => `${n} dismissed by you this week`,
+  },
 };
 
-function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
+function Stat({ icon, label, value, note }: { icon: React.ReactNode; label: string; value: string; note?: string }) {
   return (
     <div className="rounded-v2-xl border border-v2-border-light bg-white p-5">
       <div className="flex items-center gap-2 mb-2 text-v2-neutral-500">{icon}<span className="text-v2-xs font-medium text-v2-text-tertiary">{label}</span></div>
       <p className="text-v2-xl font-bold text-v2-text-primary">{value}</p>
-      {sub && <p className="text-v2-xs text-v2-text-tertiary mt-1">{sub}</p>}
+      {note && <p className="text-v2-xs text-v2-text-tertiary mt-1 leading-relaxed">{note}</p>}
     </div>
   );
 }
 
 export default function WeeklySummaryPage() {
-  const { currentBusiness } = useBusiness();
-  const { actions } = useActions();
+  const navigate = useNavigate();
+  const { currentBusiness, loading: businessLoading } = useBusiness();
+  const { actions, ready, loading, error, refresh, ensureFresh } = useActions();
   const { lang } = useI18n();
-  const state = useMemo(() => withActionHistory(createMemoryRepository(currentBusiness).load(), actions), [currentBusiness, actions]);
-  const liveSummary = useMemo(() => generateWeeklySummary(state), [state]);
-  const report = useMemo(() => buildActionReport(actions), [actions]);
-  const hasRealData = liveSummary.actionsCompleted > 0 || report.pending > 0 || report.completionRate !== null;
-  const [showExample, setShowExample] = useState(false);
+  const t = T[lang];
+  const goal = (currentBusiness?.primary_goal as GoalId | null) ?? null;
+  const report = useMemo(() => buildActionReport(actions, new Date(), goal), [actions, goal]);
+  const hasData = actions.length > 0;
 
+  useEffect(() => { ensureFresh(); }, [ensureFresh]);
   useEffect(() => { trackWeeklySummaryView(); }, []);
-  useEffect(() => { if (hasRealData) trackRealDataViewed('weekly_summary'); }, [hasRealData]);
+  useEffect(() => { if (hasData) trackRealDataViewed('weekly_summary'); }, [hasData]);
 
-  if (!hasRealData && !showExample) {
+  const awaitingFirstSync = Boolean(currentBusiness?.onboarding_completed) && !ready;
+  if (businessLoading || ((awaitingFirstSync || loading) && !hasData)) return <LoadingState message={t.loading} />;
+
+  if (error && !hasData) {
     return (
-      <div className="space-y-6 sm:space-y-8 pb-8">
-        <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">Resumen semanal</h1>
-        <NoDataState
-          surface="weekly_summary"
-          icon={<BarChart2 size={20} />}
-          title="Tu primer informe todavía no está disponible."
-          description="Completa acciones en LocalSEOHub y aquí verás tu progreso semanal. Solo mostramos lo que has hecho de verdad, nunca cifras inventadas."
-          primaryLabel="Ir a mi plan"
-          primaryTo="/plan"
-          onShowExample={() => { setShowExample(true); trackDemoViewed('weekly_summary'); }}
-          exampleLabel="Ver informe de ejemplo"
-        />
+      <div className="rounded-v2-xl border border-v2-border-light bg-white p-8 text-center">
+        <AlertTriangle size={32} className="text-v2-warning-500 mx-auto mb-3" />
+        <h2 className="text-v2-base font-semibold text-v2-text-primary mb-1">{t.errorTitle}</h2>
+        <p className="text-v2-sm text-v2-text-secondary mb-4">{t.errorText}</p>
+        <button onClick={() => refresh()} className="inline-flex items-center gap-2 px-4 py-2 rounded-v2-lg bg-v2-primary-600 hover:bg-v2-primary-700 text-white text-v2-sm font-medium transition-colors">
+          <RefreshCw size={14} /> {t.retry}
+        </button>
       </div>
     );
   }
 
-  const isDemo = !hasRealData;
-  const summary = isDemo ? DEMO_SUMMARY : liveSummary;
-  const weekLabel = `${new Date(summary.weekStart).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${new Date(summary.weekEnd).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
+  if (!hasData) {
+    return (
+      <div className="space-y-6 sm:space-y-8 pb-8">
+        <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">{t.title}</h1>
+        <NoDataState surface="weekly_summary" icon={<BarChart2 size={20} />} title={t.emptyTitle} description={t.emptyText} primaryLabel={t.goPlan} primaryTo="/plan" />
+      </div>
+    );
+  }
+
+  const locale = lang === 'en' ? 'en-GB' : 'es-ES';
+  const from = weekStart();
+  const to = new Date(from.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const fmt = (d: Date) => d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  const goalText = goalLabel(goal, lang);
+  const next = report.nextAction;
+  const unmeasured = [
+    { label: t.visits, why: t.visitsWhy },
+    { label: t.bookings, why: t.bookingsWhy },
+    { label: t.ranking, why: t.rankingWhy },
+    { label: t.conversions, why: t.conversionsWhy },
+  ];
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-8">
       <div>
-        <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">
-          {isDemo ? 'Resumen semanal (ejemplo)' : 'Resumen semanal'}
-        </h1>
+        <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">{t.title}</h1>
         <div className="flex items-center gap-2 mt-2">
           <Calendar size={14} className="text-v2-neutral-400" />
-          <p className="text-v2-sm text-v2-text-secondary">{isDemo ? 'Semana de ejemplo' : weekLabel}</p>
+          <p className="text-v2-sm text-v2-text-secondary">{fmt(from)} - {fmt(to)}</p>
         </div>
       </div>
 
-      {isDemo && (
-        <DemoModeBanner
-          onExit={() => setShowExample(false)}
-          message="Este informe es un ejemplo con cifras inventadas. No refleja la actividad de tu negocio."
-        />
-      )}
-
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard icon={<TrendingUp size={14} />} label="Acciones" value={String(summary.actionsCompleted)} sub="completadas" />
-        <StatCard icon={<Clock size={14} />} label="Tiempo" value={`${summary.timeInvestedMinutes} min`} sub="invertidos" />
-        <StatCard icon={<BarChart2 size={14} />} label="Alto impacto" value={String(summary.impactAchieved.high)} sub="acciones" />
-        <StatCard icon={<Target size={14} />} label="Objetivos" value={`${summary.goalsProgress.length}`} sub="en progreso" />
-      </div>
-
-      {/* Action engine report: real persisted counts only */}
-      {!isDemo && (
-        <div data-testid="action-report" className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6 space-y-4">
-          <h2 className="text-v2-base font-semibold text-v2-text-primary">Tus acciones</h2>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <p className="text-v2-xl font-bold text-v2-text-primary">{report.completedThisWeek}</p>
-              <p className="text-v2-xs text-v2-text-tertiary">completadas esta semana</p>
-            </div>
-            <div>
-              <p className="text-v2-xl font-bold text-v2-text-primary">{report.pending}</p>
-              <p className="text-v2-xs text-v2-text-tertiary">pendientes</p>
-            </div>
-            <div>
-              <p className="text-v2-xl font-bold text-v2-text-primary">{report.completionRate === null ? '--' : `${report.completionRate}%`}</p>
-              <p className="text-v2-xs text-v2-text-tertiary">completado del plan</p>
-            </div>
-          </div>
-          {report.byCategory.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+      <section data-testid="action-report" className="space-y-3">
+        <div>
+          <h2 className="text-v2-base font-semibold text-v2-text-primary">{t.activity}</h2>
+          <p className="text-v2-xs text-v2-text-tertiary mt-1">{t.activityNote}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat icon={<CheckCircle2 size={14} />} label={t.executed} value={String(report.executedThisWeek)} />
+          <Stat icon={<ClipboardCheck size={14} />} label={t.dataDone} value={String(report.dataCompletedThisWeek)} />
+          <Stat icon={<ListTodo size={14} />} label={t.pending} value={String(report.pending)} />
+          <Stat icon={<Clock size={14} />} label={t.time} value={`~${report.executedMinutesThisWeek} min`} note={t.timeNote} />
+        </div>
+        {report.dismissedThisWeek > 0 && (
+          <p className="flex items-center gap-1.5 text-v2-xs text-v2-text-tertiary"><Ban size={12} /> {t.dismissed(report.dismissedThisWeek)}</p>
+        )}
+        {report.byCategory.length > 0 && (
+          <div className="rounded-v2-xl border border-v2-border-light bg-white p-5">
+            <p className="text-v2-xs font-semibold text-v2-text-tertiary uppercase tracking-wider mb-3">{t.byCategory}</p>
+            <ul className="divide-y divide-v2-border-light">
               {report.byCategory.map((c) => (
-                <span key={c.category} className="inline-flex items-center gap-1 rounded-full border border-v2-border-light bg-v2-neutral-50 px-2.5 py-1 text-v2-xs text-v2-text-secondary">
-                  {CATEGORY_LABELS[lang][c.category]}: {c.completed}/{c.completed + c.pending}
-                </span>
+                <li key={c.category} className="flex items-center justify-between gap-3 py-2 text-v2-sm">
+                  <span className="font-medium text-v2-text-primary">{CATEGORY_LABELS[lang][c.category]}</span>
+                  <span className="text-v2-xs text-v2-text-secondary">{t.catLine(c.executed, c.dataCompleted, c.pending)}</span>
+                </li>
               ))}
-            </div>
-          )}
-        </div>
-      )}
+            </ul>
+          </div>
+        )}
+      </section>
 
-      {/* Goals progress */}
-      {summary.goalsProgress.length > 0 && (
-        <div className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6 space-y-4">
-          <h2 className="text-v2-base font-semibold text-v2-text-primary">Progreso de objetivos</h2>
-          <div className="space-y-4">
-            {summary.goalsProgress.map((gp) => {
-              const goalDef = AVAILABLE_GOALS.find((g) => g.id === gp.goalId);
-              return (
-                <div key={gp.goalId}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-v2-sm text-v2-text-primary font-medium">{goalDef?.label ?? gp.goalId}</span>
-                    <span className="text-v2-xs font-semibold text-v2-primary-600">{gp.progress}%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-v2-neutral-100 overflow-hidden">
-                    <div className="h-full bg-v2-primary-500 rounded-full transition-all duration-500" style={{ width: `${gp.progress}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      <section className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Target size={16} className="text-v2-primary-500" />
+          <h2 className="text-v2-base font-semibold text-v2-text-primary">{t.goal}</h2>
         </div>
-      )}
+        {goalText && report.goalActivity ? (
+          <>
+            <p className="text-v2-sm font-medium text-v2-text-primary first-letter:uppercase">{goalText}</p>
+            <p className="text-v2-sm text-v2-text-secondary mt-1">{t.goalLine(report.goalActivity.closed, report.goalActivity.pending)}</p>
+            <p className="text-v2-xs text-v2-text-tertiary mt-2">{t.goalNote}</p>
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-v2-sm text-v2-text-secondary">{t.noGoal}</p>
+            <button onClick={() => navigate('/negocio/objetivos')} className="text-v2-sm font-medium text-v2-primary-600 hover:text-v2-primary-700">{t.setGoal}</button>
+          </div>
+        )}
+      </section>
 
-      {/* Impact breakdown */}
-      <div className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6">
-        <h2 className="text-v2-base font-semibold text-v2-text-primary mb-4">Impacto conseguido</h2>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-v2-error-400" />
-            <span className="text-v2-xs text-v2-text-secondary">Alto: {summary.impactAchieved.high}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-v2-warning-400" />
-            <span className="text-v2-xs text-v2-text-secondary">Medio: {summary.impactAchieved.medium}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-v2-neutral-300" />
-            <span className="text-v2-xs text-v2-text-secondary">Bajo: {summary.impactAchieved.low}</span>
-          </div>
-        </div>
-      </div>
+      <section data-testid="external-results" className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6">
+        <h2 className="text-v2-base font-semibold text-v2-text-primary mb-3">{t.results}</h2>
+        <ul className="space-y-3">
+          {unmeasured.map((m) => (
+            <li key={m.label} className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-v2-sm font-medium text-v2-text-primary">{m.label}</p>
+                <p className="text-v2-xs text-v2-text-tertiary leading-relaxed">{m.why}</p>
+              </div>
+              <span className="shrink-0 rounded-full border border-v2-border-light bg-v2-neutral-50 px-2.5 py-0.5 text-v2-xs font-medium text-v2-text-secondary">{t.notMeasured}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      {/* Top recommendation for next week */}
-      <div className="rounded-v2-xl border border-v2-primary-200 bg-v2-primary-50/50 p-5 sm:p-6">
+      <section className="rounded-v2-xl border border-v2-primary-200 bg-v2-primary-50/50 p-5 sm:p-6">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-v2-lg bg-v2-primary-100 flex items-center justify-center shrink-0">
             <ArrowRight size={16} className="text-v2-primary-600" />
           </div>
-          <div>
-            <p className="text-v2-xs font-semibold text-v2-primary-600 uppercase tracking-wider mb-1">Proxima semana</p>
-            <p className="text-v2-sm text-v2-text-primary leading-relaxed">{summary.topRecommendation}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-v2-xs font-semibold text-v2-primary-600 uppercase tracking-wider mb-1">{t.next}</p>
+            {next ? (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-v2-sm text-v2-text-primary leading-relaxed">{localizeAction(next, lang).title}</p>
+                <button onClick={() => navigate(actionTarget(next))} className="inline-flex items-center gap-1.5 rounded-v2-lg bg-v2-primary-600 px-3 py-1.5 text-v2-xs font-semibold text-white hover:bg-v2-primary-700 transition-colors">
+                  {t.open} <ArrowRight size={12} />
+                </button>
+              </div>
+            ) : (
+              <p className="text-v2-sm text-v2-text-secondary leading-relaxed">{t.nextEmpty}</p>
+            )}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

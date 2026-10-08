@@ -7,6 +7,7 @@ import { connectWebsite, saveManualEntry, disconnectSource, startGBPConnection, 
 import type { GBPStartResult } from './engine';
 import { useBusiness } from '../business-memory/BusinessContext';
 import { useI18n } from '../../lib/i18n';
+import { useActions } from '../actions/ActionsContext';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   'map-pin': MapPin,
@@ -22,6 +23,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 export default function SourceManager() {
   const { businessId, loading: businessLoading, error: businessError } = useBusiness();
   const { lang } = useI18n();
+  const { ensureFresh } = useActions();
   const [sources, setSources] = useState<ConnectedSource[]>([]);
   const [events, setEvents] = useState<SyncEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,11 +50,17 @@ export default function SourceManager() {
       setEvents(e);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar fuentes');
+      console.error('sources load failed', err);
+      setError(lang === 'en' ? 'We could not load your sources. Please try again.' : 'No pudimos cargar tus fuentes. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
-  }, [businessId, businessLoading, businessError]);
+  }, [businessId, businessLoading, businessError, lang]);
+
+  const refreshAll = useCallback(async () => {
+    await refresh();
+    await ensureFresh();
+  }, [refresh, ensureFresh]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -67,7 +75,7 @@ export default function SourceManager() {
     setBusySource(source.source_type as SourceType);
     try {
       await disconnectSource(source.id, source.source_type as SourceType);
-      await refresh();
+      await refreshAll();
     } catch { /* refresh will show the error */ }
     setBusySource(null);
   };
@@ -207,7 +215,7 @@ export default function SourceManager() {
         <WebsiteModal
           businessId={businessId}
           onClose={() => setWebsiteModal(false)}
-          onSuccess={() => { setWebsiteModal(false); refresh(); }}
+          onSuccess={() => { setWebsiteModal(false); void refreshAll(); }}
         />
       )}
 
@@ -217,7 +225,7 @@ export default function SourceManager() {
           businessId={businessId}
           existingData={(getSource('manual')?.metadata ?? {}) as Partial<ManualEntryData>}
           onClose={() => setManualModal(false)}
-          onSuccess={() => { setManualModal(false); refresh(); }}
+          onSuccess={() => { setManualModal(false); void refreshAll(); }}
         />
       )}
     </div>
@@ -569,7 +577,8 @@ function ManualEntryModal({ businessId, existingData, onClose, onSuccess }: {
       await saveManualEntry(form as unknown as Record<string, string>, businessId);
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar');
+      console.error('manual entry save failed', err);
+      setError('No pudimos guardar los datos. Inténtalo de nuevo.');
       setLoading(false);
     }
   };
@@ -584,7 +593,7 @@ function ManualEntryModal({ businessId, existingData, onClose, onSuccess }: {
         </div>
 
         <p className="text-v2-xs text-v2-text-secondary mb-5">
-          Completa la informacion que quieras para mejorar las recomendaciones.
+          Completa la informacion que quieras para mejorar las recomendaciones. Las recomendaciones basadas en estos datos se marcan como «Basado en la información de tu negocio»: son datos que nos indicas y no los verificamos.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -597,6 +606,7 @@ function ManualEntryModal({ businessId, existingData, onClose, onSuccess }: {
                   onChange={(e) => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
                   placeholder={field.placeholder}
                   rows={3}
+                  maxLength={2000}
                   className="v2-input mt-1.5 resize-none"
                 />
               ) : (
@@ -605,6 +615,7 @@ function ManualEntryModal({ businessId, existingData, onClose, onSuccess }: {
                   value={form[field.key]}
                   onChange={(e) => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
                   placeholder={field.placeholder}
+                  maxLength={300}
                   className="v2-input mt-1.5"
                 />
               )}

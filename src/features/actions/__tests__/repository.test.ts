@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 vi.mock('../../../lib/supabase', () => ({ supabase: {} }));
 
-import { syncActions, transitionAction, loadActions } from '../repository';
+import { syncActions, transitionAction, loadActions, getAction } from '../repository';
 import { buildActionReport, actionsToTimeline } from '../engine';
 import type { BusinessRecord } from '../../business-memory/businessRecord';
 import type { SourceSnapshot } from '../types';
@@ -119,23 +119,23 @@ describe('action repository (persisted business_actions)', () => {
 
   it('completion persists COMPLETED + completed_at and the action is not recreated immediately', async () => {
     const db = createFakeDb(OWNER);
-    const { actions } = await syncActions(business(), NO_SOURCES, db as never);
+    const { actions } = await syncActions(business({ services: ['Pan de masa madre'] }), NO_SOURCES, db as never);
     const post = actions.find((a) => a.ruleId === 'create_weekly_post')!;
     const done = await transitionAction(post.id, 'COMPLETED', db as never);
     expect(done.status).toBe('COMPLETED');
     expect(done.completedAt).not.toBeNull();
-    const after = await syncActions(business(), NO_SOURCES, db as never);
+    const after = await syncActions(business({ services: ['Pan de masa madre'] }), NO_SOURCES, db as never);
     expect(after.inserted.map((a) => a.ruleId)).not.toContain('create_weekly_post');
   });
 
   it('dismiss persists DISMISSED + dismissed_at and is not recreated immediately', async () => {
     const db = createFakeDb(OWNER);
-    const { actions } = await syncActions(business(), NO_SOURCES, db as never);
+    const { actions } = await syncActions(business({ services: ['Pan de masa madre'] }), NO_SOURCES, db as never);
     const photos = actions.find((a) => a.ruleId === 'add_recent_photos')!;
     const dismissed = await transitionAction(photos.id, 'DISMISSED', db as never);
     expect(dismissed.status).toBe('DISMISSED');
     expect(dismissed.dismissedAt).not.toBeNull();
-    const after = await syncActions(business(), NO_SOURCES, db as never);
+    const after = await syncActions(business({ services: ['Pan de masa madre'] }), NO_SOURCES, db as never);
     expect(after.inserted.map((a) => a.ruleId)).not.toContain('add_recent_photos');
   });
 
@@ -145,7 +145,9 @@ describe('action repository (persisted business_actions)', () => {
     const a = actions[0];
     expect((await transitionAction(a.id, 'IN_PROGRESS', db as never)).status).toBe('IN_PROGRESS');
     await transitionAction(a.id, 'COMPLETED', db as never);
-    expect((await transitionAction(a.id, 'DISMISSED', db as never)).status).toBe('COMPLETED');
+    await expect(transitionAction(a.id, 'DISMISSED', db as never)).rejects.toThrow('invalid_transition');
+    expect((await transitionAction(a.id, 'COMPLETED', db as never)).status).toBe('COMPLETED');
+    expect((await getAction(a.id, db as never))?.status).toBe('COMPLETED');
   });
 
   it('filling a profile gap closes the open action as completed', async () => {
@@ -181,9 +183,10 @@ describe('action repository (persisted business_actions)', () => {
     expect(timeline).toHaveLength(1);
     expect(timeline[0].type).toBe('action_completed');
     const report = buildActionReport(all);
-    expect(report.completedThisWeek).toBe(1);
+    expect(report.executedThisWeek).toBe(1);
+    expect(report.dataCompletedThisWeek).toBe(0);
     expect(report.pending).toBe(all.length - 1);
-    expect(report.completionRate).toBe(Math.round((1 / all.length) * 100));
+    expect(report.weeklyProgress).toBe(Math.round((1 / all.length) * 100));
   });
 });
 

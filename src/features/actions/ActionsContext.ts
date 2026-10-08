@@ -14,6 +14,9 @@ export interface ActionsContextValue {
   /** Set only after the user's first useful action is confirmed COMPLETED and persisted as a milestone. */
   firstSuccess: BusinessAction | null;
   clearFirstSuccess(): void;
+  /** Recommendations closed by the last sync because the data they asked for now exists. */
+  recentlyResolved: BusinessAction[];
+  clearRecentlyResolved(): void;
   ensureFresh(): Promise<void>;
   refresh(): Promise<void>;
   start(action: BusinessAction): Promise<void>;
@@ -30,6 +33,8 @@ export const ActionsContext = createContext<ActionsContextValue>({
   milestones: null,
   firstSuccess: null,
   clearFirstSuccess: () => {},
+  recentlyResolved: [],
+  clearRecentlyResolved: () => {},
   ensureFresh: async () => {},
   refresh: async () => {},
   start: async () => {},

@@ -20,4 +20,5 @@ export interface DashboardAction {
   estimatedMinutes: number;
   origin: DataOrigin;
   ctaLabel: string;
+  canMarkDone: boolean;
 }

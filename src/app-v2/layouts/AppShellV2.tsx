@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { trackNavigationClick } from '../../services/analytics/v2Analytics';
 import { TrialBanner } from '../../features/billing/BillingNotices';
+import ResolvedActionsNotice from '../../features/actions/ResolvedActionsNotice';
 
 interface NavItem {
   id: string;
@@ -201,6 +202,7 @@ export default function AppShellV2() {
       <main className="lg:pl-64 pt-14 lg:pt-0 pb-20 lg:pb-0">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
           <TrialBanner />
+          <ResolvedActionsNotice />
           <Outlet />
         </div>
       </main>

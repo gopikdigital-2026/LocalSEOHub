@@ -9,6 +9,7 @@ const LABELS = {
   es: {
     heading: 'Misiones de hoy', one: 'misión', many: 'misiones', why: 'Por qué', value: 'Qué ganas',
     priority: 'Prioridad', done: 'Marcar como completada', dismiss: 'Descartar',
+    estimate: (m: number) => `Estimado: ~${m} min`, autoClose: 'Se cierra sola al guardar el dato',
     emptyTitle: 'No hay acciones para hoy ahora mismo',
     emptyText: 'Cuando haya algo útil que hacer en tu negocio aparecerá aquí. Mientras tanto puedes revisar tu plan semanal.',
     loading: 'Preparando tus acciones...', retry: 'Reintentar',
@@ -25,6 +26,7 @@ const LABELS = {
   en: {
     heading: "Today's missions", one: 'mission', many: 'missions', why: 'Why', value: 'What you gain',
     priority: 'Priority', done: 'Mark as completed', dismiss: 'Dismiss',
+    estimate: (m: number) => `Estimate: ~${m} min`, autoClose: 'Closes on its own once the detail is saved',
     emptyTitle: 'There are no actions for today right now',
     emptyText: 'When there is something useful to do for your business it will show up here. Meanwhile you can review your weekly plan.',
     loading: 'Preparing your actions...', retry: 'Retry',
@@ -183,14 +185,18 @@ export default function TodaysMissions({
                   >
                     {action.ctaLabel} <ArrowRight size={12} />
                   </button>
-                  <button
-                    onClick={() => onComplete(action)}
-                    className="inline-flex items-center gap-1.5 rounded-v2-lg border border-v2-border-light px-3 py-1.5 text-v2-xs font-medium text-v2-text-secondary hover:border-v2-success-300 hover:text-v2-success-600 transition-colors"
-                  >
-                    <Check size={12} /> {l.done}
-                  </button>
+                  {action.canMarkDone ? (
+                    <button
+                      onClick={() => onComplete(action)}
+                      className="inline-flex items-center gap-1.5 rounded-v2-lg border border-v2-border-light px-3 py-1.5 text-v2-xs font-medium text-v2-text-secondary hover:border-v2-success-300 hover:text-v2-success-600 transition-colors"
+                    >
+                      <Check size={12} /> {l.done}
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-v2-text-tertiary">{l.autoClose}</span>
+                  )}
                   <span className="flex items-center gap-1 text-[11px] text-v2-text-tertiary ml-auto">
-                    <Clock size={11} /> {action.estimatedMinutes} min
+                    <Clock size={11} /> {l.estimate(action.estimatedMinutes)}
                   </span>
                 </div>
               </div>

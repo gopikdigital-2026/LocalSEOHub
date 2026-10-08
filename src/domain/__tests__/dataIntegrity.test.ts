@@ -91,10 +91,9 @@ describe('reports and business memory do not fall back to demo metrics', () => {
   it('weekly summary shows an empty state when there is no real activity', () => {
     const page = src('src/features/business-memory/WeeklySummaryPage.tsx');
     expect(page).toMatch(/Tu primer informe todavía no está disponible\./);
-    expect(page).toMatch(/Completa acciones en LocalSEOHub y aquí verás tu progreso semanal\./);
-    expect(page).toMatch(/Ver informe de ejemplo/);
-    expect(page).not.toMatch(/isDemo \? DEMO_SUMMARY : liveSummary;\s*\n\s*useEffect/);
-    expect(page).toMatch(/useState\(false\)/);
+    expect(page).toMatch(/Solo mostramos actividad real, nunca cifras inventadas\./);
+    expect(page).not.toMatch(/DEMO_SUMMARY|impactAchieved/);
+    expect(page).toMatch(/No medido/);
   });
 
   it('timeline, insights and preferences contain no demo fallbacks', () => {

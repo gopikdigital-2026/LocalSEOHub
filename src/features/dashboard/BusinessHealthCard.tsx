@@ -3,7 +3,7 @@ import type { ConnectionEntry } from './types';
 
 interface BusinessHealthCardProps {
   score: number | null;
-  trend: 'up' | 'down' | 'stable';
+  trend: 'up' | 'down' | 'stable' | null;
   connections: ConnectionEntry[];
   pendingActions: number;
 }
@@ -55,11 +55,12 @@ export default function BusinessHealthCard({ score, trend, connections, pendingA
         <ScoreRing score={score} />
 
         <div className="flex-1 space-y-4">
-          {/* Trend */}
-          <div className="flex items-center gap-2">
-            <TrendIcon size={14} className={trendColor} />
-            <span className={`text-v2-sm font-medium ${trendColor}`}>{trendLabel}</span>
-          </div>
+          {trend && (
+            <div className="flex items-center gap-2">
+              <TrendIcon size={14} className={trendColor} />
+              <span className={`text-v2-sm font-medium ${trendColor}`}>{trendLabel}</span>
+            </div>
+          )}
 
           {/* Connections */}
           <div className="flex items-center gap-2">

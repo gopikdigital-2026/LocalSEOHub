@@ -111,6 +111,19 @@ export interface SyncPlan {
 
 const SELF_RESOLVING: ActionSourceType[] = ['BUSINESS_PROFILE', 'SOURCE_REQUIRED', 'VERIFIED_FINDING'];
 
+// Data gaps and findings close only when the data changes; a click must never mark them done.
+export function canMarkDone(action: BusinessAction): boolean {
+  return !SELF_RESOLVING.includes(action.sourceType);
+}
+
+export type ActionOutcome = 'executed' | 'data_completed' | 'dismissed' | 'open';
+
+export function actionOutcome(action: BusinessAction): ActionOutcome {
+  if (action.status === 'COMPLETED') return action.metadata.resolved_by === 'condition_met' ? 'data_completed' : 'executed';
+  if (action.status === 'DISMISSED') return 'dismissed';
+  return 'open';
+}
+
 // Open actions whose trigger no longer holds are closed: data gaps that were filled count as done.
 export function planSync(
   business: BusinessRecord,
@@ -165,6 +178,7 @@ export function actionOrigin(sourceType: ActionSourceType): DataOrigin {
     case 'GOAL_BASED':
     case 'FOLLOW_UP': return 'user_provided';
     case 'SOURCE_REQUIRED': return 'unavailable';
+    // Findings come from a connected source (Google profile or analysed website).
     case 'GENERAL_BEST_PRACTICE': return 'general';
   }
 }
@@ -225,7 +239,7 @@ export function withActionHistory<S extends { timeline: TimelineEvent[] }>(state
 
 export function actionsToTimeline(actions: BusinessAction[]): TimelineEvent[] {
   return actions
-    .filter((a) => a.status === 'COMPLETED' && a.completedAt)
+    .filter((a) => actionOutcome(a) === 'executed' && a.completedAt)
     .map((a) => ({
       id: `action-${a.id}`,
       type: 'action_completed' as const,
@@ -238,10 +252,17 @@ export function actionsToTimeline(actions: BusinessAction[]): TimelineEvent[] {
 }
 
 export interface ActionReport {
-  completedThisWeek: number;
+  executedThisWeek: number;
+  dataCompletedThisWeek: number;
+  dismissedThisWeek: number;
   pending: number;
-  completionRate: number | null;
-  byCategory: { category: ActionCategory; completed: number; pending: number }[];
+  executedMinutesThisWeek: number;
+  pendingMinutes: number;
+  weeklyProgress: number | null;
+  byCategory: { category: ActionCategory; executed: number; dataCompleted: number; pending: number }[];
+  nextAction: BusinessAction | null;
+  /** Activity in the categories that serve the primary goal. It is effort, not a measured result. */
+  goalActivity: { goal: GoalId; closed: number; pending: number } | null;
 }
 
 export function weekStart(now: Date = new Date()): Date {
@@ -252,22 +273,39 @@ export function weekStart(now: Date = new Date()): Date {
   return d;
 }
 
-export function buildActionReport(actions: BusinessAction[], now: Date = new Date()): ActionReport {
+// Single source for progress shown on Hoy, Plan and Informes: this week's closures vs what is still open.
+export function buildActionReport(actions: BusinessAction[], now: Date = new Date(), goal: GoalId | null = null): ActionReport {
   const start = weekStart(now).getTime();
-  const completed = actions.filter((a) => a.status === 'COMPLETED' && a.completedAt);
-  const completedThisWeek = completed.filter((a) => new Date(a.completedAt as string).getTime() >= start);
+  const inWeek = (at: string | null) => at !== null && new Date(at).getTime() >= start;
+  const executed = actions.filter((a) => actionOutcome(a) === 'executed' && inWeek(a.completedAt));
+  const dataCompleted = actions.filter((a) => actionOutcome(a) === 'data_completed' && inWeek(a.completedAt));
+  const dismissed = actions.filter((a) => a.status === 'DISMISSED' && !a.metadata.auto_closed && inWeek(a.dismissedAt));
   const pending = actions.filter(isOpen);
-  const totalDecided = completed.length + pending.length;
-  const categories = Array.from(new Set([...completed, ...pending].map((a) => a.category)));
+  const done = executed.length + dataCompleted.length;
+  const categories = Array.from(new Set([...executed, ...dataCompleted, ...pending].map((a) => a.category)));
+  const minutes = (list: BusinessAction[]) => list.reduce((sum, a) => sum + a.effortMinutes, 0);
   return {
-    completedThisWeek: completedThisWeek.length,
+    executedThisWeek: executed.length,
+    dataCompletedThisWeek: dataCompleted.length,
+    dismissedThisWeek: dismissed.length,
     pending: pending.length,
-    completionRate: totalDecided > 0 ? Math.round((completed.length / totalDecided) * 100) : null,
+    executedMinutesThisWeek: minutes(executed),
+    pendingMinutes: minutes(pending),
+    weeklyProgress: done + pending.length > 0 ? Math.round((done / (done + pending.length)) * 100) : null,
     byCategory: categories.map((category) => ({
       category,
-      completed: completed.filter((a) => a.category === category).length,
+      executed: executed.filter((a) => a.category === category).length,
+      dataCompleted: dataCompleted.filter((a) => a.category === category).length,
       pending: pending.filter((a) => a.category === category).length,
     })),
+    nextAction: selectTodayActions(actions, 1)[0] ?? null,
+    goalActivity: goal && GOAL_CATEGORIES[goal]
+      ? {
+          goal,
+          closed: [...executed, ...dataCompleted].filter((a) => GOAL_CATEGORIES[goal].includes(a.category)).length,
+          pending: pending.filter((a) => GOAL_CATEGORIES[goal].includes(a.category)).length,
+        }
+      : null,
   };
 }
 

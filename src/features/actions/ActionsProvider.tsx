@@ -11,7 +11,8 @@ import { loadMilestones } from '../activation/repository';
 import { advanceActivation } from '../activation/service';
 import type { ActivationEvent, Milestones } from '../activation/milestones';
 import { ActionsContext, type ActionsContextValue } from './ActionsContext';
-import { openActions } from './engine';
+import { canMarkDone, openActions } from './engine';
+import { useI18n } from '../../lib/i18n';
 import { syncActions, transitionAction, loadActions } from './repository';
 import type { BusinessAction, SourceSnapshot } from './types';
 import { useBilling } from '../billing/BillingContext';
@@ -26,7 +27,9 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
   const { hasPremium, error: billingError } = useBilling();
   const billingSettled = hasPremium !== null || billingError;
   const canWrite = hasPremium === true;
+  const { lang } = useI18n();
   const [actions, setActions] = useState<BusinessAction[]>([]);
+  const [recentlyResolved, setRecentlyResolved] = useState<BusinessAction[]>([]);
   const [loading, setLoading] = useState(false);
   const [readyFor, setReadyFor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,11 +76,14 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
         const result = await syncActions(currentBusiness, sources);
         lastSynced.current = fp;
         result.inserted.forEach(trackRecommendationGenerated);
+        if (result.resolved.length > 0) setRecentlyResolved(result.resolved);
         setActions(result.actions);
         setError(null);
         void activate({ type: 'recommendations_available', count: openActions(result.actions).length });
       } catch {
-        setError('No hemos podido cargar tus acciones. Inténtalo de nuevo en unos segundos.');
+        setError(lang === 'en'
+          ? 'We could not load your actions. Please try again in a few seconds.'
+          : 'No hemos podido cargar tus acciones. Inténtalo de nuevo en unos segundos.');
       } finally {
         setLoading(false);
         setReadyFor(currentBusiness.id);
@@ -86,7 +92,7 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
     })();
     inFlight.current = job;
     return job;
-  }, [currentBusiness, activate, billingSettled, canWrite]);
+  }, [currentBusiness, activate, billingSettled, canWrite, lang]);
 
   useEffect(() => {
     if (!currentBusiness) {
@@ -114,6 +120,7 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
 
   const transition = useCallback(async (action: BusinessAction, to: 'IN_PROGRESS' | 'COMPLETED' | 'DISMISSED') => {
     if (!canWrite) throw new PremiumRequiredError();
+    if (to === 'COMPLETED' && !canMarkDone(action)) throw new Error('resolves_with_data');
     const updated = await transitionAction(action.id, to);
     replace(updated);
     if (updated.status !== to) return;
@@ -139,12 +146,14 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
     milestones,
     firstSuccess,
     clearFirstSuccess: () => setFirstSuccess(null),
+    recentlyResolved,
+    clearRecentlyResolved: () => setRecentlyResolved([]),
     ensureFresh: () => run(false),
     refresh: () => run(true),
     start: (a) => transition(a, 'IN_PROGRESS'),
     complete: (a) => transition(a, 'COMPLETED'),
     dismiss: (a) => transition(a, 'DISMISSED'),
-  }), [actions, loading, readyFor, businessKey, error, hasPremium, milestones, firstSuccess, run, transition]);
+  }), [actions, loading, readyFor, businessKey, error, hasPremium, milestones, firstSuccess, recentlyResolved, run, transition]);
 
   return <ActionsContext.Provider value={value}>{children}</ActionsContext.Provider>;
 }

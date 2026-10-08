@@ -50,9 +50,9 @@ function persisted(ruleId: string, over: Partial<BusinessAction> = {}): Business
 const ids = (list: { ruleId: string }[]) => list.map((c) => c.ruleId);
 
 describe('rule catalogue', () => {
-  it('has between 8 and 15 deterministic rules covering every category', () => {
+  it('has between 8 and 20 deterministic rules covering every category', () => {
     expect(ACTION_RULES.length).toBeGreaterThanOrEqual(8);
-    expect(ACTION_RULES.length).toBeLessThanOrEqual(15);
+    expect(ACTION_RULES.length).toBeLessThanOrEqual(20);
     const all = evaluateBusinessState(
       business({ phone: '', website: '', schedule: '', services: [], target_audience: '', category: '', primary_goal: null }),
       [{ sourceType: 'website', status: 'error', lastSyncAt: null, metadata: {} }],
@@ -60,7 +60,13 @@ describe('rule catalogue', () => {
       NOW,
     );
     const categories = new Set(all.map((c) => c.category));
-    ['profile', 'goals', 'content', 'visibility', 'data', 'follow_up'].forEach((c) => expect(categories).toContain(c));
+    ['profile', 'goals', 'data', 'follow_up'].forEach((c) => expect(categories).toContain(c));
+    expect(categories).not.toContain('content');
+    const analysis = { url: 'https://panaderia.test', statusCode: 200, https: false, title: null, metaDescription: null, h1: null, hasRobotsTxt: false, hasSitemap: false, canonical: null, hasSchema: false, analyzedAt: NOW.toISOString(), errors: [], confidence: 'real' };
+    const withSite = evaluateBusinessState(business(), [{ sourceType: 'website', status: 'connected', lastSyncAt: NOW.toISOString(), metadata: { analysis } }], [], NOW);
+    expect(withSite.some((c) => c.category === 'visibility')).toBe(true);
+    const complete = evaluateBusinessState(business({ primary_goal: 'more_reviews' }), [], [], NOW);
+    expect(complete.some((c) => c.category === 'content')).toBe(true);
     const reputation = evaluateBusinessState(business({ primary_goal: 'more_reviews' }), [], [], NOW);
     expect(reputation.some((c) => c.category === 'reputation')).toBe(true);
   });
@@ -168,6 +174,7 @@ describe('dedup and cooldown', () => {
   });
 
   it('respects the cooldown after completion and recreates after it expires', () => {
+    const candidates = evaluateBusinessState(business({ primary_goal: 'more_reviews' }), [], [], NOW);
     const recent = persisted('create_weekly_post', { status: 'COMPLETED', completedAt: new Date(NOW.getTime() - 2 * DAY).toISOString() });
     expect(ids(dedupCandidates(candidates, [recent], NOW))).not.toContain('create_weekly_post');
     const old = persisted('create_weekly_post', { status: 'COMPLETED', completedAt: new Date(NOW.getTime() - 8 * DAY).toISOString() });
@@ -252,7 +259,8 @@ describe('wiring', () => {
   it('execution persists completion through the action model', () => {
     const exec = src('src/features/execution/ExecutionPage.tsx');
     expect(exec).not.toMatch(/demoRecommendations/);
-    expect(exec).toMatch(/onCompleted: \(\) => \{ complete\(action\)/);
-    expect(src('src/features/execution/workspaces.tsx')).toMatch(/onCompleted\?\.\(\)/);
+    expect(exec).toMatch(/\(\) => \{ complete\(action\)/);
+    expect(exec).toMatch(/onCompleted: selfAttestable/);
+    expect(src('src/features/execution/workspaces.tsx')).toMatch(/if \(!onCompleted\) return undefined/);
   });
 });

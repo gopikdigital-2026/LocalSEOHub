@@ -33,6 +33,7 @@ export interface ActionCandidate {
   effortMinutes: number;
   cta: ActionCta;
   ctaTo?: string;
+  evidence?: Record<string, string | number | boolean | null>;
   copy: { es: ActionCopy; en: ActionCopy };
 }
 

@@ -48,10 +48,11 @@ function useDemoToggle(surface: string) {
 }
 
 function useCompletion({ recommendation, executionState, onStateChange, onCompleted }: WorkspaceProps) {
+  if (!onCompleted) return undefined;
   return () => {
     onStateChange(advanceExecution(advanceExecution(executionState, 'running'), 'completed'));
     trackWorkspaceComplete(recommendation.id);
-    onCompleted?.();
+    onCompleted();
   };
 }
 
@@ -79,7 +80,7 @@ export function ReviewWorkspace(props: WorkspaceProps) {
   if (isDone(executionState)) {
     return (
       <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={sidebar} onBack={onBack}>
-        <CompletionCard title="Resenas respondidas" message="Has respondido las resenas pendientes. Esto mejora la confianza de nuevos clientes y senala actividad a Google." onBack={onBack} />
+        <CompletionCard title="Marcada como hecha" message="Has indicado que respondiste tus reseñas. No podemos comprobarlo hasta que conectes Google Business Profile, así que no lo contamos como un resultado medido." onBack={onBack} />
       </WorkspaceLayout>
     );
   }
@@ -94,7 +95,7 @@ export function ReviewWorkspace(props: WorkspaceProps) {
           description="Para preparar respuestas necesitamos leer las reseñas reales de tu Perfil de Empresa en Google. Conecta Google Business Profile en Fuentes y aparecerán aquí."
           onShowExample={openDemo}
         />
-        <ManualCompletionHint onComplete={handleComplete} label="Ya he respondido mis reseñas" />
+        {handleComplete && <ManualCompletionHint onComplete={handleComplete} label="Ya he respondido mis reseñas" />}
       </WorkspaceLayout>
     );
   }
@@ -183,7 +184,7 @@ export function PostWorkspace(props: WorkspaceProps) {
   if (isDone(executionState)) {
     return (
       <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={sidebar} onBack={onBack}>
-        <CompletionCard title="Publicacion lista" message="Has marcado la publicacion como hecha. Mantener tu perfil activo ayuda a que Google lo muestre a mas clientes." onBack={onBack} />
+        <CompletionCard title="Marcada como hecha" message="Has indicado que publicaste. Lo registramos como acción realizada por ti; todavía no medimos su efecto en visitas o clientes." onBack={onBack} />
       </WorkspaceLayout>
     );
   }
@@ -201,7 +202,7 @@ export function PostWorkspace(props: WorkspaceProps) {
           onShowExample={openDemo}
           exampleLabel="Ver publicación de ejemplo"
         />
-        <ManualCompletionHint onComplete={handleComplete} label="Ya he publicado por mi cuenta" />
+        {handleComplete && <ManualCompletionHint onComplete={handleComplete} label="Ya he publicado por mi cuenta" />}
       </WorkspaceLayout>
     );
   }
@@ -234,7 +235,7 @@ export function ProfileWorkspace(props: WorkspaceProps) {
   if (isDone(executionState)) {
     return (
       <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={sidebar} onBack={onBack}>
-        <CompletionCard title="Perfil revisado" message="Has marcado la revision de tu perfil como hecha. Un perfil completo ayuda a que Google entienda mejor tu negocio." onBack={onBack} />
+        <CompletionCard title="Marcada como hecha" message="Has indicado que revisaste tu perfil. Lo registramos como acción realizada por ti; no verificamos los cambios en Google." onBack={onBack} />
       </WorkspaceLayout>
     );
   }
@@ -249,7 +250,7 @@ export function ProfileWorkspace(props: WorkspaceProps) {
           description="Sin conectar tu Perfil de Empresa de Google no podemos saber qué tienes ahora en descripción, categorías o atributos, así que no te mostraremos problemas que no hemos comprobado."
           onShowExample={openDemo}
         />
-        <ManualCompletionHint onComplete={handleComplete} label="Ya he revisado mi perfil" />
+        {handleComplete && <ManualCompletionHint onComplete={handleComplete} label="Ya he revisado mi perfil" />}
       </WorkspaceLayout>
     );
   }
@@ -283,7 +284,7 @@ export function ContentWorkspace(props: WorkspaceProps) {
   if (isDone(executionState)) {
     return (
       <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={sidebar} onBack={onBack}>
-        <CompletionCard title="Contenido preparado" message="Has marcado el contenido como hecho. Publicar con regularidad ayuda a mantener tu visibilidad online." onBack={onBack} />
+        <CompletionCard title="Marcada como hecha" message="Has indicado que preparaste el contenido. Lo registramos como acción realizada por ti; todavía no medimos su efecto." onBack={onBack} />
       </WorkspaceLayout>
     );
   }
@@ -301,7 +302,7 @@ export function ContentWorkspace(props: WorkspaceProps) {
           onShowExample={openDemo}
           exampleLabel="Ver ideas de ejemplo"
         />
-        <ManualCompletionHint onComplete={handleComplete} label="Ya he preparado mi contenido" />
+        {handleComplete && <ManualCompletionHint onComplete={handleComplete} label="Ya he preparado mi contenido" />}
       </WorkspaceLayout>
     );
   }
