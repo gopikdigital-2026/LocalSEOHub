@@ -15,6 +15,7 @@ function sub(over: Partial<StripeSubscriptionLike> = {}): StripeSubscriptionLike
 function deps(over: Partial<BillingDeps> = {}) {
   return {
     siteUrl: 'https://app.localseohub.com',
+    planPriceIds: new Set(['price_ok']) as ReadonlySet<string>,
     getUser: vi.fn(async () => ({ id: 'user-1', email: 'a@b.c' })),
     findCustomer: vi.fn(async () => 'cus_1' as string | null),
     createCustomer: vi.fn(async () => 'cus_new'),
@@ -117,6 +118,27 @@ describe('stripe billing function', () => {
     const res = await createBillingHandler(boom)(call({ action: 'payment_method' }));
     expect(res.status).toBe(500);
     expect(await res.text()).not.toMatch(/configuration|sk_live/);
+  });
+
+  it('B10. subscriptions to other products in the shared Stripe account are invisible to LocalSEOHub', async () => {
+    const foreign = sub({ id: 'sub_autohook', items: { data: [{ price: { id: 'price_autohook' } }] } });
+    const d = deps({ listSubscriptions: vi.fn(async () => [foreign]) });
+    expect((await createBillingHandler(d)(call({ action: 'cancel' }))).status).toBe(404);
+    expect(d.setCancelAtPeriodEnd).not.toHaveBeenCalled();
+
+    const s = deps({ listSubscriptions: vi.fn(async () => [foreign]) });
+    await createBillingHandler(s)(call({ action: 'sync' }));
+    expect(s.applySnapshot).toHaveBeenCalledWith(expect.objectContaining({ p_status: 'not_started', p_subscription_id: null }));
+
+    const c = deps({ listSubscriptions: vi.fn(async () => [foreign]) });
+    expect((await createBillingHandler(c)(call({ action: 'checkout' }))).status).toBe(200);
+    expect(c.createCheckout).toHaveBeenCalled();
+  });
+
+  it('B11. with no plan price configured nothing counts as a LocalSEOHub subscription', async () => {
+    const d = deps({ planPriceIds: new Set<string>(), listSubscriptions: vi.fn(async () => [sub()]) });
+    expect((await createBillingHandler(d)(call({ action: 'cancel' }))).status).toBe(404);
+    expect(d.setCancelAtPeriodEnd).not.toHaveBeenCalled();
   });
 });
 

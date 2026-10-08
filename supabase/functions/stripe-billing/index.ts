@@ -2,7 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import Stripe from 'npm:stripe@17.7.0';
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 import { createBillingHandler } from './handler.ts';
-import { type StripePriceLike, type StripeSubscriptionLike, validatePrice } from './logic.ts';
+import { type StripePriceLike, type StripeSubscriptionLike, planPriceIdsFromEnv, validatePrice } from './logic.ts';
 
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripe = new Stripe(stripeSecret, { appInfo: { name: 'Bolt Integration', version: '1.0.0' } });
@@ -21,6 +21,7 @@ async function retrievePrice(id: string): Promise<StripePriceLike | null> {
 
 const handle = createBillingHandler({
   siteUrl: Deno.env.get('SITE_URL'),
+  planPriceIds: planPriceIdsFromEnv(Deno.env.get('STRIPE_PRICE_ID')),
 
   async getUser(authorization) {
     const token = authorization.replace(/^Bearer\s+/i, '');

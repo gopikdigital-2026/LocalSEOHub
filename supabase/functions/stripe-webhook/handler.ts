@@ -1,5 +1,6 @@
 import {
   HANDLED_EVENTS,
+  onlyPlanSubscriptions,
   type StripeSubscriptionLike,
   type SubscriptionSnapshot,
   pickSubscription,
@@ -25,6 +26,7 @@ export interface WebhookDeps {
   applySnapshot(snapshot: SubscriptionSnapshot): Promise<{ applied: boolean; previous_status: string | null; previous_cancel_at_period_end: boolean | null }>;
   resolveUserId(customerId: string): Promise<string | null>;
   track(userId: string | null, name: string, properties: Record<string, unknown>): Promise<void>;
+  planPriceIds: ReadonlySet<string>;
   now?: () => Date;
   log?: (message: string) => void;
 }
@@ -84,9 +86,13 @@ export function createWebhookHandler(deps: WebhookDeps) {
       }
 
       const userId = await deps.resolveUserId(customerId);
+      if (!userId) {
+        await deps.finishEvent(event.id, "ignored");
+        return reply({ received: true, ignored: true });
+      }
 
       const fetchedAt = now();
-      const subs = await deps.listSubscriptions(customerId);
+      const subs = onlyPlanSubscriptions(await deps.listSubscriptions(customerId), deps.planPriceIds);
       const chosen = pickSubscription(subs);
       const snapshot = toSnapshot(customerId, chosen, fetchedAt);
       const result = await deps.applySnapshot(snapshot);

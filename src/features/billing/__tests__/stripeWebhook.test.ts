@@ -26,6 +26,7 @@ function deps(over: Partial<WebhookDeps> = {}) {
     applySnapshot: vi.fn(async () => ({ applied: true, previous_status: 'not_started', previous_cancel_at_period_end: false })),
     resolveUserId: vi.fn(async () => 'user-1'),
     track: vi.fn(async () => {}),
+    planPriceIds: new Set(['price_x']) as ReadonlySet<string>,
     now: () => new Date('2024-01-01T00:00:00Z'),
     log: () => {},
     ...over,
@@ -112,6 +113,36 @@ describe('stripe webhook', () => {
     await createWebhookHandler(payment)(post());
     expect(payment.finishEvent).toHaveBeenCalledWith('evt_1', 'ignored');
     expect(payment.applySnapshot).not.toHaveBeenCalled();
+  });
+
+  it('W10. each of the six configured events reconciles a known customer from Stripe', async () => {
+    for (const type of ['checkout.session.completed', 'customer.subscription.created', 'customer.subscription.updated',
+      'customer.subscription.deleted', 'invoice.paid', 'invoice.payment_failed']) {
+      const d = deps({ verify: vi.fn(async () => event(type, { customer: 'cus_1', mode: 'subscription' })) });
+      expect((await createWebhookHandler(d)(post())).status).toBe(200);
+      expect(d.applySnapshot).toHaveBeenCalledWith(expect.objectContaining({ p_status: 'active', p_price_id: 'price_x' }));
+      expect(d.finishEvent).toHaveBeenCalledWith('evt_1', 'processed');
+    }
+  });
+
+  it('W11. customers that do not belong to LocalSEOHub are ignored without writing a subscription', async () => {
+    const d = deps({ resolveUserId: vi.fn(async () => null) });
+    expect((await createWebhookHandler(d)(post())).status).toBe(200);
+    expect(d.listSubscriptions).not.toHaveBeenCalled();
+    expect(d.applySnapshot).not.toHaveBeenCalled();
+    expect(d.finishEvent).toHaveBeenCalledWith('evt_1', 'ignored');
+  });
+
+  it('W12. an active subscription to another product never grants Premium', async () => {
+    const foreign = sub({ id: 'sub_autohook', items: { data: [{ price: { id: 'price_autohook' } }] } });
+    const d = deps({ listSubscriptions: vi.fn(async () => [foreign]) });
+    await createWebhookHandler(d)(post());
+    expect(d.applySnapshot).toHaveBeenCalledWith(expect.objectContaining({ p_status: 'not_started', p_subscription_id: null, p_price_id: null }));
+    expect(d.track).not.toHaveBeenCalledWith('user-1', 'subscription_activated', expect.anything());
+
+    const mixed = deps({ listSubscriptions: vi.fn(async () => [foreign, sub({ id: 'sub_local', status: 'canceled' })]) });
+    await createWebhookHandler(mixed)(post());
+    expect(mixed.applySnapshot).toHaveBeenCalledWith(expect.objectContaining({ p_subscription_id: 'sub_local', p_status: 'canceled' }));
   });
 });
 

@@ -29,6 +29,16 @@ export interface SubscriptionSnapshot {
   p_synced_at: string;
 }
 
+// The Stripe account is shared with other products; only subscriptions to this app's plan may count.
+export function onlyPlanSubscriptions<T extends StripeSubscriptionLike>(subs: T[], planPriceIds: ReadonlySet<string>): T[] {
+  return subs.filter((s) => s.items.data.some((item) => planPriceIds.has(item.price.id)));
+}
+
+export function planPriceIdsFromEnv(raw: string | undefined): ReadonlySet<string> {
+  const id = raw?.trim().replace(/^["']|["']$/g, "");
+  return new Set(id ? [id] : []);
+}
+
 export function pickSubscription<T extends StripeSubscriptionLike>(subs: T[]): T | null {
   if (subs.length === 0) return null;
   const rank = (s: T) => {

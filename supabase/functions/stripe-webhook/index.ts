@@ -2,7 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import Stripe from 'npm:stripe@17.7.0';
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 import { createWebhookHandler, type WebhookEvent } from './handler.ts';
-import type { StripeSubscriptionLike } from './logic.ts';
+import { type StripeSubscriptionLike, planPriceIdsFromEnv } from './logic.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   appInfo: { name: 'Bolt Integration', version: '1.0.0' },
@@ -13,6 +13,8 @@ const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPAB
 const STALE_PROCESSING_MS = 2 * 60 * 1000;
 
 const handle = createWebhookHandler({
+  planPriceIds: planPriceIdsFromEnv(Deno.env.get('STRIPE_PRICE_ID')),
+
   async verify(body, signature) {
     const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     return event as unknown as WebhookEvent;

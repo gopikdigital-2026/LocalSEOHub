@@ -4,6 +4,7 @@ import {
   type StripeSubscriptionLike,
   type SubscriptionSnapshot,
   billingReturnUrl,
+  onlyPlanSubscriptions,
   pickSubscription,
   safeErrorMessage,
   toSnapshot,
@@ -39,6 +40,7 @@ export interface BillingDeps {
   applySnapshot(snapshot: SubscriptionSnapshot): Promise<{ applied: boolean; previous_status: string | null; previous_cancel_at_period_end: boolean | null }>;
   track(userId: string, name: string, properties: Record<string, unknown>): Promise<void>;
   siteUrl: string | undefined;
+  planPriceIds: ReadonlySet<string>;
   now?: () => Date;
   log?: (message: string) => void;
 }
@@ -51,9 +53,12 @@ export function createBillingHandler(deps: BillingDeps) {
   const now = deps.now ?? (() => new Date());
   const log = deps.log ?? ((m: string) => console.error(m));
 
+  const planSubscriptions = async (customerId: string) =>
+    onlyPlanSubscriptions(await deps.listSubscriptions(customerId), deps.planPriceIds);
+
   async function reconcile(userId: string, customerId: string): Promise<StripeSubscriptionLike | null> {
     const fetchedAt = now();
-    const subs = await deps.listSubscriptions(customerId);
+    const subs = await planSubscriptions(customerId);
     const chosen = pickSubscription(subs);
     const snapshot = toSnapshot(customerId, chosen, fetchedAt);
     const result = await deps.applySnapshot(snapshot);
@@ -95,7 +100,7 @@ export function createBillingHandler(deps: BillingDeps) {
         if (!successUrl || !cancelUrl) return reply({ error: "billing_unavailable" }, 503);
 
         if (existingCustomer) {
-          const subs = await deps.listSubscriptions(existingCustomer);
+          const subs = await planSubscriptions(existingCustomer);
           if (subs.some((s) => BLOCKING_STATUSES.has(s.status))) {
             await reconcile(user.id, existingCustomer);
             return reply({ error: "already_subscribed" }, 409);
@@ -137,7 +142,7 @@ export function createBillingHandler(deps: BillingDeps) {
         return reply({ ok: true, synced: true });
       }
 
-      const current = pickSubscription(await deps.listSubscriptions(existingCustomer));
+      const current = pickSubscription(await planSubscriptions(existingCustomer));
       if (!current || !ENTITLED_STATUSES.has(current.status)) return reply({ error: "no_subscription" }, 404);
 
       const wantCancel = action === "cancel";
