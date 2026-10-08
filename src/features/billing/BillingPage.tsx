@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Check, CreditCard, Info, Loader2, RefreshCw, ShieldCheck, X } from 'lucide-react';
 import { useBilling } from './BillingContext';
 import { billingCopy, type BillingCopy } from './billingCopy';
-import { formatBillingDate, serverNow, trialCountdown, PRICE_LABEL, type BillingStatus } from './model';
+import { canSubscribe as canSubscribeIn, formatBillingDate, serverNow, trialCountdown, PRICE_LABEL, type BillingStatus } from './model';
 import { useBillingAction } from './useBillingAction';
 import { trackPaywallViewed } from './analytics';
 import { runBillingAction } from './repository';
@@ -105,7 +105,7 @@ export default function BillingPage() {
   if (!status) return <LoadingState />;
 
   const s = status.state;
-  const canSubscribe = s === 'TRIAL_NOT_STARTED' || s === 'TRIAL_ACTIVE' || s === 'TRIAL_EXPIRED' || s === 'SUBSCRIPTION_CANCELED';
+  const canSubscribe = canSubscribeIn(s);
   const hasSubscription = s === 'SUBSCRIPTION_ACTIVE' || s === 'SUBSCRIPTION_CANCELING' || s === 'SUBSCRIPTION_PAST_DUE' || s === 'PAYMENT_PENDING';
   const periodEnd = status.currentPeriodEnd ? formatBillingDate(status.currentPeriodEnd, lang) : '';
   const busy = pending !== null;
@@ -167,7 +167,7 @@ export default function BillingPage() {
         <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-3">
           {canSubscribe && (
             <button onClick={() => run('checkout')} disabled={busy} className="inline-flex items-center justify-center gap-2 v2-btn-primary text-v2-sm px-5 py-2.5 disabled:opacity-60">
-              {pending === 'checkout' ? <Loader2 size={14} className="animate-spin" /> : <CreditCard size={14} />} {c.subscribe}
+              {pending === 'checkout' ? <Loader2 size={14} className="animate-spin" /> : <CreditCard size={14} />} {pending === 'checkout' ? c.openingCheckout : c.subscribe}
             </button>
           )}
           {s === 'SUBSCRIPTION_PAST_DUE' && (

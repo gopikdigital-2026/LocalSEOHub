@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Clock, Gift, Lock, ShieldCheck, Sparkles } from 'lucide-react';
+import { AlertTriangle, Clock, CreditCard, Gift, Loader2, Lock, ShieldCheck, Sparkles } from 'lucide-react';
 import { useBilling } from './BillingContext';
 import { billingCopy } from './billingCopy';
-import { formatBillingDate, needsUpgrade, serverNow, trialCountdown, PRICE_LABEL } from './model';
+import { canSubscribe, formatBillingDate, needsUpgrade, serverNow, trialCountdown, PRICE_LABEL } from './model';
 import { trackPaywallViewed } from './analytics';
+import { useBillingAction } from './useBillingAction';
 import { useI18n } from '../../lib/i18n';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -16,6 +17,36 @@ function useMinuteClock() {
     const id = window.setInterval(() => setTick((t) => t + 1), MINUTE);
     return () => window.clearInterval(id);
   }, []);
+}
+
+/** The single entry point to Stripe Checkout for every in-app upgrade CTA. */
+export function SubscribeButton({ className, variant = 'primary' }: { className?: string; variant?: 'primary' | 'link' }) {
+  const { refresh } = useBilling();
+  const { lang } = useI18n();
+  const c = billingCopy(lang);
+  const onDone = useCallback(() => { void refresh(); }, [refresh]);
+  const { run, pending, errorCode } = useBillingAction(onDone);
+  const busy = pending === 'checkout';
+  const look = variant === 'link'
+    ? 'inline-flex items-center gap-1.5 text-v2-xs font-semibold text-v2-primary-700 hover:text-v2-primary-800 transition-colors whitespace-nowrap disabled:opacity-60'
+    : 'inline-flex items-center justify-center gap-2 v2-btn-primary disabled:opacity-60';
+
+  return (
+    <div className={variant === 'link' ? 'flex flex-col items-start sm:items-end' : 'w-full'}>
+      <button type="button" onClick={() => { void run('checkout'); }} disabled={busy} aria-busy={busy} className={`${look} ${className ?? ''}`}>
+        {busy ? <Loader2 size={14} className="animate-spin" /> : variant === 'primary' && <CreditCard size={14} />}
+        {busy ? c.openingCheckout : c.subscribe}
+      </button>
+      {errorCode && (
+        <p role="alert" className="mt-2 text-v2-xs text-v2-error-600">
+          {c.errors[errorCode]}{' '}
+          {(errorCode === 'already_subscribed' || errorCode === 'billing_unavailable') && (
+            <Link to="/facturacion" className="font-semibold underline underline-offset-2">{c.viewBilling}</Link>
+          )}
+        </p>
+      )}
+    </div>
+  );
 }
 
 /** Thin status line above every app page; hidden when there is nothing worth saying. */
@@ -59,9 +90,13 @@ export function TrialBanner() {
           <AlertTriangle size={15} className="text-v2-warning-600 shrink-0" />
           <p className="text-v2-sm font-semibold text-v2-text-primary">{title}</p>
         </div>
-        <Link to="/facturacion" className="text-v2-xs font-semibold text-v2-primary-700 hover:text-v2-primary-800 transition-colors whitespace-nowrap">
-          {pending ? c.viewBilling : pastDue ? c.updatePayment : c.subscribe}
-        </Link>
+        {pending || pastDue ? (
+          <Link to="/facturacion" className="text-v2-xs font-semibold text-v2-primary-700 hover:text-v2-primary-800 transition-colors whitespace-nowrap">
+            {pending ? c.viewBilling : c.updatePayment}
+          </Link>
+        ) : (
+          <SubscribeButton variant="link" />
+        )}
       </div>
     );
   }
@@ -100,9 +135,13 @@ export function PaywallNotice({ surface }: { surface: string }) {
             {expired ? c.upgradeBody : canceled ? c.canceledBody : status.state === 'SUBSCRIPTION_PAST_DUE' ? c.pastDueBody : c.pendingBody}
           </p>
           <p className="mt-2 text-v2-xs text-v2-text-tertiary">{c.paywallAction}</p>
-          <Link to="/facturacion" className="mt-4 inline-flex v2-btn-primary text-v2-sm px-4 py-2">
-            {status.state === 'SUBSCRIPTION_PAST_DUE' ? c.updatePayment : status.state === 'PAYMENT_PENDING' ? c.viewBilling : c.subscribe}
-          </Link>
+          {canSubscribe(status.state) ? (
+            <div className="mt-4 max-w-xs"><SubscribeButton className="text-v2-sm px-4 py-2" /></div>
+          ) : (
+            <Link to="/facturacion" className="mt-4 inline-flex v2-btn-primary text-v2-sm px-4 py-2">
+              {status.state === 'SUBSCRIPTION_PAST_DUE' ? c.updatePayment : c.viewBilling}
+            </Link>
+          )}
         </div>
       </div>
     </section>
@@ -169,9 +208,18 @@ export function PlanCard() {
         <p className="mt-1 mb-4 text-v2-xs text-v2-text-secondary">
           {canceling && status.currentPeriodEnd ? c.cancelingBody(formatBillingDate(status.currentPeriodEnd, lang)) : c.planDesc}
         </p>
-        <Link to="/facturacion" className="w-full inline-flex justify-center v2-btn-primary text-v2-xs py-2.5">
-          {status.state === 'TRIAL_ACTIVE' || canceling ? c.viewBilling : status.state === 'SUBSCRIPTION_PAST_DUE' ? c.updatePayment : c.subscribe}
-        </Link>
+        {canSubscribe(status.state) ? (
+          <SubscribeButton className="w-full text-v2-xs py-2.5" />
+        ) : (
+          <Link to="/facturacion" className="w-full inline-flex justify-center v2-btn-primary text-v2-xs py-2.5">
+            {status.state === 'SUBSCRIPTION_PAST_DUE' ? c.updatePayment : c.viewBilling}
+          </Link>
+        )}
+        {status.state === 'TRIAL_ACTIVE' && status.trialEndsAt && (
+          <p className="mt-2 text-[11px] text-v2-text-tertiary leading-relaxed">
+            {c.subscribeDuringTrial(formatBillingDate(status.trialEndsAt, lang))}
+          </p>
+        )}
         <p className="mt-3 flex items-center gap-1.5 text-[11px] text-v2-text-tertiary">
           <ShieldCheck size={12} /> {c.secure}
         </p>

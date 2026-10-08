@@ -75,6 +75,10 @@ export function needsUpgrade(state: BillingState): boolean {
   return state === 'TRIAL_EXPIRED' || state === 'SUBSCRIPTION_CANCELED';
 }
 
+export function canSubscribe(state: BillingState): boolean {
+  return state === 'TRIAL_NOT_STARTED' || state === 'TRIAL_ACTIVE' || needsUpgrade(state);
+}
+
 export function formatBillingDate(iso: string, lang: 'es' | 'en', withTime = false): string {
   return new Intl.DateTimeFormat(lang === 'es' ? 'es-ES' : 'en-GB', {
     day: 'numeric',
