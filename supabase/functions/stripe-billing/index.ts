@@ -9,7 +9,6 @@ const stripe = new Stripe(stripeSecret, { appInfo: { name: 'Bolt Integration', v
 const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
 const PRICE_LOOKUP_KEY = 'localseohub_monthly_eur_999';
-const LEGACY_PRICE_ID = 'price_1TcAMBFpzfBj0eGcInDw7XWy';
 const expectLive = /^(sk|rk)_live_/.test(stripeSecret);
 
 async function retrievePrice(id: string): Promise<StripePriceLike | null> {
@@ -71,20 +70,19 @@ const handle = createBillingHandler({
   },
 
   async resolvePrice() {
-    const configured = Deno.env.get('STRIPE_PRICE_ID');
-    const candidates: Array<StripePriceLike | null> = [];
-    if (configured) candidates.push(await retrievePrice(configured));
-    const byLookup = await stripe.prices.list({ lookup_keys: [PRICE_LOOKUP_KEY], active: true, limit: 1 });
-    if (byLookup.data[0]) candidates.push(byLookup.data[0] as unknown as StripePriceLike);
-    candidates.push(await retrievePrice(LEGACY_PRICE_ID));
-
-    let lastReason = 'price_not_found';
-    for (const price of candidates) {
-      const check = validatePrice(price, expectLive);
-      if (check.ok && price) return { ok: true as const, priceId: price.id };
-      if (!check.ok) lastReason = check.reason;
+    // Never fall back to another price when one is configured: a wrong fallback would charge for a different product.
+    const configured = Deno.env.get('STRIPE_PRICE_ID')?.trim().replace(/^["']|["']$/g, '');
+    let price: StripePriceLike | null;
+    if (configured) {
+      price = await retrievePrice(configured);
+      if (!price) return { ok: false as const, reason: 'configured_price_not_found_for_this_stripe_key' };
+    } else {
+      const byLookup = await stripe.prices.list({ lookup_keys: [PRICE_LOOKUP_KEY], active: true, limit: 1 });
+      price = (byLookup.data[0] as unknown as StripePriceLike) ?? null;
+      if (!price) return { ok: false as const, reason: 'price_not_configured' };
     }
-    return { ok: false as const, reason: lastReason };
+    const check = validatePrice(price, expectLive);
+    return check.ok ? { ok: true as const, priceId: price.id } : { ok: false as const, reason: check.reason };
   },
 
   async findOpenCheckout(customerId, priceId) {

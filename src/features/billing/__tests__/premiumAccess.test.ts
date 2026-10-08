@@ -225,6 +225,13 @@ describe('every premium function enforces entitlement first (source)', () => {
     for (const d of dirs) expect(config, d).toContain(`[functions.${d}]`);
   });
 
+  it('G6 billing never falls back to a different product price when one is configured', () => {
+    const src = read('stripe-billing');
+    expect(src).not.toMatch(/LEGACY_PRICE_ID|price_1TcAMB/);
+    expect(src).toContain("Deno.env.get('STRIPE_PRICE_ID')?.trim()");
+    expect(src).toContain('configured_price_not_found_for_this_stripe_key');
+  });
+
   it('G5 public signup is rate limited and never rewrites an existing account', () => {
     const src = read('signup-instant');
     expect(src).toContain('consume_rate_limit');
