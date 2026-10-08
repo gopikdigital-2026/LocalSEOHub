@@ -53,6 +53,7 @@ const handle = createBillingHandler({
         .from('stripe_customers')
         .select('customer_id')
         .eq('user_id', user.id)
+        .is('deleted_at', null)
         .maybeSingle();
       if (readError || !data?.customer_id) throw readError ?? new Error('customer mapping conflict');
       return data.customer_id;

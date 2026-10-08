@@ -232,6 +232,16 @@ describe('every premium function enforces entitlement first (source)', () => {
     expect(src).toContain('configured_price_not_found_for_this_stripe_key');
   });
 
+  it('G7 customer lookups only ever use the active (non-archived) customer link', () => {
+    for (const fn of ['stripe-billing', 'stripe-webhook']) {
+      const src = read(fn);
+      const lookups = src.split(".from('stripe_customers')").slice(1).map((s) => s.slice(0, 300));
+      const reads = lookups.filter((s) => s.trimStart().startsWith('.select'));
+      expect(reads.length).toBeGreaterThan(0);
+      for (const r of reads) expect(r).toContain(".is('deleted_at', null)");
+    }
+  });
+
   it('G5 public signup is rate limited and never rewrites an existing account', () => {
     const src = read('signup-instant');
     expect(src).toContain('consume_rate_limit');
