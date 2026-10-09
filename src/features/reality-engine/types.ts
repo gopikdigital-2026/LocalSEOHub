@@ -64,7 +64,9 @@ export interface SyncEvent {
 export interface SourceRegistryEntry {
   id: SourceType;
   name: string;
+  nameEn: string;
   description: string;
+  descriptionEn: string;
   icon: string;
   comingSoon: boolean;
   requiresOAuth: boolean;

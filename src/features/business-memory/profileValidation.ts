@@ -30,7 +30,7 @@ export function normalizeWebsite(raw: string): string {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
 
-function isValidWebsite(value: string): boolean {
+export function isValidWebsite(value: string): boolean {
   try {
     const url = new URL(value);
     return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname.includes('.') && !url.username && !url.password;

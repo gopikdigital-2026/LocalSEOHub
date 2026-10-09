@@ -91,25 +91,33 @@ const fixSourceConnection: ActionRule = {
   cooldownDays: 3,
   evaluate(ctx) {
     return ctx.sources
-      .filter((s) => s.status === 'error' && s.sourceType !== 'google_business')
-      .map((s) => ({
-        ruleId: `${this.id}:${s.sourceType}`, actionType: 'other', category: 'data', sourceType: 'SOURCE_REQUIRED',
-        sourceReference: `connected_sources.${s.sourceType}.status`, impact: 'medium', effortMinutes: 5, cta: 'review', ctaTo: '/fuentes',
-        copy: {
-          es: {
-            title: 'Revisa la conexión de una fuente de datos',
-            description: 'Una de tus fuentes conectadas dio un error en la última sincronización.',
-            reason: 'La conexión está en estado de error, así que sus datos pueden no estar actualizados.',
-            value: 'Recuperar la conexión mantiene tus recomendaciones basadas en datos reales.',
+      // Google errors are covered by connect_google_business_profile; reviews only mirror that connection.
+      .filter((s) => s.status === 'error' && s.sourceType !== 'google_business' && s.sourceType !== 'reviews')
+      .map((s) => {
+        const website = s.sourceType === 'website';
+        return {
+          ruleId: `${this.id}:${s.sourceType}`, actionType: 'other', category: 'data', sourceType: 'SOURCE_REQUIRED',
+          sourceReference: `connected_sources.${s.sourceType}.status`, impact: 'medium', effortMinutes: 5, cta: 'review', ctaTo: '/fuentes',
+          copy: {
+            es: {
+              title: website ? 'Vuelve a analizar tu web' : 'Revisa la conexión de una fuente de datos',
+              description: website
+                ? 'El último análisis de tu web no se pudo completar. Comprueba que la dirección abre en el navegador y vuelve a analizarla en Fuentes.'
+                : 'Una de tus fuentes dio un error en la última sincronización. Revísala en Fuentes.',
+              reason: 'La fuente está en estado de error, así que no usamos sus datos hasta que funcione.',
+              value: 'Recuperarla permite basar las recomendaciones en datos comprobados.',
+            },
+            en: {
+              title: website ? 'Analyse your website again' : 'Check a data source connection',
+              description: website
+                ? 'The last analysis of your website could not finish. Check the address opens in a browser and analyse it again in Sources.'
+                : 'One of your sources failed on its last sync. Check it in Sources.',
+              reason: 'The source is in an error state, so we do not use its data until it works.',
+              value: 'Restoring it lets recommendations rely on checked data.',
+            },
           },
-          en: {
-            title: 'Check a data source connection',
-            description: 'One of your connected sources failed on its last sync.',
-            reason: 'The connection is in an error state, so its data may be out of date.',
-            value: 'Restoring it keeps your recommendations based on real data.',
-          },
-        },
-      }));
+        };
+      });
   },
 };
 

@@ -1,27 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MapPin, Globe, Star, Search, BarChart2, PenLine, RefreshCw, Unlink, AlertCircle, CheckCircle2, Loader2, Clock, ExternalLink, ChevronDown, ChevronUp, Wifi, WifiOff, X } from 'lucide-react';
+import { MapPin, Globe, Unlink, AlertCircle, CheckCircle2, Loader2, Clock, ChevronDown, ChevronUp, X } from 'lucide-react';
 import type { ConnectedSource, SyncEvent, SourceType, ManualEntryData } from './types';
 import { SOURCE_REGISTRY, getSourceEntry } from './registry';
 import { loadSources, loadSyncEvents } from './repositories';
 import { connectWebsite, saveManualEntry, disconnectSource, startGBPConnection, formatRelativeTime } from './engine';
+import { DataStatusBanner, SourceCard } from './SourceCard';
+import { isActive, sourceDisplayStatus } from './sourceStatus';
 import type { GBPStartResult } from './engine';
 import { useBusiness } from '../business-memory/BusinessContext';
 import { useI18n } from '../../lib/i18n';
 import { useActions } from '../actions/ActionsContext';
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  'map-pin': MapPin,
-  'globe': Globe,
-  'star': Star,
-  'search': Search,
-  'bar-chart-2': BarChart2,
-  'pen-line': PenLine,
-};
+import { PROFILE_LIMITS, isValidWebsite, normalizeWebsite } from '../business-memory/profileValidation';
 
 // ─── Main SourceManager page ────────────────────────────────────────────────
 
 export default function SourceManager() {
-  const { businessId, loading: businessLoading, error: businessError } = useBusiness();
+  const { businessId, currentBusiness, updateBusiness, loading: businessLoading, error: businessError } = useBusiness();
   const { lang } = useI18n();
   const { ensureFresh } = useActions();
   const [sources, setSources] = useState<ConnectedSource[]>([]);
@@ -66,12 +60,36 @@ export default function SourceManager() {
 
   const getSource = (type: SourceType) => sources.find(s => s.source_type === type);
 
-  const connectedCount = sources.filter(s => s.status === 'connected').length;
-  const hasVerified = sources.some(s => s.status === 'connected' && s.source_type !== 'manual');
-  const hasManual = sources.some(s => s.status === 'connected' && s.source_type === 'manual');
+  const cards = SOURCE_REGISTRY.map(entry => ({
+    entry,
+    source: getSource(entry.id),
+    status: sourceDisplayStatus(entry, getSource(entry.id), entry.dependsOn ? getSource(entry.dependsOn) : undefined),
+  }));
+  const activeCount = cards.filter(c => isActive(c.status)).length;
+  const hasChecked = cards.some(c => !c.entry.dependsOn && (c.status === 'verified' || c.status === 'analyzed'));
+  const hasDeclared = cards.some(c => c.status === 'declared');
+
+  // The URL the owner analysed is their website; record it in the profile when none was declared yet.
+  const handleWebsiteAnalyzed = async (url: string) => {
+    setWebsiteModal(false);
+    if (currentBusiness && !currentBusiness.website?.trim()) {
+      try {
+        // Saving the profile already triggers a recommendation sync with the new record.
+        await updateBusiness({ website: url });
+        await refresh();
+        return;
+      } catch (err) {
+        console.error('website save to profile failed', err);
+      }
+    }
+    await refreshAll();
+  };
 
   const handleDisconnect = async (source: ConnectedSource) => {
-    if (!confirm('Desconectar esta fuente eliminara los datos asociados. Continuar?')) return;
+    const question = lang === 'en'
+      ? 'Disconnecting this source removes its stored data. Continue?'
+      : 'Desconectar esta fuente eliminará los datos guardados de ella. ¿Continuar?';
+    if (!confirm(question)) return;
     setBusySource(source.source_type as SourceType);
     try {
       await disconnectSource(source.id, source.source_type as SourceType);
@@ -112,7 +130,7 @@ export default function SourceManager() {
       {/* Header */}
       <div>
         <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">
-          Fuentes de datos
+          {lang === 'en' ? 'Data sources' : 'Fuentes de datos'}
         </h1>
         <p className="text-v2-sm text-v2-text-secondary mt-1">
           {lang === 'en'
@@ -128,9 +146,10 @@ export default function SourceManager() {
 
       {/* Data status indicator */}
       <DataStatusBanner
-        connectedCount={connectedCount}
-        hasVerified={hasVerified}
-        hasManual={hasManual}
+        activeCount={activeCount}
+        hasChecked={hasChecked}
+        hasDeclared={hasDeclared}
+        lang={lang}
       />
 
       {/* GBP not configured notice */}
@@ -139,13 +158,15 @@ export default function SourceManager() {
           <MapPin size={16} className="text-v2-warning-600 mt-0.5 shrink-0" />
           <div>
             <p className="text-v2-xs font-semibold text-v2-warning-700">
-              La conexion con Google Business esta pendiente de configuracion.
+              {lang === 'en' ? 'The Google Business Profile connection is not available yet.' : 'La conexión con Google Business Profile todavía no está disponible.'}
             </p>
             <p className="text-v2-xs text-v2-warning-600 mt-1">
-              Estamos preparando la integracion. Mientras tanto, puedes conectar tu sitio web o completar la entrada manual.
+              {lang === 'en'
+                ? 'Meanwhile you can analyse your website or fill in the manual entry.'
+                : 'Mientras tanto puedes analizar tu web o completar la entrada manual.'}
             </p>
           </div>
-          <button onClick={() => setGbpNotConfigured(false)} className="ml-auto shrink-0">
+          <button onClick={() => setGbpNotConfigured(false)} className="ml-auto shrink-0" aria-label={lang === 'en' ? 'Close' : 'Cerrar'}>
             <X size={14} className="text-v2-warning-400" />
           </button>
         </div>
@@ -153,10 +174,10 @@ export default function SourceManager() {
 
       {/* Error banner */}
       {error && (
-        <div className="flex items-start gap-3 p-4 rounded-v2-xl bg-v2-error-50 border border-v2-error-200">
+        <div role="alert" className="flex items-start gap-3 p-4 rounded-v2-xl bg-v2-error-50 border border-v2-error-200">
           <AlertCircle size={16} className="text-v2-error-500 mt-0.5 shrink-0" />
           <p className="text-v2-xs text-v2-error-600">{error}</p>
-          <button onClick={() => setError(null)} className="ml-auto shrink-0">
+          <button onClick={() => setError(null)} className="ml-auto shrink-0" aria-label={lang === 'en' ? 'Close' : 'Cerrar'}>
             <X size={14} className="text-v2-error-400" />
           </button>
         </div>
@@ -164,13 +185,14 @@ export default function SourceManager() {
 
       {/* Source cards grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {SOURCE_REGISTRY.map(entry => (
+        {cards.map(({ entry, source, status }) => (
           <SourceCard
             key={entry.id}
             entry={entry}
-            source={getSource(entry.id)}
+            source={source}
+            status={status}
             busy={busySource === entry.id}
-            gbpConnected={!!getSource('google_business')}
+            lang={lang}
             onConnect={() => {
               if (entry.id === 'google_business') handleGBPConnect();
               else if (entry.id === 'website') setWebsiteModal(true);
@@ -189,7 +211,7 @@ export default function SourceManager() {
         >
           <span className="flex items-center gap-2">
             <Clock size={15} className="text-v2-text-tertiary" />
-            Historial de sincronizacion
+            {lang === 'en' ? 'Sync history' : 'Historial de sincronización'}
           </span>
           {historyOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
@@ -197,7 +219,7 @@ export default function SourceManager() {
           <div className="border-t border-v2-border px-4 pb-4">
             {events.length === 0 ? (
               <p className="text-v2-xs text-v2-text-tertiary py-6 text-center">
-                No hay eventos de sincronizacion todavia.
+                {lang === 'en' ? 'No sync events yet.' : 'Todavía no hay eventos de sincronización.'}
               </p>
             ) : (
               <div className="divide-y divide-v2-border">
@@ -214,8 +236,9 @@ export default function SourceManager() {
       {websiteModal && businessId && (
         <WebsiteModal
           businessId={businessId}
+          initialUrl={(getSource('website')?.metadata.analysis as { url?: string } | undefined)?.url ?? currentBusiness?.website ?? ''}
           onClose={() => setWebsiteModal(false)}
-          onSuccess={() => { setWebsiteModal(false); void refreshAll(); }}
+          onSuccess={(url) => { void handleWebsiteAnalyzed(url); }}
         />
       )}
 
@@ -230,188 +253,6 @@ export default function SourceManager() {
       )}
     </div>
   );
-}
-
-// ─── Data status banner ─────────────────────────────────────────────────────
-
-function DataStatusBanner({ connectedCount, hasVerified, hasManual }: {
-  connectedCount: number;
-  hasVerified: boolean;
-  hasManual: boolean;
-}) {
-  let message: string;
-  let variant: 'success' | 'info' | 'warning';
-
-  if (hasVerified) {
-    message = 'Datos suficientes para recomendaciones verificadas.';
-    variant = 'success';
-  } else if (hasManual) {
-    message = 'Datos manuales disponibles. Conecta Google Business Profile para obtener recomendaciones verificadas.';
-    variant = 'info';
-  } else if (connectedCount > 0) {
-    message = 'Datos estimados disponibles. Conecta mas fuentes para mejorar la precision.';
-    variant = 'info';
-  } else {
-    message = 'Conecta Google Business Profile para obtener recomendaciones verificadas.';
-    variant = 'warning';
-  }
-
-  const styles = {
-    success: 'bg-v2-success-50 border-v2-success-200 text-v2-success-700',
-    info: 'bg-blue-50 border-blue-200 text-blue-700',
-    warning: 'bg-v2-warning-50 border-v2-warning-200 text-v2-warning-700',
-  };
-
-  const Icon = variant === 'success' ? Wifi : variant === 'info' ? Wifi : WifiOff;
-
-  return (
-    <div className={`flex items-center gap-3 p-4 rounded-v2-xl border ${styles[variant]}`}>
-      <Icon size={16} className="shrink-0" />
-      <div>
-        <p className="text-v2-xs font-semibold">Estado de los datos</p>
-        <p className="text-v2-xs mt-0.5 opacity-80">{message}</p>
-      </div>
-      <div className="ml-auto text-right shrink-0">
-        <div className="text-v2-xs font-bold">{connectedCount}</div>
-        <div className="text-[10px] opacity-60">conectadas</div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Source card ─────────────────────────────────────────────────────────────
-
-function SourceCard({ entry, source, busy, gbpConnected, onConnect, onDisconnect }: {
-  entry: typeof SOURCE_REGISTRY[number];
-  source: ConnectedSource | undefined;
-  busy: boolean;
-  gbpConnected: boolean;
-  onConnect: () => void;
-  onDisconnect: (s: ConnectedSource) => void;
-}) {
-  const IconComp = ICON_MAP[entry.icon] ?? Globe;
-  const status = source?.status ?? 'disconnected';
-
-  const needsGBP = entry.dependsOn === 'google_business' && !gbpConnected;
-
-  return (
-    <div className={`rounded-v2-xl border bg-white p-4 sm:p-5 transition-shadow hover:shadow-v2-sm ${
-      status === 'connected' ? 'border-v2-success-200' :
-      status === 'error' ? 'border-v2-error-200' :
-      'border-v2-border'
-    }`}>
-      <div className="flex items-start gap-3 mb-3">
-        <div className={`w-9 h-9 rounded-v2-lg flex items-center justify-center shrink-0 ${
-          status === 'connected' ? 'bg-v2-success-50 text-v2-success-600' :
-          status === 'error' ? 'bg-v2-error-50 text-v2-error-500' :
-          'bg-v2-neutral-100 text-v2-text-tertiary'
-        }`}>
-          <IconComp size={18} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-v2-sm font-semibold text-v2-text-primary truncate">{entry.name}</h3>
-          <StatusBadge status={status} comingSoon={entry.comingSoon} />
-        </div>
-      </div>
-
-      <p className="text-v2-xs text-v2-text-tertiary mb-4 leading-relaxed">
-        {entry.description}
-      </p>
-
-      {/* Error message */}
-      {source?.last_error && status === 'error' && (
-        <div className="flex items-start gap-2 mb-3 p-2.5 rounded-v2-lg bg-v2-error-50">
-          <AlertCircle size={13} className="text-v2-error-500 mt-0.5 shrink-0" />
-          <p className="text-[11px] text-v2-error-600 leading-relaxed">{source.last_error}</p>
-        </div>
-      )}
-
-      {/* Last sync */}
-      {source?.last_sync_at && (
-        <p className="text-[11px] text-v2-text-tertiary mb-3 flex items-center gap-1.5">
-          <RefreshCw size={11} />
-          Ultima sync: {formatRelativeTime(source.last_sync_at)}
-        </p>
-      )}
-
-      {/* Dependency notice */}
-      {needsGBP && !entry.comingSoon && (
-        <p className="text-[11px] text-v2-warning-600 bg-v2-warning-50 p-2 rounded-v2-lg mb-3">
-          Conecta Google Business Profile para activar esta fuente.
-        </p>
-      )}
-
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        {entry.comingSoon ? (
-          <span className="text-v2-xs text-v2-text-tertiary italic">
-            Disponible en la siguiente integracion
-          </span>
-        ) : status === 'disconnected' || status === 'permissions_required' ? (
-          <button
-            onClick={onConnect}
-            disabled={busy || needsGBP}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-v2-lg text-v2-xs font-semibold
-              bg-v2-primary-600 text-white hover:bg-v2-primary-700 disabled:opacity-50
-              disabled:cursor-not-allowed transition-colors"
-          >
-            {busy ? <Loader2 size={13} className="animate-spin" /> : <ExternalLink size={13} />}
-            {status === 'permissions_required' ? 'Resolver permisos' : 'Conectar'}
-          </button>
-        ) : status === 'connecting' || status === 'syncing' ? (
-          <span className="flex items-center gap-1.5 text-v2-xs text-v2-text-secondary">
-            <Loader2 size={13} className="animate-spin" />
-            {status === 'connecting' ? 'Conectando...' : 'Sincronizando...'}
-          </span>
-        ) : status === 'error' ? (
-          <button
-            onClick={onConnect}
-            disabled={busy}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-v2-lg text-v2-xs font-semibold
-              bg-v2-error-50 text-v2-error-600 hover:bg-v2-error-100 transition-colors"
-          >
-            {busy ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-            Reconectar
-          </button>
-        ) : (
-          <span className="flex items-center gap-1 text-v2-xs text-v2-success-600 font-medium">
-            <CheckCircle2 size={13} />
-            Conectada
-          </span>
-        )}
-
-        {source && status === 'connected' && (
-          <button
-            onClick={() => onDisconnect(source)}
-            disabled={busy}
-            className="ml-auto p-1.5 rounded-v2-md text-v2-text-tertiary hover:text-v2-error-500
-              hover:bg-v2-error-50 transition-colors"
-            title="Desconectar"
-          >
-            <Unlink size={14} />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Status badge ───────────────────────────────────────────────────────────
-
-function StatusBadge({ status, comingSoon }: { status: string; comingSoon: boolean }) {
-  if (comingSoon) {
-    return <span className="inline-block text-[10px] font-medium text-v2-text-tertiary bg-v2-neutral-100 px-1.5 py-0.5 rounded-v2-md mt-0.5">Proximamente</span>;
-  }
-  const config: Record<string, { label: string; cls: string }> = {
-    connected: { label: 'Conectada', cls: 'bg-v2-success-50 text-v2-success-700' },
-    connecting: { label: 'Conectando', cls: 'bg-blue-50 text-blue-700' },
-    syncing: { label: 'Sincronizando', cls: 'bg-blue-50 text-blue-700' },
-    error: { label: 'Error', cls: 'bg-v2-error-50 text-v2-error-600' },
-    permissions_required: { label: 'Permisos', cls: 'bg-v2-warning-50 text-v2-warning-700' },
-    disconnected: { label: 'Sin conectar', cls: 'bg-v2-neutral-100 text-v2-text-tertiary' },
-  };
-  const c = config[status] ?? config.disconnected;
-  return <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-v2-md mt-0.5 ${c.cls}`}>{c.label}</span>;
 }
 
 // ─── Sync event row ─────────────────────────────────────────────────────────
@@ -447,37 +288,29 @@ function SyncEventRow({ event }: { event: SyncEvent }) {
 
 // ─── Website modal ──────────────────────────────────────────────────────────
 
-function WebsiteModal({ businessId, onClose, onSuccess }: { businessId: string; onClose: () => void; onSuccess: () => void }) {
-  const [url, setUrl] = useState('');
+function WebsiteModal({ businessId, initialUrl, onClose, onSuccess }: { businessId: string; initialUrl: string; onClose: () => void; onSuccess: (url: string) => void }) {
+  const [url, setUrl] = useState(initialUrl);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const validate = (u: string): string | null => {
-    if (!u.trim()) return 'Introduce una URL';
-    try {
-      const parsed = new URL(u.startsWith('http') ? u : `https://${u}`);
-      if (!parsed.hostname.includes('.')) return 'Dominio no valido';
-      return null;
-    } catch {
-      return 'URL no valida';
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validationError = validate(url);
-    if (validationError) { setError(validationError); return; }
+    const normalizedUrl = normalizeWebsite(url);
+    if (!normalizedUrl) { setError('Introduce la dirección de tu web.'); return; }
+    if (normalizedUrl.length > PROFILE_LIMITS.website || !isValidWebsite(normalizedUrl)) {
+      setError('Escribe una dirección web válida, por ejemplo https://tunegocio.es');
+      return;
+    }
 
     setLoading(true);
     setError('');
 
-    const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
     const result = await connectWebsite(normalizedUrl, businessId);
 
     if (result.success) {
-      onSuccess();
+      onSuccess(normalizedUrl);
     } else {
-      setError(result.error ?? 'Error al analizar el sitio');
+      setError(result.error ?? 'No pudimos analizar la web. Comprueba la dirección e inténtalo de nuevo.');
       setLoading(false);
     }
   };
@@ -487,12 +320,12 @@ function WebsiteModal({ businessId, onClose, onSuccess }: { businessId: string; 
       <div className="absolute inset-0 bg-v2-neutral-900/50 backdrop-blur-sm" />
       <div className="relative w-full max-w-md bg-white rounded-v2-2xl shadow-v2-xl border border-v2-border p-6">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-v2-lg font-bold text-v2-text-primary">Conectar sitio web</h2>
-          <button onClick={onClose} className="v2-btn-icon"><X size={18} /></button>
+          <h2 className="text-v2-lg font-bold text-v2-text-primary">Analizar tu web</h2>
+          <button onClick={onClose} className="v2-btn-icon" aria-label="Cerrar"><X size={18} /></button>
         </div>
 
         <p className="text-v2-xs text-v2-text-secondary mb-4">
-          Introduce la URL de tu sitio web para analizar su estado SEO basico.
+          Revisamos tu página principal tal como está publicada ahora. Si corriges algo, vuelve a analizarla para que se actualicen tus recomendaciones. Si aún no tienes web guardada en Mi negocio, la guardaremos allí.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

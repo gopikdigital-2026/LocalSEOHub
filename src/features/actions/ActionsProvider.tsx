@@ -54,7 +54,8 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
 
   const run = useCallback(async (force: boolean) => {
     if (!currentBusiness?.onboarding_completed || !billingSettled) return;
-    if (inFlight.current) return inFlight.current;
+    // Wait for a running sync instead of reusing it: it may have read data from before the latest save.
+    while (inFlight.current) await inFlight.current;
     const job = (async () => {
       setLoading(true);
       try {
