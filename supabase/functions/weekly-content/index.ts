@@ -34,16 +34,22 @@ Deno.serve(async (req: Request) => {
           p_user_id: userId, p_business_id: businessId, p_week_start: week, p_expected_generations: expected,
         });
         if (error || !data || typeof data.status !== "string") throw new Error("reserve_failed");
+        if (data.status === "reserved" && (typeof data.id !== "string" || typeof data.reservation !== "string")) {
+          throw new Error("reserve_failed");
+        }
         return data as Reservation;
       },
-      async complete(id, userId, content, topic, lang) {
+      async complete(id, userId, reservation, content, topic, lang) {
         const { data, error } = await admin.rpc("complete_weekly_content", {
-          p_id: id, p_user_id: userId, p_content: content, p_topic: topic, p_lang: lang,
+          p_id: id, p_user_id: userId, p_reservation_id: reservation, p_content: content, p_topic: topic, p_lang: lang,
         });
         return !error && data === true;
       },
-      async release(id, userId) {
-        await admin.rpc("release_weekly_content", { p_id: id, p_user_id: userId });
+      async release(id, userId, reservation) {
+        const { data, error } = await admin.rpc("release_weekly_content", {
+          p_id: id, p_user_id: userId, p_reservation_id: reservation,
+        });
+        return !error && data === true;
       },
       async callModel(messages) {
         if (!apiKey) return { ok: false, retryable: false };

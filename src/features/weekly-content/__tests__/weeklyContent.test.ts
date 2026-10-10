@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { generate, type Deps, type Reservation, type ModelResult } from '../../../../supabase/functions/weekly-content/handler.ts';
 import {
-  MAX_GENERATIONS, MAX_OUTPUT_TOKENS, MAX_PROVIDER_CALLS, MODEL, buildMessages, chooseTopic, parseModelOutput, sanitizeFacts,
+  MAX_ATTEMPTS, MAX_GENERATIONS, MAX_OUTPUT_TOKENS, MAX_PROVIDER_CALLS, MODEL, buildMessages, chooseTopic, parseModelOutput, sanitizeFacts,
 } from '../../../../supabase/functions/weekly-content/logic.ts';
-import { missingProfileFields, remainingVersions, validateEdit, weekKey, type WeeklyDraft } from '../model';
+import { attemptsExhausted, missingProfileFields, remainingVersions, validateEdit, weekKey, type WeeklyDraft } from '../model';
 import { markCopied, requestGeneration, saveContent } from '../repository';
 
 const ROOT = join(__dirname, '../../../..');
@@ -34,38 +34,56 @@ const GOOD_TEXT_EN = 'At Panadería Lola in Seville we bake sourdough bread ever
 const ok = (text: string, hashtags: string[] = ['#Sevilla', '#PanArtesano']): ModelResult =>
   ({ ok: true, raw: JSON.stringify({ text, hashtags }) });
 
-interface Row { id: string; user: string; business: string; week: string; generations: number; lock: boolean; topics: string[]; content: string }
+interface Row {
+  id: string; user: string; business: string; week: string; generations: number; attempts: number;
+  lock: boolean; token: string | null; lockedAt: number; topics: string[]; content: string;
+}
 
-function makeDeps(opts: { businesses?: Record<string, { owner: string; row: Record<string, unknown> }>; model?: () => Promise<ModelResult>; now?: Date } = {}) {
+const LEASE_MS = 90_000;
+
+// In-memory mirror of reserve/complete/release in the FIX 07.1.1 migration (the real SQL is exercised separately).
+function makeDeps(opts: {
+  businesses?: Record<string, { owner: string; row: Record<string, unknown> }>;
+  model?: () => Promise<ModelResult>; now?: Date; rows?: Map<string, Row>; clock?: { ms: number };
+} = {}) {
   const businesses: Record<string, { owner: string; row: Record<string, unknown> }> = opts.businesses ?? { [BIZ_A]: { owner: USER_A, row: COMPLETE }, [BIZ_B]: { owner: USER_B, row: COMPLETE } };
-  const rows = new Map<string, Row>();
+  const rows = opts.rows ?? new Map<string, Row>();
+  const clock = opts.clock ?? { ms: 0 };
   const calls = { model: 0, complete: 0, release: 0 };
+  let seq = 0;
   const deps: Deps = {
     loadBusiness: async (u, b) => (businesses[b]?.owner === u ? businesses[b].row : null),
     reserve: async (u, b, week, expected): Promise<Reservation> => {
       if (businesses[b]?.owner !== u) return { status: 'not_found' };
       const key = `${b}:${week}`;
-      const row = rows.get(key) ?? { id: key, user: u, business: b, week, generations: 0, lock: false, topics: [], content: '' };
+      const row = rows.get(key) ?? { id: key, user: u, business: b, week, generations: 0, attempts: 0, lock: false, token: null, lockedAt: 0, topics: [], content: '' };
       rows.set(key, row);
       if (row.generations !== expected) return { status: 'stale', generations: row.generations };
       if (row.generations >= MAX_GENERATIONS) return { status: 'limit', generations: row.generations };
-      if (row.lock) return { status: 'busy', generations: row.generations };
-      row.lock = true;
+      if (row.lock && clock.ms - row.lockedAt < LEASE_MS) return { status: 'busy', generations: row.generations };
+      if (row.attempts >= MAX_ATTEMPTS) return { status: 'attempts', generations: row.generations, attempts: row.attempts };
+      Object.assign(row, { lock: true, lockedAt: clock.ms, token: `tok-${u}-${++seq}-${Math.random()}`, attempts: row.attempts + 1 });
       const recent = [...rows.values()].filter((r) => r.business === b && r.week < week).flatMap((r) => r.topics);
-      return { status: 'reserved', id: row.id, generations: row.generations, topics_used: [...row.topics], recent_topics: recent };
+      return { status: 'reserved', id: row.id, reservation: row.token!, generations: row.generations, attempts: row.attempts, topics_used: [...row.topics], recent_topics: recent };
     },
-    complete: async (id, u, content, topic) => {
+    complete: async (id, u, reservation, content, topic) => {
       calls.complete++;
       const row = rows.get(id);
-      if (!row || row.user !== u || !row.lock || row.generations >= MAX_GENERATIONS) return false;
-      Object.assign(row, { content, generations: row.generations + 1, lock: false, topics: [...row.topics, topic] });
+      if (!row || row.user !== u || !row.lock || row.token !== reservation || row.generations >= MAX_GENERATIONS) return false;
+      Object.assign(row, { content, generations: row.generations + 1, lock: false, token: null, topics: [...row.topics, topic] });
       return true;
     },
-    release: async (id) => { calls.release++; const row = rows.get(id); if (row) row.lock = false; },
+    release: async (id, u, reservation) => {
+      calls.release++;
+      const row = rows.get(id);
+      if (!row || row.user !== u || row.token !== reservation) return false;
+      Object.assign(row, { lock: false, token: null });
+      return true;
+    },
     callModel: async () => { calls.model++; return opts.model ? opts.model() : ok(GOOD_TEXT_ES); },
     now: () => opts.now ?? NOW,
   };
-  return { deps, rows, calls };
+  return { deps, rows, calls, clock };
 }
 
 const body = (over: Partial<{ businessId: string; weekStart: string; lang: string; expectedGenerations: number }> = {}) =>
@@ -239,7 +257,7 @@ describe('weekly content: server generation', () => {
 
 describe('weekly content: browser data layer', () => {
   const draft: WeeklyDraft = {
-    id: 'd1', business_id: BIZ_A, week_start: MONDAY, lang: 'es', content: 'Texto original', generations: 1,
+    id: 'd1', business_id: BIZ_A, week_start: MONDAY, lang: 'es', content: 'Texto original', generations: 1, attempts: 1,
     generated_at: 'x', edited_at: null, copied_at: null, updated_at: '2026-10-12T10:00:00.000001+00:00',
   };
 
@@ -347,5 +365,153 @@ describe('weekly content: wiring, security and regressions', () => {
     expect(migration).toMatch(/GRANT UPDATE \(content, copied_at\)/);
     expect(migration).not.toMatch(/FOR (INSERT|DELETE|ALL)/);
     expect(migration).toMatch(/UNIQUE ?\(business_id, week_start\)/i);
+  });
+});
+
+describe('FIX 07.1.1: attempt limit and reservation token', () => {
+  const KEY_A = `${BIZ_A}:${MONDAY}`;
+  const fail: () => Promise<ModelResult> = async () => ({ ok: false, retryable: false });
+
+  it('F1. six failed requests are each counted as one attempt', async () => {
+    const { deps, rows } = makeDeps({ model: fail });
+    for (let i = 1; i <= MAX_ATTEMPTS; i++) {
+      const r = await call(deps, body());
+      expect(r.status).toBe(502);
+      expect(rows.get(KEY_A)).toMatchObject({ attempts: i, generations: 0, lock: false });
+    }
+  });
+
+  it('F2. a 7th request is rejected without calling the AI', async () => {
+    const { deps, calls, rows } = makeDeps({ model: fail });
+    for (let i = 0; i < MAX_ATTEMPTS; i++) await call(deps, body());
+    const before = calls.model;
+    const r = await call(deps, body());
+    expect(r).toEqual({ status: 429, json: { error: 'attempts_exhausted', generations: 0 } });
+    expect(calls.model).toBe(before);
+    expect(rows.get(KEY_A)!.attempts).toBe(MAX_ATTEMPTS);
+  });
+
+  it('F3. three successful versions stay the maximum even with attempts left', async () => {
+    const { deps, calls, rows } = makeDeps();
+    for (let g = 0; g < MAX_GENERATIONS; g++) expect((await call(deps, body({ expectedGenerations: g }))).status).toBe(200);
+    expect(await call(deps, body({ expectedGenerations: 3 }))).toEqual({ status: 429, json: { error: 'limit_reached', generations: 3 } });
+    expect(rows.get(KEY_A)).toMatchObject({ generations: 3, attempts: 3 });
+    expect(calls.model).toBe(3);
+  });
+
+  it('F4. internal retries inside one request consume a single attempt', async () => {
+    let n = 0;
+    const { deps, calls, rows } = makeDeps({ model: async () => (++n === 1 ? { ok: false, retryable: true } : ok(GOOD_TEXT_ES)) });
+    expect((await call(deps, body())).status).toBe(200);
+    expect(calls.model).toBe(MAX_PROVIDER_CALLS);
+    expect(rows.get(KEY_A)).toMatchObject({ attempts: 1, generations: 1 });
+
+    const failing = makeDeps({ model: async () => ({ ok: false, retryable: true }) });
+    expect((await call(failing.deps, body())).status).toBe(502);
+    expect(failing.calls.model).toBe(MAX_PROVIDER_CALLS);
+    expect(failing.rows.get(KEY_A)!.attempts).toBe(1);
+  });
+
+  it('F5. simultaneous requests do not exceed the limits', async () => {
+    let open!: () => void;
+    const gate = new Promise<void>((r) => { open = r; });
+    const { deps, calls, rows } = makeDeps({ model: async () => { await gate; return ok(GOOD_TEXT_ES); } });
+    const pending = Array.from({ length: 10 }, () => call(deps, body()));
+    await new Promise((r) => setTimeout(r, 0));
+    open();
+    const results = await Promise.all(pending);
+    expect(results.filter((r) => r.status === 200)).toHaveLength(1);
+    expect(results.filter((r) => r.status === 409)).toHaveLength(9);
+    expect(calls.model).toBe(1);
+    expect(rows.get(KEY_A)).toMatchObject({ attempts: 1, generations: 1 });
+  });
+
+  it('F6. an expired reservation can be recovered with a fresh token', async () => {
+    const { deps, rows, clock } = makeDeps();
+    const first = await deps.reserve(USER_A, BIZ_A, MONDAY, 0);
+    expect(await call(deps, body())).toEqual({ status: 409, json: { error: 'in_progress' } });
+    clock.ms += LEASE_MS + 1;
+    const second = await deps.reserve(USER_A, BIZ_A, MONDAY, 0);
+    expect(second.status).toBe('reserved');
+    if (first.status !== 'reserved' || second.status !== 'reserved') throw new Error('unreachable');
+    expect(second.reservation).not.toBe(first.reservation);
+    expect(rows.get(KEY_A)!.attempts).toBe(2);
+  });
+
+  it('F7. an old request cannot complete a newer reservation', async () => {
+    const { deps, rows, clock } = makeDeps();
+    const old = await deps.reserve(USER_A, BIZ_A, MONDAY, 0);
+    clock.ms += LEASE_MS + 1;
+    const fresh = await deps.reserve(USER_A, BIZ_A, MONDAY, 0);
+    if (old.status !== 'reserved' || fresh.status !== 'reserved') throw new Error('unreachable');
+    expect(await deps.complete(old.id, USER_A, old.reservation, 'viejo', 'practical_tip', 'es')).toBe(false);
+    expect(rows.get(KEY_A)).toMatchObject({ generations: 0, lock: true, token: fresh.reservation, content: '' });
+    expect(await deps.complete(fresh.id, USER_A, fresh.reservation, 'nuevo', 'practical_tip', 'es')).toBe(true);
+    expect(rows.get(KEY_A)).toMatchObject({ generations: 1, lock: false, content: 'nuevo' });
+  });
+
+  it('F8. an old request cannot release a newer reservation', async () => {
+    const { deps, rows, clock } = makeDeps();
+    const old = await deps.reserve(USER_A, BIZ_A, MONDAY, 0);
+    clock.ms += LEASE_MS + 1;
+    const fresh = await deps.reserve(USER_A, BIZ_A, MONDAY, 0);
+    if (old.status !== 'reserved' || fresh.status !== 'reserved') throw new Error('unreachable');
+    expect(await deps.release(old.id, USER_A, old.reservation)).toBe(false);
+    expect(rows.get(KEY_A)).toMatchObject({ lock: true, token: fresh.reservation });
+    expect(await call(deps, body())).toEqual({ status: 409, json: { error: 'in_progress' } });
+  });
+
+  it('F9. counters persist across sessions (stored server-side, read back by the browser)', async () => {
+    const store = new Map<string, Row>();
+    const s1 = makeDeps({ rows: store, model: fail });
+    for (let i = 0; i < 4; i++) await call(s1.deps, body());
+    const s2 = makeDeps({ rows: store });
+    expect((await call(s2.deps, body())).status).toBe(200);
+    expect(store.get(KEY_A)).toMatchObject({ attempts: 5, generations: 1 });
+    const s3 = makeDeps({ rows: store, model: fail });
+    await call(s3.deps, body({ expectedGenerations: 1 }));
+    expect((await call(s3.deps, body({ expectedGenerations: 1 }))).json.error).toBe('attempts_exhausted');
+    expect(read('src/features/weekly-content/repository.ts')).toMatch(/attempts/);
+  });
+
+  it('F10. different users and businesses keep independent limits', async () => {
+    const store = new Map<string, Row>();
+    const a = makeDeps({ rows: store, model: fail });
+    for (let i = 0; i < MAX_ATTEMPTS; i++) await call(a.deps, body());
+    expect((await call(a.deps, body())).json.error).toBe('attempts_exhausted');
+    const b = makeDeps({ rows: store });
+    expect((await call(b.deps, body({ businessId: BIZ_B }), USER_B)).status).toBe(200);
+    expect(store.get(`${BIZ_B}:${MONDAY}`)).toMatchObject({ attempts: 1, generations: 1 });
+    expect((await call(b.deps, body(), USER_B)).status).toBe(404);
+    expect(store.get(KEY_A)!.attempts).toBe(MAX_ATTEMPTS);
+  });
+
+  it('browser: attempts drive remaining versions and the exhausted message', () => {
+    const base = { generations: 1, attempts: 1 } as WeeklyDraft;
+    expect(remainingVersions(base)).toBe(2);
+    expect(remainingVersions({ ...base, attempts: 5 })).toBe(1);
+    expect(remainingVersions({ ...base, attempts: 6 })).toBe(0);
+    expect(attemptsExhausted({ ...base, attempts: 6 })).toBe(true);
+    expect(attemptsExhausted(null)).toBe(false);
+    const copy = read('src/features/weekly-content/copy.ts');
+    expect(copy.match(/attempts_exhausted:/g)).toHaveLength(2);
+    expect(read('src/features/weekly-content/WeeklyContentCard.tsx')).toMatch(/attemptsNoDraft/);
+  });
+
+  it('migration: token-checked lock, attempt cap, hidden token, service_role only', () => {
+    const sql = read('supabase/migrations/20261010122257_fix0711_weekly_content_attempts_and_reservation_token.sql');
+    expect(sql).toMatch(/attempts\s*>=\s*6/);
+    expect(sql).toMatch(/v_token uuid := gen_random_uuid\(\)/);
+    expect(sql).toMatch(/reservation_id\s*=\s*v_token/);
+    expect((sql.match(/reservation_id\s*=\s*p_reservation_id/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect(sql).toMatch(/DROP FUNCTION IF EXISTS[^;]*complete_weekly_content\(uuid, uuid, text, text, text\)/i);
+    expect(sql).toMatch(/DROP FUNCTION IF EXISTS[^;]*release_weekly_content\(uuid, uuid\)/i);
+    const grant = sql.match(/GRANT SELECT \(([^)]*)\) ON (public\.)?weekly_content_drafts TO authenticated/i);
+    expect(grant).not.toBeNull();
+    expect(grant![1]).toMatch(/attempts/);
+    expect(grant![1]).not.toMatch(/reservation_id/);
+    expect(sql).not.toMatch(/GRANT EXECUTE[^;]*TO (anon|authenticated|public)/i);
+    expect(sql).toMatch(/GRANT EXECUTE[^;]*TO service_role/i);
+    expect(sql).not.toMatch(/DISABLE ROW LEVEL SECURITY|FOR ALL|DROP TABLE|DROP COLUMN/i);
   });
 });

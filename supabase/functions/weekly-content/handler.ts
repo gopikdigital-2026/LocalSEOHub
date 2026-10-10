@@ -10,7 +10,8 @@ export const corsHeaders = {
 };
 
 export type Reservation =
-  | { status: 'reserved'; id: string; generations: number; topics_used: string[]; recent_topics: string[] }
+  | { status: 'reserved'; id: string; reservation: string; generations: number; attempts: number; topics_used: string[]; recent_topics: string[] }
+  | { status: 'attempts'; generations: number; attempts: number }
   | { status: 'stale'; generations: number }
   | { status: 'limit'; generations: number }
   | { status: 'busy'; generations: number }
@@ -22,8 +23,8 @@ export type ModelResult = { ok: true; raw: string } | { ok: false; retryable: bo
 export interface Deps {
   loadBusiness(userId: string, businessId: string): Promise<Record<string, unknown> | null>;
   reserve(userId: string, businessId: string, week: string, expected: number): Promise<Reservation>;
-  complete(id: string, userId: string, content: string, topic: Topic, lang: Lang): Promise<boolean>;
-  release(id: string, userId: string): Promise<void>;
+  complete(id: string, userId: string, reservation: string, content: string, topic: Topic, lang: Lang): Promise<boolean>;
+  release(id: string, userId: string, reservation: string): Promise<boolean>;
   callModel(messages: ReturnType<typeof buildMessages>): Promise<ModelResult>;
   now(): Date;
 }
@@ -69,6 +70,7 @@ export async function generate(userId: string, body: unknown, deps: Deps): Promi
   if (r.status === 'stale') return json({ status: 'stale', generations: r.generations });
   if (r.status === 'limit') return json({ error: 'limit_reached', generations: r.generations }, 429);
   if (r.status === 'busy') return json({ error: 'in_progress' }, 409);
+  if (r.status === 'attempts') return json({ error: 'attempts_exhausted', generations: r.generations }, 429);
 
   const seed = `${input.businessId}:${input.weekStart}:${r.generations}`;
   const topic = chooseTopic(facts, seed, r.topics_used, r.recent_topics);
@@ -93,13 +95,13 @@ export async function generate(userId: string, body: unknown, deps: Deps): Promi
   }
 
   if (!content) {
-    await deps.release(r.id, userId);
+    await deps.release(r.id, userId, r.reservation).catch(() => false);
     return json({ error: providerDown ? 'ai_unavailable' : 'generation_failed' }, 502);
   }
 
-  const saved = await deps.complete(r.id, userId, content, topic, input.lang).catch(() => false);
+  const saved = await deps.complete(r.id, userId, r.reservation, content, topic, input.lang).catch(() => false);
   if (!saved) {
-    await deps.release(r.id, userId);
+    await deps.release(r.id, userId, r.reservation).catch(() => false);
     return json({ error: 'save_failed' }, 500);
   }
   return json({ status: 'generated', generations: r.generations + 1 });

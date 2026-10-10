@@ -4,7 +4,7 @@ import { useBusiness } from '../business-memory/BusinessContext';
 import { useBilling } from '../billing/BillingContext';
 import { useI18n } from '../../lib/i18n';
 import { WEEKLY_COPY, type WeeklyCopy } from './copy';
-import { MAX_CONTENT_CHARS, hasDraft, missingProfileFields, remainingVersions, validateEdit, weekRange, type WeeklyDraft } from './model';
+import { MAX_CONTENT_CHARS, MAX_GENERATIONS, attemptsExhausted, hasDraft, missingProfileFields, remainingVersions, validateEdit, weekRange, type WeeklyDraft } from './model';
 import { useWeeklyContent } from './useWeeklyContent';
 
 const btnSecondary = 'inline-flex items-center gap-1.5 rounded-v2-lg border border-v2-border-light bg-white px-3 py-2 text-v2-xs font-medium text-v2-text-secondary hover:border-v2-primary-300 hover:text-v2-primary-600 transition-colors disabled:opacity-50 disabled:pointer-events-none';
@@ -167,6 +167,7 @@ export default function WeeklyContentCard({ onNavigate }: { onNavigate: (path: s
         );
       }
       if (locked) return <p className="text-v2-xs text-v2-text-secondary leading-relaxed">{t.lockedText}</p>;
+      if (attemptsExhausted(draft)) return <p role="status" className="text-v2-xs text-v2-text-secondary leading-relaxed">{t.attemptsNoDraft}</p>;
       return (
         <div className="space-y-2.5">
           <button onClick={() => void generate()} className={btnPrimary}><Sparkles size={13} /> {t.prepare}</button>
@@ -216,7 +217,9 @@ export default function WeeklyContentCard({ onNavigate }: { onNavigate: (path: s
             </div>
           </Notice>
         )}
-        {remaining === 0 && <p className="text-v2-xs text-v2-text-tertiary">{t.limitInfo}</p>}
+        {remaining === 0 && (
+          <p className="text-v2-xs text-v2-text-tertiary">{draft.generations >= MAX_GENERATIONS ? t.limitInfo : t.attemptsInfo}</p>
+        )}
       </div>
     );
   })();

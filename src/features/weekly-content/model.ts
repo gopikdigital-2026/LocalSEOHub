@@ -2,6 +2,7 @@ import { weekStart } from '../actions/engine';
 import type { BusinessRecord } from '../business-memory/businessRecord';
 
 export const MAX_GENERATIONS = 3;
+export const MAX_ATTEMPTS = 6;
 export const MAX_CONTENT_CHARS = 2200;
 
 export interface WeeklyDraft {
@@ -11,6 +12,7 @@ export interface WeeklyDraft {
   lang: 'es' | 'en';
   content: string;
   generations: number;
+  attempts: number;
   generated_at: string | null;
   edited_at: string | null;
   copied_at: string | null;
@@ -18,7 +20,7 @@ export interface WeeklyDraft {
 }
 
 export type WeeklyContentErrorCode =
-  | 'profile_incomplete' | 'limit_reached' | 'in_progress' | 'ai_unavailable' | 'generation_failed'
+  | 'profile_incomplete' | 'limit_reached' | 'attempts_exhausted' | 'in_progress' | 'ai_unavailable' | 'generation_failed'
   | 'premium_required' | 'rate_limited' | 'unauthorized' | 'invalid_week' | 'unavailable' | 'load_failed';
 
 export class WeeklyContentError extends Error {
@@ -54,7 +56,10 @@ export function missingProfileFields(b: Pick<BusinessRecord, 'name' | 'category'
 }
 
 export const hasDraft = (d: WeeklyDraft | null): d is WeeklyDraft => Boolean(d && d.generations > 0 && d.content.trim());
-export const remainingVersions = (d: WeeklyDraft | null) => Math.max(0, MAX_GENERATIONS - (d?.generations ?? 0));
+export const attemptsExhausted = (d: WeeklyDraft | null) => (d?.attempts ?? 0) >= MAX_ATTEMPTS;
+
+export const remainingVersions = (d: WeeklyDraft | null) =>
+  Math.max(0, Math.min(MAX_GENERATIONS - (d?.generations ?? 0), MAX_ATTEMPTS - (d?.attempts ?? 0)));
 
 export function validateEdit(text: string): 'empty' | 'too_long' | null {
   if (!text.trim()) return 'empty';

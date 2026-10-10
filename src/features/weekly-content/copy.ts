@@ -14,6 +14,8 @@ const ES = {
   saved: 'Guardado', editedSaved: 'Editado por ti · guardado', copiedOnce: 'Copiado al portapapeles',
   unsaved: 'Cambios sin guardar',
   limitInfo: 'Has usado las 3 versiones de esta semana. Puedes seguir editando este texto.',
+  attemptsInfo: 'Has agotado los intentos de esta semana. Puedes seguir editando este texto; el lunes podrás preparar uno nuevo.',
+  attemptsNoDraft: 'Esta semana no hemos podido preparar tu contenido tras varios intentos. El lunes podrás intentarlo de nuevo.',
   replaceEdited: 'Tu texto editado se sustituirá por una versión nueva. ¿Continuar?',
   replaceYes: 'Sí, crear otra versión', replaceNo: 'No, mantener mi texto',
   chars: (n: number, max: number) => `${n}/${max}`,
@@ -34,6 +36,7 @@ const ES = {
   errors: {
     profile_incomplete: 'Faltan datos de tu negocio para preparar un contenido fiel. Complétalos en Mi negocio.',
     limit_reached: 'Ya has usado las 3 versiones de esta semana. Puedes seguir editando el texto actual.',
+    attempts_exhausted: 'Has agotado los intentos de preparación de esta semana. El lunes podrás preparar un contenido nuevo.',
     in_progress: 'Ya estamos preparando tu contenido en otra ventana. Espera unos segundos y vuelve a intentarlo.',
     ai_unavailable: 'El servicio de redacción no está disponible ahora mismo. No se ha gastado ninguna versión; inténtalo más tarde.',
     generation_failed: 'No hemos conseguido un texto que cumpla nuestras reglas (sin datos inventados). No se ha gastado ninguna versión; inténtalo de nuevo.',
@@ -71,6 +74,8 @@ const EN: Copy = {
   saved: 'Saved', editedSaved: 'Edited by you · saved', copiedOnce: 'Copied to clipboard',
   unsaved: 'Unsaved changes',
   limitInfo: "You've used this week's 3 versions. You can keep editing this text.",
+  attemptsInfo: "You've used all of this week's attempts. You can keep editing this text; on Monday you can prepare a new one.",
+  attemptsNoDraft: "We couldn't prepare your content this week after several attempts. You can try again on Monday.",
   replaceEdited: 'Your edited text will be replaced by a new version. Continue?',
   replaceYes: 'Yes, create another version', replaceNo: 'No, keep my text',
   chars: (n, max) => `${n}/${max}`,
@@ -91,6 +96,7 @@ const EN: Copy = {
   errors: {
     profile_incomplete: 'Some business details are missing to prepare accurate content. Complete them in My business.',
     limit_reached: "You've used this week's 3 versions. You can keep editing the current text.",
+    attempts_exhausted: "You've used all of this week's preparation attempts. On Monday you can prepare new content.",
     in_progress: "We're already preparing your content in another window. Wait a few seconds and try again.",
     ai_unavailable: "The writing service isn't available right now. No version was used; please try later.",
     generation_failed: "We couldn't get a text that follows our rules (no made-up details). No version was used; please try again.",

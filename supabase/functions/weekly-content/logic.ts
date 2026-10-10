@@ -3,6 +3,7 @@
 export type Lang = 'es' | 'en';
 
 export const MAX_GENERATIONS = 3;
+export const MAX_ATTEMPTS = 6;
 export const MAX_CONTENT_CHARS = 2200;
 export const MIN_POST_CHARS = 80;
 export const MAX_POST_CHARS = 900;
