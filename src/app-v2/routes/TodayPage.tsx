@@ -31,6 +31,7 @@ import type { SnapshotStat } from '../../features/dashboard/BusinessSnapshot';
 import { PaywallNotice, PlanCard, TrialStartCard } from '../../features/billing/BillingNotices';
 import { PremiumRequiredError } from '../../features/billing/model';
 import WeeklyContentCard from '../../features/weekly-content/WeeklyContentCard';
+import PreparedRepliesCard from '../../features/prepared-replies/PreparedRepliesCard';
 import { offersImprovement } from '../../features/improvement/model';
 
 const ACTION_ERRORS = {
@@ -258,8 +259,9 @@ export default function TodayPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-5 lg:space-y-6">
           <WeeklyContentCard onNavigate={navigate} />
+          <PreparedRepliesCard onNavigate={navigate} />
         </div>
       </div>
 

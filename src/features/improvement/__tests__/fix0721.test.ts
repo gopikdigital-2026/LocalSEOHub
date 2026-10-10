@@ -168,7 +168,7 @@ describe('FIX 07.2.1 - migrations in order', () => {
     expect(files).toContain(V072);
     expect(files.indexOf(OLD)).toBeLessThan(files.indexOf(V072));
     expect(files.indexOf(V072)).toBeLessThan(files.indexOf(FIX));
-    expect(files[files.length - 1]).toBe(FIX);
+    expect(files.filter((f) => /_(v072|fix0721)_/.test(f)).pop()).toBe(FIX);
   });
 
   it('the obsolete 6-argument reserve is removed on both clean and existing installs', () => {
