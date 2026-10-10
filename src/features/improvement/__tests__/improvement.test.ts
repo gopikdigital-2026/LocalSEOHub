@@ -406,7 +406,7 @@ describe('v0.7.2 business improvement: i18n, wiring and regressions', () => {
 
   it('22. no regressions: v0.7.1 weekly content and FIX 07.1.1 untouched, guards in place', async () => {
     const index = read('supabase/functions/business-improvement/index.ts');
-    expect(read('supabase/functions/business-improvement/entitlement.ts')).toBe(read('supabase/functions/generate-seo/entitlement.ts'));
+    expect(read('supabase/functions/business-improvement/entitlement.ts')).toBe(read('supabase/functions/analyze-website/entitlement.ts'));
     const guard = index.indexOf('requirePremium(req, "business-improvement"');
     expect(guard).toBeGreaterThan(-1);
     for (const later of ['req.json(', 'fetch(', 'LocalSEO_KEY']) expect(index.indexOf(later)).toBeGreaterThan(guard);

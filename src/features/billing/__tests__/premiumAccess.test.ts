@@ -7,7 +7,7 @@ import {
   PREMIUM_RATE_LIMIT,
   type EntitlementDecision,
   type EntitlementDeps,
-} from '../../../../supabase/functions/generate-seo/entitlement.ts';
+} from '../../../../supabase/functions/analyze-website/entitlement.ts';
 import {
   checkPublicUrl,
   isPrivateAddress,
@@ -19,8 +19,12 @@ type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 const FN_DIR = join(__dirname, '../../../../supabase/functions');
 const CORS = { 'Access-Control-Allow-Origin': '*' };
 
-const PREMIUM_FUNCTIONS = [
-  'analyze-competitor-url', 'analyze-website', 'audit-maps-profile', 'audit-reviews',
+const PREMIUM_FUNCTIONS = ['analyze-website'];
+
+const ENTITLEMENT_COPIES = ['analyze-website', 'weekly-content', 'business-improvement'];
+
+const RETIRED_FUNCTIONS = [
+  'analyze-competitor-url', 'audit-maps-profile', 'audit-reviews',
   'execute-tip-content', 'generate-business-audit', 'generate-content-plan',
   'generate-countermeasure', 'generate-gbp-description', 'generate-geo-audit',
   'generate-pitch', 'generate-seo', 'generate-voice-script', 'scan-directories',
@@ -188,10 +192,10 @@ describe('createRuntimeEntitlementDeps (HTTP wiring)', () => {
 });
 
 describe('every premium function enforces entitlement first (source)', () => {
-  const reference = read('generate-seo', 'entitlement.ts');
+  const reference = read('analyze-website', 'entitlement.ts');
 
   it('G1 all premium functions ship an identical entitlement helper', () => {
-    for (const fn of PREMIUM_FUNCTIONS) {
+    for (const fn of ENTITLEMENT_COPIES) {
       expect(existsSync(join(FN_DIR, fn, 'entitlement.ts')), fn).toBe(true);
       expect(read(fn, 'entitlement.ts'), fn).toBe(reference);
     }
@@ -240,6 +244,13 @@ describe('every premium function enforces entitlement first (source)', () => {
       expect(reads.length).toBeGreaterThan(0);
       for (const r of reads) expect(r).toContain(".is('deleted_at', null)");
     }
+  });
+
+  it.each(RETIRED_FUNCTIONS)('G8 retired %s answers 410 without auth, secrets, AI or outbound calls', (fn) => {
+    expect(readdirSync(join(FN_DIR, fn))).toEqual(['index.ts']);
+    const src = read(fn);
+    expect(src).toContain('status: 410');
+    expect(src).not.toMatch(/\bimport\b|fetch\(|Deno\.env|req\.json\(|createClient|requirePremium|openai/i);
   });
 
   it('G5 public signup is rate limited and never rewrites an existing account', () => {

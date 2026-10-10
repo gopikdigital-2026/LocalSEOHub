@@ -346,7 +346,7 @@ describe('weekly content: wiring, security and regressions', () => {
   });
 
   it('server function: premium guard first, identical entitlement, no secrets in the browser', () => {
-    expect(read('supabase/functions/weekly-content/entitlement.ts')).toBe(read('supabase/functions/generate-seo/entitlement.ts'));
+    expect(read('supabase/functions/weekly-content/entitlement.ts')).toBe(read('supabase/functions/analyze-website/entitlement.ts'));
     const guard = index.indexOf('requirePremium(req, "weekly-content"');
     expect(guard).toBeGreaterThan(-1);
     for (const later of ['req.json(', 'fetch(', 'LocalSEO_KEY']) expect(index.indexOf(later)).toBeGreaterThan(guard);
