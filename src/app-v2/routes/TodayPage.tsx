@@ -31,6 +31,7 @@ import type { SnapshotStat } from '../../features/dashboard/BusinessSnapshot';
 import { PaywallNotice, PlanCard, TrialStartCard } from '../../features/billing/BillingNotices';
 import { PremiumRequiredError } from '../../features/billing/model';
 import WeeklyContentCard from '../../features/weekly-content/WeeklyContentCard';
+import { offersImprovement } from '../../features/improvement/model';
 
 const ACTION_ERRORS = {
   es: {
@@ -65,6 +66,7 @@ function toDashboardAction(action: BusinessAction, lang: ActionLang): DashboardA
     origin: actionOrigin(action.sourceType),
     ctaLabel: ctaLabel(action, lang),
     canMarkDone: canMarkDone(action),
+    improveTo: offersImprovement(action) ? `/ejecutar/${action.id}` : undefined,
   };
 }
 

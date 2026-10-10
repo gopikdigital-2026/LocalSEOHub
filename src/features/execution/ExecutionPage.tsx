@@ -13,6 +13,8 @@ import { AlertTriangle, Info } from 'lucide-react';
 import type { BusinessAction } from '../actions/types';
 import { useI18n } from '../../lib/i18n';
 import { PaywallNotice } from '../billing/BillingNotices';
+import ImprovementPanel from '../improvement/ImprovementPanel';
+import { improvementTarget } from '../improvement/model';
 
 export default function ExecutionPage() {
   const { recommendationId } = useParams<{ recommendationId: string }>();
@@ -77,6 +79,7 @@ export default function ExecutionPage() {
     onCompleted: selfAttestable
       ? () => { complete(action).then(() => setSaveError(false)).catch(() => { setExecutionState(beforeCompletion); setSaveError(true); }); }
       : undefined,
+    prepared: improvementTarget(action) ? <ImprovementPanel action={action} onNavigate={navigate} /> : undefined,
   };
 
   const next = selectTodayActions(actions.filter((a) => a.id !== action.id))[0] ?? null;

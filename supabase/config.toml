@@ -75,3 +75,6 @@ verify_jwt = true
 
 [functions.weekly-content]
 verify_jwt = true
+
+[functions.business-improvement]
+verify_jwt = true

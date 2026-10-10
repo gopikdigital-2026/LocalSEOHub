@@ -2,6 +2,7 @@ import { ArrowRight, Clock, CheckCircle2, Target, Check, X, Info, RefreshCw, Ale
 import type { DashboardAction } from './types';
 import type { TodayState } from '../activation/milestones';
 import { OriginLabel } from '../../components/DataIntegrity';
+import ImprovementHint from '../improvement/ImprovementHint';
 
 type Lang = 'es' | 'en';
 
@@ -199,6 +200,9 @@ export default function TodaysMissions({
                     <Clock size={11} /> {l.estimate(action.estimatedMinutes)}
                   </span>
                 </div>
+                {action.improveTo && (
+                  <ImprovementHint lang={lang} onClick={() => onNavigate(action.improveTo as string)} />
+                )}
               </div>
 
               <button

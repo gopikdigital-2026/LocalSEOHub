@@ -36,6 +36,7 @@ interface WorkspaceProps {
   onStateChange: (state: ExecutionState) => void;
   onBack: () => void;
   onCompleted?: () => void;
+  prepared?: React.ReactNode;
 }
 
 function useDemoToggle(surface: string) {
@@ -243,13 +244,15 @@ export function ProfileWorkspace(props: WorkspaceProps) {
   if (!showDemo) {
     return (
       <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={sidebar} onBack={onBack} onComplete={handleComplete}>
-        <NoDataState
-          surface="workspace_profile"
-          icon={<Store size={20} />}
-          title="Necesitamos datos de tu Perfil de Empresa para analizar este apartado."
-          description="Sin conectar tu Perfil de Empresa de Google no podemos saber qué tienes ahora en descripción, categorías o atributos, así que no te mostraremos problemas que no hemos comprobado."
-          onShowExample={openDemo}
-        />
+        {props.prepared ?? (
+          <NoDataState
+            surface="workspace_profile"
+            icon={<Store size={20} />}
+            title="Necesitamos datos de tu Perfil de Empresa para analizar este apartado."
+            description="Sin conectar tu Perfil de Empresa de Google no podemos saber qué tienes ahora en descripción, categorías o atributos, así que no te mostraremos problemas que no hemos comprobado."
+            onShowExample={openDemo}
+          />
+        )}
         {handleComplete && <ManualCompletionHint onComplete={handleComplete} label="Ya he revisado mi perfil" />}
       </WorkspaceLayout>
     );
@@ -292,16 +295,18 @@ export function ContentWorkspace(props: WorkspaceProps) {
   if (!showDemo) {
     return (
       <WorkspaceLayout recommendation={recommendation} executionState={executionState} sidebar={sidebar} onBack={onBack} onComplete={handleComplete}>
-        <NoDataState
-          surface="workspace_content"
-          icon={<Lightbulb size={20} />}
-          title="Aún no hay ideas de contenido para tu negocio"
-          description="Para proponerte ideas útiles necesitamos conocer tu negocio: qué ofreces, dónde y a quién. Complétalo y las ideas se basarán en esa información."
-          primaryLabel="Completar mi negocio"
-          primaryTo="/negocio"
-          onShowExample={openDemo}
-          exampleLabel="Ver ideas de ejemplo"
-        />
+        {props.prepared ?? (
+          <NoDataState
+            surface="workspace_content"
+            icon={<Lightbulb size={20} />}
+            title="Aún no hay ideas de contenido para tu negocio"
+            description="Para proponerte ideas útiles necesitamos conocer tu negocio: qué ofreces, dónde y a quién. Complétalo y las ideas se basarán en esa información."
+            primaryLabel="Completar mi negocio"
+            primaryTo="/negocio"
+            onShowExample={openDemo}
+            exampleLabel="Ver ideas de ejemplo"
+          />
+        )}
         {handleComplete && <ManualCompletionHint onComplete={handleComplete} label="Ya he preparado mi contenido" />}
       </WorkspaceLayout>
     );

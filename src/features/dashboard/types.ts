@@ -21,4 +21,5 @@ export interface DashboardAction {
   origin: DataOrigin;
   ctaLabel: string;
   canMarkDone: boolean;
+  improveTo?: string;
 }

@@ -14,6 +14,8 @@ import { goalLabel } from '../../features/activation/milestones';
 import { useI18n } from '../../lib/i18n';
 import { PaywallNotice } from '../../features/billing/BillingNotices';
 import { PremiumRequiredError } from '../../features/billing/model';
+import ImprovementHint from '../../features/improvement/ImprovementHint';
+import { offersImprovement } from '../../features/improvement/model';
 import { Target, Check, Clock, ArrowRight, Calendar, Info, AlertTriangle, X, RefreshCw } from 'lucide-react';
 
 const L = {
@@ -55,11 +57,12 @@ interface RowProps {
   action: BusinessAction;
   lang: ActionLang;
   onOpen(a: BusinessAction): void;
+  onPrepare(a: BusinessAction): void;
   onComplete(a: BusinessAction): void;
   onDismiss(a: BusinessAction): void;
 }
 
-function ActionRow({ action, lang, onOpen, onComplete, onDismiss }: RowProps) {
+function ActionRow({ action, lang, onOpen, onPrepare, onComplete, onDismiss }: RowProps) {
   const l = L[lang];
   const copy = localizeAction(action, lang);
   const outcome = actionOutcome(action);
@@ -101,6 +104,7 @@ function ActionRow({ action, lang, onOpen, onComplete, onDismiss }: RowProps) {
               )}
             </div>
           )}
+          {!done && offersImprovement(action) && <ImprovementHint lang={lang} onClick={() => onPrepare(action)} />}
         </div>
         {!done && (
           <button onClick={() => onDismiss(action)} aria-label={l.dismiss} title={l.dismiss} className="shrink-0 p-1.5 rounded-v2-md text-v2-neutral-400 hover:text-v2-text-primary hover:bg-v2-neutral-100 transition-colors">
@@ -188,6 +192,7 @@ export default function PlanPage() {
       }
       navigate(actionTarget(a));
     },
+    onPrepare: (a: BusinessAction) => navigate(`/ejecutar/${a.id}`),
     onComplete: (a: BusinessAction) => { setActionError(null); complete(a).catch(failWith(l.failComplete)); },
     onDismiss: (a: BusinessAction) => { setActionError(null); dismiss(a).catch(failWith(l.failDismiss)); },
   };
