@@ -51,6 +51,12 @@ Deno.serve(async (req: Request) => {
         });
         return !error && data === true;
       },
+      async releaseAiUsage(userId) {
+        const { data, error } = await admin.rpc("release_ai_usage", {
+          p_user_id: userId, p_function: "weekly-content",
+        });
+        return !error && data === true;
+      },
       async callModel(messages) {
         if (!apiKey) return { ok: false, retryable: false };
         const ctrl = new AbortController();

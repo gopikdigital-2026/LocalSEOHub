@@ -17,6 +17,8 @@ export type Reservation =
   | { status: 'busy'; generations: number }
   | { status: 'edited'; generations: number }
   | { status: 'global'; generations: number }
+  | { status: 'fn_limit'; fn_used: number; global_used: number }
+  | { status: 'global_limit'; fn_used: number; global_used: number }
   | { status: 'closed' }
   | { status: 'not_found' }
   | { status: 'invalid' };
@@ -45,6 +47,7 @@ export interface Deps {
   reserve(args: ReserveArgs): Promise<Reservation>;
   complete(id: string, userId: string, reservation: string, content: string, lang: Lang, mode: Mode, source: string): Promise<boolean>;
   release(id: string, userId: string, reservation: string): Promise<boolean>;
+  releaseAiUsage(userId: string): Promise<boolean>;
   callModel(messages: ReturnType<typeof buildMessages>): Promise<ModelResult>;
 }
 
@@ -119,6 +122,8 @@ export async function generate(userId: string, body: unknown, deps: Deps): Promi
   if (r.status === 'attempts') return json({ error: 'attempts_exhausted', generations: r.generations }, 429);
   if (r.status === 'edited') return json({ error: 'edited_conflict' }, 409);
   if (r.status === 'global') return json({ error: 'global_limit' }, 429);
+  if (r.status === 'fn_limit') return json({ error: 'limit_reached' }, 429);
+  if (r.status === 'global_limit') return json({ error: 'limit_reached' }, 429);
 
   const messages = buildMessages(target.kind, input.mode, facts, target.service, input.sourceText, input.lang);
   const declared = declaredText(facts, input.sourceText);
@@ -143,6 +148,7 @@ export async function generate(userId: string, body: unknown, deps: Deps): Promi
 
   if (!content) {
     await deps.release(r.id, userId, r.reservation).catch(() => false);
+    await deps.releaseAiUsage(userId).catch(() => false);
     return json({ error: providerDown ? 'ai_unavailable' : 'generation_failed' }, 502);
   }
 
@@ -151,6 +157,7 @@ export async function generate(userId: string, body: unknown, deps: Deps): Promi
     .catch(() => false);
   if (!saved) {
     await deps.release(r.id, userId, r.reservation).catch(() => false);
+    await deps.releaseAiUsage(userId).catch(() => false);
     return json({ error: 'save_failed' }, 500);
   }
   return json({ status: 'generated', generations: r.generations + 1 });

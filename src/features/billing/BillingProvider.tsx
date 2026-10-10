@@ -38,9 +38,10 @@ export default function BillingProvider({ children }: { children: ReactNode }) {
   const startTrial = useCallback(async () => {
     const uid = userRef.current;
     if (!uid) throw new Error('no_session');
-    const { status: next, created } = await startTrialRpc();
+    const { status: next, created, emailNotVerified } = await startTrialRpc();
     setStatus(next);
     setError(false);
+    if (emailNotVerified) throw new Error('email_not_verified');
     if (created) trackTrialStarted(uid);
     return next;
   }, []);

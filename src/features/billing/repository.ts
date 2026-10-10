@@ -10,10 +10,18 @@ export async function fetchBillingStatus(db: Db = supabase): Promise<BillingStat
   return parseBillingStatus(data);
 }
 
-export async function startTrial(db: Db = supabase): Promise<{ status: BillingStatus; created: boolean }> {
+export async function startTrial(db: Db = supabase): Promise<{ status: BillingStatus; created: boolean; emailNotVerified?: boolean }> {
   const { data, error } = await db.rpc('start_trial');
   if (error) throw new Error('start_trial_failed');
-  return { status: parseBillingStatus(data), created: (data as { trial_created?: unknown })?.trial_created === true };
+  const raw = data as Record<string, unknown> | null;
+  if (raw?.state === 'email_not_verified') {
+    return {
+      status: { state: 'TRIAL_NOT_STARTED', hasPremium: false, trialStartedAt: null, trialEndsAt: null, subscriptionStatus: null, cancelAtPeriodEnd: false, currentPeriodEnd: null, clockOffsetMs: 0 },
+      created: false,
+      emailNotVerified: true,
+    };
+  }
+  return { status: parseBillingStatus(data), created: raw?.trial_created === true };
 }
 
 export type BillingAction = 'checkout' | 'portal' | 'payment_method' | 'cancel' | 'resume' | 'sync';

@@ -10,6 +10,7 @@ const corsHeaders = {
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
 const IP_LIMIT = { limit: 10, windowSeconds: 3600 };
 const EMAIL_LIMIT = { limit: 5, windowSeconds: 3600 };
+const GLOBAL_SIGNUP_LIMIT = { limit: 50, windowSeconds: 3600 };
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -19,8 +20,12 @@ function json(body: unknown, status = 200) {
 }
 
 function clientIp(req: Request): string {
+  // x-forwarded-for is set by the Supabase edge proxy, not by the end user.
+  // In this deployment, it is the only IP source available and is not spoofable
+  // by the client (Supabase overwrites it). We hash it for rate-limiting only.
+  // If the header is absent, we fall back to a constant so the global limit still applies.
   const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return (forwarded || req.headers.get("x-real-ip") || "unknown").slice(0, 64);
+  return (forwarded || "no-ip").slice(0, 64);
 }
 
 async function withinLimit(url: string, key: string, bucket: string, cfg: { limit: number; windowSeconds: number }) {
@@ -50,6 +55,10 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+    // Global signup rate limit (not IP-dependent, catches all attempts)
+    const globalOk = await withinLimit(supabaseUrl, serviceRoleKey, "signup:global", GLOBAL_SIGNUP_LIMIT);
+    if (!globalOk) return json({ error: "rate_limited" }, 429);
+
     const ipOk = await withinLimit(supabaseUrl, serviceRoleKey, `signup:ip:${clientIp(req)}`, IP_LIMIT);
     const emailOk = ipOk && await withinLimit(supabaseUrl, serviceRoleKey, `signup:email:${email}`, EMAIL_LIMIT);
     if (!ipOk || !emailOk) return json({ error: "rate_limited" }, 429);
@@ -58,11 +67,14 @@ Deno.serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // An existing account is never modified here, and the response is identical either way.
+    // Do NOT set email_confirm: true here. Let the Supabase project's
+    // "Confirm email" setting control whether verification is required.
+    // Once SMTP is configured and "Confirm email" is enabled in the console,
+    // new accounts will need to verify before they can sign in.
+    // Until then, autoconfirm is ON, so accounts are confirmed immediately.
     const { error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
     });
 
     if (createError) {

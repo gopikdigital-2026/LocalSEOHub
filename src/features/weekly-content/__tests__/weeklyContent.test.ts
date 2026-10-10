@@ -80,6 +80,7 @@ function makeDeps(opts: {
       Object.assign(row, { lock: false, token: null });
       return true;
     },
+    releaseAiUsage: async () => true,
     callModel: async () => { calls.model++; return opts.model ? opts.model() : ok(GOOD_TEXT_ES); },
     now: () => opts.now ?? NOW,
   };

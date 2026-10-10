@@ -155,15 +155,21 @@ export function TrialStartCard() {
   const c = billingCopy(lang);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [emailNeeded, setEmailNeeded] = useState(false);
   if (status?.state !== 'TRIAL_NOT_STARTED') return null;
 
   const onStart = async () => {
     setBusy(true);
     setFailed(false);
+    setEmailNeeded(false);
     try {
       await startTrial();
-    } catch {
-      setFailed(true);
+    } catch (err) {
+      if (err instanceof Error && err.message === 'email_not_verified') {
+        setEmailNeeded(true);
+      } else {
+        setFailed(true);
+      }
     } finally {
       setBusy(false);
     }
@@ -178,6 +184,7 @@ export function TrialStartCard() {
         <div className="flex-1 min-w-0">
           <h2 className="text-v2-base font-semibold text-v2-text-primary">{c.startTitle}</h2>
           <p className="mt-1 text-v2-sm text-v2-text-secondary leading-relaxed">{c.startBody}</p>
+          {emailNeeded && <p role="alert" className="mt-2 text-v2-xs text-v2-warning-600">Confirma tu correo para activar tu prueba gratuita</p>}
           {failed && <p role="alert" className="mt-2 text-v2-xs text-v2-error-600">{c.startError}</p>}
           <button onClick={onStart} disabled={busy} className="mt-4 v2-btn-primary text-v2-sm px-4 py-2 disabled:opacity-60">
             {busy ? c.starting : c.startCta}

@@ -182,7 +182,8 @@ describe('FIX 07.2.1 - migrations in order', () => {
     for (const f of files) {
       for (const m of stripComments(read(f)).matchAll(/CREATE OR REPLACE FUNCTION public\.([a-z_]+)\(/g)) last[m[1]] = f;
     }
-    expect(last.reserve_business_improvement).toBe(FIX);
+    // A2.3 migration redefines reserve_business_improvement with monthly AI cap
+    expect(last.reserve_business_improvement).toMatch(/a23_ai_usage_limits/);
     expect(last.business_improvement_rule_kind).toBe(FIX);
     expect(last.business_improvement_key_part).toBe(FIX);
     expect(last.complete_business_improvement).toBe(V072);
