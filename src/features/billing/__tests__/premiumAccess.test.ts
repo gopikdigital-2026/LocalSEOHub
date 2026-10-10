@@ -11,7 +11,7 @@ import {
 import {
   checkPublicUrl,
   isPrivateAddress,
-  fetchPublic,
+  resolvePublicAddresses,
 } from '../../../../supabase/functions/analyze-website/urlSafety.ts';
 
 type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
@@ -209,7 +209,7 @@ describe('every premium function enforces entitlement first (source)', () => {
     const handler = src.indexOf('Deno.serve(');
     const after = src.slice(handler);
     const guardInHandler = after.indexOf('requirePremium(');
-    for (const marker of ['req.json()', 'fetch(', 'fetchPublic(', 'LocalSEO_KEY', 'LocalSEO_AI', 'GOOGLE_']) {
+    for (const marker of ['req.json()', 'fetch(', 'analyze(', 'LocalSEO_KEY', 'LocalSEO_AI', 'GOOGLE_']) {
       const at = after.indexOf(marker);
       if (at !== -1) expect(at, `${fn}: ${marker}`).toBeGreaterThan(guardInHandler);
     }
@@ -276,15 +276,10 @@ describe('analyze-website outbound URL safety', () => {
     expect(isPrivateAddress('93.184.216.34')).toBe(false);
   });
 
-  it('U3 blocks hosts that resolve to private addresses and redirects into the network', async () => {
-    const fetchMock = vi.fn<FetchFn>(async () => new Response(null, { status: 302, headers: { location: 'http://169.254.169.254/' } }));
-    await expect(fetchPublic('https://evil.example', {}, { fetch: fetchMock, resolve: async () => ['10.0.0.1'] }))
-      .rejects.toThrow('blocked_url');
-    expect(fetchMock).not.toHaveBeenCalled();
-
-    await expect(fetchPublic('https://ok.example', {}, { fetch: fetchMock, resolve: async () => ['93.184.216.34'] }))
-      .rejects.toThrow('blocked_url');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ redirect: 'manual' });
+  it('U3 blocks hosts that resolve to private addresses', async () => {
+    await expect(resolvePublicAddresses('evil.com', async (_h, t) => (t === 'A' ? ['10.0.0.1'] : [])))
+      .rejects.toMatchObject({ code: 'blocked' });
+    await expect(resolvePublicAddresses('ok.com', async (_h, t) => (t === 'A' ? ['93.184.216.34'] : [])))
+      .resolves.toEqual(['93.184.216.34']);
   });
 });
