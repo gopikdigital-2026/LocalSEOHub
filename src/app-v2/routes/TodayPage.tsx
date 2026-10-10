@@ -30,6 +30,7 @@ import BusinessSnapshot from '../../features/dashboard/BusinessSnapshot';
 import type { SnapshotStat } from '../../features/dashboard/BusinessSnapshot';
 import { PaywallNotice, PlanCard, TrialStartCard } from '../../features/billing/BillingNotices';
 import { PremiumRequiredError } from '../../features/billing/model';
+import WeeklyContentCard from '../../features/weekly-content/WeeklyContentCard';
 
 const ACTION_ERRORS = {
   es: {
@@ -251,6 +252,12 @@ export default function TodayPage() {
             connections={connections}
             pendingActions={pendingCount}
           />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
+        <div className="lg:col-span-2">
+          <WeeklyContentCard onNavigate={navigate} />
         </div>
       </div>
 

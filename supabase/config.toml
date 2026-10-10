@@ -72,3 +72,6 @@ verify_jwt = false
 
 [functions.admin-stats]
 verify_jwt = true
+
+[functions.weekly-content]
+verify_jwt = true

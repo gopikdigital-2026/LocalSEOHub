@@ -9,6 +9,7 @@ import { useI18n } from '../../lib/i18n';
 import { trackWeeklySummaryView, trackRealDataViewed } from '../../services/analytics/v2Analytics';
 import { NoDataState } from '../../components/DataIntegrity';
 import { LoadingState } from '../../components/ui';
+import WeeklyContentReport from '../weekly-content/WeeklyContentReport';
 import { AlertTriangle, ArrowRight, BarChart2, Calendar, CheckCircle2, ClipboardCheck, Clock, ListTodo, RefreshCw, Target, Ban } from 'lucide-react';
 
 const T = {
@@ -175,6 +176,8 @@ export default function WeeklySummaryPage() {
           </div>
         )}
       </section>
+
+      <WeeklyContentReport businessId={currentBusiness?.id ?? null} lang={lang} onNavigate={navigate} />
 
       <section data-testid="external-results" className="rounded-v2-xl border border-v2-border-light bg-white p-5 sm:p-6">
         <h2 className="text-v2-base font-semibold text-v2-text-primary mb-3">{t.results}</h2>
