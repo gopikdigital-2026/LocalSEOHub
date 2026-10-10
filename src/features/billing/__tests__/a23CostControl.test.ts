@@ -18,6 +18,8 @@ const ROOT = join(__dirname, '../../../..');
 const MIGRATIONS = join(ROOT, 'supabase/migrations');
 const A23 = readdirSync(MIGRATIONS).find((f) => f.includes('a23_ai_usage'))!;
 const a23Sql = readFileSync(join(MIGRATIONS, A23), 'utf8');
+const A231 = readdirSync(MIGRATIONS).find((f) => f.includes('a231_ai_reservation'))!;
+const a231Sql = readFileSync(join(MIGRATIONS, A231), 'utf8');
 
 // ---------- Shared helpers ----------
 
@@ -51,7 +53,7 @@ function makeWCDeps(opts: {
     }),
     complete: async () => true,
     release: async () => true,
-    releaseAiUsage: async () => true,
+    settleAiUsage: async () => true,
     callModel: async () => (opts.model ? opts.model() : okModel()),
     now: () => NOW,
   };
@@ -74,7 +76,7 @@ function makeBIDeps(opts: {
     },
     complete: async () => true,
     release: async () => true,
-    releaseAiUsage: async () => true,
+    settleAiUsage: async () => true,
     callModel: async () => (opts.model ? opts.model() : okModel()),
   };
 }
@@ -98,18 +100,18 @@ const callBI = async (deps: BIDeps, body: unknown, user = USER_A) => {
 describe('A2.3 — §2 Signup', () => {
   const signupSrc = readFileSync(join(ROOT, 'supabase/functions/signup-instant/index.ts'), 'utf8');
 
-  it('T1. registro válido: signup-instant does not force email_confirm:true in createUser call', () => {
+  // A2.3.1: the admin API ignores autoconfirm and password sign-in rejects unconfirmed emails,
+  // so the A2.3 removal of email_confirm made every new account unusable. Restored.
+  it('T1. registro válido (A2.3.1): createUser confirms so the immediate sign-in works', () => {
     const createBlock = signupSrc.slice(signupSrc.indexOf('createUser({'));
-    const callEnd = createBlock.indexOf('});');
-    const callBody = createBlock.slice(0, callEnd);
-    expect(callBody).not.toMatch(/email_confirm/);
+    const callBody = createBlock.slice(0, createBlock.indexOf('});'));
+    expect(callBody).toMatch(/email_confirm:\s*true/);
     expect(signupSrc).toContain('adminClient.auth.admin.createUser');
   });
 
-  it('T2. registro con email sin verificar: account creation delegates confirmation to project settings', () => {
-    // The createUser call must NOT force email_confirm
-    const createBlock = signupSrc.slice(signupSrc.indexOf('createUser'));
-    expect(createBlock).not.toMatch(/email_confirm/);
+  it('T2. registro (A2.3.1): the account is tagged server-side for the created-accounts breaker', () => {
+    const createBlock = signupSrc.slice(signupSrc.indexOf('createUser({'));
+    expect(createBlock).toMatch(/app_metadata:\s*\{\s*signup_source:\s*SIGNUP_SOURCE\s*\}/);
   });
 
   it('T3. verificación de correo: start_trial migration checks email_confirmed_at', () => {
@@ -150,13 +152,14 @@ describe('A2.3 — §2 Signup', () => {
     // user_trials has a CHECK constraint enforcing ends_at = started_at + 7 days (existing)
   });
 
-  it('T9. manipulación de cabeceras IP: signup-instant has a global rate limit independent of IP', () => {
-    expect(signupSrc).toContain('"signup:global"');
-    expect(signupSrc).toContain('GLOBAL_SIGNUP_LIMIT');
+  it('T9. manipulación de cabeceras IP (A2.3.1): a global breaker independent of IP still exists', () => {
+    expect(signupSrc).toContain('signup_created_recently');
+    expect(signupSrc).toContain('GLOBAL_CREATED_LIMIT');
+    expect(signupSrc).not.toContain('"signup:global"');
   });
 
-  it('T10. límite de registros concurrentes: global + IP + email rate limits exist', () => {
-    expect(signupSrc).toContain('GLOBAL_SIGNUP_LIMIT');
+  it('T10. límite de registros concurrentes: global + IP + email limits exist', () => {
+    expect(signupSrc).toContain('GLOBAL_CREATED_LIMIT');
     expect(signupSrc).toContain('IP_LIMIT');
     expect(signupSrc).toContain('EMAIL_LIMIT');
     expect(signupSrc).toMatch(/limit:\s*50.*windowSeconds:\s*3600/s);
@@ -176,7 +179,7 @@ describe('A2.3 — §3 Trial + §4 AI cost limits', () => {
     const deps = makeWCDeps({ fnLimitHit: true });
     const r = await callWC(deps, wcBody());
     expect(r.status).toBe(429);
-    expect(r.json.error).toBe('limit_reached');
+    expect(r.json.error).toBe('monthly_limit');
   });
 
   it('T13. acceso a IA con Premium válido: generates successfully', async () => {
@@ -218,17 +221,16 @@ describe('A2.3 — §3 Trial + §4 AI cost limits', () => {
     expect(forUpdate).toBeLessThan(increment);
   });
 
-  it('T18. reservas caducadas: releaseAiUsage is called on failure in weekly-content', () => {
+  it('T18. reservas (A2.3.1): every exit after a reservation settles it by id', () => {
     const handler = readFileSync(join(ROOT, 'supabase/functions/weekly-content/handler.ts'), 'utf8');
-    expect(handler).toContain('releaseAiUsage');
-    // Count: should appear in Deps interface + 2 failure paths
-    const matches = handler.match(/releaseAiUsage/g) ?? [];
-    expect(matches.length).toBeGreaterThanOrEqual(3);
+    expect(handler).not.toContain('releaseAiUsage');
+    const matches = handler.match(/settleAiUsage\(userId, r\.reservation/g) ?? [];
+    expect(matches.length).toBe(3);
   });
 
-  it('T19. intentos fallidos: release_ai_usage decrements safely', () => {
-    expect(a23Sql).toContain('GREATEST(weekly_content_used - 1, 0)');
-    expect(a23Sql).toContain('GREATEST(business_improvement_used - 1, 0)');
+  it('T19. intentos fallidos (A2.3.1): settle_ai_usage decrements safely', () => {
+    expect(a231Sql).toContain('GREATEST(weekly_content_used - 1, 0)');
+    expect(a231Sql).toContain('GREATEST(business_improvement_used - 1, 0)');
   });
 
   it('T20. reintentos del proveedor: MAX_PROVIDER_CALLS limits retries', async () => {
@@ -240,13 +242,13 @@ describe('A2.3 — §3 Trial + §4 AI cost limits', () => {
     expect(callCount).toBeLessThanOrEqual(MAX_PROVIDER_CALLS);
   });
 
-  it('T21. ausencia de duplicidad de consumo: successful generation does not call releaseAiUsage', async () => {
-    const releaseCalls: string[] = [];
+  it('T21. ausencia de duplicidad de consumo: success settles once as completed, never released', async () => {
+    const settled: string[] = [];
     const deps = makeWCDeps();
-    deps.releaseAiUsage = async (u) => { releaseCalls.push(u); return true; };
+    deps.settleAiUsage = async (_u, _r, o) => { settled.push(o); return true; };
     const r = await callWC(deps, wcBody());
     expect(r.status).toBe(200);
-    expect(releaseCalls).toHaveLength(0);
+    expect(settled).toEqual(['completed']);
   });
 
   it('T22. separación entre usuarios: user B cannot access user A business', async () => {
@@ -267,8 +269,8 @@ describe('A2.3 — §3 Trial + §4 AI cost limits', () => {
     // Weekly-content parseInput only extracts known fields; extra fields are ignored
     const parsed = parseWeeklyInput({ businessId: BIZ_A, weekStart: MONDAY, lang: 'es', expectedGenerations: 0, monthly_used: 999, cost: 100 });
     expect(parsed).not.toBeNull();
-    expect((parsed as Record<string, unknown>).monthly_used).toBeUndefined();
-    expect((parsed as Record<string, unknown>).cost).toBeUndefined();
+    expect((parsed as unknown as Record<string, unknown>).monthly_used).toBeUndefined();
+    expect((parsed as unknown as Record<string, unknown>).cost).toBeUndefined();
     // reserve_ai_usage is a server-side RPC; the migration proves no client cost param
     expect(a23Sql).not.toMatch(/p_cost|p_fn_used|p_global_used/);
     // The handler never reads cost/usage from the request body
@@ -347,10 +349,11 @@ describe('A2.3 — §6 Persistence: migration structure', () => {
     expect(a23Sql).toContain('"no_delete_ai_usage"');
   });
 
-  it('RPCs are restricted to service_role only', () => {
-    expect(a23Sql).toContain('REVOKE EXECUTE ON FUNCTION public.reserve_ai_usage');
-    expect(a23Sql).toContain('REVOKE EXECUTE ON FUNCTION public.release_ai_usage');
-    expect(a23Sql).toContain('REVOKE EXECUTE ON FUNCTION public.enforce_max_businesses_per_user');
+  it('RPCs are restricted to service_role only (A2.3.1 supersedes release_ai_usage)', () => {
+    expect(a231Sql).toContain('REVOKE ALL ON FUNCTION public.reserve_ai_usage(uuid, uuid, text) FROM PUBLIC, anon, authenticated');
+    expect(a231Sql).toContain('REVOKE ALL ON FUNCTION public.settle_ai_usage(uuid, uuid, text) FROM PUBLIC, anon, authenticated');
+    expect(a231Sql).toContain('REVOKE ALL ON FUNCTION public.enforce_max_businesses_per_user() FROM PUBLIC, anon, authenticated');
+    expect(a231Sql).toContain('DROP FUNCTION IF EXISTS public.release_ai_usage(uuid, text)');
   });
 
   it('business count trigger limits to 5 per user', () => {
@@ -364,9 +367,9 @@ describe('A2.3 — §6 Persistence: migration structure', () => {
   });
 
   it('all new functions are SECURITY DEFINER with fixed search_path', () => {
-    const fns = ['reserve_ai_usage', 'release_ai_usage'];
+    const fns = ['reserve_ai_usage', 'settle_ai_usage', 'reconcile_ai_usage'];
     for (const fn of fns) {
-      const block = a23Sql.slice(a23Sql.indexOf(`FUNCTION public.${fn}`));
+      const block = a231Sql.slice(a231Sql.indexOf(`FUNCTION public.${fn}`));
       expect(block).toContain('SECURITY DEFINER');
       expect(block.includes("search_path = public") || block.includes("search_path TO 'public'")).toBe(true);
     }

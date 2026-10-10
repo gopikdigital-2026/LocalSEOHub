@@ -20,7 +20,7 @@ export interface WeeklyDraft {
 }
 
 export type WeeklyContentErrorCode =
-  | 'profile_incomplete' | 'limit_reached' | 'attempts_exhausted' | 'in_progress' | 'ai_unavailable' | 'generation_failed'
+  | 'profile_incomplete' | 'limit_reached' | 'monthly_limit' | 'attempts_exhausted' | 'in_progress' | 'ai_unavailable' | 'generation_failed'
   | 'premium_required' | 'rate_limited' | 'unauthorized' | 'invalid_week' | 'unavailable' | 'load_failed';
 
 export class WeeklyContentError extends Error {

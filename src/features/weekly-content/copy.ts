@@ -36,6 +36,7 @@ const ES = {
   errors: {
     profile_incomplete: 'Faltan datos de tu negocio para preparar un contenido fiel. Complétalos en Mi negocio.',
     limit_reached: 'Ya has usado las 3 versiones de esta semana. Puedes seguir editando el texto actual.',
+    monthly_limit: 'Has alcanzado el límite de uso de esta función. Podrás usarla de nuevo el mes que viene.',
     attempts_exhausted: 'Has agotado los intentos de preparación de esta semana. El lunes podrás preparar un contenido nuevo.',
     in_progress: 'Ya estamos preparando tu contenido en otra ventana. Espera unos segundos y vuelve a intentarlo.',
     ai_unavailable: 'El servicio de redacción no está disponible ahora mismo. No se ha gastado ninguna versión; inténtalo más tarde.',
@@ -96,6 +97,7 @@ const EN: Copy = {
   errors: {
     profile_incomplete: 'Some business details are missing to prepare accurate content. Complete them in My business.',
     limit_reached: "You've used this week's 3 versions. You can keep editing the current text.",
+    monthly_limit: "You've reached the usage limit for this feature. You can use it again next month.",
     attempts_exhausted: "You've used all of this week's preparation attempts. On Monday you can prepare new content.",
     in_progress: "We're already preparing your content in another window. Wait a few seconds and try again.",
     ai_unavailable: "The writing service isn't available right now. No version was used; please try later.",

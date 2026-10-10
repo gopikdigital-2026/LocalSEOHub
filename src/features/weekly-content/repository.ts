@@ -7,7 +7,7 @@ type Db = Pick<SupabaseClient, 'from' | 'functions'>;
 const COLUMNS = 'id, business_id, week_start, lang, content, generations, attempts, generated_at, edited_at, copied_at, updated_at';
 
 const KNOWN = new Set<WeeklyContentErrorCode>([
-  'profile_incomplete', 'limit_reached', 'attempts_exhausted', 'in_progress', 'ai_unavailable', 'generation_failed',
+  'profile_incomplete', 'limit_reached', 'monthly_limit', 'attempts_exhausted', 'in_progress', 'ai_unavailable', 'generation_failed',
   'premium_required', 'rate_limited', 'unauthorized', 'invalid_week', 'unavailable',
 ]);
 

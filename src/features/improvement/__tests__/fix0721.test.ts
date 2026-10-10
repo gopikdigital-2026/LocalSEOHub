@@ -182,8 +182,13 @@ describe('FIX 07.2.1 - migrations in order', () => {
     for (const f of files) {
       for (const m of stripComments(read(f)).matchAll(/CREATE OR REPLACE FUNCTION public\.([a-z_]+)\(/g)) last[m[1]] = f;
     }
-    // A2.3 migration redefines reserve_business_improvement with monthly AI cap
-    expect(last.reserve_business_improvement).toMatch(/a23_ai_usage_limits/);
+    // A2.3.1 restores the fix0721 body (lost in A2.3) and adds the identified AI reservation
+    expect(last.reserve_business_improvement).toMatch(/a231_ai_reservation/);
+    const def = stripComments(read(last.reserve_business_improvement));
+    const body = def.slice(def.indexOf('FUNCTION public.reserve_business_improvement('));
+    for (const lit of ['business_improvement_rule_kind', 'business_improvement_key_part', "'closed'", "'edited'", "'stale'", "'busy'", "'attempts'", '>= 16']) {
+      expect(body).toContain(lit);
+    }
     expect(last.business_improvement_rule_kind).toBe(FIX);
     expect(last.business_improvement_key_part).toBe(FIX);
     expect(last.complete_business_improvement).toBe(V072);

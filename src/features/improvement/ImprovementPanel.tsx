@@ -65,7 +65,7 @@ function Panel({ action, target, onNavigate }: {
   const state: PanelState = (() => {
     if (generating) return 'preparing';
     if (editing) return saving ? 'saving' : 'editing';
-    if (genError === 'global_limit' || genError === 'limit_reached' || genError === 'attempts_exhausted') return 'limit';
+    if (genError === 'global_limit' || genError === 'monthly_limit' || genError === 'limit_reached' || genError === 'attempts_exhausted') return 'limit';
     if (genError || phase === 'load_error') return 'error';
     if (available) return draft.edited_at ? 'saved' : 'available';
     if (locked) return 'locked';

@@ -25,6 +25,8 @@ export type Reservation =
 
 export type ModelResult = { ok: true; raw: string } | { ok: false; retryable: boolean };
 
+export type AiOutcome = 'completed' | 'consumed' | 'released';
+
 export interface ActionRow {
   rule_id: string;
   status: string;
@@ -47,7 +49,7 @@ export interface Deps {
   reserve(args: ReserveArgs): Promise<Reservation>;
   complete(id: string, userId: string, reservation: string, content: string, lang: Lang, mode: Mode, source: string): Promise<boolean>;
   release(id: string, userId: string, reservation: string): Promise<boolean>;
-  releaseAiUsage(userId: string): Promise<boolean>;
+  settleAiUsage(userId: string, reservation: string, outcome: AiOutcome): Promise<boolean>;
   callModel(messages: ReturnType<typeof buildMessages>): Promise<ModelResult>;
 }
 
@@ -122,14 +124,14 @@ export async function generate(userId: string, body: unknown, deps: Deps): Promi
   if (r.status === 'attempts') return json({ error: 'attempts_exhausted', generations: r.generations }, 429);
   if (r.status === 'edited') return json({ error: 'edited_conflict' }, 409);
   if (r.status === 'global') return json({ error: 'global_limit' }, 429);
-  if (r.status === 'fn_limit') return json({ error: 'limit_reached' }, 429);
-  if (r.status === 'global_limit') return json({ error: 'limit_reached' }, 429);
+  if (r.status === 'fn_limit' || r.status === 'global_limit') return json({ error: 'monthly_limit' }, 429);
 
   const messages = buildMessages(target.kind, input.mode, facts, target.service, input.sourceText, input.lang);
   const declared = declaredText(facts, input.sourceText);
 
   let content: string | null = null;
   let providerDown = false;
+  let billed = false;
   try {
     for (let attempt = 0; attempt < MAX_PROVIDER_CALLS && !content; attempt++) {
       const res = await deps.callModel(messages);
@@ -139,6 +141,7 @@ export async function generate(userId: string, body: unknown, deps: Deps): Promi
         continue;
       }
       providerDown = false;
+      billed = true;
       const parsed = parseModelOutput(res.raw, target.kind, input.mode, declared);
       if (parsed.ok) content = parsed.content;
     }
@@ -148,7 +151,8 @@ export async function generate(userId: string, body: unknown, deps: Deps): Promi
 
   if (!content) {
     await deps.release(r.id, userId, r.reservation).catch(() => false);
-    await deps.releaseAiUsage(userId).catch(() => false);
+    // Units are only returned when the provider produced nothing billable.
+    await deps.settleAiUsage(userId, r.reservation, billed ? 'consumed' : 'released').catch(() => false);
     return json({ error: providerDown ? 'ai_unavailable' : 'generation_failed' }, 502);
   }
 
@@ -157,8 +161,9 @@ export async function generate(userId: string, body: unknown, deps: Deps): Promi
     .catch(() => false);
   if (!saved) {
     await deps.release(r.id, userId, r.reservation).catch(() => false);
-    await deps.releaseAiUsage(userId).catch(() => false);
+    await deps.settleAiUsage(userId, r.reservation, 'consumed').catch(() => false);
     return json({ error: 'save_failed' }, 500);
   }
+  await deps.settleAiUsage(userId, r.reservation, 'completed').catch(() => false);
   return json({ status: 'generated', generations: r.generations + 1 });
 }

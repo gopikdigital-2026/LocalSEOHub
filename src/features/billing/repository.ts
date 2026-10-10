@@ -14,14 +14,9 @@ export async function startTrial(db: Db = supabase): Promise<{ status: BillingSt
   const { data, error } = await db.rpc('start_trial');
   if (error) throw new Error('start_trial_failed');
   const raw = data as Record<string, unknown> | null;
-  if (raw?.state === 'email_not_verified') {
-    return {
-      status: { state: 'TRIAL_NOT_STARTED', hasPremium: false, trialStartedAt: null, trialEndsAt: null, subscriptionStatus: null, cancelAtPeriodEnd: false, currentPeriodEnd: null, clockOffsetMs: 0 },
-      created: false,
-      emailNotVerified: true,
-    };
-  }
-  return { status: parseBillingStatus(data), created: raw?.trial_created === true };
+  const status = parseBillingStatus(data);
+  if (raw?.reason === 'email_not_verified') return { status, created: false, emailNotVerified: true };
+  return { status, created: raw?.trial_created === true };
 }
 
 export type BillingAction = 'checkout' | 'portal' | 'payment_method' | 'cancel' | 'resume' | 'sync';

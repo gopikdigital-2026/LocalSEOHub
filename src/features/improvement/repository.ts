@@ -8,7 +8,7 @@ const COLUMNS = 'id, business_id, semantic_key, kind, mode, lang, content, sourc
 
 const KNOWN = new Set<ImprovementErrorCode>([
   'profile_incomplete', 'service_not_declared', 'incompatible_action', 'action_closed', 'edited_conflict',
-  'limit_reached', 'attempts_exhausted', 'global_limit', 'in_progress', 'ai_unavailable', 'generation_failed',
+  'limit_reached', 'attempts_exhausted', 'global_limit', 'monthly_limit', 'in_progress', 'ai_unavailable', 'generation_failed',
   'premium_required', 'rate_limited', 'unauthorized', 'invalid_request', 'not_found', 'unavailable',
 ]);
 

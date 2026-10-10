@@ -123,7 +123,7 @@ function makeDeps(opts: { model?: () => Promise<ModelResult>; businesses?: Recor
       Object.assign(row, { token: null, lockedAt: null });
       return true;
     },
-    releaseAiUsage: async () => true,
+    settleAiUsage: async () => true,
     callModel: async () => { calls.model++; return opts.model ? opts.model() : text(DESC_ES); },
   };
   return { deps, rows, calls, clock, usage, actions };

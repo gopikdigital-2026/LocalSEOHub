@@ -51,9 +51,9 @@ Deno.serve(async (req: Request) => {
         });
         return !error && data === true;
       },
-      async releaseAiUsage(userId) {
-        const { data, error } = await admin.rpc("release_ai_usage", {
-          p_user_id: userId, p_function: "weekly-content",
+      async settleAiUsage(userId, reservation, outcome) {
+        const { data, error } = await admin.rpc("settle_ai_usage", {
+          p_reservation_id: reservation, p_user_id: userId, p_outcome: outcome,
         });
         return !error && data === true;
       },
