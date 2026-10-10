@@ -47,7 +47,7 @@ export interface Target {
 
 // The rule id is stable across re-created actions; the service is part of the key so each service keeps its own draft.
 export function resolveTarget(ruleId: string, metadata: unknown): Target | null {
-  const kind = COMPATIBLE_RULES[ruleId];
+  const kind = Object.prototype.hasOwnProperty.call(COMPATIBLE_RULES, ruleId) ? COMPATIBLE_RULES[ruleId] : undefined;
   if (!kind) return null;
   if (kind !== 'service_description') return { kind, semanticKey: ruleId, service: null };
   const evidence = (metadata as { evidence?: { service?: unknown } } | null)?.evidence;

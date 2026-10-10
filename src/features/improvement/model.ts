@@ -33,7 +33,7 @@ export interface ImprovementTarget {
 }
 
 export function improvementTarget(action: Pick<BusinessAction, 'ruleId' | 'metadata'>): ImprovementTarget | null {
-  const kind = COMPATIBLE_RULES[action.ruleId];
+  const kind = Object.prototype.hasOwnProperty.call(COMPATIBLE_RULES, action.ruleId) ? COMPATIBLE_RULES[action.ruleId] : undefined;
   if (!kind) return null;
   if (kind !== 'service_description') return { kind, semanticKey: action.ruleId, service: null };
   const evidence = (action.metadata as { evidence?: { service?: unknown } } | null)?.evidence;
