@@ -1,4 +1,4 @@
-const AUTH_PATHS = ['/login', '/signup', '/registro', '/empezar', '/auth'];
+const AUTH_PATHS = ['/login', '/signup', '/registro', '/empezar', '/auth', '/reset-password'];
 
 /**
  * Accepts only same-origin, in-app paths. Anything that could leave the site

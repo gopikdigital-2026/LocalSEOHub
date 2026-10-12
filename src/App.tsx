@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { returnPathFromLocation } from './app-v2/returnTo';
 import AppShellV2 from './app-v2/layouts/AppShellV2';
@@ -6,6 +6,7 @@ import { useAuth } from './hooks/useAuth';
 import { useOnboardingStatus } from './hooks/useOnboardingStatus';
 import { AppGuard, OnboardingGuard, useAuthRedirect } from './app-v2/auth';
 import { LoadingState } from './components/ui';
+import { RESET_PASSWORD_PATH, type RecoveryLink } from './features/password-reset/recovery';
 
 // ─── Product pages ──────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ const BillingPage = lazy(() => import('./features/billing/BillingPage'));
 
 const LandingPage = lazy(() => import('./components/LandingPage'));
 const LoginModal = lazy(() => import('./components/LoginModal'));
+const ResetPasswordPage = lazy(() => import('./features/password-reset/ResetPasswordPage'));
 
 const SKELETON = (
   <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
@@ -117,6 +119,7 @@ function AuthRoute({ mode }: { mode: 'login' | 'signup' }) {
         onSuccess={() => {}}
         returnTo={returnPathFromLocation(location.search)}
         initialMode={mode}
+        initialRecovering={mode === 'login' && new URLSearchParams(location.search).has('recuperar')}
       />
     </Suspense>
   );
@@ -124,7 +127,17 @@ function AuthRoute({ mode }: { mode: 'login' | 'signup' }) {
 
 // ─── App ────────────────────────────────────────────────────────────────────
 
-export default function App() {
+export default function App({ initialRecoveryLink = null }: { initialRecoveryLink?: RecoveryLink | null }) {
+  const location = useLocation();
+  const [recoveryLink, setRecoveryLink] = useState(initialRecoveryLink);
+  const consumeRecoveryLink = useCallback(() => setRecoveryLink(null), []);
+
+  // A recovery link can land on another page (e.g. Supabase falls back to the Site URL);
+  // route it to the reset page before the landing sends the recovered session into the app.
+  if (recoveryLink && location.pathname !== RESET_PASSWORD_PATH) {
+    return <Navigate to={{ pathname: RESET_PASSWORD_PATH, search: location.search, hash: location.hash }} replace />;
+  }
+
   return (
     <Suspense fallback={SKELETON}>
       <Routes>
@@ -132,6 +145,9 @@ export default function App() {
         <Route path="/" element={<RootRoute />} />
         <Route path="/signup" element={<AuthRoute mode="signup" />} />
         <Route path="/login" element={<AuthRoute mode="login" />} />
+        <Route path={RESET_PASSWORD_PATH} element={
+          <ResetPasswordPage initialLink={recoveryLink} onLinkConsumed={consumeRecoveryLink} />
+        } />
 
         {/* ── Onboarding ── */}
         <Route path="/empezar" element={

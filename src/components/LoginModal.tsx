@@ -3,6 +3,8 @@ import { X, Mail, Lock, Eye, EyeOff, AlertCircle, ExternalLink, Copy, Check } fr
 import { supabase } from '../lib/supabase';
 import { trackCompleteRegistration } from '../lib/pixel';
 import { track } from '../lib/analytics';
+import { useI18n } from '../lib/i18n';
+import ForgotPasswordForm from '../features/password-reset/ForgotPasswordForm';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -13,6 +15,8 @@ interface LoginModalProps {
   initialMode?: Mode;
   initialError?: string;
   initialEmail?: string;
+  /** Opens directly on the password-recovery form. */
+  initialRecovering?: boolean;
 }
 
 type Mode = 'login' | 'signup';
@@ -26,9 +30,11 @@ function isAndroid(): boolean {
   return /Android/i.test(navigator.userAgent);
 }
 
-export default function LoginModal({ onClose, onSuccess, returnTo = null, initialMode = 'login', initialError = '', initialEmail = '' }: LoginModalProps) {
+export default function LoginModal({ onClose, onSuccess, returnTo = null, initialMode = 'login', initialError = '', initialEmail = '', initialRecovering = false }: LoginModalProps) {
   const finish = onSuccess ?? onClose;
+  const { t } = useI18n();
   const [mode, setMode] = useState<Mode>(initialMode);
+  const [recovering, setRecovering] = useState(initialRecovering);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -134,6 +140,23 @@ export default function LoginModal({ onClose, onSuccess, returnTo = null, initia
       {/* Modal */}
       <div className="relative w-full max-w-md bg-white rounded-v2-2xl shadow-v2-xl border border-v2-border v2-scale-in overflow-hidden">
         <div className="p-7 sm:p-8">
+          {recovering ? (
+            <>
+              <div className="flex items-start justify-between mb-5">
+                <div className="w-10 h-10 rounded-v2-xl bg-v2-primary-50 border border-v2-primary-200 flex items-center justify-center">
+                  <span className="text-lg font-bold text-v2-primary-600">L</span>
+                </div>
+                <button onClick={onClose} className="v2-btn-icon" aria-label="Cerrar">
+                  <X size={18} />
+                </button>
+              </div>
+              <ForgotPasswordForm
+                initialEmail={email}
+                onBack={() => { setRecovering(false); clearMessages(); }}
+              />
+            </>
+          ) : (
+          <>
           {/* Header */}
           <div className="flex items-start justify-between mb-7">
             <div className="flex items-center gap-3">
@@ -250,6 +273,17 @@ export default function LoginModal({ onClose, onSuccess, returnTo = null, initia
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
+              {mode === 'login' && (
+                <div className="flex justify-end pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => { setRecovering(true); clearMessages(); }}
+                    className="text-v2-xs font-medium text-v2-primary-600 hover:text-v2-primary-700 hover:underline underline-offset-2 transition-colors rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-v2-primary-300"
+                  >
+                    {t('reset_forgot_link')}
+                  </button>
+                </div>
+              )}
             </div>
 
             {error && (
@@ -288,6 +322,8 @@ export default function LoginModal({ onClose, onSuccess, returnTo = null, initia
               {mode === 'login' ? 'Registrate gratis' : 'Inicia sesion'}
             </button>
           </p>
+          </>
+          )}
         </div>
       </div>
     </div>
