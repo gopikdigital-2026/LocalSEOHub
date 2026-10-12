@@ -215,7 +215,7 @@ export default function TodayPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-8 max-w-5xl">
-      <DashboardHeader businessName={profile.name} />
+      <DashboardHeader />
 
       {firstSuccess && (
         <FirstSuccessNotice

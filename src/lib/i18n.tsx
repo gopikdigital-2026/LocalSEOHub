@@ -578,6 +578,7 @@ const translations = {
 
     // MC runtime strings
     mc_greeting_morning: 'Buenos días', mc_greeting_afternoon: 'Buenas tardes', mc_greeting_evening: 'Buenas noches',
+    identity_welcome: 'te damos la bienvenida', identity_account_fallback: 'Mi cuenta', identity_notifications: 'Notificaciones',
     mc_home_detected: 'Hoy hemos detectado', mc_home_opportunities: 'oportunidades para mejorar tu visibilidad.', mc_home_monitoring: 'La IA está monitorizando tu presencia en tiempo real.',
     mc_home_start_mission: 'Comenzar misión',
     mc_section_mission: 'Misión del día', mc_section_priorities: 'Prioridad alta', mc_section_progress: 'Tu progreso', mc_section_ai_activity: 'Actividad IA',
@@ -1257,6 +1258,7 @@ const translations = {
 
     // MC runtime strings
     mc_greeting_morning: 'Good morning', mc_greeting_afternoon: 'Good afternoon', mc_greeting_evening: 'Good evening',
+    identity_welcome: 'welcome', identity_account_fallback: 'My account', identity_notifications: 'Notifications',
     mc_home_detected: "Today we've detected", mc_home_opportunities: 'opportunities to improve your visibility.', mc_home_monitoring: 'AI is monitoring your presence in real time.',
     mc_home_start_mission: 'Start mission',
     mc_section_mission: 'Mission of the day', mc_section_priorities: 'High priority', mc_section_progress: 'Your progress', mc_section_ai_activity: 'AI Activity',

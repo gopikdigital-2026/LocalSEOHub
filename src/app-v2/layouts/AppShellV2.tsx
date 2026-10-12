@@ -15,6 +15,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { trackNavigationClick } from '../../services/analytics/v2Analytics';
 import { TrialBanner } from '../../features/billing/BillingNotices';
 import ResolvedActionsNotice from '../../features/actions/ResolvedActionsNotice';
+import UserIdentity from '../../features/user-identity/UserIdentity';
 
 interface NavItem {
   id: string;
@@ -36,7 +37,6 @@ function SidebarNav() {
   const { session, signOut } = useAuth();
   const navigate = useNavigate();
   const userEmail = session?.user?.email ?? '';
-  const userName = session?.user?.user_metadata?.name || userEmail.split('@')[0] || 'Usuario';
 
   return (
     <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-v2-border-light z-30">
@@ -76,13 +76,7 @@ function SidebarNav() {
       {/* User section */}
       <div className="px-4 py-4 border-t border-v2-border-light">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-v2-primary-100 flex items-center justify-center">
-            <span className="text-v2-sm font-semibold text-v2-primary-700">{userName[0]?.toUpperCase()}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-v2-sm font-medium text-v2-text-primary truncate">{userName}</p>
-            <p className="text-v2-xs text-v2-text-tertiary truncate">{userEmail}</p>
-          </div>
+          <UserIdentity email={userEmail} />
           <button
             onClick={() => { signOut().then(() => navigate('/')); }}
             aria-label="Cerrar sesion"
@@ -99,9 +93,8 @@ function SidebarNav() {
 
 function MobileHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { session, signOut } = useAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
-  const userName = session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'Usuario';
 
   return (
     <>
@@ -134,12 +127,7 @@ function MobileHeader() {
           transition-transform duration-250 ease-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="flex items-center gap-3 pb-4 border-b border-v2-border-light">
-          <div className="w-9 h-9 rounded-full bg-v2-primary-100 flex items-center justify-center">
-            <span className="text-v2-sm font-semibold text-v2-primary-700">{userName[0]?.toUpperCase()}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-v2-sm font-medium text-v2-text-primary truncate">{userName}</p>
-          </div>
+          <UserIdentity />
         </div>
         <nav className="space-y-1">
           {NAV_ITEMS.map((item) => (
