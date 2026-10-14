@@ -10,6 +10,7 @@ import {
   LogOut,
   Wifi,
   CreditCard,
+  Wrench,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { trackNavigationClick } from '../../services/analytics/v2Analytics';
@@ -27,11 +28,16 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'hoy', label: 'Hoy', path: '/hoy', icon: <Calendar size={18} /> },
   { id: 'plan', label: 'Plan', path: '/plan', icon: <ClipboardList size={18} /> },
+  { id: 'herramientas', label: 'Herramientas', path: '/herramientas', icon: <Wrench size={18} /> },
   { id: 'informes', label: 'Resumen', path: '/informes', icon: <BarChart2 size={18} /> },
   { id: 'negocio', label: 'Mi negocio', path: '/negocio', icon: <Building2 size={18} /> },
   { id: 'fuentes', label: 'Fuentes', path: '/fuentes', icon: <Wifi size={18} /> },
   { id: 'facturacion', label: 'Facturación', path: '/facturacion', icon: <CreditCard size={18} /> },
 ];
+
+// The mobile bottom bar keeps its original five destinations; the rest live in the drawer.
+const BOTTOM_BAR_IDS = ['hoy', 'plan', 'informes', 'negocio', 'fuentes'];
+const BOTTOM_BAR_ITEMS = NAV_ITEMS.filter((item) => BOTTOM_BAR_IDS.includes(item.id));
 
 function SidebarNav() {
   const { session, signOut } = useAuth();
@@ -162,7 +168,7 @@ function MobileHeader() {
 function MobileBottomNav() {
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-v2-border-light flex items-center justify-around h-16 z-30 safe-area-pb" aria-label="Navegacion principal">
-      {NAV_ITEMS.slice(0, 5).map((item) => (
+      {BOTTOM_BAR_ITEMS.map((item) => (
         <NavLink
           key={item.id}
           to={item.path}

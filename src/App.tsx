@@ -21,6 +21,7 @@ const SourceManagerPage = lazy(() => import('./features/reality-engine/SourceMan
 const FirstValueFlow = lazy(() => import('./features/first-value/FirstValueFlow'));
 const GBPCallbackPage = lazy(() => import('./features/reality-engine/GBPCallbackPage'));
 const BillingPage = lazy(() => import('./features/billing/BillingPage'));
+const ToolsPage = lazy(() => import('./features/tools/ToolsPage'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
@@ -162,6 +163,7 @@ export default function App({ initialRecoveryLink = null }: { initialRecoveryLin
         <Route element={<AppGuard><AppShellV2 /></AppGuard>}>
           <Route path="/hoy" element={<TodayPage />} />
           <Route path="/plan" element={<PlanPage />} />
+          <Route path="/herramientas" element={<ToolsPage />} />
           <Route path="/informes" element={<WeeklySummaryPage />} />
           <Route path="/negocio" element={<BusinessProfilePage />} />
           <Route path="/negocio/objetivos" element={<BusinessGoalsPage />} />

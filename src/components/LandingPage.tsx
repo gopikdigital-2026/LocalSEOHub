@@ -352,7 +352,7 @@ function MapsResult({ input1, input2 }: { input1: string; input2: string }) {
         <p className="text-slate-900 text-sm font-medium leading-snug">{title}</p>
       </div>
       <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5">
-        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-2">Fallos críticos detectados</p>
+        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider mb-2">Fallos habituales (ejemplo orientativo)</p>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-amber-700">
             <AlertCircle size={10} className="text-amber-500 shrink-0" />
@@ -407,7 +407,7 @@ function TwinResult({ input1, input2 }: { input1: string; input2: string }) {
           style={{ width: `${score}%` }} />
       </div>
       <div className="rounded-xl bg-white border border-slate-200 p-3.5">
-        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Señales detectadas</p>
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Señales de ejemplo orientativo</p>
         <div className="space-y-2">
           {[
             { ok: true, label: 'Presencia en Google Maps: Activa' },
@@ -518,7 +518,7 @@ function AdvisorResult({ input1, input2 }: { input1: string; input2: string }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">Consejo AI para {biz}</p>
+      <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">Ejemplo orientativo de consejo para {biz}</p>
       <div className="rounded-xl bg-white border border-slate-200 p-3.5">
         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Análisis de tu situación</p>
         <p className="text-slate-600 text-xs leading-relaxed">
