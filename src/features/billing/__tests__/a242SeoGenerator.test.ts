@@ -125,9 +125,9 @@ describe('A2.4.2 SEO Generator', () => {
     expect(hub).toMatch(/<Link\s+to=\{tool\.path\}/);
   });
 
-  it('3. the other six tools remain blocked', () => {
-    const others = TOOLS.filter((t) => t.id !== 'seo');
-    expect(others).toHaveLength(6);
+  it('3. the tools not yet released remain blocked (Advisor released in A2.4.3)', () => {
+    const others = TOOLS.filter((t) => t.id !== 'seo' && t.id !== 'advisor');
+    expect(others).toHaveLength(5);
     expect(others.every((t) => t.enabled === false)).toBe(true);
   });
 

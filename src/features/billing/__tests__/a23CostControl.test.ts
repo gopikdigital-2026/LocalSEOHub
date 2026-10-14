@@ -327,7 +327,7 @@ describe('A2.3 — §9 Regression checks', () => {
     expect(migrations.length).toBe(2);
   });
 
-  it('T30. ausencia de nuevas llamadas a IA: only weekly-content and business-improvement call OpenAI', () => {
+  it('T30. ausencia de nuevas llamadas a IA: only the approved AI functions call OpenAI', () => {
     const funcsDir = join(ROOT, 'supabase/functions');
     const dirs = readdirSync(funcsDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
     const aiCallers: string[] = [];
@@ -337,7 +337,7 @@ describe('A2.3 — §9 Regression checks', () => {
         if (indexSrc.includes('openai.com') || indexSrc.includes('chat/completions')) aiCallers.push(d);
       } catch { /* no index.ts */ }
     }
-    expect(aiCallers.sort()).toEqual(['business-improvement', 'seo-generator-v2', 'weekly-content']);
+    expect(aiCallers.sort()).toEqual(['business-advisor-v2', 'business-improvement', 'seo-generator-v2', 'weekly-content']);
   });
 });
 

@@ -23,6 +23,7 @@ const GBPCallbackPage = lazy(() => import('./features/reality-engine/GBPCallback
 const BillingPage = lazy(() => import('./features/billing/BillingPage'));
 const ToolsPage = lazy(() => import('./features/tools/ToolsPage'));
 const SeoGeneratorPage = lazy(() => import('./features/seo-generator/SeoGeneratorPage'));
+const AdvisorPage = lazy(() => import('./features/business-advisor/AdvisorPage'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
@@ -166,6 +167,7 @@ export default function App({ initialRecoveryLink = null }: { initialRecoveryLin
           <Route path="/plan" element={<PlanPage />} />
           <Route path="/herramientas" element={<ToolsPage />} />
           <Route path="/herramientas/seo" element={<SeoGeneratorPage />} />
+          <Route path="/herramientas/advisor" element={<AdvisorPage />} />
           <Route path="/informes" element={<WeeklySummaryPage />} />
           <Route path="/negocio" element={<BusinessProfilePage />} />
           <Route path="/negocio/objetivos" element={<BusinessGoalsPage />} />

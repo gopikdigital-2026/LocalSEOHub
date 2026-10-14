@@ -81,3 +81,6 @@ verify_jwt = true
 
 [functions.seo-generator-v2]
 verify_jwt = true
+
+[functions.business-advisor-v2]
+verify_jwt = true

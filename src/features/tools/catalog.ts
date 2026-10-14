@@ -123,9 +123,10 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: 'advisor',
     dataKind: 'business_ai',
-    recoveryStatus: 'REQUIRES_REBUILD',
+    recoveryStatus: 'ACTIVE',
     legacyFunction: 'generate-business-audit',
-    enabled: false,
+    enabled: true,
+    path: '/herramientas/advisor',
     copy: {
       es: {
         name: 'AI Business Advisor',

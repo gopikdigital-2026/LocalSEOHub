@@ -142,10 +142,10 @@ describe('A2.4.2-0 — nothing new is reachable', () => {
     }
   });
 
-  it('14. /herramientas executes no AI itself; only the SEO card is enabled (A2.4.2)', () => {
+  it('14. /herramientas executes no AI itself; only the SEO and Advisor cards are enabled (A2.4.3)', () => {
     const page = src('src/features/tools/ToolsPage.tsx');
     const catalog = src('src/features/tools/catalog.ts');
-    expect(catalog.match(/enabled:\s*true,/g)).toHaveLength(1);
+    expect(catalog.match(/enabled:\s*true,/g)).toHaveLength(2);
     expect(page).not.toMatch(/fetch\(|functions\.invoke|supabase|onClick/);
     expect(page).toContain('disabled');
   });
@@ -169,7 +169,7 @@ describe('A2.4.2-0 — nothing new is reachable', () => {
   });
 
   it('17. the migration preserves existing data: additive only, no reset, no deletes, latest in order', () => {
-    expect(migrationFiles.indexOf(ledgerFile)).toBeGreaterThanOrEqual(migrationFiles.length - 2);
+    expect(migrationFiles.indexOf(ledgerFile)).toBeGreaterThanOrEqual(migrationFiles.length - 3);
     expect(code).not.toMatch(/DROP\s+(TABLE|COLUMN)|TRUNCATE|DELETE\s+FROM|ALTER\s+COLUMN|RENAME/i);
     for (const c of COLUMNS.slice(2)) expect(code).toContain(`ADD COLUMN IF NOT EXISTS ${c} integer NOT NULL DEFAULT 0`);
     expect(code).not.toMatch(/SET (weekly_content_used|business_improvement_used) = 0/);
