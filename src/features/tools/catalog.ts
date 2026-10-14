@@ -47,9 +47,10 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: 'maps',
     dataKind: 'sources',
-    recoveryStatus: 'PARTIAL',
+    recoveryStatus: 'ACTIVE',
     legacyFunction: 'audit-maps-profile',
-    enabled: false,
+    enabled: true,
+    path: '/herramientas/maps',
     copy: {
       es: {
         name: 'Maps Profile Scanner',

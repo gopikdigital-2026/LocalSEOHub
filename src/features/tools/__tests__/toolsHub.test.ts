@@ -65,8 +65,8 @@ describe('A2.4.1 tools hub foundation', () => {
     expect(page).toContain('data-testid="tool-card"');
   });
 
-  it('5. (A2.4.3) only the SEO Generator and AI Business Advisor are enabled; every other CTA stays disabled and reads "En preparación"', () => {
-    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'advisor']);
+  it('5. (A2.4.4) only the SEO Generator, Maps Profile Scanner and AI Business Advisor are enabled; every other CTA stays disabled and reads "En preparación"', () => {
+    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'advisor']);
     expect(TOOLS.find((t) => t.id === 'advisor')).toMatchObject({ enabled: true, path: '/herramientas/advisor' });
     expect(TOOLS.find((t) => t.id === 'seo')).toMatchObject({ enabled: true, path: '/herramientas/seo' });
     expect(page).toContain("cta: 'En preparación'");
