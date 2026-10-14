@@ -65,8 +65,9 @@ describe('A2.4.1 tools hub foundation', () => {
     expect(page).toContain('data-testid="tool-card"');
   });
 
-  it('5. no tool has an active CTA; every CTA is disabled and reads "En preparación"', () => {
-    expect(TOOLS.every((t) => t.enabled === false)).toBe(true);
+  it('5. (A2.4.2) only the SEO Generator is enabled; every other CTA stays disabled and reads "En preparación"', () => {
+    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo']);
+    expect(TOOLS.find((t) => t.id === 'seo')).toMatchObject({ enabled: true, path: '/herramientas/seo' });
     expect(page).toContain("cta: 'En preparación'");
     expect(page).toMatch(/<button[\s\S]*?disabled[\s\S]*?\{l\.cta\}/);
     expect(page).not.toMatch(/onClick|navigate\(|<a\s|href=|Probar/);

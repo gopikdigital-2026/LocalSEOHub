@@ -2,6 +2,7 @@ export type ToolId = 'seo' | 'maps' | 'twin' | 'radar' | 'geo' | 'advisor' | 'vo
 
 // Internal audit status (A2.4.1). Never rendered in the UI.
 export type ToolRecoveryStatus =
+  | 'ACTIVE'
   | 'READY_FOR_SAFE_RECOVERY'
   | 'PARTIAL'
   | 'REQUIRES_REBUILD'
@@ -12,22 +13,24 @@ export type ToolDataKind = 'business_ai' | 'sources' | 'available_data' | 'user_
 
 type Copy = { name: string; description: string; indicator: string };
 
-export interface ToolDefinition {
+interface ToolBase {
   id: ToolId;
   dataKind: ToolDataKind;
   recoveryStatus: ToolRecoveryStatus;
   legacyFunction: string | null;
-  enabled: false;
   copy: { es: Copy; en: Copy };
 }
+
+export type ToolDefinition = ToolBase & ({ enabled: true; path: string } | { enabled: false; path?: never });
 
 export const TOOLS: readonly ToolDefinition[] = [
   {
     id: 'seo',
     dataKind: 'business_ai',
-    recoveryStatus: 'REQUIRES_REBUILD',
+    recoveryStatus: 'ACTIVE',
     legacyFunction: 'generate-seo',
-    enabled: false,
+    enabled: true,
+    path: '/herramientas/seo',
     copy: {
       es: {
         name: 'Generador SEO',

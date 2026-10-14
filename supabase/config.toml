@@ -78,3 +78,6 @@ verify_jwt = true
 
 [functions.business-improvement]
 verify_jwt = true
+
+[functions.seo-generator-v2]
+verify_jwt = true

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  FileText, MapPin, Layers, Radar, Globe, MessageSquare, Mic, Clock, Info,
+  ArrowRight, CheckCircle2, FileText, MapPin, Layers, Radar, Globe, MessageSquare, Mic, Clock, Info,
   Sparkles, Database, BarChart3, UserCheck, Gauge, FlaskConical,
 } from 'lucide-react';
 import { useI18n } from '../../lib/i18n';
@@ -13,7 +14,9 @@ const L = {
     notice: 'Las herramientas utilizan la información disponible de tu negocio. Cuando un resultado sea una estimación o una simulación, te lo indicaremos claramente.',
     status: 'Aún no disponible',
     cta: 'En preparación',
-    listLabel: 'Herramientas disponibles próximamente',
+    availableStatus: 'Disponible',
+    openCta: 'Abrir herramienta',
+    listLabel: 'Herramientas',
   },
   en: {
     title: 'Tools',
@@ -21,7 +24,9 @@ const L = {
     notice: 'Tools use the information available about your business. When a result is an estimate or a simulation, we will tell you clearly.',
     status: 'Not available yet',
     cta: 'In preparation',
-    listLabel: 'Tools coming soon',
+    availableStatus: 'Available',
+    openCta: 'Open tool',
+    listLabel: 'Tools',
   },
 } as const;
 
@@ -74,10 +79,17 @@ export default function ToolsPage() {
                 <div className="w-10 h-10 rounded-v2-lg bg-v2-primary-50 text-v2-primary-600 flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
                   {TOOL_ICONS[tool.id]}
                 </div>
-                <span className="inline-flex items-center gap-1 rounded-full bg-v2-neutral-100 px-2 py-0.5 text-[11px] font-medium text-v2-text-secondary">
-                  <Clock size={11} />
-                  {l.status}
-                </span>
+                {tool.enabled ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-v2-success-50 px-2 py-0.5 text-[11px] font-medium text-v2-success-700">
+                    <CheckCircle2 size={11} />
+                    {l.availableStatus}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-v2-neutral-100 px-2 py-0.5 text-[11px] font-medium text-v2-text-secondary">
+                    <Clock size={11} />
+                    {l.status}
+                  </span>
+                )}
               </div>
 
               <h2 className="mt-4 text-v2-base font-semibold text-v2-text-primary">{copy.name}</h2>
@@ -88,14 +100,25 @@ export default function ToolsPage() {
                 {copy.indicator}
               </p>
 
-              <button
-                type="button"
-                disabled
-                aria-disabled="true"
-                className="mt-4 w-full rounded-v2-lg border border-v2-border-light bg-v2-neutral-50 px-4 py-2.5 text-v2-sm font-medium text-v2-text-tertiary cursor-not-allowed"
-              >
-                {l.cta}
-              </button>
+              {tool.enabled ? (
+                <Link
+                  to={tool.path}
+                  data-testid="tool-open"
+                  className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-v2-lg bg-v2-primary-600 px-4 py-2.5 text-v2-sm font-semibold text-white transition-colors hover:bg-v2-primary-700"
+                >
+                  {l.openCta}
+                  <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="mt-4 w-full rounded-v2-lg border border-v2-border-light bg-v2-neutral-50 px-4 py-2.5 text-v2-sm font-medium text-v2-text-tertiary cursor-not-allowed"
+                >
+                  {l.cta}
+                </button>
+              )}
             </li>
           );
         })}

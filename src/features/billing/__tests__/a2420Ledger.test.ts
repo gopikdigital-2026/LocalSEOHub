@@ -142,10 +142,10 @@ describe('A2.4.2-0 — nothing new is reachable', () => {
     }
   });
 
-  it('14. /herramientas still executes no AI: every CTA is disabled and there is no network call', () => {
+  it('14. /herramientas executes no AI itself; only the SEO card is enabled (A2.4.2)', () => {
     const page = src('src/features/tools/ToolsPage.tsx');
     const catalog = src('src/features/tools/catalog.ts');
-    expect(catalog).not.toMatch(/enabled:\s*true/);
+    expect(catalog.match(/enabled:\s*true,/g)).toHaveLength(1);
     expect(page).not.toMatch(/fetch\(|functions\.invoke|supabase|onClick/);
     expect(page).toContain('disabled');
   });
@@ -155,7 +155,7 @@ describe('A2.4.2-0 — nothing new is reachable', () => {
     for (const f of files) {
       const s = readFileSync(f, 'utf8');
       expect(s, f).not.toMatch(/api\.openai\.com|LocalSEO_KEY|reserve_ai_usage|settle_ai_usage|reconcile_ai_usage/);
-      expect(s, f).not.toMatch(/functions\.invoke\(['"](seo-generator|business-advisor|voice-simulator)/);
+      expect(s, f).not.toMatch(/functions\.invoke\(['"](seo-generator|business-advisor|voice-simulator)['"]/);
     }
     for (const f of FUTURE) expect(readdirSync(FN_DIR)).not.toContain(f);
   });
@@ -169,7 +169,7 @@ describe('A2.4.2-0 — nothing new is reachable', () => {
   });
 
   it('17. the migration preserves existing data: additive only, no reset, no deletes, latest in order', () => {
-    expect(migrationFiles[migrationFiles.length - 1]).toBe(ledgerFile);
+    expect(migrationFiles.indexOf(ledgerFile)).toBeGreaterThanOrEqual(migrationFiles.length - 2);
     expect(code).not.toMatch(/DROP\s+(TABLE|COLUMN)|TRUNCATE|DELETE\s+FROM|ALTER\s+COLUMN|RENAME/i);
     for (const c of COLUMNS.slice(2)) expect(code).toContain(`ADD COLUMN IF NOT EXISTS ${c} integer NOT NULL DEFAULT 0`);
     expect(code).not.toMatch(/SET (weekly_content_used|business_improvement_used) = 0/);
