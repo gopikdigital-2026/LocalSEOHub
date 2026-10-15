@@ -143,11 +143,11 @@ describe('A2.4.3 AI Business Advisor', () => {
     expect(app.match(/path="\/herramientas\/advisor"/g)).toHaveLength(1);
   });
 
-  it('2-4. Advisor and SEO are available, the remaining tools stay blocked (Maps released in A2.4.4, GEO in A2.4.5)', () => {
+  it('2-4. Advisor and SEO are available, the remaining tools stay blocked (Maps released in A2.4.4, GEO in A2.4.5, Twin in A2.4.6)', () => {
     expect(TOOLS.find((t) => t.id === 'advisor')).toMatchObject({ enabled: true, path: '/herramientas/advisor' });
     expect(TOOLS.find((t) => t.id === 'seo')).toMatchObject({ enabled: true, path: '/herramientas/seo' });
-    const others = TOOLS.filter((t) => !['seo', 'advisor', 'maps', 'geo'].includes(t.id));
-    expect(others).toHaveLength(3);
+    const others = TOOLS.filter((t) => !['seo', 'advisor', 'maps', 'geo', 'twin'].includes(t.id));
+    expect(others).toHaveLength(2);
     expect(others.every((t) => t.enabled === false && !t.path)).toBe(true);
   });
 

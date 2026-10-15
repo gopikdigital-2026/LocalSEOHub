@@ -67,9 +67,10 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: 'twin',
     dataKind: 'available_data',
-    recoveryStatus: 'NO_IMPLEMENTATION_FOUND',
+    recoveryStatus: 'ACTIVE',
     legacyFunction: null,
-    enabled: false,
+    enabled: true,
+    path: '/herramientas/twin',
     copy: {
       es: {
         name: 'AI Digital Twin',

@@ -142,10 +142,10 @@ describe('A2.4.2-0 — nothing new is reachable', () => {
     }
   });
 
-  it('14. /herramientas executes no AI itself; only the SEO, Maps, GEO and Advisor cards are enabled (A2.4.5)', () => {
+  it('14. /herramientas executes no AI itself; only the SEO, Maps, Twin, GEO and Advisor cards are enabled (A2.4.6)', () => {
     const page = src('src/features/tools/ToolsPage.tsx');
     const catalog = src('src/features/tools/catalog.ts');
-    expect(catalog.match(/enabled:\s*true,/g)).toHaveLength(4);
+    expect(catalog.match(/enabled:\s*true,/g)).toHaveLength(5);
     expect(page).not.toMatch(/fetch\(|functions\.invoke|supabase|onClick/);
     expect(page).toContain('disabled');
   });
