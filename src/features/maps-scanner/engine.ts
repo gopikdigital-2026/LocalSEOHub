@@ -104,13 +104,13 @@ const PRIORITY_ORDER: Array<{ id: PriorityId; cta: string }> = [
 
 export const MAX_PRIORITIES = 5;
 
-const text = (v: unknown, max = 300) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
-const digits = (s: string) => s.replace(/\D/g, '');
-const host = (s: string) => s.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[/?#]/)[0];
-const validPhone = (s: string) => digits(s).length >= 7;
-const validWebsite = (s: string) => /^(https?:\/\/)?[^\s/.]+(\.[^\s/.]+)+(\/\S*)?$/i.test(s);
+export const text = (v: unknown, max = 300) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
+export const digits = (s: string) => s.replace(/\D/g, '');
+export const host = (s: string) => s.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[/?#]/)[0];
+export const validPhone = (s: string) => digits(s).length >= 7;
+export const validWebsite = (s: string) => /^(https?:\/\/)?[^\s/.]+(\.[^\s/.]+)+(\/\S*)?$/i.test(s);
 
-function serviceList(v: unknown): string[] {
+export function serviceList(v: unknown): string[] {
   return Array.isArray(v) ? [...new Set(v.map((s) => text(s, 80)).filter(Boolean))] : [];
 }
 

@@ -105,9 +105,10 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: 'geo',
     dataKind: 'estimate',
-    recoveryStatus: 'BLOCKED',
+    recoveryStatus: 'ACTIVE',
     legacyFunction: 'generate-geo-audit',
-    enabled: false,
+    enabled: true,
+    path: '/herramientas/geo',
     copy: {
       es: {
         name: 'GEO Audit',

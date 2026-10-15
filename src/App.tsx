@@ -25,6 +25,7 @@ const ToolsPage = lazy(() => import('./features/tools/ToolsPage'));
 const SeoGeneratorPage = lazy(() => import('./features/seo-generator/SeoGeneratorPage'));
 const AdvisorPage = lazy(() => import('./features/business-advisor/AdvisorPage'));
 const MapsScannerPage = lazy(() => import('./features/maps-scanner/MapsScannerPage'));
+const GeoAuditPage = lazy(() => import('./features/geo-audit/GeoAuditPage'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
@@ -170,6 +171,7 @@ export default function App({ initialRecoveryLink = null }: { initialRecoveryLin
           <Route path="/herramientas/seo" element={<SeoGeneratorPage />} />
           <Route path="/herramientas/advisor" element={<AdvisorPage />} />
           <Route path="/herramientas/maps" element={<MapsScannerPage />} />
+          <Route path="/herramientas/geo" element={<GeoAuditPage />} />
           <Route path="/informes" element={<WeeklySummaryPage />} />
           <Route path="/negocio" element={<BusinessProfilePage />} />
           <Route path="/negocio/objetivos" element={<BusinessGoalsPage />} />
