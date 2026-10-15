@@ -84,3 +84,6 @@ verify_jwt = true
 
 [functions.business-advisor-v2]
 verify_jwt = true
+
+[functions.competitor-radar-v2]
+verify_jwt = true

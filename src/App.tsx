@@ -27,6 +27,7 @@ const AdvisorPage = lazy(() => import('./features/business-advisor/AdvisorPage')
 const MapsScannerPage = lazy(() => import('./features/maps-scanner/MapsScannerPage'));
 const GeoAuditPage = lazy(() => import('./features/geo-audit/GeoAuditPage'));
 const DigitalTwinPage = lazy(() => import('./features/digital-twin/DigitalTwinPage'));
+const CompetitorRadarPage = lazy(() => import('./features/competitor-radar/CompetitorRadarPage'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
@@ -174,6 +175,7 @@ export default function App({ initialRecoveryLink = null }: { initialRecoveryLin
           <Route path="/herramientas/maps" element={<MapsScannerPage />} />
           <Route path="/herramientas/geo" element={<GeoAuditPage />} />
           <Route path="/herramientas/twin" element={<DigitalTwinPage />} />
+          <Route path="/herramientas/radar" element={<CompetitorRadarPage />} />
           <Route path="/informes" element={<WeeklySummaryPage />} />
           <Route path="/negocio" element={<BusinessProfilePage />} />
           <Route path="/negocio/objetivos" element={<BusinessGoalsPage />} />

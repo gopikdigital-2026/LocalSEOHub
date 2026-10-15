@@ -19,9 +19,9 @@ type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 const FN_DIR = join(__dirname, '../../../../supabase/functions');
 const CORS = { 'Access-Control-Allow-Origin': '*' };
 
-const PREMIUM_FUNCTIONS = ['analyze-website', 'seo-generator-v2', 'business-advisor-v2'];
+const PREMIUM_FUNCTIONS = ['analyze-website', 'seo-generator-v2', 'business-advisor-v2', 'competitor-radar-v2'];
 
-const ENTITLEMENT_COPIES = ['analyze-website', 'weekly-content', 'business-improvement', 'seo-generator-v2', 'business-advisor-v2'];
+const ENTITLEMENT_COPIES = ['analyze-website', 'weekly-content', 'business-improvement', 'seo-generator-v2', 'business-advisor-v2', 'competitor-radar-v2'];
 
 const RETIRED_FUNCTIONS = [
   'analyze-competitor-url', 'audit-maps-profile', 'audit-reviews',

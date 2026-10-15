@@ -87,9 +87,10 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: 'radar',
     dataKind: 'user_input',
-    recoveryStatus: 'BLOCKED',
+    recoveryStatus: 'ACTIVE',
     legacyFunction: 'analyze-competitor-url',
-    enabled: false,
+    enabled: true,
+    path: '/herramientas/radar',
     copy: {
       es: {
         name: 'Competitor Radar',

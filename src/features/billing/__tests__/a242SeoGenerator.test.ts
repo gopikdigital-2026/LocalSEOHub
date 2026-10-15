@@ -125,9 +125,9 @@ describe('A2.4.2 SEO Generator', () => {
     expect(hub).toMatch(/<Link\s+to=\{tool\.path\}/);
   });
 
-  it('3. the tools not yet released remain blocked (Advisor released in A2.4.3, Maps in A2.4.4, GEO in A2.4.5, Twin in A2.4.6)', () => {
-    const others = TOOLS.filter((t) => !['seo', 'advisor', 'maps', 'geo', 'twin'].includes(t.id));
-    expect(others).toHaveLength(2);
+  it('3. the tools not yet released remain blocked (Advisor released in A2.4.3, Maps in A2.4.4, GEO in A2.4.5, Twin in A2.4.6, Radar in A2.4.7)', () => {
+    const others = TOOLS.filter((t) => !['seo', 'advisor', 'maps', 'geo', 'twin', 'radar'].includes(t.id));
+    expect(others).toHaveLength(1);
     expect(others.every((t) => t.enabled === false)).toBe(true);
   });
 
