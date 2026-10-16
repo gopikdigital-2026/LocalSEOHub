@@ -147,18 +147,19 @@ export const TOOLS: readonly ToolDefinition[] = [
   {
     id: 'voice',
     dataKind: 'simulation',
-    recoveryStatus: 'REQUIRES_REBUILD',
+    recoveryStatus: 'ACTIVE',
     legacyFunction: 'generate-voice-script',
-    enabled: false,
+    enabled: true,
+    path: '/herramientas/voice',
     copy: {
       es: {
         name: 'Voice Simulator',
-        description: 'Prepara guiones y respuestas para conversaciones habituales con tus clientes.',
+        description: 'Simula conversaciones con clientes y practica respuestas adaptadas a tu negocio.',
         indicator: 'Simulación generada con IA',
       },
       en: {
         name: 'Voice Simulator',
-        description: 'Prepare scripts and answers for common conversations with your customers.',
+        description: 'Simulate customer conversations and practise replies tailored to your business.',
         indicator: 'AI-generated simulation',
       },
     },

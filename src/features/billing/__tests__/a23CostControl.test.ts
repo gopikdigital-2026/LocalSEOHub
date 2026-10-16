@@ -337,7 +337,7 @@ describe('A2.3 — §9 Regression checks', () => {
         if (indexSrc.includes('openai.com') || indexSrc.includes('chat/completions')) aiCallers.push(d);
       } catch { /* no index.ts */ }
     }
-    expect(aiCallers.sort()).toEqual(['business-advisor-v2', 'business-improvement', 'seo-generator-v2', 'weekly-content']);
+    expect(aiCallers.sort()).toEqual(['business-advisor-v2', 'business-improvement', 'seo-generator-v2', 'voice-simulator-v2', 'weekly-content']);
   });
 });
 

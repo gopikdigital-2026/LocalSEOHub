@@ -76,16 +76,16 @@ describe('A2.4.6 AI Digital Twin', () => {
     },
   );
 
-  it.each(['voice'])('8. %s stays blocked', (id) => {
+  it.each(['voice'])('8. %s is released in A2.4.8', (id) => {
     const tool = TOOLS.find((t) => t.id === id)!;
-    expect(tool.enabled).toBe(false);
-    expect(tool.path).toBeUndefined();
-    expect(app).not.toContain(`/herramientas/${id}`);
+    expect(tool.enabled).toBe(true);
+    expect(tool.path).toBe(`/herramientas/${id}`);
+    expect(app).toContain(`/herramientas/${id}`);
     expect(twinSrc).not.toContain(`/herramientas/${id}`);
   });
 
-  it('enabled tools are exactly seo, maps, twin, radar, geo and advisor (A2.4.7)', () => {
-    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor']);
+  it('enabled tools are exactly seo, maps, twin, radar, geo, advisor and voice (A2.4.8)', () => {
+    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice']);
   });
 
   it('9-10. no AI call and no ledger use', () => {

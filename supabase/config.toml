@@ -87,3 +87,6 @@ verify_jwt = true
 
 [functions.competitor-radar-v2]
 verify_jwt = true
+
+[functions.voice-simulator-v2]
+verify_jwt = true

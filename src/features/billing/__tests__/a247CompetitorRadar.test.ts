@@ -382,12 +382,12 @@ describe('A2.4.7 Competitor Radar — functional (29-78)', () => {
     expect(app).toContain(`path="/herramientas/${id}"`);
   });
 
-  it('37. Voice stays blocked', () => {
+  it('37. Voice is released in A2.4.8', () => {
     const voice = TOOLS.find((t) => t.id === 'voice')!;
-    expect(voice.enabled).toBe(false);
-    expect(voice.path).toBeUndefined();
-    expect(app).not.toContain('/herramientas/voice');
-    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor']);
+    expect(voice.enabled).toBe(true);
+    expect(voice.path).toBe('/herramientas/voice');
+    expect(app).toContain('/herramientas/voice');
+    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice']);
   });
 
   it('38. legacy analyze-competitor-url is untouched and still answers 410', () => {

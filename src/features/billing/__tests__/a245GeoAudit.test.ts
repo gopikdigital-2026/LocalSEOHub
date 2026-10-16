@@ -78,12 +78,10 @@ describe('A2.4.5 GEO Audit', () => {
     expect(TOOLS.find((t) => t.id === 'advisor')).toMatchObject({ enabled: true, path: '/herramientas/advisor' });
   });
 
-  it('6. Voice stays blocked (Twin released in A2.4.6, Radar in A2.4.7)', () => {
-    const blocked = TOOLS.filter((t) => ['voice'].includes(t.id));
-    expect(blocked).toHaveLength(1);
-    expect(blocked.every((t) => t.enabled === false && !t.path)).toBe(true);
-    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor']);
-    expect(app).not.toMatch(/herramientas\/voice/);
+  it('6. Voice is released in A2.4.8 (Twin A2.4.6, Radar A2.4.7)', () => {
+    expect(TOOLS.find((t) => t.id === 'voice')).toMatchObject({ enabled: true, path: '/herramientas/voice' });
+    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice']);
+    expect(app).toMatch(/herramientas\/voice/);
   });
 
   it('7. legacy generate-geo-audit still answers 410; no new function or migration was added', () => {
