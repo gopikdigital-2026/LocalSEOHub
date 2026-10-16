@@ -40,7 +40,8 @@ Deno.serve(async (req: Request) => {
 
       const googleError = url.searchParams.get("error");
       if (googleError) {
-        return redirectWithError(`Google denego el acceso: ${googleError}`);
+        console.error("[gbp-oauth-callback] Google returned an authorization error");
+        return redirectWithError("Google denego el acceso. Vuelve a intentarlo desde Fuentes.");
       }
     } else {
       try {

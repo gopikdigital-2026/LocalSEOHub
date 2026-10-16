@@ -25,10 +25,17 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { accountId, locationId, businessId } = await req.json();
-    if (!accountId || !locationId) {
+    const { accountId, locationId: rawLocationId, businessId } = await req.json();
+    const locMatch = typeof rawLocationId === "string"
+      ? /^(?:accounts\/[A-Za-z0-9_-]{1,64}\/)?(locations\/[A-Za-z0-9_-]{1,64})$/.exec(rawLocationId)
+      : null;
+    const locationId = locMatch?.[1];
+    if (
+      typeof accountId !== "string" || !/^accounts\/[A-Za-z0-9_-]{1,64}$/.test(accountId) ||
+      !locationId || locationId === "locations/default"
+    ) {
       return new Response(
-        JSON.stringify({ error: "accountId y locationId requeridos" }),
+        JSON.stringify({ success: false, error: "accountId y locationId requeridos" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -123,6 +130,17 @@ Deno.serve(async (req: Request) => {
         hours: loc.regularHours?.periods ?? null,
       };
       recordCount = Object.values(profile).filter(Boolean).length;
+    } else {
+      console.error("[gbp-sync] location fetch failed:", locationResponse.status);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: locationResponse.status === 401
+            ? "La sesion de Google ha caducado. Vuelve a conectar Google Business Profile."
+            : "No se pudo leer la ficha de Google. Intentalo de nuevo.",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Fetch reviews count
@@ -144,12 +162,36 @@ Deno.serve(async (req: Request) => {
       // Reviews API not available — non-fatal
     }
 
+    // Only this server-side write may mark Google data as verified; clients cannot write these columns.
+    const syncedAt = new Date().toISOString();
+    const { error: persistError } = await supabaseAdmin
+      .from("connected_sources")
+      .update({
+        verified_profile: profile,
+        verified_at: syncedAt,
+        last_sync_at: syncedAt,
+        external_account_id: accountId,
+        external_location_id: locationId,
+      })
+      .eq("user_id", user.id)
+      .eq("business_id", business.id)
+      .eq("source_type", "google_business");
+
+    if (persistError) {
+      console.error("[gbp-sync] persist failed:", persistError.code);
+      return new Response(
+        JSON.stringify({ success: false, error: "No se pudo guardar la sincronizacion" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         profile,
         recordCount,
         reviewCount,
+        verifiedAt: syncedAt,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -56,7 +56,7 @@ export function sourceDisplayStatus(
 
   if (entry.dependsOn) {
     if (parent?.status === 'error' || parent?.status === 'permissions_required') return 'unavailable';
-    if (parent?.status !== 'connected') return 'pending';
+    if (parent?.status !== 'connected' || !parent.verified_at) return 'pending';
     return source?.status === 'connected' ? 'verified' : 'pending';
   }
 
@@ -64,7 +64,8 @@ export function sourceDisplayStatus(
     case 'connected':
       if (entry.id === 'manual') return 'declared';
       if (entry.id === 'website') return 'analyzed';
-      return 'verified';
+      // A client-written 'connected' status is not proof; only a server-side sync is.
+      return source.verified_at ? 'verified' : 'in_progress';
     case 'error': return 'error';
     case 'connecting':
     case 'syncing': return 'in_progress';

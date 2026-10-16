@@ -79,10 +79,11 @@ describe('FIX 06.1 · Google and reviews', () => {
 });
 
 describe('FIX 06.1 · source states shown in /fuentes', () => {
-  const row = (source_type: SourceType, status: SourceStatus, metadata: Record<string, unknown> = {}): ConnectedSource => ({
+  const row = (source_type: SourceType, status: SourceStatus, metadata: Record<string, unknown> = {}, verified_at: string | null = null): ConnectedSource => ({
     id: source_type, user_id: 'u', business_id: 'b', source_type, status, external_account_id: null, external_location_id: null,
-    token_expires_at: null, last_sync_at: null, last_error: null, metadata, created_at: '', updated_at: '',
+    token_expires_at: null, last_sync_at: null, last_error: null, metadata, verified_profile: null, verified_at, created_at: '', updated_at: '',
   });
+  const SYNCED = '2026-10-10T09:30:00.000Z';
   const entry = (id: SourceType) => getSourceEntry(id)!;
 
   it('reviews depend on Google and are never independently connectable', () => {
@@ -91,11 +92,13 @@ describe('FIX 06.1 · source states shown in /fuentes', () => {
     expect(sourceDisplayStatus(entry('reviews'), row('reviews', 'connected'), undefined)).toBe('pending');
     expect(sourceDisplayStatus(entry('reviews'), row('reviews', 'connected'), row('google_business', 'error'))).toBe('unavailable');
     expect(sourceDisplayStatus(entry('reviews'), undefined, row('google_business', 'connected'))).toBe('pending');
-    expect(sourceDisplayStatus(entry('reviews'), row('reviews', 'connected'), row('google_business', 'connected'))).toBe('verified');
+    expect(sourceDisplayStatus(entry('reviews'), row('reviews', 'connected'), row('google_business', 'connected', {}, SYNCED))).toBe('verified');
+    expect(sourceDisplayStatus(entry('reviews'), row('reviews', 'connected'), row('google_business', 'connected'))).toBe('pending');
   });
 
   it('distinguishes verified, analysed, declared, pending, error and not available', () => {
-    expect(sourceDisplayStatus(entry('google_business'), row('google_business', 'connected'), undefined)).toBe('verified');
+    expect(sourceDisplayStatus(entry('google_business'), row('google_business', 'connected', {}, SYNCED), undefined)).toBe('verified');
+    expect(sourceDisplayStatus(entry('google_business'), row('google_business', 'connected'), undefined)).toBe('in_progress');
     expect(sourceDisplayStatus(entry('google_business'), row('google_business', 'error'), undefined)).toBe('error');
     expect(sourceDisplayStatus(entry('google_business'), undefined, undefined)).toBe('pending');
     expect(sourceDisplayStatus(entry('website'), row('website', 'connected'), undefined)).toBe('analyzed');

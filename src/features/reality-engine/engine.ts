@@ -162,7 +162,7 @@ export async function selectGBPLocation(
 
   await addSyncEvent(source.id, 'google_business', 'source_sync_started', `Sincronizando ${locationName}`);
 
-  const { data, error } = await invokeEdge<{ success: boolean; error?: string; profile?: Record<string, unknown>; recordCount?: number; reviewCount?: number }>(
+  const { data, error } = await invokeEdge<{ success: boolean; error?: string; profile?: Record<string, unknown>; recordCount?: number; reviewCount?: number; verifiedAt?: string }>(
     'gbp-sync',
     { accountId, locationId, businessId }
   );
@@ -179,9 +179,8 @@ export async function selectGBPLocation(
 
   await upsertSource('google_business', {
     status: 'connected',
-    last_sync_at: new Date().toISOString(),
     last_error: null,
-    metadata: { locationName, ...(data.profile ?? {}) },
+    metadata: { locationName },
   }, businessId);
 
   const recordCount = data.recordCount ?? 0;
@@ -191,7 +190,7 @@ export async function selectGBPLocation(
     status: 'connected',
     external_account_id: accountId,
     external_location_id: locationId,
-    last_sync_at: new Date().toISOString(),
+    last_sync_at: data.verifiedAt ?? null,
     last_error: null,
     metadata: { linkedToGBP: true, reviewCount: data.reviewCount ?? 0 },
   }, businessId);

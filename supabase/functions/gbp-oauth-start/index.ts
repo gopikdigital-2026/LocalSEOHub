@@ -141,8 +141,8 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Error interno";
-    return new Response(JSON.stringify({ error: msg }), {
+    console.error("[gbp-oauth-start] unhandled error:", err instanceof Error ? err.name : "unknown");
+    return new Response(JSON.stringify({ error: "Error interno al iniciar la conexion" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

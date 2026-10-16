@@ -32,6 +32,9 @@ export interface ConnectedSource {
   last_sync_at: string | null;
   last_error: string | null;
   metadata: Record<string, unknown>;
+  /** Written only by gbp-sync (service role); the sole basis for "verified by Google". */
+  verified_profile: Record<string, unknown> | null;
+  verified_at: string | null;
   created_at: string;
   updated_at: string;
 }

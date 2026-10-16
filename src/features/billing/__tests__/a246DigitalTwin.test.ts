@@ -42,8 +42,8 @@ const A: TwinProfileInput = {
 const B: TwinProfileInput = { name: 'Taller Ruiz', category: 'Taller mecánico', city: '', services: [], primary_goal: null, secondary_goals: [] };
 // C: complete profile + GBP row as written after gbp-sync.
 const C_ROW = {
-  status: 'connected', last_sync_at: '2026-10-10T09:30:00.000Z',
-  metadata: { locationName: 'locations/123', name: 'Gopik.Digital', category: 'Agencia de marketing', address: 'Calle Mayor 1, Marbella', phone: '+34 600 123 456' },
+  status: 'connected', verified_at: '2026-10-10T09:30:00.000Z',
+  verified_profile: { locationName: 'locations/123', name: 'Gopik.Digital', category: 'Agencia de marketing', address: 'Calle Mayor 1, Marbella', phone: '+34 600 123 456' },
 };
 const C: TwinProfileInput = { ...A, schedule: 'L-V 9:00-18:00' };
 // D: minimal.
@@ -52,7 +52,7 @@ const D: TwinProfileInput = { name: '', category: '', city: '', services: [] };
 const PROD: TwinProfileInput = { name: 'Negocio', category: 'Peluquería', city: 'Madrid', phone: '', website: '', schedule: '', services: [], target_audience: '', primary_goal: 'more_bookings', secondary_goals: [] };
 
 const ALL: TwinProfileInput[] = [A, B, C, D, PROD];
-const SNAPS: GbpSnapshot[] = [NO_GBP, normalizeGbp(C_ROW), normalizeGbp({ status: 'error' }), normalizeGbp({ status: 'connected', last_sync_at: null, metadata: {} })];
+const SNAPS: GbpSnapshot[] = [NO_GBP, normalizeGbp(C_ROW), normalizeGbp({ status: 'error' }), normalizeGbp({ status: 'connected', verified_at: null, verified_profile: {} })];
 const allText = JSON.stringify(COPY);
 const field = (p: TwinProfileInput, g: GbpSnapshot, id: string) => buildDigitalTwin(p, g).fields.find((f) => f.id === id)!;
 
@@ -140,7 +140,7 @@ describe('A2.4.6 AI Digital Twin', () => {
 
   it('18. GBP is verified only with a connected and synced row', () => {
     expect(field(C, normalizeGbp(C_ROW), 'gbp')).toMatchObject({ state: 'known', provenance: 'verified' });
-    expect(field(C, normalizeGbp({ status: 'connected', last_sync_at: null, metadata: {} }), 'gbp')).toMatchObject({ state: 'partial', provenance: 'detected' });
+    expect(field(C, normalizeGbp({ status: 'connected', verified_at: null, verified_profile: {} }), 'gbp')).toMatchObject({ state: 'partial', provenance: 'detected' });
     expect(field(C, normalizeGbp({ ...C_ROW, status: 'error' }), 'gbp')).toMatchObject({ state: 'missing', provenance: 'unchecked' });
     expect(field(C, normalizeGbp({ ...C_ROW, status: 'disconnected' }), 'gbp')).toMatchObject({ state: 'missing', provenance: 'unchecked' });
     expect(buildDigitalTwin(C, NO_GBP).values).toMatchObject({ gbpAddress: null, gbpCategory: null });
@@ -212,7 +212,7 @@ describe('A2.4.6 AI Digital Twin', () => {
     expect(buildDigitalTwin(A, NO_GBP).priorities.map((p) => p.id)).toEqual(['add_hours', 'connect_gbp']);
     expect(buildDigitalTwin(C, normalizeGbp(C_ROW)).priorities).toEqual([{ id: 'keep_updated', cta: '/negocio' }]);
     expect(buildDigitalTwin(C, normalizeGbp({ status: 'error' })).priorities.map((p) => p.id)).toEqual(['fix_gbp']);
-    expect(buildDigitalTwin(C, normalizeGbp({ status: 'connected', last_sync_at: null })).priorities.map((p) => p.id)).toEqual(['sync_gbp']);
+    expect(buildDigitalTwin(C, normalizeGbp({ status: 'connected', verified_at: null })).priorities.map((p) => p.id)).toEqual(['sync_gbp']);
     for (const p of ALL) for (const g of SNAPS) {
       const n = buildDigitalTwin(p, g).priorities.length;
       expect(n).toBeGreaterThanOrEqual(1);

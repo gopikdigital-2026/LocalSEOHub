@@ -37,8 +37,8 @@ const B: ProfileInput = { name: 'Taller Ruiz', category: 'Taller mecánico', cit
 // Fixture C: real GBP row shape written after gbp-sync.
 const C_ROW = {
   status: 'connected',
-  last_sync_at: '2026-10-10T09:30:00.000Z',
-  metadata: {
+  verified_at: '2026-10-10T09:30:00.000Z',
+  verified_profile: {
     locationName: 'locations/123', name: 'Gopik.Digital', category: 'Agencia de marketing', address: 'Calle Mayor 1, Marbella',
     phone: '+34 600 123 456', website: 'https://www.gopik.digital/', hours: [{ openDay: 'MONDAY' }], totalReviews: 12, averageRating: 4.6,
   },
@@ -175,7 +175,7 @@ describe('A2.4.4 Maps Profile Scanner', () => {
     expect(r.score).not.toBeNull();
     expect(r.gbpState).toBe('not_connected');
     expect(normalizeGbp(null).state).toBe('not_connected');
-    expect(normalizeGbp({ status: 'disconnected', metadata: {} }).state).toBe('not_connected');
+    expect(normalizeGbp({ status: 'disconnected', verified_profile: {} }).state).toBe('not_connected');
     expect(COPY.es.gbpNotConnected).toBe('Google Business Profile no está conectado.');
     expect(COPY.es.gbpNotConnectedBody).toBe('Puedes analizar la información disponible ahora y conectar Google para ampliar el diagnóstico.');
     expect(COPY.es.intro).toBe('Analizamos la información local disponible de tu negocio. Cuando Google Business Profile esté conectado, podremos comprobar más elementos.');
@@ -195,7 +195,7 @@ describe('A2.4.4 Maps Profile Scanner', () => {
     expect(c.every((x) => x.trust === 'verified')).toBe(true);
     expect(COPY.es.trust.verified).toBe('Verificado con Google');
     // Connected but never synced: nothing is verified.
-    const empty = normalizeGbp({ status: 'connected', last_sync_at: null, metadata: {} });
+    const empty = normalizeGbp({ status: 'connected', verified_at: null, verified_profile: {} });
     expect(empty).toEqual({ state: 'connected', lastSyncAt: null, data: null });
     expect(scan(C_PROFILE, empty).checks.filter((x) => x.source === 'google').every((x) => x.trust === 'unchecked')).toBe(true);
     // Disconnected rows with stale metadata are ignored.
@@ -285,7 +285,7 @@ describe('A2.4.4 Maps Profile Scanner', () => {
       expect(r.coverage).toBe(100);
       expect(r.score).toBe(100);
       expect(r.gbpState).toBe('connected');
-      const mismatch = scan(C_PROFILE, normalizeGbp({ ...C_ROW, metadata: { ...C_ROW.metadata, phone: '+34 999 000 111', totalReviews: 0 } }));
+      const mismatch = scan(C_PROFILE, normalizeGbp({ ...C_ROW, verified_profile: { ...C_ROW.verified_profile, phone: '+34 999 000 111', totalReviews: 0 } }));
       expect(mismatch.checks.find((c) => c.id === 'gbp_phone')).toMatchObject({ status: 'improve', detail: 'phone_mismatch' });
       expect(mismatch.priorities.map((p) => p.id)).toEqual(['align_phone', 'reviews']);
       expect(mismatch.score!).toBeLessThan(100);

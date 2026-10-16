@@ -114,13 +114,13 @@ export function serviceList(v: unknown): string[] {
   return Array.isArray(v) ? [...new Set(v.map((s) => text(s, 80)).filter(Boolean))] : [];
 }
 
-// Only keys that gbp-sync actually returns are read; anything else in metadata is ignored.
-export function normalizeGbp(row: { status?: unknown; last_sync_at?: unknown; metadata?: unknown } | null): GbpSnapshot {
+// Only the server-written snapshot from gbp-sync counts; client-writable metadata/last_sync_at are ignored.
+export function normalizeGbp(row: { status?: unknown; verified_at?: unknown; verified_profile?: unknown } | null): GbpSnapshot {
   if (!row) return { state: 'not_connected', lastSyncAt: null, data: null };
   if (row.status === 'error') return { state: 'error', lastSyncAt: null, data: null };
   if (row.status !== 'connected') return { state: 'not_connected', lastSyncAt: null, data: null };
-  const lastSyncAt = typeof row.last_sync_at === 'string' && !Number.isNaN(Date.parse(row.last_sync_at)) ? row.last_sync_at : null;
-  const m = row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata) ? row.metadata as Record<string, unknown> : {};
+  const lastSyncAt = typeof row.verified_at === 'string' && !Number.isNaN(Date.parse(row.verified_at)) ? row.verified_at : null;
+  const m = row.verified_profile && typeof row.verified_profile === 'object' && !Array.isArray(row.verified_profile) ? row.verified_profile as Record<string, unknown> : {};
   const data: GbpData = {};
   for (const k of ['name', 'category', 'address', 'phone', 'website'] as const) {
     const v = text(m[k]);

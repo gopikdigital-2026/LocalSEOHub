@@ -8,7 +8,7 @@ const STALE_CONNECTING_MS = 10 * 60 * 1000; // 10 minutes
 export async function loadSources(businessId: string): Promise<ConnectedSource[]> {
   const { data, error } = await supabase
     .from('connected_sources')
-    .select('id, user_id, business_id, source_type, status, external_account_id, external_location_id, token_expires_at, last_sync_at, last_error, metadata, created_at, updated_at')
+    .select('id, user_id, business_id, source_type, status, external_account_id, external_location_id, token_expires_at, last_sync_at, last_error, metadata, verified_profile, verified_at, created_at, updated_at')
     .eq('business_id', businessId)
     .order('created_at', { ascending: true });
 
@@ -53,7 +53,7 @@ export async function upsertSource(
       },
       { onConflict: 'user_id,business_id,source_type' }
     )
-    .select('id, user_id, business_id, source_type, status, external_account_id, external_location_id, token_expires_at, last_sync_at, last_error, metadata, created_at, updated_at')
+    .select('id, user_id, business_id, source_type, status, external_account_id, external_location_id, token_expires_at, last_sync_at, last_error, metadata, verified_profile, verified_at, created_at, updated_at')
     .single();
 
   if (error) {

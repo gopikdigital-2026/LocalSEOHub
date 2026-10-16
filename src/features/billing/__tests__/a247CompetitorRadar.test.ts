@@ -158,7 +158,7 @@ const PROFILE_A: RadarProfileInput = {
 };
 const PROFILE_B: RadarProfileInput = { name: 'Taller Ruiz', category: 'Taller mecánico', city: '', phone: '', website: '', services: [] };
 const NO_GBP: GbpSnapshot = { state: 'not_connected', lastSyncAt: null, data: null };
-const GBP_ROW = { status: 'connected', last_sync_at: '2026-10-10T09:30:00.000Z', metadata: { name: 'Gopik.Digital', phone: '+34 600 123 456' } };
+const GBP_ROW = { status: 'connected', verified_at: '2026-10-10T09:30:00.000Z', verified_profile: { name: 'Gopik.Digital', phone: '+34 600 123 456' } };
 
 async function analyse(page: string, own: OwnTerms = OWN): Promise<CompetitorAnalysis> {
   const r = await run('https://competidor.com/', site(() => html(page)), { own });
@@ -553,7 +553,7 @@ describe('A2.4.7 Competitor Radar — functional (29-78)', () => {
     expect(manual.rows.some((r) => r.yours.provenance === 'verified')).toBe(false);
     const synced = compareCompetitor(PROFILE_A, normalizeGbp(GBP_ROW), a);
     expect(synced.rows.filter((r) => r.yours.provenance === 'verified').map((r) => r.id)).toEqual(['gbp']);
-    const unsynced = compareCompetitor(PROFILE_A, normalizeGbp({ status: 'connected', last_sync_at: null, metadata: {} }), a);
+    const unsynced = compareCompetitor(PROFILE_A, normalizeGbp({ status: 'connected', verified_at: null, verified_profile: {} }), a);
     expect(unsynced.rows.find((r) => r.id === 'gbp')!.yours.provenance).toBe('detected');
   });
 

@@ -66,12 +66,11 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
           setError(null);
           return;
         }
-        const sources: SourceSnapshot[] = (await loadSources(currentBusiness.id)).map((s) => ({
-          sourceType: s.source_type,
-          status: s.status,
-          lastSyncAt: s.last_sync_at,
-          metadata: s.metadata ?? {},
-        }));
+        const sources: SourceSnapshot[] = (await loadSources(currentBusiness.id)).map((s) => (
+          s.source_type === 'google_business'
+            ? { sourceType: s.source_type, status: s.status, lastSyncAt: s.verified_at, metadata: s.verified_profile ?? {} }
+            : { sourceType: s.source_type, status: s.status, lastSyncAt: s.last_sync_at, metadata: s.metadata ?? {} }
+        ));
         const fp = fingerprint(currentBusiness.updated_at, sources);
         if (!force && fp === lastSynced.current) return;
         const result = await syncActions(currentBusiness, sources);

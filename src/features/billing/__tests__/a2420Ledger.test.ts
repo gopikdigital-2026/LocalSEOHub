@@ -169,7 +169,8 @@ describe('A2.4.2-0 — nothing new is reachable', () => {
   });
 
   it('17. the migration preserves existing data: additive only, no reset, no deletes, latest in order', () => {
-    expect(migrationFiles.indexOf(ledgerFile)).toBeGreaterThanOrEqual(migrationFiles.length - 4);
+    expect(migrationFiles.indexOf(ledgerFile)).toBeLessThan(migrationFiles.findIndex((f) => f.includes('a243_business_advisor_limits')));
+    expect(migrationFiles.indexOf(ledgerFile)).toBeGreaterThan(migrationFiles.findIndex((f) => f.includes('create_businesses')));
     expect(code).not.toMatch(/DROP\s+(TABLE|COLUMN)|TRUNCATE|DELETE\s+FROM|ALTER\s+COLUMN|RENAME/i);
     for (const c of COLUMNS.slice(2)) expect(code).toContain(`ADD COLUMN IF NOT EXISTS ${c} integer NOT NULL DEFAULT 0`);
     expect(code).not.toMatch(/SET (weekly_content_used|business_improvement_used) = 0/);

@@ -40,8 +40,8 @@ const B: GeoProfileInput = { name: 'Taller Ruiz', category: 'Taller mecánico', 
 // C: profile + GBP row shaped as written after gbp-sync.
 const C_ROW = {
   status: 'connected',
-  last_sync_at: '2026-10-10T09:30:00.000Z',
-  metadata: {
+  verified_at: '2026-10-10T09:30:00.000Z',
+  verified_profile: {
     locationName: 'locations/123', name: 'Gopik.Digital', category: 'Agencia de marketing', address: 'Calle Mayor 1, Marbella',
     phone: '+34 600 123 456', website: 'https://www.gopik.digital/', hours: [{ openDay: 'MONDAY' }], totalReviews: 12, averageRating: 4.6,
   },
@@ -223,7 +223,7 @@ describe('A2.4.5 GEO Audit', () => {
   it('29. Google data counts only when it comes from a connected and synced row', () => {
     const google = (g: GbpSnapshot) => geoAudit(C, g).criteria.filter((x) => x.source === 'google');
     expect(google(normalizeGbp(C_ROW)).every((x) => x.trust === 'verified')).toBe(true);
-    expect(google(normalizeGbp({ status: 'connected', last_sync_at: null, metadata: {} })).every((x) => x.status === 'unchecked')).toBe(true);
+    expect(google(normalizeGbp({ status: 'connected', verified_at: null, verified_profile: {} })).every((x) => x.status === 'unchecked')).toBe(true);
     expect(google(normalizeGbp({ ...C_ROW, status: 'disconnected' })).every((x) => x.status === 'unchecked')).toBe(true);
     expect(google(normalizeGbp({ ...C_ROW, status: 'error' })).every((x) => x.status === 'unchecked')).toBe(true);
     expect(geoAudit(C, normalizeGbp({ ...C_ROW, status: 'error' })).priorities[0].id).toBe('fix_gbp');
@@ -336,10 +336,10 @@ describe('A2.4.5 GEO Audit', () => {
       const r = geoAudit(C, normalizeGbp(C_ROW));
       expect(r.coverage).toBeGreaterThan(geoAudit(C, NO_GBP).coverage);
       expect(r.score).toBe(100);
-      const bad = geoAudit(C, normalizeGbp({ ...C_ROW, metadata: { ...C_ROW.metadata, phone: '+34 999 000 111', address: 'Calle Sol 2, Málaga' } }));
+      const bad = geoAudit(C, normalizeGbp({ ...C_ROW, verified_profile: { ...C_ROW.verified_profile, phone: '+34 999 000 111', address: 'Calle Sol 2, Málaga' } }));
       expect(bad.criteria.find((c) => c.id === 'consistency')).toMatchObject({ status: 'improve', detail: 'mismatch', mismatches: ['city', 'phone'] });
       expect(bad.priorities.map((p) => p.id)).toEqual(['align_sources']);
-      const nothing = geoAudit({ name: 'X Y', category: 'Bar', services: [] }, normalizeGbp({ ...C_ROW, metadata: { category: 'Bar' } }));
+      const nothing = geoAudit({ name: 'X Y', category: 'Bar', services: [] }, normalizeGbp({ ...C_ROW, verified_profile: { category: 'Bar' } }));
       expect(nothing.criteria.find((c) => c.id === 'consistency')).toMatchObject({ status: 'unchecked', detail: 'no_source' });
     });
 
