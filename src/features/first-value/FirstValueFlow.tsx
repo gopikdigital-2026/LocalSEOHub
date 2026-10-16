@@ -108,7 +108,12 @@ export default function FirstValueFlow() {
     try {
       // The goal step tells the user that finishing starts the free trial; the server only creates it once.
       const billingNow = billing.status ?? (await billing.refresh());
-      if (billingNow?.state === 'TRIAL_NOT_STARTED') await billing.startTrial();
+      if (billingNow?.state === 'TRIAL_NOT_STARTED') {
+        // An unconfirmed email must not block onboarding; Today then asks the user to confirm before the trial.
+        await billing.startTrial().catch((err: unknown) => {
+          if (!(err instanceof Error && err.message === 'email_not_verified')) throw err;
+        });
+      }
       const goal = s.selectedGoalId as GoalId;
       const completedAt = new Date().toISOString();
       const updated = await updateBusiness({

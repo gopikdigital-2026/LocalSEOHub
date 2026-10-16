@@ -177,7 +177,7 @@ describe('7. /reset-password route', () => {
 
   it('captures the link before the Supabase client clears the URL', () => {
     expect(mainSrc).toContain('const initialRecoveryLink = captureRecoveryLink(window.location.href);');
-    expect(mainSrc).toContain('<App initialRecoveryLink={initialRecoveryLink} />');
+    expect(mainSrc).toMatch(/<App initialRecoveryLink=\{initialRecoveryLink\}[^>]*\/>/);
   });
 
   it('sends a recovery link that landed on another page to /reset-password', () => {

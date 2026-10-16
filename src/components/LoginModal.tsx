@@ -5,6 +5,8 @@ import { trackCompleteRegistration } from '../lib/pixel';
 import { track } from '../lib/analytics';
 import { useI18n } from '../lib/i18n';
 import ForgotPasswordForm from '../features/password-reset/ForgotPasswordForm';
+import VerifyEmailPanel from '../features/email-verification/VerifyEmailPanel';
+import { isEmailNotConfirmed, type VerificationLinkProblem } from '../features/email-verification/verification';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -17,7 +19,11 @@ interface LoginModalProps {
   initialEmail?: string;
   /** Opens directly on the password-recovery form. */
   initialRecovering?: boolean;
+  /** A failed email-confirmation link that brought the user here. */
+  initialLinkProblem?: VerificationLinkProblem | null;
 }
+
+type Verifying = { reason: 'signup' | 'login' | 'link'; email: string } | null;
 
 type Mode = 'login' | 'signup';
 
@@ -30,9 +36,10 @@ function isAndroid(): boolean {
   return /Android/i.test(navigator.userAgent);
 }
 
-export default function LoginModal({ onClose, onSuccess, returnTo = null, initialMode = 'login', initialError = '', initialEmail = '', initialRecovering = false }: LoginModalProps) {
+export default function LoginModal({ onClose, onSuccess, returnTo = null, initialMode = 'login', initialError = '', initialEmail = '', initialRecovering = false, initialLinkProblem = null }: LoginModalProps) {
   const finish = onSuccess ?? onClose;
   const { t } = useI18n();
+  const [verifying, setVerifying] = useState<Verifying>(initialLinkProblem ? { reason: 'link', email: '' } : null);
   const [mode, setMode] = useState<Mode>(initialMode);
   const [recovering, setRecovering] = useState(initialRecovering);
   const [email, setEmail] = useState(initialEmail);
@@ -90,7 +97,7 @@ export default function LoginModal({ onClose, onSuccess, returnTo = null, initia
     });
     if (authError) {
       cleanup();
-      setError(translateError(authError.message));
+      setError(translateError(authError.message, t('auth_err_generic')));
       setGoogleLoading(false);
     }
   };
@@ -102,8 +109,10 @@ export default function LoginModal({ onClose, onSuccess, returnTo = null, initia
 
     if (mode === 'login') {
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-      if (authError) {
-        setError(translateError(authError.message));
+      if (isEmailNotConfirmed(authError)) {
+        setVerifying({ reason: 'login', email });
+      } else if (authError) {
+        setError(translateError(authError.message, t('auth_err_generic')));
       } else {
         finish();
       }
@@ -112,7 +121,8 @@ export default function LoginModal({ onClose, onSuccess, returnTo = null, initia
       const res = await supabase.functions.invoke('signup-instant', { body: { email, password } });
       if (res.error) {
         track('register_failed', { method: 'email', error: res.error.message });
-        setError(translateError(res.error.message));
+        const status = (res.error as { context?: { status?: number } }).context?.status;
+        setError(status === 429 ? t('reset_err_rate_limited') : t('auth_err_generic'));
         setLoading(false);
         return;
       }
@@ -121,8 +131,9 @@ export default function LoginModal({ onClose, onSuccess, returnTo = null, initia
         trackCompleteRegistration();
         finish();
       } else {
+        // Same screen whether the address is new (awaiting confirmation) or already registered.
         track('register_partial_failure', { step: 'auto_login', error: loginErr.message });
-        setError(translateError(loginErr.message));
+        setVerifying({ reason: 'signup', email });
       }
     }
 
@@ -140,7 +151,21 @@ export default function LoginModal({ onClose, onSuccess, returnTo = null, initia
       {/* Modal */}
       <div className="relative w-full max-w-md bg-white rounded-v2-2xl shadow-v2-xl border border-v2-border v2-scale-in overflow-hidden">
         <div className="p-7 sm:p-8">
-          {recovering ? (
+          {verifying ? (
+            <>
+              <div className="flex items-start justify-end mb-3">
+                <button onClick={onClose} className="v2-btn-icon" aria-label="Cerrar">
+                  <X size={18} />
+                </button>
+              </div>
+              <VerifyEmailPanel
+                reason={verifying.reason}
+                initialEmail={verifying.email}
+                linkProblem={initialLinkProblem}
+                onBack={() => { setVerifying(null); setMode('login'); setPassword(''); clearMessages(); }}
+              />
+            </>
+          ) : recovering ? (
             <>
               <div className="flex items-start justify-between mb-5">
                 <div className="w-10 h-10 rounded-v2-xl bg-v2-primary-50 border border-v2-primary-200 flex items-center justify-center">
@@ -341,11 +366,11 @@ function GoogleIcon() {
   );
 }
 
-function translateError(msg: string): string {
+function translateError(msg: string, fallback: string): string {
   if (msg.includes('Invalid login credentials')) return 'Email o contrasena incorrectos.';
   if (msg.includes('Email not confirmed')) return 'Confirma tu email antes de iniciar sesion.';
   if (msg.includes('User already registered')) return 'Este email ya esta registrado. Inicia sesion.';
   if (msg.includes('Password should be')) return 'La contrasena debe tener al menos 6 caracteres.';
   if (msg.includes('provider')) return 'Google no esta disponible ahora. Registrate con email.';
-  return msg;
+  return fallback;
 }

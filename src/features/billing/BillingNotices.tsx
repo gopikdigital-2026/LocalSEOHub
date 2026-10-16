@@ -151,7 +151,7 @@ export function PaywallNotice({ surface }: { surface: string }) {
 /** Explicit, card-free trial activation for accounts that finished onboarding before trials existed. */
 export function TrialStartCard() {
   const { status, startTrial } = useBilling();
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const c = billingCopy(lang);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -184,7 +184,7 @@ export function TrialStartCard() {
         <div className="flex-1 min-w-0">
           <h2 className="text-v2-base font-semibold text-v2-text-primary">{c.startTitle}</h2>
           <p className="mt-1 text-v2-sm text-v2-text-secondary leading-relaxed">{c.startBody}</p>
-          {emailNeeded && <p role="alert" className="mt-2 text-v2-xs text-v2-warning-600">Confirma tu correo para activar tu prueba gratuita</p>}
+          {emailNeeded && <p role="alert" className="mt-2 text-v2-xs text-v2-warning-600">{t('verify_trial_needed')}</p>}
           {failed && <p role="alert" className="mt-2 text-v2-xs text-v2-error-600">{c.startError}</p>}
           <button onClick={onStart} disabled={busy} className="mt-4 v2-btn-primary text-v2-sm px-4 py-2 disabled:opacity-60">
             {busy ? c.starting : c.startCta}

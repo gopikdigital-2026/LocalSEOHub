@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { I18nProvider } from './lib/i18n';
 import App from './App.tsx';
 import { captureRecoveryLink } from './features/password-reset/recovery';
+import { captureVerificationLinkProblem } from './features/email-verification/verification';
 import { BusinessProvider } from './features/business-memory/BusinessContext';
 import ActionsProvider from './features/actions/ActionsProvider';
 import BillingProvider from './features/billing/BillingProvider';
@@ -31,6 +32,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 // Read before the Supabase client strips the recovery tokens from the URL.
 const initialRecoveryLink = captureRecoveryLink(window.location.href);
+const initialLinkProblem = captureVerificationLinkProblem(window.location.href);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -40,7 +42,7 @@ createRoot(document.getElementById('root')!).render(
           <BusinessProvider>
             <BillingProvider>
               <ActionsProvider>
-                <App initialRecoveryLink={initialRecoveryLink} />
+                <App initialRecoveryLink={initialRecoveryLink} initialLinkProblem={initialLinkProblem} />
               </ActionsProvider>
             </BillingProvider>
           </BusinessProvider>

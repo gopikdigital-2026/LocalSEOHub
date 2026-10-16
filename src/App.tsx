@@ -7,6 +7,7 @@ import { useOnboardingStatus } from './hooks/useOnboardingStatus';
 import { AppGuard, OnboardingGuard, useAuthRedirect } from './app-v2/auth';
 import { LoadingState } from './components/ui';
 import { RESET_PASSWORD_PATH, type RecoveryLink } from './features/password-reset/recovery';
+import { VERIFY_REDIRECT_PATH, type VerificationLinkProblem } from './features/email-verification/verification';
 
 // ─── Product pages ──────────────────────────────────────────────────────────
 
@@ -109,7 +110,7 @@ function RootRoute() {
 
 // ─── /signup & /login ───────────────────────────────────────────────────────
 
-function AuthRoute({ mode }: { mode: 'login' | 'signup' }) {
+function AuthRoute({ mode, linkProblem = null }: { mode: 'login' | 'signup'; linkProblem?: VerificationLinkProblem | null }) {
   const redirect = useAuthRedirect();
   const navigate = useNavigate();
   const location = useLocation();
@@ -128,6 +129,7 @@ function AuthRoute({ mode }: { mode: 'login' | 'signup' }) {
         returnTo={returnPathFromLocation(location.search)}
         initialMode={mode}
         initialRecovering={mode === 'login' && new URLSearchParams(location.search).has('recuperar')}
+        initialLinkProblem={linkProblem}
       />
     </Suspense>
   );
@@ -135,10 +137,15 @@ function AuthRoute({ mode }: { mode: 'login' | 'signup' }) {
 
 // ─── App ────────────────────────────────────────────────────────────────────
 
-export default function App({ initialRecoveryLink = null }: { initialRecoveryLink?: RecoveryLink | null }) {
+export default function App({ initialRecoveryLink = null, initialLinkProblem = null }: { initialRecoveryLink?: RecoveryLink | null; initialLinkProblem?: VerificationLinkProblem | null }) {
   const location = useLocation();
   const [recoveryLink, setRecoveryLink] = useState(initialRecoveryLink);
   const consumeRecoveryLink = useCallback(() => setRecoveryLink(null), []);
+  const [linkProblem, setLinkProblem] = useState(initialLinkProblem);
+
+  useEffect(() => {
+    if (location.pathname !== VERIFY_REDIRECT_PATH) setLinkProblem(null);
+  }, [location.pathname]);
 
   // A recovery link can land on another page (e.g. Supabase falls back to the Site URL);
   // route it to the reset page before the landing sends the recovered session into the app.
@@ -152,7 +159,7 @@ export default function App({ initialRecoveryLink = null }: { initialRecoveryLin
         {/* ── Public ── */}
         <Route path="/" element={<RootRoute />} />
         <Route path="/signup" element={<AuthRoute mode="signup" />} />
-        <Route path="/login" element={<AuthRoute mode="login" />} />
+        <Route path="/login" element={<AuthRoute mode="login" linkProblem={linkProblem} />} />
         <Route path={RESET_PASSWORD_PATH} element={
           <ResetPasswordPage initialLink={recoveryLink} onLinkConsumed={consumeRecoveryLink} />
         } />
