@@ -1081,6 +1081,7 @@ const LOAD_STAGES = [
 
 // ── Main VisibilityChecker ────────────────────────────────────────────────────
 function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: () => void; onPhaseChange?: (phase: VPhase) => void; onSignup?: (businessName: string) => void }) {
+  const { t } = useI18n();
   const [phase,       setPhase]       = useState<VPhase>('idle');
   const [name,        setName]        = useState('');
   const [pct,         setPct]         = useState(0);
@@ -1178,14 +1179,15 @@ function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: ()
 
               <motion.h1 variants={FU}
                 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold text-slate-900 leading-[1.07] tracking-tight">
-                ¿Cuántos clientes pierdes<br className="hidden sm:block" /> por no aparecer en{' '}
+                {t('hero_value_title_before')}
                 <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                  Google Maps?
+                  {t('hero_value_title_highlight')}
                 </span>
+                {t('hero_value_title_after')}
               </motion.h1>
 
               <motion.p variants={FU} className="text-slate-500 text-lg">
-                Descúbrelo ahora. Gratis. Sin registro.
+                {t('hero_value_subtitle')}
               </motion.p>
 
               {/* ── Search bar ── */}
