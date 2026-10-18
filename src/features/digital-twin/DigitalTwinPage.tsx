@@ -9,6 +9,9 @@ import { normalizeGbp, type GbpSnapshot } from '../maps-scanner/engine';
 import { COPY } from './copy';
 import { buildDigitalTwin, TWIN_TOOL_ROUTES, type KnowledgeBand } from './engine';
 import { TwinBlockCard } from './TwinBlockCard';
+import { ActionDetail } from '../action-layer/ActionDetail';
+import { ACTION_COPY } from '../action-layer/copy';
+import { twinActions } from '../action-layer/model';
 
 const btnPrimary = 'inline-flex items-center justify-center gap-2 rounded-v2-lg bg-v2-primary-600 px-4 py-2.5 text-v2-sm font-semibold text-white hover:bg-v2-primary-700 active:scale-[0.99] transition-all';
 const btnSecondary = 'inline-flex items-center gap-1.5 rounded-v2-lg border border-v2-border-light bg-white px-3 py-2 text-v2-xs font-medium text-v2-text-secondary hover:border-v2-primary-300 hover:text-v2-primary-600 transition-colors disabled:opacity-50 disabled:pointer-events-none';
@@ -143,6 +146,8 @@ export default function DigitalTwinPage() {
   const updatedDate = formatDate(currentBusiness.updated_at, lang);
   const v = twin.values;
   const { declared, detected, verified } = twin.sourceSummary;
+  const ac = ACTION_COPY[l];
+  const actions = new Map(twinActions(twin.priorities).map((a) => [a.id, a]));
 
   return (
     <div className="space-y-6">
@@ -205,10 +210,13 @@ export default function DigitalTwinPage() {
           <p className="mt-1 text-v2-xs text-v2-text-secondary leading-relaxed">{t.gapsWhy}</p>
           <ol className="mt-4 space-y-2">
             {twin.priorities.map((p, i) => (
-              <li key={p.id} data-testid="twin-gap" className="flex items-center gap-3 rounded-v2-lg border border-v2-border-light px-3 py-2.5 hover:border-v2-primary-200 transition-colors">
+              <li key={p.id} data-testid="twin-gap" className="flex items-start gap-3 rounded-v2-lg border border-v2-border-light px-3 py-2.5 hover:border-v2-primary-200 transition-colors">
                 <span className="w-6 h-6 shrink-0 rounded-full bg-v2-primary-50 text-v2-primary-700 text-v2-xs font-bold flex items-center justify-center">{i + 1}</span>
-                <p className="flex-1 min-w-0 text-v2-sm font-medium text-v2-text-primary">{t.gaps[p.id].title}</p>
-                <Link to={p.cta} className="shrink-0 inline-flex items-center gap-1 text-v2-xs font-medium text-v2-primary-600 hover:text-v2-primary-700 hover:gap-1.5 transition-all">
+                <div className="flex-1 min-w-0">
+                  <p className="text-v2-sm font-medium text-v2-text-primary">{t.gaps[p.id].title}</p>
+                  {actions.has(p.id) && <ActionDetail item={actions.get(p.id)!} c={ac} showUsedBy />}
+                </div>
+                <Link to={p.cta} className="shrink-0 mt-0.5 inline-flex items-center gap-1 text-v2-xs font-medium text-v2-primary-600 hover:text-v2-primary-700 hover:gap-1.5 transition-all">
                   {t.gaps[p.id].cta} <ArrowRight size={12} />
                 </Link>
               </li>

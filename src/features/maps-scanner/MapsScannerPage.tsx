@@ -10,6 +10,9 @@ import { useBilling } from '../billing/BillingContext';
 import { loadSources } from '../reality-engine/repositories';
 import { COPY, type MapsCopy } from './copy';
 import { normalizeGbp, scan, type Band, type Check, type CheckStatus, type GbpSnapshot } from './engine';
+import { ActionDetail } from '../action-layer/ActionDetail';
+import { ACTION_COPY } from '../action-layer/copy';
+import { mapsActions } from '../action-layer/model';
 
 const btnPrimary = 'inline-flex items-center justify-center gap-2 rounded-v2-lg bg-v2-primary-600 px-4 py-2.5 text-v2-sm font-semibold text-white hover:bg-v2-primary-700 active:scale-[0.99] transition-all disabled:opacity-60 disabled:pointer-events-none';
 const btnSecondary = 'inline-flex items-center gap-1.5 rounded-v2-lg border border-v2-border-light bg-white px-3 py-2 text-v2-xs font-medium text-v2-text-secondary hover:border-v2-primary-300 hover:text-v2-primary-600 transition-colors disabled:opacity-50 disabled:pointer-events-none';
@@ -171,6 +174,8 @@ export default function MapsScannerPage() {
   const style = result.band ? BAND_STYLE[result.band] : null;
   const syncDate = formatDate(gbp.lastSyncAt, lang);
   const updatedDate = formatDate(currentBusiness.updated_at, lang);
+  const ac = lang === 'en' ? ACTION_COPY.en : ACTION_COPY.es;
+  const actions = new Map(mapsActions(result.priorities).map((a) => [a.id, a]));
 
   return (
     <div className="space-y-6">
@@ -249,6 +254,7 @@ export default function MapsScannerPage() {
                     <span className="w-6 h-6 shrink-0 rounded-full bg-v2-primary-50 text-v2-primary-700 text-v2-xs font-bold flex items-center justify-center">{i + 1}</span>
                     <div className="min-w-0">
                       <p className="text-v2-sm font-medium text-v2-text-primary leading-snug">{t.priorities[p.id].title}</p>
+                      {actions.has(p.id) && <ActionDetail item={actions.get(p.id)!} c={ac} />}
                       <Link to={p.cta} className="mt-1 inline-flex items-center gap-1 text-v2-xs font-medium text-v2-primary-600 hover:text-v2-primary-700 hover:gap-1.5 transition-all">
                         {t.priorities[p.id].cta} <ArrowRight size={12} />
                       </Link>
