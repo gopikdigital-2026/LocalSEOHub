@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 vi.mock('../../../lib/supabase', () => ({ supabase: {} }));
 
 import { normalizeGbp, scan, WEIGHTS, type GbpSnapshot } from '../../maps-scanner/engine';
+import { EMPTY, ERR, FULL, MINIMAL, OFF, ON, PARTIAL, without } from './fixtures';
 import { geoAudit, GEO_WEIGHTS } from '../../geo-audit/engine';
 import { buildDigitalTwin, TWIN_WEIGHTS } from '../../digital-twin/engine';
 import { COPY as MAPS_COPY } from '../../maps-scanner/copy';
@@ -17,7 +18,7 @@ import {
 } from '../model';
 import { ACTION_COPY, actionText } from '../copy';
 
-// Every fixture below is FIXTURE data. No real Google, Stripe or AI call is made.
+// Fixtures live in ./fixtures and are FIXTURE data. No real Google, Stripe or AI call is made.
 
 const ROOT = resolve(__dirname, '../../../../');
 const src = (p: string) => readFileSync(join(ROOT, p), 'utf8');
@@ -28,24 +29,6 @@ const mapsPage = src('src/features/maps-scanner/MapsScannerPage.tsx');
 const twinPage = src('src/features/digital-twin/DigitalTwinPage.tsx');
 const geoPage = src('src/features/geo-audit/GeoAuditPage.tsx');
 
-const FULL = {
-  name: 'Gopik.Digital', category: 'Agencia de marketing', city: 'Marbella', phone: '+34 600 123 456',
-  website: 'https://www.gopik.digital/', schedule: 'L-V 9:00-18:00', services: ['Diseño web', 'SEO local', 'Redes sociales'],
-  target_audience: 'Pequeños negocios locales', primary_goal: 'more_calls',
-};
-const EMPTY = {};
-const MINIMAL = { name: 'Bar Pepe', category: 'Bar' };
-const PARTIAL = { name: 'Bar Pepe', category: 'Bar', city: 'Málaga', services: ['Tapas'] };
-const OFF: GbpSnapshot = normalizeGbp(null);
-const ERR: GbpSnapshot = normalizeGbp({ status: 'error' });
-const ON: GbpSnapshot = normalizeGbp({
-  status: 'connected', verified_at: '2026-10-10T09:30:00.000Z',
-  verified_profile: {
-    name: 'Gopik.Digital', category: 'Marketing', address: 'Calle 1, Marbella', phone: '+34 600 123 456',
-    website: 'https://gopik.digital', hours: [{ d: 1 }], totalReviews: 0,
-  },
-});
-const without = (k: keyof typeof FULL) => ({ ...FULL, [k]: k === 'services' ? [] : '' });
 
 const keys = (a: ActionItem[]) => a.map((x) => x.key);
 const maps = (p: object, g = ON) => mapsActions(scan(p, g).priorities);

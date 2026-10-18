@@ -33,6 +33,9 @@ import { PremiumRequiredError } from '../../features/billing/model';
 import WeeklyContentCard from '../../features/weekly-content/WeeklyContentCard';
 import PreparedRepliesCard from '../../features/prepared-replies/PreparedRepliesCard';
 import { offersImprovement } from '../../features/improvement/model';
+import { normalizeGbp } from '../../features/maps-scanner/engine';
+import { todayActions } from '../../features/today-intelligence/model';
+import TodayPriorities from '../../features/today-intelligence/TodayPriorities';
 
 const ACTION_ERRORS = {
   es: {
@@ -106,10 +109,14 @@ function useDashboardData(lang: ActionLang) {
   const { currentBusiness, businessId } = useBusiness();
   const memoryRepo = useMemo(() => createMemoryRepository(currentBusiness), [currentBusiness]);
   const [connectedSources, setConnectedSources] = useState<ConnectedSource[]>([]);
+  const [sourcesState, setSourcesState] = useState<'loading' | 'ready' | 'failed'>('loading');
 
   useEffect(() => {
     if (!businessId) return;
-    loadConnectedSources(businessId).then(setConnectedSources).catch(() => {});
+    setSourcesState('loading');
+    loadConnectedSources(businessId)
+      .then((rows) => { setConnectedSources(rows); setSourcesState('ready'); })
+      .catch(() => setSourcesState('failed'));
   }, [businessId]);
 
   const memory = memoryRepo.load();
@@ -122,7 +129,13 @@ function useDashboardData(lang: ActionLang) {
         { id: 'website', label: SOURCE_LABELS[lang].website, status: 'not_connected', lastSync: null },
       ];
 
-  return { profile, connections, business: currentBusiness };
+  const priorities = useMemo(() => {
+    if (!currentBusiness || sourcesState === 'loading') return null;
+    const gbp = normalizeGbp(connectedSources.find((s) => s.source_type === 'google_business') ?? null);
+    return todayActions(currentBusiness, gbp, sourcesState === 'ready');
+  }, [currentBusiness, connectedSources, sourcesState]);
+
+  return { profile, connections, business: currentBusiness, priorities };
 }
 
 function buildMilestones(t: typeof PAGE_COPY.es, essentials: boolean, connectedCount: number, executed: number): GrowthMilestone[] {
@@ -140,7 +153,7 @@ export default function TodayPage() {
   const navigate = useNavigate();
   const { lang } = useI18n();
   const t = PAGE_COPY[lang];
-  const { profile, connections, business } = useDashboardData(lang);
+  const { profile, connections, business, priorities } = useDashboardData(lang);
   const {
     actions: allActions, loading, error, ready, milestones: activation, firstSuccess, clearFirstSuccess,
     ensureFresh, refresh, start, complete, dismiss, locked,
@@ -236,7 +249,8 @@ export default function TodayPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-5 lg:space-y-6">
+          {priorities && <TodayPriorities actions={priorities} lang={lang} />}
           <TodaysMissions
             actions={today.map((a) => toDashboardAction(a, lang))}
             state={todayState}
