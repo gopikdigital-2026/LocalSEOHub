@@ -146,9 +146,9 @@ describe('A2.6.1 unconfirmed sign-in and signup screens', () => {
     expect(loginModal).toContain("setVerifying({ reason: 'signup', email });");
   });
 
-  it('17. signup still goes through signup-instant, never direct auth.signUp', () => {
-    expect(loginModal).toContain("supabase.functions.invoke('signup-instant', { body: { email, password } })");
-    expect(frontendText).not.toContain('auth.signUp(');
+  it('17. signup uses standard Supabase signup, no longer signup-instant (F-03 Stage 2B)', () => {
+    expect(loginModal).not.toContain("invoke('signup-instant'");
+    expect(loginModal).toContain('requestEmailSignup(');
   });
 
   it('18. password sign-in call is unchanged', () => {
@@ -160,8 +160,9 @@ describe('A2.6.1 unconfirmed sign-in and signup screens', () => {
     expect(loginModal).not.toMatch(/setError\(\s*(authError|fnError|error)\.message\s*\)/);
   });
 
-  it('20. a signup rate limit (429) shows the rate-limited message', () => {
-    expect(loginModal).toContain("status === 429 ? t('reset_err_rate_limited') : t('auth_err_generic')");
+  it('20. a signup rate limit shows the rate-limited message', () => {
+    expect(loginModal).toContain("rate_limited: 'reset_err_rate_limited'");
+    expect(loginModal).toContain("error: 'auth_err_generic'");
   });
 
   it('21. the panel shows the address the user typed', () => {
@@ -313,14 +314,13 @@ describe('A2.6.1 copy in Spanish and English', () => {
 });
 
 describe('A2.6.1 preserved controls', () => {
-  it('49. signup-instant rate limits are unchanged (IP 10/h, email 5/h, global 50/h)', () => {
-    expect(signup).toContain('const IP_LIMIT = { limit: 10, windowSeconds: 3600 };');
-    expect(signup).toContain('const EMAIL_LIMIT = { limit: 5, windowSeconds: 3600 };');
-    expect(signup).toContain('const GLOBAL_CREATED_LIMIT = { limit: 50, windowSeconds: 3600 };');
+  it('49. signup-instant is retired (F-03 Stage 2B): its custom limits no longer apply', () => {
+    expect(signup).toContain('status: 410');
+    expect(signup).not.toContain('IP_LIMIT');
   });
 
-  it('50. F-03 is still open: signup-instant pre-confirms emails (Stage 2 pending)', () => {
-    expect(signup).toContain('email_confirm: true');
+  it('50. F-03 Stage 2B: signup-instant no longer pre-confirms emails', () => {
+    expect(signup).not.toMatch(/email_confirm\s*:/);
   });
 
   it('51. Google sign-in is unchanged', () => {
@@ -358,8 +358,8 @@ describe('A2.6.1 preserved controls', () => {
     }
   });
 
-  it('56. all 7 tools stay enabled and the 14 legacy functions stay retired', () => {
-    expect(TOOLS.filter((t) => t.enabled)).toHaveLength(7);
+  it('56. all 9 tools (reviews added in A3.4.2, social in A3.5.4.3) stay enabled and the 14 legacy functions stay retired', () => {
+    expect(TOOLS.filter((t) => t.enabled)).toHaveLength(9);
     const legacy = ['analyze-competitor-url', 'audit-maps-profile', 'audit-reviews', 'execute-tip-content', 'generate-business-audit',
       'generate-content-plan', 'generate-countermeasure', 'generate-gbp-description', 'generate-geo-audit', 'generate-pitch',
       'generate-seo', 'generate-voice-script', 'scan-directories', 'simulate-campaign'];

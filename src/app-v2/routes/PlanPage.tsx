@@ -17,6 +17,11 @@ import { PremiumRequiredError } from '../../features/billing/model';
 import ImprovementHint from '../../features/improvement/ImprovementHint';
 import { offersImprovement } from '../../features/improvement/model';
 import { Target, Check, Clock, ArrowRight, Calendar, Info, AlertTriangle, X, RefreshCw } from 'lucide-react';
+import { loadSources as loadConnectedSources } from '../../features/reality-engine/repositories';
+import type { ConnectedSource } from '../../features/reality-engine/types';
+import { normalizeGbp } from '../../features/maps-scanner/engine';
+import { buildRoadmap } from '../../features/roadmap/model';
+import RoadmapCard from '../../features/roadmap/RoadmapCard';
 
 const L = {
   es: {
@@ -135,6 +140,23 @@ export default function PlanPage() {
 
   useEffect(() => { ensureFresh(); }, [ensureFresh]);
 
+  const businessId = currentBusiness?.id;
+  const [sources, setSources] = useState<ConnectedSource[]>([]);
+  const [sourcesState, setSourcesState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  useEffect(() => {
+    if (!businessId) return;
+    setSourcesState('loading');
+    loadConnectedSources(businessId)
+      .then((rows) => { setSources(rows); setSourcesState('ready'); })
+      .catch(() => setSourcesState('failed'));
+  }, [businessId]);
+
+  const roadmap = useMemo(() => {
+    if (!currentBusiness || sourcesState === 'loading') return null;
+    const gbp = normalizeGbp(sources.find((s) => s.source_type === 'google_business') ?? null);
+    return buildRoadmap(currentBusiness, gbp, sourcesState === 'ready', actions);
+  }, [currentBusiness, sources, sourcesState, actions]);
+
   const { today, rest, closedThisWeek, report } = useMemo(() => {
     const todayList = selectTodayActions(actions);
     const todayIds = new Set(todayList.map((a) => a.id));
@@ -249,6 +271,8 @@ export default function PlanPage() {
         <Info size={14} className="text-v2-secondary-500 mt-0.5 shrink-0" />
         <p className="text-v2-xs text-v2-text-secondary">{l.notice}</p>
       </div>
+
+      {roadmap && <RoadmapCard items={roadmap} lang={lang} />}
 
       {open === 0 && <p className="text-v2-sm text-v2-text-secondary">{l.allDone}</p>}
 

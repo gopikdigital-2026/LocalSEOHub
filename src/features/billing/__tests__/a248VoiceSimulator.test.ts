@@ -132,12 +132,12 @@ const check = (patch: Partial<Simulation>, i = input(), f = facts) => violations
 const raw = (patch: Partial<Simulation>) => JSON.stringify({ ...GOOD, ...patch });
 
 describe('A2.4.8 Voice Simulator', () => {
-  it('1-2. /herramientas/voice is mounted once inside the AppGuard shell and the hub releases all 7 tools', () => {
+  it('1-2. /herramientas/voice is mounted once inside the AppGuard shell and the hub releases all 8 tools (reviews added in A3.4.2)', () => {
     const block = app.match(/<Route element=\{<AppGuard><AppShellV2 \/><\/AppGuard>\}>([\s\S]*?)<\/Route>\n/)![1];
     expect(block).toContain('<Route path="/herramientas/voice" element={<VoiceSimulatorPage />} />');
     expect(app.match(/path="\/herramientas\/voice"/g)).toHaveLength(1);
     expect(TOOLS.find((t) => t.id === 'voice')).toMatchObject({ enabled: true, path: '/herramientas/voice', recoveryStatus: 'ACTIVE' });
-    expect(TOOLS.filter((t) => t.enabled)).toHaveLength(7);
+    expect(TOOLS.filter((t) => t.enabled)).toHaveLength(9);
     expect(TOOLS.every((t) => t.enabled)).toBe(true);
   });
 

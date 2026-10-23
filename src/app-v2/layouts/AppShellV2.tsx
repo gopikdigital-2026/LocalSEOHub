@@ -11,6 +11,7 @@ import {
   Wifi,
   CreditCard,
   Wrench,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { trackNavigationClick } from '../../services/analytics/v2Analytics';
@@ -92,6 +93,9 @@ function SidebarNav() {
             <LogOut size={16} />
           </button>
         </div>
+        <NavLink to="/privacidad" className="mt-3 inline-block text-v2-xs text-v2-text-tertiary hover:text-v2-text-primary transition-colors">
+          Privacidad y preferencias
+        </NavLink>
       </div>
     </aside>
   );
@@ -152,6 +156,14 @@ function MobileHeader() {
           ))}
         </nav>
         <div className="pt-4 border-t border-v2-border-light">
+          <NavLink
+            to="/privacidad"
+            onClick={() => setMenuOpen(false)}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-v2-lg text-v2-sm font-medium text-v2-text-secondary hover:bg-v2-neutral-50 w-full transition-colors"
+          >
+            <ShieldCheck size={18} />
+            Privacidad y preferencias
+          </NavLink>
           <button
             onClick={() => { signOut().then(() => navigate('/')); }}
             className="flex items-center gap-3 px-3 py-2.5 rounded-v2-lg text-v2-sm font-medium text-v2-error-500 hover:bg-v2-error-50 w-full transition-colors"

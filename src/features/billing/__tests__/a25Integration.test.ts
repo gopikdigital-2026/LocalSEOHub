@@ -41,9 +41,11 @@ const a25Migration = src(`supabase/migrations/${readdirSync(MIG_DIR).find((f) =>
 const sourcesMigration = src('supabase/migrations/20260804165058_create_connected_sources_and_sync_events.sql');
 const ledgerSql = src(`supabase/migrations/${readdirSync(MIG_DIR).find((f) => f.includes('a2420_generalized_ai_usage_ledger'))}`);
 const capsSql = src(`supabase/migrations/${readdirSync(MIG_DIR).find((f) => f.endsWith('_a248_voice_simulator_limits.sql'))}`);
-const gbpSync = src('supabase/functions/gbp-sync/index.ts');
-const oauthStart = src('supabase/functions/gbp-oauth-start/index.ts');
-const oauthCallback = src('supabase/functions/gbp-oauth-callback/index.ts');
+const gbpSyncIndex = src('supabase/functions/gbp-sync/index.ts');
+const gbpSyncHandler = src('supabase/functions/gbp-sync/handler.ts');
+const gbpSync = gbpSyncIndex + gbpSyncHandler;
+const oauthStart = src('supabase/functions/gbp-oauth-start/index.ts') + src('supabase/functions/gbp-oauth-start/handler.ts');
+const oauthCallback = src('supabase/functions/gbp-oauth-callback/index.ts') + src('supabase/functions/gbp-oauth-callback/handler.ts');
 const realityEngine = src('src/features/reality-engine/engine.ts');
 const repositories = src('src/features/reality-engine/repositories.ts');
 const actionsProvider = src('src/features/actions/ActionsProvider.tsx');
@@ -227,8 +229,8 @@ describe('A2.5 · GBP server sync and graceful degradation', () => {
     expect(normalizeGbp({ ...TRUSTED_ROW, status: 'error' })).toEqual({ state: 'error', lastSyncAt: null, data: null });
     expect(normalizeGbp({ ...TRUSTED_ROW, status: 'disconnected' }).data).toBeNull();
     expect(scan(FULL, normalizeGbp({ ...TRUSTED_ROW, status: 'error' })).priorities.map((p) => p.id)).toContain('fix_gbp');
-    expect(gbpSync).toContain('locationResponse.status === 401');
-    expect(gbpSync).toMatch(/success: false,\s*error: locationResponse\.status/);
+    expect(gbpSync).toContain('if (status === 401) return "GBP_AUTH_EXPIRED"');
+    expect(gbpSync).toContain('return fail(classifyLocationFetch(locationResponse.status))');
   });
 
   it('8b. partial GBP config (only a name) evaluates without crashing', () => {
@@ -247,13 +249,14 @@ describe('A2.5 · GBP server sync and graceful degradation', () => {
   it('8d. gbp-sync persists the verified snapshot with the service role, scoped to the caller', () => {
     expect(gbpSync).toContain('verified_profile: profile');
     expect(gbpSync).toContain('verified_at: syncedAt');
-    expect(gbpSync).toMatch(/\.eq\("user_id", user\.id\)\s*\.eq\("business_id", business\.id\)\s*\.eq\("source_type", "google_business"\)/);
+    expect(gbpSync).toMatch(/\.eq\("user_id", userId\)\s*\.eq\("business_id", businessId\)\s*\.eq\("source_type", "google_business"\)/);
     expect(gbpSync).toContain('Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")');
   });
 
   it('8e. the client no longer writes Google profile fields or a Google sync time', () => {
     expect(realityEngine).not.toContain('...(data.profile');
-    expect(realityEngine).toContain("metadata: { locationName },");
+    expect(realityEngine).toMatch(/invokeForBody\('gbp-sync'/);
+    expect(realityEngine).not.toMatch(/upsertSource\('(google_business|reviews)'/);
     expect(repositories).toContain('verified_profile, verified_at');
   });
 });
@@ -285,7 +288,7 @@ describe('A2.5 · website integration', () => {
     }
     const fetchers = readdirSync(FN_DIR).filter((d) => existsSync(join(FN_DIR, d, 'safeHttp.ts')));
     expect(fetchers.sort()).toEqual(['analyze-website', 'competitor-radar-v2']);
-    expect(gbpSync.match(/fetch\(/g)?.length).toBe(2);
+    expect(gbpSyncHandler.match(/deps\.fetch\(/g)?.length).toBe(2);
     expect(gbpSync).toContain('https://mybusinessbusinessinformation.googleapis.com/v1/');
     expect(gbpSync).toContain('https://mybusiness.googleapis.com/v4/');
   });
@@ -329,7 +332,7 @@ describe('A2.5 · business profile fixtures and cross-tool consistency', () => {
   it('22. GBP freshness shown is the server time, not a client clock', () => {
     expect(normalizeGbp({ ...FORGED_ROW, verified_at: null }).lastSyncAt).toBeNull();
     expect(gbpSync).toContain('last_sync_at: syncedAt');
-    expect(realityEngine).toContain('last_sync_at: data.verifiedAt ?? null');
+    expect(realityEngine).not.toMatch(/upsertSource\('google_business'/);
   });
 });
 
@@ -349,7 +352,7 @@ describe('A2.5 · isolation, ownership and business cap', () => {
 
   it('25. gbp-sync derives the owner from the JWT and rejects a foreign businessId', () => {
     expect(gbpSync).toContain('supabaseAdmin.auth.getUser(jwt)');
-    expect(gbpSync).toContain('businessId != null && businessId !== business.id');
+    expect(gbpSync).toContain('sel.businessId !== null && sel.businessId !== businessId');
   });
 
   it('26. one business per user is enforced by a unique index (race-safe)', () => {
@@ -527,8 +530,8 @@ describe('A2.5 · secrets, legacy, tools, routes', () => {
     for (const fn of RETIRED) expect(src(`supabase/functions/${fn}/index.ts`)).toContain('status: 410');
   });
 
-  it('51. all seven tools remain enabled', () => {
-    expect(TOOLS.filter((t) => t.enabled)).toHaveLength(7);
+  it('51. all nine tools remain enabled (reviews added in A3.4.2, social in A3.5.4.3)', () => {
+    expect(TOOLS.filter((t) => t.enabled)).toHaveLength(9);
   });
 
   it('52. tool and source routes exist', () => {
@@ -542,7 +545,8 @@ describe('A2.5 · no destructive or out-of-scope change', () => {
   });
 
   it('54. Google OAuth configuration is untouched (same env names, same redirect builder)', () => {
-    for (const k of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI']) expect(oauthCallback).toContain(`Deno.env.get("${k}")`);
+    for (const k of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI']) expect(oauthCallback).toContain(`deps.env("${k}")`);
+    expect(oauthCallback).toContain('env: (name) => Deno.env.get(name)');
     expect(oauthStart).toContain('GOOGLE_CLIENT_ID');
   });
 

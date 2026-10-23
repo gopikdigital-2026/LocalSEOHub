@@ -21,6 +21,7 @@ const WeeklySummaryPage = lazy(() => import('./features/business-memory/WeeklySu
 const SourceManagerPage = lazy(() => import('./features/reality-engine/SourceManager'));
 const FirstValueFlow = lazy(() => import('./features/first-value/FirstValueFlow'));
 const GBPCallbackPage = lazy(() => import('./features/reality-engine/GBPCallbackPage'));
+const MetaCallbackPage = lazy(() => import('./features/meta-connection/MetaCallbackPage'));
 const BillingPage = lazy(() => import('./features/billing/BillingPage'));
 const ToolsPage = lazy(() => import('./features/tools/ToolsPage'));
 const SeoGeneratorPage = lazy(() => import('./features/seo-generator/SeoGeneratorPage'));
@@ -30,12 +31,17 @@ const GeoAuditPage = lazy(() => import('./features/geo-audit/GeoAuditPage'));
 const DigitalTwinPage = lazy(() => import('./features/digital-twin/DigitalTwinPage'));
 const CompetitorRadarPage = lazy(() => import('./features/competitor-radar/CompetitorRadarPage'));
 const VoiceSimulatorPage = lazy(() => import('./features/voice-simulator/VoiceSimulatorPage'));
+const ReviewsPage = lazy(() => import('./features/reviews/ReviewsPage'));
+const SocialIntelligencePage = lazy(() => import('./features/social-intelligence/ui/SocialIntelligencePage'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
 const LandingPage = lazy(() => import('./components/LandingPage'));
 const LoginModal = lazy(() => import('./components/LoginModal'));
 const ResetPasswordPage = lazy(() => import('./features/password-reset/ResetPasswordPage'));
+const PrivacyPolicyPage = lazy(() => import('./features/legal/PrivacyPolicyPage'));
+const TermsPage = lazy(() => import('./features/legal/TermsPage'));
+const DataDeletionPage = lazy(() => import('./features/legal/DataDeletionPage'));
 
 const SKELETON = (
   <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
@@ -163,6 +169,9 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
         <Route path={RESET_PASSWORD_PATH} element={
           <ResetPasswordPage initialLink={recoveryLink} onLinkConsumed={consumeRecoveryLink} />
         } />
+        <Route path="/privacidad" element={<PrivacyPolicyPage />} />
+        <Route path="/terminos" element={<TermsPage />} />
+        <Route path="/eliminar-datos" element={<DataDeletionPage />} />
 
         {/* ── Onboarding ── */}
         <Route path="/empezar" element={
@@ -185,6 +194,8 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
           <Route path="/herramientas/twin" element={<DigitalTwinPage />} />
           <Route path="/herramientas/radar" element={<CompetitorRadarPage />} />
           <Route path="/herramientas/voice" element={<VoiceSimulatorPage />} />
+          <Route path="/herramientas/resenas" element={<ReviewsPage />} />
+          <Route path="/herramientas/social" element={<SocialIntelligencePage />} />
           <Route path="/informes" element={<WeeklySummaryPage />} />
           <Route path="/negocio" element={<BusinessProfilePage />} />
           <Route path="/negocio/objetivos" element={<BusinessGoalsPage />} />
@@ -198,6 +209,13 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
           <AppGuard>
             <Suspense fallback={SKELETON}>
               <GBPCallbackPage />
+            </Suspense>
+          </AppGuard>
+        } />
+        <Route path="/oauth/meta/callback" element={
+          <AppGuard>
+            <Suspense fallback={SKELETON}>
+              <MetaCallbackPage />
             </Suspense>
           </AppGuard>
         } />

@@ -20,7 +20,8 @@ export default function VerifyEmailPanel({ reason, initialEmail = '', linkProble
   const [sending, setSending] = useState(false);
   const [resent, setResent] = useState(false);
   const [error, setError] = useState<ErrorKey | null>(null);
-  const [cooldown, setCooldown] = useState(0);
+  // A signup has just sent a confirmation email, so the first resend waits a full cooldown.
+  const [cooldown, setCooldown] = useState(reason === 'signup' ? RESEND_COOLDOWN_SECONDS : 0);
   const inFlight = useRef(false);
   const emailKnown = initialEmail.trim().length > 0;
 

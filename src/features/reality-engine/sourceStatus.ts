@@ -1,4 +1,5 @@
 import type { ConnectedSource, SourceRegistryEntry } from './types';
+import { gbpPhase, isStaleGBPAttempt } from './gbpStatus';
 
 export type SourceDisplayStatus =
   | 'verified'
@@ -6,6 +7,9 @@ export type SourceDisplayStatus =
   | 'declared'
   | 'pending'
   | 'in_progress'
+  | 'selecting'
+  | 'syncing'
+  | 'expired'
   | 'permissions'
   | 'error'
   | 'unavailable'
@@ -20,6 +24,9 @@ export const STATUS_LABELS: Record<Lang, Record<SourceDisplayStatus, string>> = 
     declared: 'Datos declarados por ti',
     pending: 'Pendiente de conexión',
     in_progress: 'Conectando…',
+    selecting: 'Elige tu ficha',
+    syncing: 'Sincronizando…',
+    expired: 'Intento caducado',
     permissions: 'Faltan permisos',
     error: 'Error de conexión',
     unavailable: 'No disponible',
@@ -31,6 +38,9 @@ export const STATUS_LABELS: Record<Lang, Record<SourceDisplayStatus, string>> = 
     declared: 'Information you declared',
     pending: 'Not connected yet',
     in_progress: 'Connecting…',
+    selecting: 'Choose your listing',
+    syncing: 'Syncing…',
+    expired: 'Attempt expired',
     permissions: 'Permissions missing',
     error: 'Connection error',
     unavailable: 'Unavailable',
@@ -51,6 +61,7 @@ export function sourceDisplayStatus(
   entry: SourceRegistryEntry,
   source: ConnectedSource | undefined,
   parent: ConnectedSource | undefined,
+  now = Date.now(),
 ): SourceDisplayStatus {
   if (entry.comingSoon) return 'coming_soon';
 
@@ -58,6 +69,15 @@ export function sourceDisplayStatus(
     if (parent?.status === 'error' || parent?.status === 'permissions_required') return 'unavailable';
     if (parent?.status !== 'connected' || !parent.verified_at) return 'pending';
     return source?.status === 'connected' ? 'verified' : 'pending';
+  }
+
+  if (entry.id === 'google_business' && source) {
+    // An in-flight attempt never shows a spinner past its timeout.
+    if (isStaleGBPAttempt(source, now)) return 'expired';
+    const phase = gbpPhase(source);
+    if (phase === 'select_location') return 'selecting';
+    if (phase === 'syncing') return 'syncing';
+    if (source.status === 'disconnected' && source.last_error === 'ATTEMPT_EXPIRED') return 'expired';
   }
 
   switch (source?.status) {

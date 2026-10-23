@@ -7,6 +7,7 @@ export interface TwinCopy {
   title: string;
   subtitle: string;
   definition: string;
+  purpose: string;
   loading: string;
   noBusiness: string;
   premiumTitle: string;
@@ -76,6 +77,7 @@ const es: TwinCopy = {
   title: 'AI Digital Twin',
   subtitle: 'Así entiende LocalSEOHub tu negocio.',
   definition: 'Una representación estructurada de lo que LocalSEOHub conoce sobre tu negocio.',
+  purpose: 'Cuanto mejor conoce LocalSEOHub tu negocio, más personalizadas pueden ser tus recomendaciones y contenidos.',
   loading: 'Cargando tu Digital Twin…',
   noBusiness: 'No hemos podido cargar tu negocio. Recarga la página o revisa tus datos en Mi negocio.',
   premiumTitle: 'Disponible con Premium',
@@ -178,6 +180,7 @@ const en: TwinCopy = {
   title: 'AI Digital Twin',
   subtitle: 'This is how LocalSEOHub understands your business.',
   definition: 'A structured representation of what LocalSEOHub knows about your business.',
+  purpose: 'The better LocalSEOHub knows your business, the more personalised your recommendations and content can be.',
   loading: 'Loading your Digital Twin…',
   noBusiness: "We couldn't load your business. Reload the page or check your details in My business.",
   premiumTitle: 'Available with Premium',

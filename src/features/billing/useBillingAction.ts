@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BillingActionError, runBillingAction, type BillingAction, type BillingErrorCode } from './repository';
+import { browserStore, trackInitiateCheckout } from '../../lib/pixel';
+import { PLAN_PRICE, markCheckoutStarted } from './conversion';
 
 export function useBillingAction(onDone?: () => void) {
   const [pending, setPending] = useState<BillingAction | null>(null);
@@ -20,6 +22,11 @@ export function useBillingAction(onDone?: () => void) {
       const { url } = await runBillingAction(action);
       if (url) {
         redirecting = true;
+        // Only reached once the server has returned a validated Stripe Checkout URL.
+        if (action === 'checkout') {
+          trackInitiateCheckout(PLAN_PRICE);
+          markCheckoutStarted(browserStore());
+        }
         window.location.assign(url);
         return;
       }

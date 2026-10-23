@@ -313,10 +313,11 @@ describe('A2.6 · Premium state matrix (FIXTURE billing_state_for → parseBilli
 });
 
 describe('A2.6 · tool entitlement', () => {
-  it('43. all seven tools remain in the catalog and routed', () => {
-    expect(TOOLS).toHaveLength(7);
+  it('43. all nine tools remain in the catalog and routed (reviews added in A3.4.2, social in A3.5.4.3)', () => {
+    expect(TOOLS).toHaveLength(9);
     const app = src('src/App.tsx');
     for (const p of ['seo', 'advisor', 'maps', 'geo', 'twin', 'radar', 'voice']) expect(app).toContain(`path="/herramientas/${p}"`);
+    expect(app).toContain('path="/herramientas/resenas"');
   });
 
   it.each(['seo-generator-v2', 'business-advisor-v2', 'voice-simulator-v2', 'competitor-radar-v2', 'analyze-website', 'weekly-content', 'business-improvement'])(
@@ -656,14 +657,14 @@ describe('A2.6 · RLS, grants, AI usage, secrets, auth', () => {
     expect(Object.keys(snap).filter((k) => k.startsWith('p_payment'))).toEqual(['p_payment_method_brand', 'p_payment_method_last4']);
   });
 
-  it('95. signup goes through signup-instant (rate limited), not direct auth.signUp', () => {
-    expect(loginModal).toContain("supabase.functions.invoke('signup-instant'");
-    expect(frontendText).not.toContain('auth.signUp(');
-    expect(signup).toContain('signup_created_recently');
+  it('95. signup uses standard Supabase signup, not signup-instant (F-03 Stage 2B)', () => {
+    expect(loginModal).not.toContain("invoke('signup-instant'");
+    expect(loginModal).toContain('requestEmailSignup(');
   });
 
-  it('96. F-03 documented: signup-instant auto-confirms email (owner action pending)', () => {
-    expect(signup).toContain('email_confirm: true');
+  it('96. F-03 Stage 2B: signup-instant is retired and cannot pre-confirm emails', () => {
+    expect(signup).toContain('status: 410');
+    expect(signup).not.toMatch(/email_confirm\s*:/);
   });
 
   it('97. retired Stripe and legacy functions answer 410', () => {

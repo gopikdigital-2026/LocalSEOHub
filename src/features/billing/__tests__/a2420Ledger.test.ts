@@ -142,10 +142,10 @@ describe('A2.4.2-0 — nothing new is reachable', () => {
     }
   });
 
-  it('14. /herramientas executes no AI itself; all seven tool cards are enabled (A2.4.8)', () => {
+  it('14. /herramientas executes no AI itself; all eight tool cards are enabled (A2.4.8, reviews A3.4.2)', () => {
     const page = src('src/features/tools/ToolsPage.tsx');
     const catalog = src('src/features/tools/catalog.ts');
-    expect(catalog.match(/enabled:\s*true,/g)).toHaveLength(7);
+    expect(catalog.match(/enabled:\s*true,/g)).toHaveLength(9);
     expect(page).not.toMatch(/fetch\(|functions\.invoke|supabase|onClick/);
     expect(page).toContain('disabled');
   });
@@ -163,9 +163,8 @@ describe('A2.4.2-0 — nothing new is reachable', () => {
   it('16. signup/trial unchanged: this migration never touches signup, trial or billing', () => {
     expect(code).not.toMatch(/start_trial|billing_state_for|signup|auth\.users\b(?! ?\()/);
     const signup = src('supabase/functions/signup-instant/index.ts');
-    expect(signup).toMatch(/email_confirm:\s*true/);
-    expect(signup).toContain('const IP_LIMIT = { limit: 10, windowSeconds: 3600 }');
-    expect(signup).toContain('const GLOBAL_CREATED_LIMIT = { limit: 50, windowSeconds: 3600 }');
+    expect(signup).toContain('status: 410');
+    expect(signup).not.toMatch(/email_confirm\s*:/);
   });
 
   it('17. the migration preserves existing data: additive only, no reset, no deletes, latest in order', () => {

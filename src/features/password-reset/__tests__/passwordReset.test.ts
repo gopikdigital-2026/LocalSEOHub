@@ -389,7 +389,7 @@ describe('15. Mobile and desktop layout', () => {
 describe('16. No regressions in sign-in and sign-up', () => {
   it('sign-in and sign-up calls are unchanged', () => {
     expect(loginModal).toContain('await supabase.auth.signInWithPassword({ email, password });');
-    expect(loginModal).toContain("supabase.functions.invoke('signup-instant', { body: { email, password } })");
+    expect(loginModal).toContain('requestEmailSignup(');
     expect(loginModal).toContain('minLength={6}');
   });
 

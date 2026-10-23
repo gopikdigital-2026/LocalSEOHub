@@ -1,19 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2, AlertCircle, MapPin, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Loader2, AlertCircle, MapPin, CheckCircle2, ChevronRight, RefreshCw } from 'lucide-react';
 import {
   clearStoredOAuthState,
   selectGBPLocation,
-  resetGBPStatus,
+  cancelGBPAttempt,
+  startGBPConnection,
 } from '../../features/reality-engine/engine';
 import { supabase } from '../../lib/supabase';
 import { useBusiness } from '../business-memory/BusinessContext';
-import { LOCATIONS_UNAVAILABLE_MSG, isRealLocationName } from './gbpStatus';
+import { LOCATIONS_UNAVAILABLE_MSG, gbpErrorMessage, isRealLocationName } from './gbpStatus';
 
 type Phase = 'validating' | 'select_account' | 'loading_locations' | 'select_location' | 'syncing' | 'done' | 'error';
 
 interface Account { id: string; name: string }
 interface Location { name: string; title: string }
+
+type CancelReason = 'USER_CANCELLED' | 'NO_LOCATIONS' | 'LOCATIONS_UNAVAILABLE';
 
 export default function GBPCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -24,59 +27,44 @@ export default function GBPCallbackPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  const started = useRef(false);
 
   const accountsParam = searchParams.get('accounts');
   const errorParam = searchParams.get('error');
 
-  const handleError = useCallback((msg: string) => {
+  const showError = useCallback((msg: string) => {
     setError(msg);
     setPhase('error');
     clearStoredOAuthState();
-    if (businessId) resetGBPStatus(businessId).catch(() => undefined);
-  }, [businessId]);
+  }, []);
 
-  // The edge function already exchanged the code for tokens and fetched accounts.
-  // This page receives accounts (success) or error (failure) as query params.
-  useEffect(() => {
-    if (phase !== 'validating' || businessLoading) return;
+  // Failures detected in the browser after Google authorised: the server closes the attempt.
+  const failAndEnd = useCallback(async (msg: string, reason: CancelReason) => {
+    showError(msg);
+    if (businessId) await cancelGBPAttempt(businessId, reason).catch(() => undefined);
+  }, [businessId, showError]);
 
-    clearStoredOAuthState();
-
+  const handleSelectLocation = useCallback(async (accountId: string, location: Location) => {
     if (!businessId) {
-      handleError('No se pudo identificar tu negocio. Vuelve a intentar desde Fuentes.');
+      showError(gbpErrorMessage(null));
       return;
     }
-
-    if (errorParam) {
-      handleError(decodeURIComponent(errorParam));
-      return;
-    }
-
-    if (!accountsParam) {
-      handleError('No se recibieron datos de Google Business Profile. Vuelve a intentar desde Fuentes.');
-      return;
-    }
-
+    setPhase('syncing');
     try {
-      const parsed: Account[] = JSON.parse(decodeURIComponent(accountsParam));
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        handleError('No se encontraron cuentas de Google Business Profile asociadas.');
-        return;
-      }
-
-      setAccounts(parsed);
-      if (parsed.length === 1) {
-        handleSelectAccount(parsed[0]);
+      const result = await selectGBPLocation(accountId, location.name, location.title, businessId);
+      if (result.success) {
+        setPhase('done');
       } else {
-        setPhase('select_account');
+        console.warn('[gbp-callback] sync failed:', result.code);
+        showError(gbpErrorMessage(result.code));
       }
     } catch {
-      handleError('Error al procesar la respuesta de Google. Vuelve a intentar desde Fuentes.');
+      showError(gbpErrorMessage(null));
     }
-  }, [phase, accountsParam, errorParam, handleError, businessId, businessLoading]);
+  }, [businessId, showError]);
 
-  // Load locations for selected account
-  const handleSelectAccount = async (account: Account) => {
+  const handleSelectAccount = useCallback(async (account: Account) => {
     setSelectedAccount(account);
     setPhase('loading_locations');
 
@@ -87,54 +75,107 @@ export default function GBPCallbackPage() {
 
       if (fnError || !Array.isArray(data?.locations)) {
         console.warn('[gbp-callback] locations unavailable:', typeof data?.code === 'string' ? data.code : 'invalid response');
-        handleError(data?.success === false && typeof data.message === 'string' ? data.message : LOCATIONS_UNAVAILABLE_MSG);
+        await failAndEnd(
+          data?.success === false && typeof data.message === 'string' ? data.message : LOCATIONS_UNAVAILABLE_MSG,
+          'LOCATIONS_UNAVAILABLE',
+        );
         return;
       }
 
       const locs = (data.locations as Location[]).filter((l) => typeof l?.name === 'string' && isRealLocationName(l.name));
       if (locs.length === 0) {
-        handleError('No se encontraron ubicaciones en esta cuenta. Verifica que tu negocio este registrado en Google Business Profile.');
+        await failAndEnd(gbpErrorMessage('NO_LOCATIONS'), 'NO_LOCATIONS');
         return;
       }
 
       setLocations(locs);
       if (locs.length === 1) {
-        handleSelectLocation(account.id, locs[0]);
+        await handleSelectLocation(account.id, locs[0]);
       } else {
         setPhase('select_location');
       }
     } catch {
-      handleError(LOCATIONS_UNAVAILABLE_MSG);
+      await failAndEnd(LOCATIONS_UNAVAILABLE_MSG, 'LOCATIONS_UNAVAILABLE');
     }
-  };
+  }, [businessId, failAndEnd, handleSelectLocation]);
 
-  // Sync selected location
-  const handleSelectLocation = async (accountId: string, location: Location) => {
-    if (!businessId) {
-      handleError('No se pudo identificar tu negocio. Vuelve a intentar desde Fuentes.');
+  // The server already exchanged the code, stored credentials and fetched accounts (or ended the attempt).
+  useEffect(() => {
+    if (started.current || businessLoading) return;
+    started.current = true;
+    clearStoredOAuthState();
+
+    if (errorParam) {
+      console.warn('[gbp-callback] connection ended:', errorParam);
+      showError(gbpErrorMessage(errorParam));
       return;
     }
-    setPhase('syncing');
-    const result = await selectGBPLocation(accountId, location.name, location.title, businessId);
-    if (result.success) {
-      setPhase('done');
-    } else {
-      handleError(result.error ?? 'Error durante la sincronizacion');
+
+    if (!businessId) {
+      showError(gbpErrorMessage(null));
+      return;
     }
+
+    let parsed: Account[] = [];
+    try {
+      const raw: unknown = accountsParam ? JSON.parse(accountsParam) : null;
+      parsed = Array.isArray(raw)
+        ? raw.filter((a): a is Account => typeof a?.id === 'string' && typeof a?.name === 'string')
+        : [];
+    } catch {
+      parsed = [];
+    }
+
+    if (parsed.length === 0) {
+      void failAndEnd(gbpErrorMessage(null), 'USER_CANCELLED');
+      return;
+    }
+
+    setAccounts(parsed);
+    if (parsed.length === 1) void handleSelectAccount(parsed[0]);
+    else setPhase('select_account');
+  }, [accountsParam, errorParam, businessId, businessLoading, showError, failAndEnd, handleSelectAccount]);
+
+  const handleRetry = async () => {
+    if (!businessId) {
+      navigate('/fuentes');
+      return;
+    }
+    setRetrying(true);
+    const result = await startGBPConnection(businessId);
+    if (result.status === 'redirect') {
+      window.location.href = result.url;
+      return;
+    }
+    setRetrying(false);
+    setError(result.status === 'not_configured' ? gbpErrorMessage('NOT_CONFIGURED') : gbpErrorMessage(null));
   };
+
+  const handleCancel = async () => {
+    if (businessId) await cancelGBPAttempt(businessId, 'USER_CANCELLED').catch(() => undefined);
+    navigate('/fuentes');
+  };
+
+  const cancelLink = (
+    <button
+      onClick={handleCancel}
+      className="mt-5 w-full text-center text-v2-xs font-medium text-v2-text-tertiary hover:text-v2-text-secondary transition-colors"
+    >
+      Cancelar y volver a Fuentes
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-v2-bg-primary font-v2 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-v2-2xl border border-v2-border shadow-v2-lg p-6 sm:p-8">
 
-        {/* ── Validating / Loading ── */}
         {(phase === 'validating' || phase === 'loading_locations' || phase === 'syncing') && (
-          <div className="text-center py-8">
+          <div className="text-center py-8" aria-live="polite">
             <Loader2 className="w-8 h-8 animate-spin text-v2-primary-600 mx-auto mb-4" />
             <p className="text-v2-sm font-semibold text-v2-text-primary">
-              {phase === 'validating' && 'Procesando autorizacion...'}
-              {phase === 'loading_locations' && 'Cargando ubicaciones...'}
-              {phase === 'syncing' && 'Sincronizando datos del negocio...'}
+              {phase === 'validating' && 'Procesando autorización...'}
+              {phase === 'loading_locations' && 'Cargando tus fichas de Google...'}
+              {phase === 'syncing' && 'Sincronizando los datos de tu negocio...'}
             </p>
             <p className="text-v2-xs text-v2-text-tertiary mt-2">
               Esto puede tardar unos segundos.
@@ -142,7 +183,6 @@ export default function GBPCallbackPage() {
           </div>
         )}
 
-        {/* ── Select account ── */}
         {phase === 'select_account' && (
           <div>
             <h2 className="text-v2-lg font-bold text-v2-text-primary mb-1">Selecciona una cuenta</h2>
@@ -153,7 +193,7 @@ export default function GBPCallbackPage() {
               {accounts.map(account => (
                 <button
                   key={account.id}
-                  onClick={() => handleSelectAccount(account)}
+                  onClick={() => { void handleSelectAccount(account); }}
                   className="w-full flex items-center gap-3 p-4 rounded-v2-xl border border-v2-border
                     hover:border-v2-primary-300 hover:bg-v2-primary-50/50 transition-all text-left group"
                 >
@@ -165,21 +205,21 @@ export default function GBPCallbackPage() {
                 </button>
               ))}
             </div>
+            {cancelLink}
           </div>
         )}
 
-        {/* ── Select location ── */}
         {phase === 'select_location' && selectedAccount && (
           <div>
             <h2 className="text-v2-lg font-bold text-v2-text-primary mb-1">Selecciona tu negocio</h2>
             <p className="text-v2-xs text-v2-text-secondary mb-5">
-              Elige la ubicacion que quieres sincronizar.
+              Elige la ficha que quieres sincronizar.
             </p>
             <div className="space-y-2">
               {locations.map(loc => (
                 <button
                   key={loc.name}
-                  onClick={() => handleSelectLocation(selectedAccount.id, loc)}
+                  onClick={() => { void handleSelectLocation(selectedAccount.id, loc); }}
                   className="w-full flex items-center gap-3 p-4 rounded-v2-xl border border-v2-border
                     hover:border-v2-primary-300 hover:bg-v2-primary-50/50 transition-all text-left group"
                 >
@@ -191,10 +231,10 @@ export default function GBPCallbackPage() {
                 </button>
               ))}
             </div>
+            {cancelLink}
           </div>
         )}
 
-        {/* ── Done ── */}
         {phase === 'done' && (
           <div className="text-center py-8">
             <div className="w-14 h-14 rounded-full bg-v2-success-50 flex items-center justify-center mx-auto mb-4">
@@ -204,7 +244,7 @@ export default function GBPCallbackPage() {
               Google Business Profile conectado
             </h2>
             <p className="text-v2-xs text-v2-text-secondary mb-6">
-              Tus datos han sido sincronizados correctamente.
+              Google ha confirmado tu ficha y tus datos se han sincronizado.
             </p>
             <button
               onClick={() => navigate('/fuentes')}
@@ -215,9 +255,8 @@ export default function GBPCallbackPage() {
           </div>
         )}
 
-        {/* ── Error ── */}
         {phase === 'error' && (
-          <div className="text-center py-6">
+          <div className="text-center py-6" role="alert">
             <div className="w-14 h-14 rounded-full bg-v2-error-50 flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-7 h-7 text-v2-error-500" />
             </div>
@@ -227,19 +266,21 @@ export default function GBPCallbackPage() {
             <p className="text-v2-xs text-v2-text-secondary mb-6 max-w-sm mx-auto">
               {error}
             </p>
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-center gap-3">
               <button
                 onClick={() => navigate('/fuentes')}
-                className="px-5 py-2.5 rounded-v2-lg text-v2-sm font-semibold border border-v2-border
+                className="w-full sm:w-auto px-5 py-2.5 rounded-v2-lg text-v2-sm font-semibold border border-v2-border
                   text-v2-text-secondary hover:bg-v2-neutral-50 transition-colors"
               >
                 Volver a Fuentes
               </button>
               <button
-                onClick={() => navigate('/fuentes')}
-                className="v2-btn-primary px-5 py-2.5 text-v2-sm font-semibold"
+                onClick={handleRetry}
+                disabled={retrying}
+                className="w-full sm:w-auto v2-btn-primary px-5 py-2.5 text-v2-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                Reintentar
+                {retrying ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+                Reintentar conexión
               </button>
             </div>
           </div>

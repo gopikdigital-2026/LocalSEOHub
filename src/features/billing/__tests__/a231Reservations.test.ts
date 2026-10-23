@@ -215,31 +215,21 @@ describe('A2.3.1 §2 — maximum five businesses per user', () => {
   });
 });
 
-describe('A2.3.1 §3 — signup cannot be saturated through the global limit', () => {
-  it('10. malicious saturation: per-IP and per-email limits run first, global counts created accounts only', () => {
-    const ip = signupSrc.indexOf('signup:ip:');
-    const email = signupSrc.indexOf('signup:email:');
-    const global = signupSrc.indexOf('await createdRecently(');
-    const create = signupSrc.indexOf('admin.createUser(');
-    expect(ip).toBeLessThan(email);
-    expect(email).toBeLessThan(global);
-    expect(global).toBeLessThan(create);
-    expect(signupSrc).not.toContain('signup:global');
+describe('A2.3.1 §3 — signup breaker (superseded by F-03 Stage 2B)', () => {
+  it('10. signup-instant is retired: no limiter or account creation remains in it', () => {
+    expect(signupSrc).toContain('status: 410');
+    expect(signupSrc).not.toContain('admin.createUser(');
+    expect(signupSrc).not.toContain('consume_rate_limit');
+  });
+
+  it('11. the breaker function stays service-role only', () => {
     expect(breakerSql).toContain("raw_app_meta_data ->> 'signup_source' = 'signup-instant'");
-  });
-
-  it('input is validated before any limit is consumed', () => {
-    expect(signupSrc.indexOf('invalid_input')).toBeLessThan(signupSrc.indexOf('withinLimit(supabaseUrl'));
-  });
-
-  it('11. direct Supabase Auth signups cannot drain the breaker (only server-tagged accounts count)', () => {
-    expect(signupSrc).toMatch(/app_metadata:\s*\{\s*signup_source:\s*SIGNUP_SOURCE\s*\}/);
     expect(breakerSql).toContain('REVOKE ALL ON FUNCTION public.signup_created_recently(int) FROM PUBLIC, anon, authenticated');
     expect(breakerSql).toContain('GRANT EXECUTE ON FUNCTION public.signup_created_recently(int) TO service_role');
   });
 
-  it('new accounts remain usable: confirmation is set so the immediate sign-in succeeds', () => {
-    expect(signupSrc).toMatch(/email_confirm:\s*true/);
+  it('no account is pre-confirmed any more', () => {
+    expect(signupSrc).not.toMatch(/email_confirm\s*:/);
   });
 });
 

@@ -52,42 +52,9 @@
       }
       @keyframes spin { to { transform: rotate(360deg); } }
     </style>
-    <!-- Meta Pixel -->
-    <script>
-      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-      n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-      document,'script','https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init','7692881320839391');
-      fbq('track','PageView');
-    </script>
-    <!-- End Meta Pixel -->
-    <!-- Microsoft Clarity — deferred to idle so it never blocks FCP -->
-    <script>
-      function _loadClarity() {
-        var CLARITY_ID = "xhez4c3vjj";
-        if (!CLARITY_ID) return;
-        (function(c,l,a,r,i,t,y){
-          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window,document,"clarity","script",CLARITY_ID);
-      }
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(_loadClarity, { timeout: 4000 });
-      } else {
-        setTimeout(_loadClarity, 2000);
-      }
-    </script>
-    <!-- End Microsoft Clarity -->
+    <!-- Meta Pixel and Microsoft Clarity load from the app only after privacy consent. -->
   </head>
   <body>
-    <!-- Meta Pixel noscript fallback -->
-    <noscript>
-      <img height="1" width="1" style="display:none"
-        src="https://www.facebook.com/tr?id=7692881320839391&ev=PageView&noscript=1" />
-    </noscript>
     <div id="root">
       <div id="app-loading">
         <div class="logo">

@@ -6,7 +6,6 @@ import {
   Mail, Lock, Eye, EyeOff, X,
 } from 'lucide-react';
 import { track } from '../lib/analytics';
-import { trackCompleteRegistration } from '../lib/pixel';
 import { supabase } from '../lib/supabase';
 
 // ─── Scroll animation hook ────────────────────────────────────────────────────
@@ -668,7 +667,6 @@ function RegisterModal({ onClose }: { onClose: () => void }) {
         setErr('Email o contraseña incorrectos.');
         return;
       }
-      trackCompleteRegistration();
       track('signup_success', { method: 'email_login', landing: '/copiloto-ia' });
       window.location.href = '/';
       return;
@@ -696,7 +694,6 @@ function RegisterModal({ onClose }: { onClose: () => void }) {
       return;
     }
 
-    trackCompleteRegistration();
     track('signup_success', { method: 'email', landing: '/copiloto-ia' });
     window.location.href = '/';
   };

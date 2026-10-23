@@ -8,6 +8,10 @@ import { captureVerificationLinkProblem } from './features/email-verification/ve
 import { BusinessProvider } from './features/business-memory/BusinessContext';
 import ActionsProvider from './features/actions/ActionsProvider';
 import BillingProvider from './features/billing/BillingProvider';
+import MetaPixelTracker from './features/conversion/MetaPixelTracker';
+import ConsentProvider from './features/consent/ConsentProvider';
+import { applyTrackingConsent } from './features/consent/applyConsent';
+import { hasAdvertisingConsent } from './lib/consent';
 import './index.css';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -34,19 +38,25 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 const initialRecoveryLink = captureRecoveryLink(window.location.href);
 const initialLinkProblem = captureVerificationLinkProblem(window.location.href);
 
+// Optional trackers load only for a stored, current-version acceptance; otherwise nothing is requested.
+if (hasAdvertisingConsent()) applyTrackingConsent(true);
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <BrowserRouter>
-        <I18nProvider>
-          <BusinessProvider>
-            <BillingProvider>
-              <ActionsProvider>
-                <App initialRecoveryLink={initialRecoveryLink} initialLinkProblem={initialLinkProblem} />
-              </ActionsProvider>
-            </BillingProvider>
-          </BusinessProvider>
-        </I18nProvider>
+        <MetaPixelTracker />
+        <ConsentProvider>
+          <I18nProvider>
+            <BusinessProvider>
+              <BillingProvider>
+                <ActionsProvider>
+                  <App initialRecoveryLink={initialRecoveryLink} initialLinkProblem={initialLinkProblem} />
+                </ActionsProvider>
+              </BillingProvider>
+            </BusinessProvider>
+          </I18nProvider>
+        </ConsentProvider>
       </BrowserRouter>
     </ErrorBoundary>
   </StrictMode>

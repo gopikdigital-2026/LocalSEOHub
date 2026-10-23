@@ -253,11 +253,10 @@ describe('every premium function enforces entitlement first (source)', () => {
     expect(src).not.toMatch(/\bimport\b|fetch\(|Deno\.env|req\.json\(|createClient|requirePremium|openai/i);
   });
 
-  it('G5 public signup is rate limited and never rewrites an existing account', () => {
+  it('G5 retired signup-instant cannot create, confirm or rewrite any account', () => {
     const src = read('signup-instant');
-    expect(src).toContain('consume_rate_limit');
-    expect(src).not.toMatch(/updateUserById|listUsers/);
-    expect(src).not.toContain('exists: true');
+    expect(src).toContain('status: 410');
+    expect(src).not.toMatch(/createUser|updateUserById|listUsers|email_confirm/);
   });
 });
 

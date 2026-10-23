@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/analytics';
-import { trackCompleteRegistration } from '../lib/pixel';
 
 // ---------------------------------------------------------------------------
 // UTM helpers
@@ -295,7 +294,6 @@ function RegisterPanel({ onSuccess, onClose }: { onSuccess: () => void; onClose:
       setLoading(false);
       return;
     }
-    trackCompleteRegistration();
     track('register_success', { source: 'diagnostic', ...getUtmParams() });
     onSuccess();
   };

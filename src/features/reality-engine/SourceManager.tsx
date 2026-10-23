@@ -11,6 +11,7 @@ import { useBusiness } from '../business-memory/BusinessContext';
 import { useI18n } from '../../lib/i18n';
 import { useActions } from '../actions/ActionsContext';
 import { PROFILE_LIMITS, isValidWebsite, normalizeWebsite } from '../business-memory/profileValidation';
+import { MetaConnectionCard } from '../meta-connection/MetaConnectionCard';
 
 // ─── Main SourceManager page ────────────────────────────────────────────────
 
@@ -68,6 +69,15 @@ export default function SourceManager() {
   const activeCount = cards.filter(c => isActive(c.status)).length;
   const hasChecked = cards.some(c => !c.entry.dependsOn && (c.status === 'verified' || c.status === 'analyzed'));
   const hasDeclared = cards.some(c => c.status === 'declared');
+  const gbpInFlight = cards.some(c => c.entry.id === 'google_business'
+    && (c.status === 'in_progress' || c.status === 'selecting' || c.status === 'syncing'));
+
+  // Re-check while an attempt is in flight so an abandoned one turns into "expired" without a reload.
+  useEffect(() => {
+    if (!gbpInFlight) return;
+    const timer = setInterval(() => { void refresh(); }, 30_000);
+    return () => clearInterval(timer);
+  }, [gbpInFlight, refresh]);
 
   // The URL the owner analysed is their website; record it in the profile when none was declared yet.
   const handleWebsiteAnalyzed = async (url: string) => {
@@ -201,6 +211,7 @@ export default function SourceManager() {
             onDisconnect={(s) => handleDisconnect(s)}
           />
         ))}
+        {businessId && <MetaConnectionCard businessId={businessId} lang={lang} />}
       </div>
 
       {/* Sync history */}

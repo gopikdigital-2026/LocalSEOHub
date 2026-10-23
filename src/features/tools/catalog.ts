@@ -1,4 +1,4 @@
-export type ToolId = 'seo' | 'maps' | 'twin' | 'radar' | 'geo' | 'advisor' | 'voice';
+export type ToolId = 'seo' | 'maps' | 'twin' | 'radar' | 'geo' | 'advisor' | 'voice' | 'reviews' | 'social';
 
 // Internal audit status (A2.4.1). Never rendered in the UI.
 export type ToolRecoveryStatus =
@@ -11,7 +11,7 @@ export type ToolRecoveryStatus =
 
 export type ToolDataKind = 'business_ai' | 'sources' | 'available_data' | 'user_input' | 'estimate' | 'simulation';
 
-type Copy = { name: string; description: string; indicator: string };
+type Copy = { name: string; description: string; indicator: string; cta?: string };
 
 interface ToolBase {
   id: ToolId;
@@ -161,6 +161,48 @@ export const TOOLS: readonly ToolDefinition[] = [
         name: 'Voice Simulator',
         description: 'Simulate customer conversations and practise replies tailored to your business.',
         indicator: 'AI-generated simulation',
+      },
+    },
+  },
+  {
+    id: 'reviews',
+    dataKind: 'sources',
+    recoveryStatus: 'ACTIVE',
+    legacyFunction: 'audit-reviews',
+    enabled: true,
+    path: '/herramientas/resenas',
+    copy: {
+      es: {
+        name: 'Reseñas IA',
+        description: 'Gestiona tus reseñas y prepara respuestas personalizadas con IA.',
+        indicator: 'Reseñas reales de Google + borradores con IA',
+        cta: 'Gestionar reseñas',
+      },
+      en: {
+        name: 'AI Reviews',
+        description: 'Manage your reviews and prepare personalised replies with AI.',
+        indicator: 'Real Google reviews + AI drafts',
+        cta: 'Manage reviews',
+      },
+    },
+  },
+  {
+    id: 'social',
+    dataKind: 'sources',
+    recoveryStatus: 'ACTIVE',
+    legacyFunction: null,
+    enabled: true,
+    path: '/herramientas/social',
+    copy: {
+      es: {
+        name: 'Inteligencia Social',
+        description: 'Revisa qué merece atención en tus cuentas conectadas de Facebook e Instagram.',
+        indicator: 'Datos reales de tus cuentas de Meta',
+      },
+      en: {
+        name: 'Social Intelligence',
+        description: 'See what deserves attention in your connected Facebook and Instagram accounts.',
+        indicator: 'Real data from your Meta accounts',
       },
     },
   },

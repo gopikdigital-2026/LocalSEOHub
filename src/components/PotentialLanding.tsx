@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowRight, Check, Search, TrendingUp, Star, Lock, Mail } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/analytics';
-import { trackLead, trackCompleteRegistration } from '../lib/pixel';
+import { trackLead } from '../lib/pixel';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -511,7 +511,6 @@ export default function PotentialLanding() {
           setScore(buildScore(saved));
           setUnlocked(true);
           setStage('result');
-          trackCompleteRegistration();
           track('register_success', { business: saved, method: 'magic_link', ...utm.current });
         }
       }

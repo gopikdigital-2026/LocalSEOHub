@@ -11,6 +11,7 @@ import { loadSources } from '../reality-engine/repositories';
 import { normalizeGbp, type GbpSnapshot } from '../maps-scanner/engine';
 import { ActionDetail } from '../action-layer/ActionDetail';
 import { ACTION_COPY } from '../action-layer/copy';
+import { primaryAction } from '../action-layer/primary';
 import { geoActions } from '../action-layer/model';
 import { COPY, type GeoCopy } from './copy';
 import { GEO_BLOCKS, geoAudit, type GeoBand, type GeoCriterion, type GeoStatus } from './engine';
@@ -173,6 +174,7 @@ export default function GeoAuditPage() {
   const updatedDate = formatDate(currentBusiness.updated_at, lang);
   const unchecked = result.criteria.filter((c) => c.status === 'unchecked');
   const ac = lang === 'en' ? ACTION_COPY.en : ACTION_COPY.es;
+  const actionLang = lang === 'en' ? 'en' : 'es';
   const actions = new Map(geoActions(result.priorities).map((a) => [a.id, a]));
 
   return (
@@ -241,8 +243,8 @@ export default function GeoAuditPage() {
                       <p className="text-v2-sm font-medium text-v2-text-primary leading-snug">{t.priorities[p.id].title}</p>
                       <p className="mt-0.5 text-v2-xs text-v2-text-secondary leading-relaxed">{t.priorities[p.id].why}</p>
                       {actions.has(p.id) && <ActionDetail item={actions.get(p.id)!} c={ac} showWhy={false} />}
-                      <Link to={p.cta} className="mt-1.5 inline-flex items-center gap-1 text-v2-xs font-medium text-v2-primary-600 hover:text-v2-primary-700 hover:gap-1.5 transition-all">
-                        {t.priorities[p.id].cta} <ArrowRight size={12} />
+                      <Link to={primaryAction(actionLang, actions.get(p.id), { to: p.cta, label: t.priorities[p.id].cta }).to} data-testid="diagnostic-primary-cta" className="mt-1.5 inline-flex items-center gap-1 text-v2-xs font-medium text-v2-primary-600 hover:text-v2-primary-700 hover:gap-1.5 transition-all">
+                        {primaryAction(actionLang, actions.get(p.id), { to: p.cta, label: t.priorities[p.id].cta }).label} <ArrowRight size={12} />
                       </Link>
                     </div>
                   </div>

@@ -90,3 +90,24 @@ verify_jwt = true
 
 [functions.voice-simulator-v2]
 verify_jwt = true
+
+[functions.gbp-disconnect]
+verify_jwt = true
+
+[functions.gbp-reviews]
+verify_jwt = true
+
+[functions.gbp-recover-attempt]
+verify_jwt = true
+
+[functions.meta-oauth-start]
+verify_jwt = true
+
+[functions.meta-oauth-callback]
+verify_jwt = false
+
+[functions.meta-connection]
+verify_jwt = true
+
+[functions.meta-read]
+verify_jwt = true

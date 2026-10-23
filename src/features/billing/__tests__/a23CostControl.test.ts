@@ -100,18 +100,10 @@ const callBI = async (deps: BIDeps, body: unknown, user = USER_A) => {
 describe('A2.3 — §2 Signup', () => {
   const signupSrc = readFileSync(join(ROOT, 'supabase/functions/signup-instant/index.ts'), 'utf8');
 
-  // A2.3.1: the admin API ignores autoconfirm and password sign-in rejects unconfirmed emails,
-  // so the A2.3 removal of email_confirm made every new account unusable. Restored.
-  it('T1. registro válido (A2.3.1): createUser confirms so the immediate sign-in works', () => {
-    const createBlock = signupSrc.slice(signupSrc.indexOf('createUser({'));
-    const callBody = createBlock.slice(0, createBlock.indexOf('});'));
-    expect(callBody).toMatch(/email_confirm:\s*true/);
-    expect(signupSrc).toContain('adminClient.auth.admin.createUser');
-  });
-
-  it('T2. registro (A2.3.1): the account is tagged server-side for the created-accounts breaker', () => {
-    const createBlock = signupSrc.slice(signupSrc.indexOf('createUser({'));
-    expect(createBlock).toMatch(/app_metadata:\s*\{\s*signup_source:\s*SIGNUP_SOURCE\s*\}/);
+  it('T1. registro (F-03 Stage 2B): signup-instant is retired and never pre-confirms', () => {
+    expect(signupSrc).toContain('status: 410');
+    expect(signupSrc).not.toMatch(/email_confirm\s*:/);
+    expect(signupSrc).not.toContain('createUser');
   });
 
   it('T3. verificación de correo: start_trial migration checks email_confirmed_at', () => {
@@ -152,17 +144,9 @@ describe('A2.3 — §2 Signup', () => {
     // user_trials has a CHECK constraint enforcing ends_at = started_at + 7 days (existing)
   });
 
-  it('T9. manipulación de cabeceras IP (A2.3.1): a global breaker independent of IP still exists', () => {
-    expect(signupSrc).toContain('signup_created_recently');
-    expect(signupSrc).toContain('GLOBAL_CREATED_LIMIT');
-    expect(signupSrc).not.toContain('"signup:global"');
-  });
-
-  it('T10. límite de registros concurrentes: global + IP + email limits exist', () => {
-    expect(signupSrc).toContain('GLOBAL_CREATED_LIMIT');
-    expect(signupSrc).toContain('IP_LIMIT');
-    expect(signupSrc).toContain('EMAIL_LIMIT');
-    expect(signupSrc).toMatch(/limit:\s*50.*windowSeconds:\s*3600/s);
+  it('T9/T10. signup rate limiting is now Supabase Auth\'s own (F-03 Stage 2B)', () => {
+    expect(signupSrc).not.toContain('IP_LIMIT');
+    expect(signupSrc).not.toContain('GLOBAL_CREATED_LIMIT');
   });
 });
 
@@ -337,7 +321,8 @@ describe('A2.3 — §9 Regression checks', () => {
         if (indexSrc.includes('openai.com') || indexSrc.includes('chat/completions')) aiCallers.push(d);
       } catch { /* no index.ts */ }
     }
-    expect(aiCallers.sort()).toEqual(['business-advisor-v2', 'business-improvement', 'seo-generator-v2', 'voice-simulator-v2', 'weekly-content']);
+    // A3.4.2: gbp-reviews drafts review replies (gpt-4o-mini, ledger-capped) and is an approved AI caller.
+    expect(aiCallers.sort()).toEqual(['business-advisor-v2', 'business-improvement', 'gbp-reviews', 'seo-generator-v2', 'voice-simulator-v2', 'weekly-content']);
   });
 });
 

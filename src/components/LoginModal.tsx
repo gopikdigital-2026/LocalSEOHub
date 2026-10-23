@@ -7,6 +7,8 @@ import { useI18n } from '../lib/i18n';
 import ForgotPasswordForm from '../features/password-reset/ForgotPasswordForm';
 import VerifyEmailPanel from '../features/email-verification/VerifyEmailPanel';
 import { isEmailNotConfirmed, type VerificationLinkProblem } from '../features/email-verification/verification';
+import { requestEmailSignup } from '../features/email-verification/signup';
+import { peekPendingBusinessName, pendingBusinessMetadata } from '../features/first-value/pendingBusiness';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -26,6 +28,13 @@ interface LoginModalProps {
 type Verifying = { reason: 'signup' | 'login' | 'link'; email: string } | null;
 
 type Mode = 'login' | 'signup';
+
+const SIGNUP_ERROR_KEYS = {
+  rate_limited: 'reset_err_rate_limited',
+  weak_password: 'reset_err_weak',
+  invalid_email: 'reset_err_email_invalid',
+  error: 'auth_err_generic',
+} as const;
 
 function isInAppBrowser(): boolean {
   const ua = navigator.userAgent || '';
@@ -118,22 +127,20 @@ export default function LoginModal({ onClose, onSuccess, returnTo = null, initia
       }
     } else {
       track('register_attempt', { method: 'email' });
-      const res = await supabase.functions.invoke('signup-instant', { body: { email, password } });
-      if (res.error) {
-        track('register_failed', { method: 'email', error: res.error.message });
-        const status = (res.error as { context?: { status?: number } }).context?.status;
-        setError(status === 429 ? t('reset_err_rate_limited') : t('auth_err_generic'));
-        setLoading(false);
-        return;
-      }
-      const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (!loginErr) {
+      const outcome = await requestEmailSignup(
+        supabase.auth, email, password, window.location.origin, pendingBusinessMetadata(peekPendingBusinessName()),
+      );
+      if (outcome === 'signed_in') {
+        // Only reachable while Confirm email is disabled in Supabase; Supabase then marks the address confirmed itself.
         trackCompleteRegistration();
         finish();
-      } else {
+      } else if (outcome === 'verify') {
         // Same screen whether the address is new (awaiting confirmation) or already registered.
-        track('register_partial_failure', { step: 'auto_login', error: loginErr.message });
+        track('register_pending_verification', { method: 'email' });
         setVerifying({ reason: 'signup', email });
+      } else {
+        track('register_failed', { method: 'email', error: outcome });
+        setError(t(SIGNUP_ERROR_KEYS[outcome]));
       }
     }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPendingBusinessName } from '../../App';
+import { pendingBusinessFromMetadata } from './pendingBusiness';
 import type { BusinessSetupData, FirstValueState } from './types';
 import type { GoalId } from '../business-memory/types';
 import { createFirstValueRepository, createDefaultState, type FirstValueRepository } from './repository';
@@ -64,6 +65,8 @@ export default function FirstValueFlow() {
   const repoRef = useRef<FirstValueRepository | null>(null);
   const initRef = useRef(false);
   const finishingRef = useRef(false);
+  const signupMetadataRef = useRef<unknown>(null);
+  signupMetadataRef.current = session?.user?.user_metadata ?? null;
 
   useEffect(() => {
     if (!userId || !businessId || initRef.current) return;
@@ -73,7 +76,8 @@ export default function FirstValueFlow() {
 
     repo.load().then((loaded) => {
       const base = loaded ?? createDefaultState(userId, businessId);
-      const businessData = initialBusinessData(base.businessData, currentBusiness, getPendingBusinessName());
+      const pendingName = getPendingBusinessName() ?? pendingBusinessFromMetadata(signupMetadataRef.current);
+      const businessData = initialBusinessData(base.businessData, currentBusiness, pendingName);
       const goal = base.selectedGoalId ?? currentBusiness?.primary_goal ?? null;
       setState({ ...base, businessData, selectedGoalId: goal });
       setScreen(resumeScreen(loaded?.currentStep ?? null, businessData, goal));

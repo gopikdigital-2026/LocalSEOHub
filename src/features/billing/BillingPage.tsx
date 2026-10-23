@@ -7,6 +7,7 @@ import { canSubscribe as canSubscribeIn, formatBillingDate, serverNow, trialCoun
 import { useBillingAction } from './useBillingAction';
 import { trackPaywallViewed } from './analytics';
 import { runBillingAction } from './repository';
+import { trackPurchaseAfterCheckout } from './purchase';
 import { useI18n, type Lang } from '../../lib/i18n';
 import { useAuth } from '../../hooks/useAuth';
 import { LoadingState } from '../../components/ui';
@@ -84,7 +85,11 @@ export default function BillingPage() {
     if (returned === 'cancel' || syncedRef.current) return;
     syncedRef.current = true;
     // Access is never granted from this URL; the server re-reads Stripe and the webhook remains the source of truth.
-    runBillingAction('sync').catch(() => {}).finally(() => { void refresh(); });
+    runBillingAction('sync').catch(() => {}).finally(() => {
+      void refresh();
+      // The URL only triggers this check; the event needs the reconciled subscription row.
+      if (returned === 'success') void trackPurchaseAfterCheckout();
+    });
   }, [returned, setParams, refresh]);
 
   const userId = session?.user?.id;

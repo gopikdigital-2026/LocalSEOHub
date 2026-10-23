@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHandler, type HandlerDeps, type SourceRow } from '../../../../supabase/functions/gbp-list-locations/handler.ts';
-import { mapGoogleError, needsRefresh, normalizeLocations } from '../../../../supabase/functions/gbp-list-locations/logic.ts';
+import { mapGoogleError, normalizeLocations } from '../../../../supabase/functions/gbp-list-locations/logic.ts';
+import { tokenNeedsRefresh as needsRefresh, type StoredCredentials } from '../../../../supabase/functions/gbp-list-locations/gbpToken.ts';
 
 const root = resolve(__dirname, '../../../..');
 const src = (p: string) => readFileSync(resolve(root, p), 'utf8');
@@ -11,11 +12,11 @@ const ACCESS = 'ya29.SECRET_ACCESS_TOKEN';
 const REFRESH = '1//SECRET_REFRESH_TOKEN';
 const NOW = Date.parse('2026-10-07T10:00:00Z');
 
-const validSource: SourceRow = {
-  id: 'src-1',
-  access_token_encrypted: ACCESS,
-  refresh_token_encrypted: REFRESH,
-  token_expires_at: new Date(NOW + 3600_000).toISOString(),
+const validSource: SourceRow = { id: 'src-1' };
+const validCreds: StoredCredentials = {
+  accessToken: ACCESS,
+  refreshToken: REFRESH,
+  expiresAt: new Date(NOW + 3600_000).toISOString(),
 };
 
 function reply(status: number, body: unknown) {
@@ -25,9 +26,11 @@ function reply(status: number, body: unknown) {
 function setup(opts: {
   userId?: string | null;
   source?: SourceRow | null;
+  creds?: StoredCredentials | null;
   google?: (url: string) => Response;
 }) {
   const updates: Record<string, unknown>[] = [];
+  const writes: { access: string; refresh: string | null; expiresAt: string }[] = [];
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
     if (url.startsWith('https://oauth2.googleapis.com/token')) {
@@ -38,6 +41,13 @@ function setup(opts: {
   const deps: HandlerDeps = {
     getUserId: async () => (opts.userId === undefined ? 'user-a' : opts.userId),
     loadSource: async () => ({ row: opts.source === undefined ? validSource : opts.source, failed: false }),
+    credentials: () => ({
+      read: async () => (opts.creds === undefined ? validCreds : opts.creds),
+      write: async (access, refresh, expiresAt) => {
+        writes.push({ access, refresh, expiresAt });
+        return true;
+      },
+    }),
     updateSource: async (_u, _s, patch) => {
       updates.push(patch);
     },
@@ -45,7 +55,7 @@ function setup(opts: {
     env: (n) => ({ GOOGLE_CLIENT_ID: 'cid', GOOGLE_CLIENT_SECRET: 'csecret' } as Record<string, string>)[n],
     now: () => NOW,
   };
-  return { handle: createHandler(deps), fetchMock, updates };
+  return { handle: createHandler(deps), fetchMock, updates, writes };
 }
 
 function request(body: unknown = { accountId: 'accounts/111' }, auth = 'Bearer jwt') {
@@ -172,22 +182,23 @@ describe('gbp-list-locations: real locations', () => {
 
 describe('gbp-list-locations: token handling', () => {
   it('refreshes an expired access token and stores the new one server-side', async () => {
-    const expired = { ...validSource, token_expires_at: new Date(NOW - 1000).toISOString() };
-    const { handle, updates } = setup({
-      source: expired,
+    const expired = { ...validCreds, expiresAt: new Date(NOW - 1000).toISOString() };
+    const { handle, writes } = setup({
+      creds: expired,
       google: () => reply(200, { locations: [{ name: 'locations/1', title: 'A' }] }),
     });
     const r = await call(handle, request());
     expect(r.json.success).toBe(true);
-    expect(updates[0]).toMatchObject({ access_token_encrypted: 'ya29.NEW_TOKEN' });
+    expect(writes[0]).toMatchObject({ access: 'ya29.NEW_TOKEN', refresh: null });
     expect(r.text).not.toContain('NEW_TOKEN');
   });
 
   it('reports NOT_CONFIGURED when a refresh is needed but OAuth secrets are missing', async () => {
-    const expired = { ...validSource, token_expires_at: null };
+    const expired = { ...validCreds, expiresAt: null };
     const h = createHandler({
       getUserId: async () => 'user-a',
-      loadSource: async () => ({ row: expired, failed: false }),
+      loadSource: async () => ({ row: validSource, failed: false }),
+      credentials: () => ({ read: async () => expired, write: async () => true }),
       updateSource: async () => {},
       fetch: vi.fn() as unknown as typeof fetch,
       env: () => undefined,
@@ -229,8 +240,14 @@ describe('security: tokens and logs', () => {
   });
 
   it('GBP functions never log tokens or raw Google bodies', () => {
-    for (const f of ['gbp-oauth-callback', 'gbp-oauth-start', 'gbp-sync', 'gbp-list-locations']) {
-      const files = f === 'gbp-list-locations' ? ['index.ts', 'handler.ts', 'logic.ts'] : ['index.ts'];
+    const fileSets: Record<string, string[]> = {
+      'gbp-oauth-callback': ['index.ts'],
+      'gbp-oauth-start': ['index.ts'],
+      'gbp-sync': ['index.ts', 'gbpToken.ts'],
+      'gbp-list-locations': ['index.ts', 'handler.ts', 'logic.ts', 'gbpToken.ts'],
+      'gbp-disconnect': ['index.ts', 'handler.ts', 'gbpToken.ts'],
+    };
+    for (const [f, files] of Object.entries(fileSets)) {
       for (const file of files) {
         const code = src(`supabase/functions/${f}/${file}`);
         const logs = code.match(/console\.(log|error|warn|info)\([^;]*\);/g) ?? [];

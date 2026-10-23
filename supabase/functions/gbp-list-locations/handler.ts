@@ -4,9 +4,9 @@ import {
   isValidAccountId,
   makeError,
   mapGoogleError,
-  needsRefresh,
   normalizeLocations,
 } from "./logic.ts";
+import { type CredentialStore, ensureAccessToken } from "./gbpToken.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,14 +16,12 @@ export const corsHeaders = {
 
 export interface SourceRow {
   id: string;
-  access_token_encrypted: string | null;
-  refresh_token_encrypted: string | null;
-  token_expires_at: string | null;
 }
 
 export interface HandlerDeps {
   getUserId(jwt: string): Promise<string | null>;
   loadSource(userId: string, businessId: string | null): Promise<{ row: SourceRow | null; failed: boolean }>;
+  credentials(sourceId: string): CredentialStore;
   updateSource(userId: string, sourceId: string, patch: Record<string, unknown>): Promise<void>;
   fetch: typeof fetch;
   env(name: string): string | undefined;
@@ -44,24 +42,6 @@ type GoogleResult<T> = { ok: true; data: T } | { ok: false; error: ListLocations
 
 export function createHandler(deps: HandlerDeps) {
   const now = deps.now ?? Date.now;
-
-  async function refreshAccessToken(refreshToken: string): Promise<{ token: string; expiresAt: string } | null> {
-    const res = await deps.fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: deps.env("GOOGLE_CLIENT_ID") ?? "",
-        client_secret: deps.env("GOOGLE_CLIENT_SECRET") ?? "",
-        refresh_token: refreshToken,
-        grant_type: "refresh_token",
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (typeof data?.access_token !== "string") return null;
-    const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 3600;
-    return { token: data.access_token, expiresAt: new Date(now() + expiresIn * 1000).toISOString() };
-  }
 
   async function googleGet<T>(url: string, token: string): Promise<GoogleResult<T>> {
     const res = await deps.fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -127,27 +107,24 @@ export function createHandler(deps: HandlerDeps) {
 
       const { row: source, failed } = await deps.loadSource(userId, businessId);
       if (failed) return json(makeError("INTERNAL_ERROR"), 500);
-      if (!source || (!source.access_token_encrypted && !source.refresh_token_encrypted)) {
-        return json(makeError("NOT_CONNECTED"));
-      }
+      if (!source) return json(makeError("NOT_CONNECTED"));
 
-      let accessToken = source.access_token_encrypted;
-      if (!accessToken || needsRefresh(source.token_expires_at, now())) {
-        if (source.refresh_token_encrypted) {
-          if (!deps.env("GOOGLE_CLIENT_ID") || !deps.env("GOOGLE_CLIENT_SECRET")) {
-            return json(makeError("NOT_CONFIGURED"));
-          }
-          const refreshed = await refreshAccessToken(source.refresh_token_encrypted);
-          if (!refreshed) return json(makeError("GBP_AUTH_EXPIRED"));
-          accessToken = refreshed.token;
+      const token = await ensureAccessToken(deps.credentials(source.id), {
+        fetch: deps.fetch,
+        clientId: deps.env("GOOGLE_CLIENT_ID"),
+        clientSecret: deps.env("GOOGLE_CLIENT_SECRET"),
+        now,
+      });
+      if (!token.ok) {
+        if (token.code === "GBP_AUTH_EXPIRED") {
           await deps.updateSource(userId, source.id, {
-            access_token_encrypted: refreshed.token,
-            token_expires_at: refreshed.expiresAt,
+            last_error: token.code,
             updated_at: new Date(now()).toISOString(),
           });
         }
+        return json({ ...makeError(token.code), retryable: token.retryable });
       }
-      if (!accessToken) return json(makeError("GBP_AUTH_EXPIRED"));
+      const accessToken = token.accessToken;
 
       let accountIds: string[];
       if (isValidAccountId(body.accountId)) {

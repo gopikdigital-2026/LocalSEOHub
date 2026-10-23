@@ -89,7 +89,7 @@ export const COPY: Record<'es' | 'en', SeoCopy> = {
     premiumCta: 'Ver planes',
     errors: {
       profile_incomplete: 'Faltan datos de tu negocio para generar este contenido. Complétalos en Mi negocio.',
-      seo_limit: 'Has alcanzado el límite de 20 generaciones SEO de este mes. Podrás generar más el mes que viene.',
+      seo_limit: 'Has alcanzado el límite mensual de generaciones SEO. Podrás generar más el mes que viene.',
       global_limit: 'Has alcanzado el límite mensual de uso de IA de tu cuenta. Podrás generar más el mes que viene.',
       ai_unavailable: 'El servicio de IA no está disponible ahora mismo. No se ha descontado ningún uso. Inténtalo de nuevo en unos minutos.',
       generation_failed: 'No hemos podido generar un contenido que cumpla nuestras reglas de calidad. Prueba con otro tema o formato.',
@@ -148,7 +148,7 @@ export const COPY: Record<'es' | 'en', SeoCopy> = {
     premiumCta: 'See plans',
     errors: {
       profile_incomplete: 'Some business details are missing for this content. Complete them in My business.',
-      seo_limit: "You've reached this month's limit of 20 SEO generations. You can generate more next month.",
+      seo_limit: "You've reached this month's SEO generation limit. You can generate more next month.",
       global_limit: "You've reached your account's monthly AI usage limit. You can generate more next month.",
       ai_unavailable: 'The AI service is not available right now. No use was deducted. Please try again in a few minutes.',
       generation_failed: "We couldn't generate content that meets our quality rules. Try another theme or format.",

@@ -40,9 +40,7 @@ const FROZEN: Record<string, string> = {
   'src/features/action-layer/model.ts': '38edfb9004c9a6bea8ca680d71d374eedfacc221fa4229cbbfe5efe4b4994075',
   'src/features/action-layer/copy.ts': '3dbbe24bcd674fd9f684bf6a2a5a40862ca1ca49ab4efcc86471ec035c54330d',
   'src/features/action-layer/ActionDetail.tsx': '1444e520b6bf497e5b710b13184837d59b67114efaf31ed4d00307a0a0ed8336',
-  'src/app-v2/routes/PlanPage.tsx': '03789a3dc7e441288da653c91c42798f6a727123baad529f9d4c870e5d828e45',
-  'src/App.tsx': '3674e428fe9412a7879a1a91b6ea16707f014db8ae5cb3c205ddc7b5ea4664c0',
-  'supabase/functions/gbp-oauth-start/index.ts': '8dd1479ec3dd31b02a47b538164584ed0ecde268ca178a5879ef2ebb9e97fa03',
+  'src/App.tsx': '008a96fe660a7852b2a3fe4bb708bf15b856b6cca0a69972b6476a358d27b199', // A3.5.1: /oauth/meta/callback
   'src/features/dashboard/TodaysMissions.tsx': '22684ca84042aa83ef018bb7855e4493a6338eb2cc880359b5a10c011a91b79d',
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
@@ -129,10 +127,14 @@ describe('A2.7.2 · Completion and promotion', () => {
   });
   it('28. no manual completion flag', () => expect(tiSrc).not.toMatch(/done\s*[:=]\s*true|completed\s*[:=]|localStorage|sessionStorage/));
   it('29. no Today persistence table', () => expect(tiSrc).not.toMatch(/\.from\(|insert|upsert|today_actions/));
-  it('30. no new migration', () => {
-    expect(readdirSync(MIG_DIR)).toHaveLength(42);
+  it('30. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)', () => {
+    expect(readdirSync(MIG_DIR)).toHaveLength(49);
     const migs = readdirSync(MIG_DIR).sort();
-    expect(migs[migs.length - 1]).toBe('20261016104108_a26_billing_grant_hardening.sql');
+    expect(migs.slice(-3)).toEqual([
+      '20261022152358_a3512_meta_oauth_stuck_connection_recovery.sql',
+      '20261022170333_a353_meta_read_layer.sql',
+      '20261022170523_a353_meta_sync_claim_min_interval.sql',
+    ]);
   });
 });
 
@@ -205,14 +207,17 @@ describe('A2.7.2 · Platform regression', () => {
     'generate-content-plan', 'generate-countermeasure', 'generate-gbp-description', 'generate-geo-audit', 'generate-pitch',
     'generate-seo', 'generate-voice-script', 'scan-directories', 'simulate-campaign',
   ];
-  it('69. all seven tools remain available', () => expect(TOOLS.map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice']));
+  it('69. all eight tools remain available (reviews added in A3.4.2)', () => expect(TOOLS.map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews']));
   it('70. all 14 retired functions remain retired', () => { for (const fn of RETIRED) expect(src(`supabase/functions/${fn}/index.ts`)).toContain('status: 410'); });
   it('71. GBP trust fix preserved', () => {
     // Client-writable metadata must never count as verified Google data (A2.5).
     expect(normalizeGbp({ status: 'connected', metadata: { name: 'Fake' }, last_sync_at: '2026-10-10T00:00:00Z' } as never).data).toBeNull();
     expect(todayPage).toContain("normalizeGbp(connectedSources.find((s) => s.source_type === 'google_business') ?? null)");
   });
-  it('72. no new GBP scopes', () => frozen('supabase/functions/gbp-oauth-start/index.ts'));
+  it('72. no new GBP scopes', () => {
+    const start = readFileSync(join(process.cwd(), 'supabase/functions/gbp-oauth-start/handler.ts'), 'utf8');
+    expect(start.match(/https:\/\/www\.googleapis\.com\/auth\/[\w.]+/g)).toEqual(['https://www.googleapis.com/auth/business.manage']);
+  });
   it('73. no review management', () => expect(tiSrc).not.toMatch(/replyToReview|review_replies|manageReviews/i));
   it('74. no review inbox', () => expect(tiSrc).not.toMatch(/inbox|bandeja/i));
   it('75. no automatic review replies', () => expect(tiSrc).not.toMatch(/auto.?repl|respuesta autom/i));
@@ -249,8 +254,9 @@ describe('A2.7.2 · Copy, layout and scope', () => {
     }
     frozen('src/features/dashboard/TodaysMissions.tsx');
   });
-  it('90. no Plan implementation', () => { frozen('src/app-v2/routes/PlanPage.tsx'); expect(src('src/app-v2/routes/PlanPage.tsx')).not.toContain('today-intelligence'); });
-  it('91. no new route', () => { frozen('src/App.tsx'); expect((app.match(/<Route path=/g) ?? []).length).toBe(27); });
+  // Plan integration was authorised in A2.7.3; A2.7.2 itself only guaranteed Plan did not consume Today directly.
+  it('90. no Plan implementation inside A2.7.2', () => { expect(src('src/app-v2/routes/PlanPage.tsx')).not.toContain('today-intelligence'); expect(tiSrc).not.toContain('PlanPage'); });
+  it('91. no new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback)', () => { frozen('src/App.tsx'); expect((app.match(/<Route path=/g) ?? []).length).toBe(32); });
   it('92. Today CTA routes valid', () => {
     for (const r of ACTION_DESTINATIONS) expect(routeExists(r)).toBe(true);
     expect(routeExists('/herramientas')).toBe(true);

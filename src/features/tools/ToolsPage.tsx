@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle2, FileText, MapPin, Layers, Radar, Globe, MessageSquare, Mic, Clock, Info,
-  Sparkles, Database, BarChart3, UserCheck, Gauge, FlaskConical,
+  Sparkles, Database, BarChart3, UserCheck, Gauge, FlaskConical, Star, Share2,
 } from 'lucide-react';
 import { useI18n } from '../../lib/i18n';
 import { TOOLS, type ToolDataKind, type ToolId } from './catalog';
@@ -15,6 +15,8 @@ const L = {
     status: 'Aún no disponible',
     cta: 'En preparación',
     availableStatus: 'Disponible',
+    premiumBadge: 'Premium',
+    premiumNote: 'Todas las herramientas están incluidas en Premium y en el periodo de prueba.',
     openCta: 'Abrir herramienta',
     listLabel: 'Herramientas',
   },
@@ -25,6 +27,8 @@ const L = {
     status: 'Not available yet',
     cta: 'In preparation',
     availableStatus: 'Available',
+    premiumBadge: 'Premium',
+    premiumNote: 'All tools are included in Premium and in the trial period.',
     openCta: 'Open tool',
     listLabel: 'Tools',
   },
@@ -38,6 +42,8 @@ const TOOL_ICONS: Record<ToolId, ReactNode> = {
   geo: <Globe size={20} />,
   advisor: <MessageSquare size={20} />,
   voice: <Mic size={20} />,
+  reviews: <Star size={20} />,
+  social: <Share2 size={20} />,
 };
 
 const KIND_ICONS: Record<ToolDataKind, ReactNode> = {
@@ -62,7 +68,7 @@ export default function ToolsPage() {
 
       <div className="flex items-start gap-2.5 rounded-v2-lg border border-v2-primary-100 bg-v2-primary-50/60 px-4 py-3">
         <Info size={14} className="text-v2-primary-600 mt-0.5 shrink-0" />
-        <p className="text-v2-xs text-v2-text-secondary leading-relaxed">{l.notice}</p>
+        <p className="text-v2-xs text-v2-text-secondary leading-relaxed">{l.notice} {l.premiumNote}</p>
       </div>
 
       <ul aria-label={l.listLabel} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -80,10 +86,15 @@ export default function ToolsPage() {
                   {TOOL_ICONS[tool.id]}
                 </div>
                 {tool.enabled ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-v2-success-50 px-2 py-0.5 text-[11px] font-medium text-v2-success-700">
-                    <CheckCircle2 size={11} />
-                    {l.availableStatus}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span data-testid="tool-premium" className="inline-flex items-center rounded-full bg-v2-primary-50 px-2 py-0.5 text-[11px] font-medium text-v2-primary-700">
+                      {l.premiumBadge}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-v2-success-50 px-2 py-0.5 text-[11px] font-medium text-v2-success-700">
+                      <CheckCircle2 size={11} />
+                      {l.availableStatus}
+                    </span>
+                  </div>
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-full bg-v2-neutral-100 px-2 py-0.5 text-[11px] font-medium text-v2-text-secondary">
                     <Clock size={11} />
@@ -106,7 +117,7 @@ export default function ToolsPage() {
                   data-testid="tool-open"
                   className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-v2-lg bg-v2-primary-600 px-4 py-2.5 text-v2-sm font-semibold text-white transition-colors hover:bg-v2-primary-700"
                 >
-                  {l.openCta}
+                  {copy.cta ?? l.openCta}
                   <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Link>
               ) : (

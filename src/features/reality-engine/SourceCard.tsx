@@ -2,6 +2,7 @@ import { MapPin, Globe, Star, Search, BarChart2, PenLine, RefreshCw, Unlink, Ale
 import type { ConnectedSource, SourceRegistryEntry } from './types';
 import { formatRelativeTime } from './engine';
 import { STATUS_LABELS, type SourceDisplayStatus } from './sourceStatus';
+import { gbpErrorMessage } from './gbpStatus';
 
 type Lang = 'es' | 'en';
 
@@ -27,6 +28,8 @@ const COPY = {
     reanalyze: 'Volver a analizar',
     edit: 'Editar datos',
     retry: 'Reintentar',
+    retryConnection: 'Reintentar conexión',
+    selectingHint: 'Termina de elegir tu ficha en la ventana de Google o vuelve a empezar.',
     permissions: 'Resolver permisos',
     disconnect: 'Desconectar',
     comingSoon: 'Esta integración aún no existe. No mostramos datos de ella.',
@@ -46,6 +49,8 @@ const COPY = {
     reanalyze: 'Analyse again',
     edit: 'Edit details',
     retry: 'Try again',
+    retryConnection: 'Retry connection',
+    selectingHint: 'Finish choosing your listing in the Google window, or start again.',
     permissions: 'Fix permissions',
     disconnect: 'Disconnect',
     comingSoon: 'This integration does not exist yet. We show no data from it.',
@@ -92,6 +97,9 @@ const BADGE_STYLES: Record<SourceDisplayStatus, string> = {
   declared: 'bg-v2-primary-50 text-v2-primary-700',
   pending: 'bg-v2-neutral-100 text-v2-text-tertiary',
   in_progress: 'bg-blue-50 text-blue-700',
+  selecting: 'bg-blue-50 text-blue-700',
+  syncing: 'bg-blue-50 text-blue-700',
+  expired: 'bg-v2-warning-50 text-v2-warning-700',
   permissions: 'bg-v2-warning-50 text-v2-warning-700',
   error: 'bg-v2-error-50 text-v2-error-600',
   unavailable: 'bg-v2-warning-50 text-v2-warning-700',
@@ -124,6 +132,13 @@ export function SourceCard({ entry, source, status, busy, lang, onConnect, onDis
   const dependent = !!entry.dependsOn;
   const positive = status === 'verified' || status === 'analyzed' || status === 'declared';
   const negative = status === 'error';
+  const isGBP = entry.id === 'google_business';
+  const gbpNeedsRetry = isGBP && (status === 'error' || status === 'permissions' || status === 'expired');
+  const errorText = !source?.last_error
+    ? null
+    : isGBP
+      ? (gbpNeedsRetry || status === 'pending' ? gbpErrorMessage(source.last_error, lang) : null)
+      : status === 'error' ? source.last_error : null;
   const reviewCount = dependent && status === 'verified' && typeof source?.metadata.reviewCount === 'number'
     ? source.metadata.reviewCount
     : null;
@@ -141,6 +156,17 @@ export function SourceCard({ entry, source, status, busy, lang, onConnect, onDis
         </p>
       );
     }
+  } else if (gbpNeedsRetry) {
+    action = <button onClick={onConnect} disabled={busy} className={status === 'error' ? errorBtn : primaryBtn}>{spinner ?? <RefreshCw size={13} />}{t.retryConnection}</button>;
+  } else if (isGBP && (status === 'in_progress' || status === 'selecting' || status === 'syncing')) {
+    action = (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="flex items-center gap-1.5 text-v2-xs text-v2-text-secondary"><Loader2 size={13} className="animate-spin" />{STATUS_LABELS[lang][status]}</span>
+        {status !== 'syncing' && (
+          <button onClick={onConnect} disabled={busy} className={secondaryBtn}>{spinner ?? <RefreshCw size={13} />}{t.retryConnection}</button>
+        )}
+      </div>
+    );
   } else if (status === 'pending' || status === 'permissions') {
     const label = status === 'permissions' ? t.permissions : entry.id === 'website' ? t.analyze : entry.id === 'manual' ? t.edit : t.connect;
     action = <button onClick={onConnect} disabled={busy} className={primaryBtn}>{spinner ?? <ExternalLink size={13} />}{label}</button>;
@@ -178,11 +204,15 @@ export function SourceCard({ entry, source, status, busy, lang, onConnect, onDis
         {lang === 'en' ? entry.descriptionEn : entry.description}
       </p>
 
-      {source?.last_error && status === 'error' && (
-        <div className="flex items-start gap-2 mb-3 p-2.5 rounded-v2-lg bg-v2-error-50">
-          <AlertCircle size={13} className="text-v2-error-500 mt-0.5 shrink-0" />
-          <p className="text-[11px] text-v2-error-600 leading-relaxed">{source.last_error}</p>
+      {errorText && (
+        <div className={`flex items-start gap-2 mb-3 p-2.5 rounded-v2-lg ${status === 'error' ? 'bg-v2-error-50' : 'bg-v2-warning-50'}`}>
+          <AlertCircle size={13} className={`mt-0.5 shrink-0 ${status === 'error' ? 'text-v2-error-500' : 'text-v2-warning-600'}`} />
+          <p className={`text-[11px] leading-relaxed ${status === 'error' ? 'text-v2-error-600' : 'text-v2-warning-700'}`}>{errorText}</p>
         </div>
+      )}
+
+      {isGBP && status === 'selecting' && (
+        <p className="text-[11px] text-v2-text-secondary mb-3">{t.selectingHint}</p>
       )}
 
       {reviewCount !== null && (

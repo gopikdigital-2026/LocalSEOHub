@@ -387,7 +387,7 @@ describe('A2.4.7 Competitor Radar — functional (29-78)', () => {
     expect(voice.enabled).toBe(true);
     expect(voice.path).toBe('/herramientas/voice');
     expect(app).toContain('/herramientas/voice');
-    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice']);
+    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews', 'social']);
   });
 
   it('38. legacy analyze-competitor-url is untouched and still answers 410', () => {

@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createHandler } from "./handler.ts";
+import { vaultCredentialStore } from "./gbpToken.ts";
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -15,13 +16,15 @@ const handle = createHandler({
   async loadSource(userId, businessId) {
     let query = supabaseAdmin
       .from("connected_sources")
-      .select("id, access_token_encrypted, refresh_token_encrypted, token_expires_at")
+      .select("id")
       .eq("user_id", userId)
-      .eq("source_type", "google_business");
+      .eq("source_type", "google_business")
+      .neq("status", "disconnected");
     if (businessId) query = query.eq("business_id", businessId);
     const { data, error } = await query.order("updated_at", { ascending: false }).limit(1);
     return { row: data?.[0] ?? null, failed: !!error };
   },
+  credentials: (sourceId) => vaultCredentialStore(supabaseAdmin, sourceId),
   async updateSource(userId, sourceId, patch) {
     await supabaseAdmin.from("connected_sources").update(patch).eq("id", sourceId).eq("user_id", userId);
   },

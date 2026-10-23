@@ -105,6 +105,12 @@ export async function saveManualEntry(
 
 export async function disconnectSource(sourceId: string, sourceType: SourceType) {
   await addSyncEvent(sourceId, sourceType, 'source_disconnected', 'Fuente desconectada');
+  if (sourceType === 'google_business') {
+    // Revocation and credential removal happen server-side; the browser never sees the tokens.
+    const { error } = await invokeEdge('gbp-disconnect', {});
+    if (error) throw new Error(error);
+    return;
+  }
   await deleteSource(sourceId);
 }
 
@@ -139,63 +145,40 @@ export function clearStoredOAuthState(): void {
   sessionStorage.removeItem(GBP_STATE_KEY);
 }
 
-export async function resetGBPStatus(businessId: string): Promise<void> {
-  await upsertSource('google_business', {
-    status: 'disconnected',
-    last_error: null,
-    metadata: {},
-  }, businessId);
+async function invokeForBody(fnName: string, body: Record<string, unknown>): Promise<Record<string, unknown> | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke(fnName, { body });
+    if (error) {
+      const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
+      if (typeof ctx?.json === 'function') {
+        const parsed = await ctx.json().catch(() => null);
+        if (parsed && typeof parsed === 'object') return parsed as Record<string, unknown>;
+      }
+      return null;
+    }
+    return data && typeof data === 'object' ? (data as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
 }
 
+export type GBPSelectResult = { success: true } | { success: false; code: string };
+
+// The server sets syncing, runs the sync and only then marks the profile connected; the browser writes nothing.
 export async function selectGBPLocation(
   accountId: string,
   locationId: string,
   locationName: string,
   businessId: string
-): Promise<{ success: boolean; error?: string }> {
-  const source = await upsertSource('google_business', {
-    status: 'syncing',
-    external_account_id: accountId,
-    external_location_id: locationId,
-    metadata: { locationName },
-  }, businessId);
+): Promise<GBPSelectResult> {
+  const body = await invokeForBody('gbp-sync', { accountId, locationId, locationName, businessId });
+  if (body?.success === true) return { success: true };
+  return { success: false, code: typeof body?.code === 'string' ? body.code : 'SYNC_FAILED' };
+}
 
-  await addSyncEvent(source.id, 'google_business', 'source_sync_started', `Sincronizando ${locationName}`);
-
-  const { data, error } = await invokeEdge<{ success: boolean; error?: string; profile?: Record<string, unknown>; recordCount?: number; reviewCount?: number; verifiedAt?: string }>(
-    'gbp-sync',
-    { accountId, locationId, businessId }
-  );
-
-  if (error || !data?.success) {
-    const msg = error ?? data?.error ?? 'Error de sincronizacion';
-    await upsertSource('google_business', {
-      status: 'error',
-      last_error: msg,
-    }, businessId);
-    await addSyncEvent(source.id, 'google_business', 'source_sync_failed', msg, 0, msg);
-    return { success: false, error: msg };
-  }
-
-  await upsertSource('google_business', {
-    status: 'connected',
-    last_error: null,
-    metadata: { locationName },
-  }, businessId);
-
-  const recordCount = data.recordCount ?? 0;
-  await addSyncEvent(source.id, 'google_business', 'source_sync_completed', `${recordCount} datos importados`, recordCount);
-
-  await upsertSource('reviews', {
-    status: 'connected',
-    external_account_id: accountId,
-    external_location_id: locationId,
-    last_sync_at: data.verifiedAt ?? null,
-    last_error: null,
-    metadata: { linkedToGBP: true, reviewCount: data.reviewCount ?? 0 },
-  }, businessId);
-
-  return { success: true };
+// Ends an unfinished attempt server-side (only while it is still in the authorisation/selection step).
+export async function cancelGBPAttempt(businessId: string, reason: 'USER_CANCELLED' | 'NO_LOCATIONS' | 'LOCATIONS_UNAVAILABLE'): Promise<void> {
+  await invokeForBody('gbp-recover-attempt', { action: 'cancel', businessId, reason });
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

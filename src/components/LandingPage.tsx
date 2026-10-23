@@ -7,7 +7,8 @@ import {
   BadgeCheck, Flame, TrendingUp, CheckCircle2, Building2, Mic,
   MessageSquare, Clock, Radar, ChevronRight, Search, Layers,
 } from 'lucide-react';
-import { PrivacyModal, TermsModal, ContactModal, type LegalModal } from './LegalModals';
+import { ContactModal, type LegalModal } from './LegalModals';
+import LegalLinks from '../features/legal/LegalLinks';
 import { LogoIcon } from './Logo';
 import { useI18n } from '../lib/i18n';
 import { track, storeGoogleIntent } from '../lib/analytics';
@@ -133,16 +134,18 @@ function GoogleIconSm() {
 }
 
 // ─── Registration gate ────────────────────────────────────────────────────────
-// NOTE: Google button routes through onLoginClick (opens LoginModal) instead of
+// NOTE: Google button routes through onSignupClick (opens LoginModal) instead of
 // calling signInWithOAuth directly. Direct OAuth had 0% completion rate — users
 // were landing on Google consent but never returning. LoginModal is the proven path.
 function RegistrationGate({
   onLoginClick,
+  onSignupClick,
   context,
   businessName,
   toolLabel,
 }: {
   onLoginClick: (email?: string) => void;
+  onSignupClick: (businessName?: string) => void;
   context: string;
   businessName?: string;
   toolLabel: string;
@@ -159,13 +162,13 @@ function RegistrationGate({
     if (!email.trim()) return;
     track('gate_register_click', { context, method: 'email_inline' });
     setSubmitted(true);
-    onLoginClick(email.trim());
+    onSignupClick(businessName);
   };
 
   const handleGoogle = () => {
     track('gate_register_click', { context, method: 'google_modal' });
     storeGoogleIntent(context);
-    onLoginClick(); // abre LoginModal — el flujo que sí completa
+    onSignupClick(businessName);
   };
 
   if (submitted) {
@@ -287,8 +290,8 @@ function DemoNotice() {
 function SeoResult({ input1, input2 }: { input1: string; input2: string }) {
   const biz = input1 || 'tu negocio';
   const city = input2 || 'tu ciudad';
-  const title = `${biz} en ${city} — Expertos Locales · Reserva Online · Resultados Garantizados`;
-  const desc = `¿Buscas ${biz.toLowerCase()} en ${city}? Somos especialistas con más de 10 años de experiencia. Ofrecemos atención personalizada, presupuesto sin compromiso y el mejor servicio de la zona.`;
+  const title = `${biz} en ${city} — Servicios, horario y contacto`;
+  const desc = `¿Buscas ${biz.toLowerCase()} en ${city}? Consulta nuestros servicios, horario y forma de contacto. Escríbenos o llámanos y te informamos sin compromiso.`;
   const kws = [`${biz.toLowerCase()} ${city}`, `mejor ${biz.toLowerCase()} ${city}`];
   const score = EXAMPLE_SCORE.seo;
 
@@ -356,7 +359,7 @@ function MapsResult({ input1, input2 }: { input1: string; input2: string }) {
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-amber-700">
             <AlertCircle size={10} className="text-amber-500 shrink-0" />
-            <span>Sin horarios especiales para festivos (pierdes el 68% de búsquedas nocturnas)</span>
+            <span>Sin horarios especiales para festivos</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <Lock size={10} className="shrink-0" /><span className="blur-[3px] select-none">Descripción sin keywords semánticas locales</span>
@@ -364,21 +367,6 @@ function MapsResult({ input1, input2 }: { input1: string; input2: string }) {
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <Lock size={10} className="shrink-0" /><span className="blur-[3px] select-none">Sin schema de negocio estructurado</span>
           </div>
-        </div>
-      </div>
-      <div className="rounded-xl bg-white border border-slate-200 p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Lock size={9} className="text-slate-400" />
-          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Competidores cercanos — bloqueado</p>
-        </div>
-        <div className="space-y-1.5">
-          {['Competidor #1 en tu zona', 'Competidor #2 en tu zona'].map((c, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="text-[9px] font-black text-amber-500 w-4">#{i + 1}</span>
-              <span className="text-[11px] text-slate-600 blur-[5px] select-none flex-1">{c}</span>
-              <span className="text-[9px] text-red-500 font-bold">+{i === 0 ? 47 : 29} pts</span>
-            </div>
-          ))}
         </div>
       </div>
     </div>
@@ -410,8 +398,8 @@ function TwinResult({ input1, input2 }: { input1: string; input2: string }) {
         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Señales de ejemplo orientativo</p>
         <div className="space-y-2">
           {[
-            { ok: true, label: 'Presencia en Google Maps: Activa' },
-            { ok: true, label: 'Categoría principal: Correcta' },
+            { ok: true, label: 'Nombre del negocio: indicado' },
+            { ok: true, label: 'Categoría: indicada' },
             { ok: false, label: 'Keywords semánticas en descripción' },
           ].map(({ ok, label }, i) => (
             <div key={i} className="flex items-center gap-2 text-xs">
@@ -452,9 +440,9 @@ function RadarResult({ input1, input2 }: { input1: string; input2: string }) {
   const city = input2 || 'tu ciudad';
   const myScore = EXAMPLE_SCORE.radar;
   const comps = [
-    { score: myScore + 46, reviews: 142 },
-    { score: myScore + 31, reviews: 97 },
-    { score: myScore + 17, reviews: 63 },
+    { score: myScore + 46 },
+    { score: myScore + 31 },
+    { score: myScore + 17 },
   ];
 
   return (
@@ -466,18 +454,16 @@ function RadarResult({ input1, input2 }: { input1: string; input2: string }) {
         </div>
         <div className="flex-1">
           <p className="text-slate-900 font-bold text-sm">{biz}</p>
-          <p className="text-slate-500 text-[11px]">vs. 3 competidores en {city}</p>
+          <p className="text-slate-500 text-[11px]">vs. 3 competidores de ejemplo en {city} · en la herramienta indicas tú sus webs</p>
         </div>
       </div>
       <div className="rounded-xl bg-white border border-slate-200 p-3.5 space-y-2.5">
         {comps.map((c, i) => (
           <div key={i} className="space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-500 blur-[4px] select-none">Competidor #{i + 1} en {city}</span>
+              <span className="text-[10px] font-bold text-slate-500">Competidor de ejemplo {i + 1}</span>
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-[10px] text-red-500 font-bold">+{c.score - myScore} pts</span>
-                <Star size={9} className="text-amber-400 fill-amber-400" />
-                <span className="text-[9px] text-slate-500">{c.reviews}</span>
               </div>
             </div>
             <div className="w-full bg-slate-200 rounded-full h-1.5">
@@ -500,10 +486,10 @@ function RadarResult({ input1, input2 }: { input1: string; input2: string }) {
       <div className="rounded-xl bg-white border border-slate-200 p-3">
         <div className="flex items-center gap-2">
           <Lock size={9} className="text-slate-400" />
-          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Plan para superar al #1 en 30 días — bloqueado</p>
+          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Plan de mejora frente a tus competidores — bloqueado</p>
         </div>
         <div className="mt-2 space-y-1">
-          {['Acción inmediata #1 para cerrar la brecha', 'Palabras clave que el #1 usa y tú no', 'Estrategia de reseñas semana a semana'].map((item) => (
+          {['Acción inmediata #1 para cerrar la brecha', 'Señales públicas que su web muestra y la tuya no', 'Prioridades de mejora para tu web'].map((item) => (
             <p key={item} className="text-[11px] text-slate-400 blur-[3.5px] select-none">{item}</p>
           ))}
         </div>
@@ -535,7 +521,7 @@ function AdvisorResult({ input1, input2 }: { input1: string; input2: string }) {
           <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Plan de acción en 5 pasos — bloqueado</p>
         </div>
         <div className="space-y-1">
-          {['Quick win esta semana: optimizar ficha GBP', 'Conseguir 10 reseñas con plantilla incluida', 'Keywords locales prioritarias para tu categoría'].map((item) => (
+          {['Quick win esta semana: optimizar ficha GBP', 'Pedir reseñas a tus clientes de forma constante', 'Keywords locales prioritarias para tu categoría'].map((item) => (
             <p key={item} className="text-[11px] text-slate-400 blur-[3.5px] select-none">{item}</p>
           ))}
         </div>
@@ -549,7 +535,7 @@ function AdvisorResult({ input1, input2 }: { input1: string; input2: string }) {
 }
 
 // ─── Main tool trial widget ───────────────────────────────────────────────────
-function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (email?: string) => void; initialToolIdx?: number }) {
+function ToolTrialSection({ onLoginClick, onSignupClick, initialToolIdx }: { onLoginClick: (email?: string) => void; onSignupClick: (businessName?: string) => void; initialToolIdx?: number }) {
   const { t } = useI18n();
   const TRIAL_TOOLS = getTrialTools(t as TFn);
   const [activeTool, setActiveTool] = useState(initialToolIdx ?? 0);
@@ -709,6 +695,7 @@ function ToolTrialSection({ onLoginClick, initialToolIdx }: { onLoginClick: (ema
               {showGate && (
                 <RegistrationGate
                   onLoginClick={onLoginClick}
+                  onSignupClick={onSignupClick}
                   context={tool.id}
                   businessName={lockedInput1 || undefined}
                   toolLabel={tool.label}
@@ -790,135 +777,10 @@ function AnimatedCounter({ target, suffix = '', prefix = '', active }: {
   return <>{prefix}{val}{suffix}</>;
 }
 
-// ─── Hero dashboard preview ───────────────────────────────────────────────────
-function HeroDashboard() {
-  const [score, setScore] = useState(0);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setReady(true), 500);
-    return () => clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    let n = 0;
-    const iv = setInterval(() => {
-      n = Math.min(n + 1, 74);
-      setScore(n);
-      if (n >= 74) clearInterval(iv);
-    }, 18);
-    return () => clearInterval(iv);
-  }, [ready]);
-
-  const barColor = score < 40 ? '#ef4444' : score < 70 ? '#f59e0b' : '#10b981';
-
-  return (
-    <div className="relative float-dash">
-      {/* Glow behind card */}
-      <div className="absolute -inset-6 bg-emerald-500/5 rounded-3xl blur-2xl -z-10 pointer-events-none" />
-
-      <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xl bg-white">
-
-        {/* Browser chrome */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 bg-slate-50">
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-          </div>
-          <div className="flex-1 mx-3 bg-slate-100 rounded-md px-3 py-1 text-[10px] text-slate-500 font-mono text-center">
-            localsenhub.io/dashboard
-          </div>
-          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />Live
-          </span>
-        </div>
-
-        <div className="p-5 space-y-4">
-          {/* Biz header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-900 font-bold text-sm">Peluquería López</p>
-              <p className="text-slate-500 text-xs">Madrid · Peluquería</p>
-            </div>
-            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all duration-500 ${
-              score >= 74
-                ? 'bg-amber-50 border-amber-200 text-amber-600'
-                : 'bg-slate-100 border-slate-200 text-slate-500'
-            }`}>
-              {score >= 74 ? 'Mejorable' : 'Analizando…'}
-            </span>
-          </div>
-
-          {/* Score card */}
-          <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-            <div className="flex items-end justify-between mb-3">
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Visibilidad Local</p>
-              <p className="text-3xl font-black tabular-nums text-slate-900">
-                {score}<span className="text-slate-400 text-base font-normal">/100</span>
-              </p>
-            </div>
-            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-none" style={{ width: `${score}%`, background: barColor }} />
-            </div>
-            <p className={`text-[10px] mt-2 flex items-center gap-1 font-medium transition-all duration-700 ${
-              score >= 74 ? 'text-emerald-600 opacity-100' : 'opacity-0'
-            }`}>
-              <Sparkles size={9} />Con optimización IA: estimado 91/100
-            </p>
-          </div>
-
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { v: '+23%', label: 'Llamadas', tc: 'text-emerald-600' },
-              { v: '+14%', label: 'Clics web', tc: 'text-sky-600' },
-              { v: '+17%', label: 'Rutas', tc: 'text-violet-600' },
-            ].map(({ v, label, tc }) => (
-              <div key={label} className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
-                <p className={`text-lg font-black ${tc} transition-all duration-500 ${score >= 74 ? 'opacity-100' : 'opacity-0'}`}>{v}</p>
-                <p className="text-[9px] text-slate-500 mt-0.5">{label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Actions list */}
-          <div className="rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-3 py-2.5 bg-slate-50 border-b border-slate-200">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Plan de acción IA</p>
-            </div>
-            {[
-              { t: 'Optimizar descripción con keywords locales', p: 'Alta', dot: 'bg-red-400' },
-              { t: 'Responder 3 reseñas sin contestar', p: 'Alta', dot: 'bg-red-400' },
-              { t: 'Publicar actualización semanal', p: 'Media', dot: 'bg-amber-400' },
-            ].map(({ t, p, dot }, i) => (
-              <div key={t} className="flex items-center justify-between px-3 py-2.5 gap-2 border-b border-slate-100 last:border-0"
-                style={{ opacity: score >= 74 ? 1 : 0, transform: score >= 74 ? 'none' : 'translateX(-6px)', transition: `opacity 0.4s ease ${0.5 + i * 0.12}s, transform 0.4s ease ${0.5 + i * 0.12}s` }}>
-                <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
-                  <span className="text-xs text-slate-600">{t}</span>
-                </div>
-                <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${p === 'Alta' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500'}`}>{p}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Floating badge */}
-      <div className={`absolute -top-4 -right-4 z-10 bg-emerald-500 rounded-xl px-3.5 py-2 shadow-lg shadow-emerald-500/25 text-[11px] font-bold text-white flex items-center gap-1.5 transition-all duration-500 ${score >= 74 ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
-        <Sparkles size={11} />5 oportunidades detectadas
-      </div>
-    </div>
-  );
-}
-
 // ─── Animation presets ───────────────────────────────────────────────────────
 const FU   = { hidden: { opacity: 0, y: 20 },      show: { opacity: 1, y: 0,      transition: { duration: 0.5,  ease: [0.16,1,0.3,1] as const } } };
 const FI   = { hidden: { opacity: 0 },              show: { opacity: 1,            transition: { duration: 0.4 } } };
 const STAG = { show: { transition: { staggerChildren: 0.1 } } };
-const HCARD= { y: -4, scale: 1.02, transition: { duration: 0.2 } };
 
 const Rev = memo(function Rev({ children, delay = 0, stagger = false, className = '' }: {
   children: React.ReactNode; delay?: number; stagger?: boolean; className?: string;
@@ -935,23 +797,6 @@ const Rev = memo(function Rev({ children, delay = 0, stagger = false, className 
 });
 
 // ─── Metric counter ───────────────────────────────────────────────────────────
-function MetricCounter({ target, cls }: { target: number; cls: string }) {
-  const ref   = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.5 });
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    if (!inView) return;
-    const dur = 1600, t0 = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min((now - t0) / dur, 1);
-      setVal(Math.round((1 - Math.pow(1 - p, 3)) * target));
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [inView, target]);
-  return <span ref={ref} className={cls}>+{val}%</span>;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // VISIBILITY CHECKER — Google Maps Visibility interactive hero
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1454,7 +1299,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: ()
                     {[
                       'Plan de contenido para los próximos 30 días',
                       'Análisis de 87 keywords locales',
-                      'Estrategia de reseñas personalizada',
+                      'Recomendaciones para tu ficha de Google',
                       'Comparativa detallada con 3 competidores',
                     ].map((t) => (
                       <div key={t} className="flex items-center gap-2.5 p-3 rounded-lg bg-slate-50">
@@ -1477,7 +1322,7 @@ function VisibilityChecker({ onUnlock, onPhaseChange, onSignup }: { onUnlock: ()
                         <p className="text-slate-900 font-bold text-lg">Desbloquea el informe completo</p>
                       </div>
                       <p className="text-slate-500 text-sm max-w-sm mx-auto">
-                        Accede a tu plan detallado con IA: keywords, estrategia de reseñas, comparativa de competidores y más.
+                        Accede a tu plan detallado con IA: keywords, recomendaciones, comparativa de competidores y más.
                       </p>
                       <motion.button onClick={onUnlock} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
                         className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl font-bold text-base
@@ -1546,29 +1391,6 @@ export default function LandingPage({ onLoginClick, onSignupClick, onSubscribeCl
     { n: '01', icon: Search,     title: t('landing_step_1_title'), desc: t('landing_step_1_desc') },
     { n: '02', icon: Sparkles,   title: t('landing_step_2_title'), desc: t('landing_step_2_desc') },
     { n: '03', icon: TrendingUp, title: t('landing_step_3_title'), desc: t('landing_step_3_desc') },
-  ], [t]);
-
-  const METRICS = useMemo(() => [
-    { target: 38, label: t('landing_metric_calls'),   sub: t('landing_metric_calls_sub'),   color: 'emerald' as const, icon: Globe      },
-    { target: 24, label: t('landing_metric_visits'),  sub: t('landing_metric_visits_sub'),  color: 'sky'     as const, icon: TrendingUp },
-    { target: 17, label: t('landing_metric_routes'),  sub: t('landing_metric_routes_sub'),  color: 'violet'  as const, icon: MapPin     },
-  ], [t]);
-
-  const MCLS = useMemo(() => ({
-    emerald: { text: 'text-emerald-600', bg: 'bg-emerald-50', ring: 'border-emerald-200' },
-    sky:     { text: 'text-sky-600',     bg: 'bg-sky-50',     ring: 'border-sky-200'     },
-    violet:  { text: 'text-violet-600',  bg: 'bg-violet-50',  ring: 'border-violet-200'  },
-  }), []);
-
-  const testimonials = useMemo(() => [
-    { name: t('t1_name'), role: t('t1_role'), city: t('t1_city'), stars: 5, metric: t('t1_metric'), text: t('t1_text'),
-      photo: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop', initials: 'JM' },
-    { name: t('t2_name'), role: t('t2_role'), city: t('t2_city'), stars: 5, metric: t('t2_metric'), text: t('t2_text'),
-      photo: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop', initials: 'AC' },
-    { name: t('t3_name'), role: t('t3_role'), city: t('t3_city'), stars: 5, metric: t('t3_metric'), text: t('t3_text'),
-      photo: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop', initials: 'DR' },
-    { name: t('t4_name'), role: t('t4_role'), city: t('t4_city'), stars: 5, metric: t('t4_metric'), text: t('t4_text'),
-      photo: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&dpr=1&fit=crop', initials: 'MI' },
   ], [t]);
 
   const faqs = useMemo(() => [
@@ -1684,75 +1506,7 @@ export default function LandingPage({ onLoginClick, onSignupClick, onSubscribeCl
             </p>
           </Rev>
           <Rev>
-            <ToolTrialSection onLoginClick={onLoginClick} />
-          </Rev>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════ RESULTADOS */}
-      <section className="py-28 px-5">
-        <div className="max-w-5xl mx-auto">
-          <Rev className="text-center mb-14">
-            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">{t('lp_results_badge')}</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              {t('lp_results_title')}
-            </h2>
-          </Rev>
-
-          <Rev stagger className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {METRICS.map(({ target, label, sub, color, icon: Icon }) => {
-              const c = MCLS[color];
-              return (
-                <motion.div key={label} variants={FU} whileHover={HCARD}
-                  className={`rounded-2xl border ${c.ring} p-8 text-center cursor-default bg-white shadow-sm`}>
-                  <div className={`w-12 h-12 rounded-2xl ${c.bg} border ${c.ring} flex items-center justify-center mx-auto mb-5`}>
-                    <Icon size={20} className={c.text} />
-                  </div>
-                  <MetricCounter target={target} cls={`text-5xl font-black mb-2 block ${c.text}`} />
-                  <p className="text-slate-900 font-bold text-lg mb-1">{label}</p>
-                  <p className="text-slate-500 text-sm leading-snug">{sub}</p>
-                </motion.div>
-              );
-            })}
-          </Rev>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════ TESTIMONIOS */}
-      <section className="py-28 px-5 bg-slate-50/80 border-y border-slate-200">
-        <div className="max-w-5xl mx-auto">
-          <Rev className="text-center mb-14">
-            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.2em] mb-4">{t('lp_trust_badge')}</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              {t('lp_trust_title')}
-            </h2>
-          </Rev>
-
-          <Rev stagger className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {testimonials.map((testimonial, i) => (
-              <motion.div key={i} variants={FU} whileHover={HCARD}
-                className="rounded-2xl border border-slate-200 p-7 flex flex-col gap-5 cursor-default bg-white shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: testimonial.stars }).map((_, j) => (
-                      <Star key={j} size={13} className="text-amber-400 fill-amber-400" />
-                    ))}
-                  </div>
-                  <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
-                    {testimonial.metric}
-                  </span>
-                </div>
-                <p className="text-slate-700 text-base leading-relaxed flex-1">"{testimonial.text}"</p>
-                <div className="flex items-center gap-3.5 pt-4 border-t border-slate-200">
-                  <img src={testimonial.photo} alt={testimonial.name} loading="lazy" width={40} height={40}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-200" />
-                  <div>
-                    <p className="text-slate-900 font-bold text-sm">{testimonial.name}</p>
-                    <p className="text-slate-500 text-xs">{testimonial.role} · {testimonial.city}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            <ToolTrialSection onLoginClick={onLoginClick} onSignupClick={onSignupClick} />
           </Rev>
         </div>
       </section>
@@ -1857,19 +1611,12 @@ export default function LandingPage({ onLoginClick, onSignupClick, onSubscribeCl
               {t('lp_footer_login')}
             </button>
             <span className="text-slate-300">·</span>
-            {([
-              { label: t('lp_footer_privacy'), modal: 'privacy' as const },
-              { label: t('lp_footer_terms'),   modal: 'terms'   as const },
-              { label: t('lp_footer_contact'),  modal: 'contact' as const },
-            ]).map(({ label, modal }, i, a) => (
-              <React.Fragment key={label}>
-                <button onClick={() => setLegalModal(modal)}
-                  className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors">
-                  {label}
-                </button>
-                {i < a.length - 1 && <span className="text-slate-300">·</span>}
-              </React.Fragment>
-            ))}
+            <button onClick={() => setLegalModal('contact')}
+              className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors">
+              {t('lp_footer_contact')}
+            </button>
+            <span className="text-slate-300">·</span>
+            <LegalLinks />
           </div>
         </div>
       </footer>
@@ -1889,8 +1636,6 @@ export default function LandingPage({ onLoginClick, onSignupClick, onSubscribeCl
       </div>
       )}
 
-      {legalModal === 'privacy' && <PrivacyModal onClose={() => setLegalModal(null)} />}
-      {legalModal === 'terms'   && <TermsModal   onClose={() => setLegalModal(null)} />}
       {legalModal === 'contact' && <ContactModal onClose={() => setLegalModal(null)} />}
     </div>
   );

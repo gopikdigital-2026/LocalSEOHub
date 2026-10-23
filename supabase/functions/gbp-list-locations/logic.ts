@@ -124,9 +124,3 @@ export function normalizeLocations(raw: unknown, accountId: string): GbpLocation
   }
   return out;
 }
-
-export function needsRefresh(expiresAt: string | null, now: number = Date.now()): boolean {
-  if (!expiresAt) return true;
-  const t = Date.parse(expiresAt);
-  return Number.isNaN(t) || t - now < 60_000;
-}

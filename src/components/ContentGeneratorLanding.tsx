@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Copy, Check, Lock, ChevronDown, Star, Clock, Zap, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/analytics';
-import { trackCompleteRegistration } from '../lib/pixel';
 
 // ---------------------------------------------------------------------------
 // UTM / tracking helpers
@@ -320,7 +319,6 @@ function RegisterPanel({
       setLoading(false);
       return;
     }
-    trackCompleteRegistration();
     track('register_success', { source: 'content_generator', ...getUtmParams() });
     onSuccess();
   };

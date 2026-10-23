@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { PROFILE_ANCHORS } from '../action-layer/primary';
 import type { BusinessProfile } from './types';
 import { createMemoryRepository } from './repository';
 import { registerProfileUpdated } from './engine';
@@ -146,6 +148,17 @@ export default function BusinessProfilePage() {
     if (currentBusiness && !profile) setProfile(toProfile(currentBusiness));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadedId]);
+
+  const { hash } = useLocation();
+  const hasProfile = profile !== null;
+  useEffect(() => {
+    const anchor = hash.slice(1);
+    if (!hasProfile || !(Object.values(PROFILE_ANCHORS) as string[]).includes(anchor)) return;
+    const el = document.getElementById(anchor);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.focus({ preventScroll: true });
+  }, [hash, hasProfile]);
 
   function handleChange(field: keyof BusinessProfile, value: string) {
     setProfile((prev) => (prev ? { ...prev, [field]: value } : prev));

@@ -5,6 +5,7 @@ import type { BusinessAction } from '../actions/types';
 import { trackActivationMilestone, trackOnboardingCompleted, type ActivationMilestoneEvent } from '../../services/analytics/v2Analytics';
 import { milestonesFor, type ActivationEvent, type Milestone, type Milestones } from './milestones';
 import { recordMilestones } from './repository';
+import { trackFirstValueActivation } from '../conversion/activation';
 
 type Db = Pick<SupabaseClient, 'from'>;
 
@@ -33,6 +34,9 @@ export async function advanceActivation(
     m === 'first_recommendations_generated' && Boolean(current.first_action_started || result.milestones.first_action_started) && !result.added.includes('first_action_started');
   result.added
     .filter((m) => FUNNEL_EVENTS.includes(m) && !alreadyPast(m))
-    .forEach((m) => trackActivationMilestone(m as ActivationMilestoneEvent, action));
+    .forEach((m) => {
+      trackActivationMilestone(m as ActivationMilestoneEvent, action);
+      if (m === 'first_value_reached') trackFirstValueActivation(userId);
+    });
   return result;
 }

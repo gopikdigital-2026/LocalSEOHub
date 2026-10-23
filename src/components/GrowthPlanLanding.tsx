@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowRight, Check, Copy, Mail, Lock, Eye, EyeOff, Calendar, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { track } from '../lib/analytics';
-import { trackLead, trackCompleteRegistration } from '../lib/pixel';
+import { trackLead } from '../lib/pixel';
 
 // ─── UTM & scroll helpers ─────────────────────────────────────────────────────
 
@@ -444,7 +444,6 @@ function RegisterOverlay({ business, onClose }: { business: string; onClose: () 
         return;
       }
       trackLead();
-      trackCompleteRegistration();
       track('register_success', { business, method: 'email_login', ...utm.current });
       window.location.href = '/';
       return;
@@ -478,7 +477,6 @@ function RegisterOverlay({ business, onClose }: { business: string; onClose: () 
     }
 
     trackLead();
-    trackCompleteRegistration();
     track('register_success', { business, method: 'email', ...utm.current });
     window.location.href = '/';
   };

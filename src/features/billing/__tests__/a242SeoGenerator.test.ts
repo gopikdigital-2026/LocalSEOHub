@@ -125,8 +125,8 @@ describe('A2.4.2 SEO Generator', () => {
     expect(hub).toMatch(/<Link\s+to=\{tool\.path\}/);
   });
 
-  it('3. every tool is released after A2.4.8 (Advisor A2.4.3, Maps A2.4.4, GEO A2.4.5, Twin A2.4.6, Radar A2.4.7, Voice A2.4.8)', () => {
-    const others = TOOLS.filter((t) => !['seo', 'advisor', 'maps', 'geo', 'twin', 'radar', 'voice'].includes(t.id));
+  it('3. every tool is released after A2.4.8 (Advisor A2.4.3, Maps A2.4.4, GEO A2.4.5, Twin A2.4.6, Radar A2.4.7, Voice A2.4.8, Reviews A3.4.2)', () => {
+    const others = TOOLS.filter((t) => !['seo', 'advisor', 'maps', 'geo', 'twin', 'radar', 'voice', 'reviews', 'social'].includes(t.id));
     expect(others).toHaveLength(0);
     expect(TOOLS.every((t) => t.enabled === true)).toBe(true);
   });

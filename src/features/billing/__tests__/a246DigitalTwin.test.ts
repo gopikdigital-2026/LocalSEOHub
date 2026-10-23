@@ -84,8 +84,8 @@ describe('A2.4.6 AI Digital Twin', () => {
     expect(twinSrc).not.toContain(`/herramientas/${id}`);
   });
 
-  it('enabled tools are exactly seo, maps, twin, radar, geo, advisor and voice (A2.4.8)', () => {
-    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice']);
+  it('enabled tools are exactly seo, maps, twin, radar, geo, advisor, voice (A2.4.8), reviews (A3.4.2) and social (A3.5.4.3)', () => {
+    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews', 'social']);
   });
 
   it('9-10. no AI call and no ledger use', () => {

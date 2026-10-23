@@ -42,10 +42,10 @@ describe('A2.4.1 tools hub foundation', () => {
     expect(shell).toMatch(/path: '\/herramientas', icon: <Wrench/);
   });
 
-  it('4. exactly the seven tools are catalogued in order with the approved copy', () => {
+  it('4. exactly the nine tools (reviews added in A3.4.2, social in A3.5.4.3) are catalogued in order with the approved copy', () => {
     expect(TOOLS.map((t) => t.copy.es.name)).toEqual([
       'Generador SEO', 'Maps Profile Scanner', 'AI Digital Twin', 'Competitor Radar',
-      'GEO Audit', 'AI Business Advisor', 'Voice Simulator',
+      'GEO Audit', 'AI Business Advisor', 'Voice Simulator', 'Reseñas IA', 'Inteligencia Social',
     ]);
     expect(TOOLS.map((t) => t.copy.es.indicator)).toEqual([
       'Utiliza los datos de tu negocio + IA',
@@ -55,7 +55,20 @@ describe('A2.4.1 tools hub foundation', () => {
       'Evaluación orientativa, no ranking real en IA',
       'Utiliza el contexto de tu negocio + IA',
       'Simulación generada con IA',
+      'Reseñas reales de Google + borradores con IA',
+      'Datos reales de tus cuentas de Meta',
     ]);
+    const social = TOOLS.find((t) => t.id === 'social')!;
+    expect(social.copy.en.name).toBe('Social Intelligence');
+    expect(social.copy.en.indicator).toBe('Real data from your Meta accounts');
+    expect(social).toMatchObject({ dataKind: 'sources', recoveryStatus: 'ACTIVE', legacyFunction: null });
+    // A3.4.2: only the reviews card overrides the default open CTA.
+    expect(TOOLS.filter((t) => t.copy.es.cta || t.copy.en.cta).map((t) => t.id)).toEqual(['reviews']);
+    const reviews = TOOLS.find((t) => t.id === 'reviews')!;
+    expect(reviews.copy.en.name).toBe('AI Reviews');
+    expect(reviews.copy.es.cta).toBe('Gestionar reseñas');
+    expect(reviews.copy.en.cta).toBe('Manage reviews');
+    expect(page).toContain('copy.cta ?? l.openCta');
     for (const t of TOOLS) {
       expect(t.copy.en.name).toBeTruthy();
       expect(t.copy.en.description).toBeTruthy();
@@ -65,8 +78,12 @@ describe('A2.4.1 tools hub foundation', () => {
     expect(page).toContain('data-testid="tool-card"');
   });
 
-  it('5. (A2.4.8) all seven tools are enabled; the disabled "En preparación" CTA remains for future tools', () => {
-    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice']);
+  it('5. (A2.4.8, A3.4.2, A3.5.4.3) all nine tools are enabled; the disabled "En preparación" CTA remains for future tools', () => {
+    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews', 'social']);
+    expect(TOOLS.find((t) => t.id === 'social')).toMatchObject({ enabled: true, path: '/herramientas/social' });
+    expect(app).toContain('<Route path="/herramientas/social" element={<SocialIntelligencePage />} />');
+    expect(page).toContain('social: <Share2 size={20} />');
+    expect(TOOLS.find((t) => t.id === 'reviews')).toMatchObject({ enabled: true, path: '/herramientas/resenas' });
     expect(TOOLS.find((t) => t.id === 'advisor')).toMatchObject({ enabled: true, path: '/herramientas/advisor' });
     expect(TOOLS.find((t) => t.id === 'seo')).toMatchObject({ enabled: true, path: '/herramientas/seo' });
     expect(page).toContain("cta: 'En preparación'");

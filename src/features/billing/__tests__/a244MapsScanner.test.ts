@@ -70,9 +70,9 @@ describe('A2.4.4 Maps Profile Scanner', () => {
     expect(TOOLS.find((t) => t.id === 'advisor')).toMatchObject({ enabled: true, path: '/herramientas/advisor' });
   });
 
-  it('5. Voice is released in A2.4.8 (GEO A2.4.5, Twin A2.4.6, Radar A2.4.7)', () => {
+  it('5. Voice is released in A2.4.8 (GEO A2.4.5, Twin A2.4.6, Radar A2.4.7, Reviews A3.4.2)', () => {
     expect(TOOLS.find((t) => t.id === 'voice')).toMatchObject({ enabled: true, path: '/herramientas/voice' });
-    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice']);
+    expect(TOOLS.filter((t) => t.enabled).map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews', 'social']);
   });
 
   it('6. legacy audit-maps-profile still answers 410 and no new function or migration was added', () => {

@@ -3,25 +3,38 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { destinationFor, returnPathFromLocation } from './returnTo';
 import { useOnboardingStatus } from '../hooks/useOnboardingStatus';
 import { LoadingState } from '../components/ui';
+import { supabase } from '../lib/supabase';
+
+async function signOutAndRestart() {
+  await supabase.auth.signOut().catch(() => undefined);
+  window.location.assign('/');
+}
 
 const SKELETON = (
   <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2">
-    <LoadingState message="Comprobando tu sesion..." />
+    <LoadingState message="Comprobando tu sesión..." />
   </div>
 );
 
 const ERROR_SCREEN = (
   <div className="min-h-screen bg-v2-bg-primary flex items-center justify-center font-v2 px-4">
     <div className="text-center max-w-sm">
-      <h1 className="text-v2-xl font-bold text-v2-text-primary mb-2">Error de conexion</h1>
+      <h1 className="text-v2-xl font-bold text-v2-text-primary mb-2">Error de conexión</h1>
       <p className="text-v2-sm text-v2-text-secondary mb-6">
-        No se pudo comprobar tu progreso. Comprueba tu conexion e intentalo de nuevo.
+        No se pudo comprobar tu progreso. Comprueba tu conexión e inténtalo de nuevo.
       </p>
       <button
         onClick={() => window.location.reload()}
         className="inline-flex items-center justify-center px-6 py-3 rounded-v2-lg bg-v2-primary-600 hover:bg-v2-primary-700 text-white font-semibold text-v2-sm transition-colors shadow-v2-sm"
       >
         Reintentar
+      </button>
+      <button
+        type="button"
+        onClick={() => { void signOutAndRestart(); }}
+        className="block mx-auto mt-4 text-v2-sm text-v2-text-secondary hover:text-v2-text-primary underline underline-offset-2 transition-colors"
+      >
+        Cerrar sesión
       </button>
     </div>
   </div>

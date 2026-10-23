@@ -181,7 +181,7 @@ describe('no placeholder business ids in active code', () => {
     for (const fn of ['gbp-oauth-start', 'gbp-oauth-callback', 'gbp-sync']) {
       const code = readFileSync(resolve(root, `supabase/functions/${fn}/index.ts`), 'utf8');
       expect(code, fn).toMatch(/\.from\("businesses"\)/);
-      expect(code, fn).toMatch(/business_id: business\.id|\.eq\("business_id", business\.id\)/);
+      expect(code, fn).toMatch(/\.from\("businesses"\)[\s\S]{0,120}\.eq\("user_id", userId\)/);
     }
   });
 

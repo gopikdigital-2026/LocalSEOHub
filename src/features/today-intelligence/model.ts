@@ -86,5 +86,8 @@ export function rankedTodayActions(profile: TwinProfileInput, gbp: GbpSnapshot):
 }
 
 // When the Google source could not be read, its state is unknown, so Google-side actions are withheld rather than guessed.
+export const eligibleActions = (profile: TwinProfileInput, gbp: GbpSnapshot, gbpKnown = true): TodayAction[] =>
+  rankedTodayActions(profile, gbp).filter((a) => gbpKnown || a.tier < 2);
+
 export const todayActions = (profile: TwinProfileInput, gbp: GbpSnapshot, gbpKnown = true): TodayAction[] =>
-  rankedTodayActions(profile, gbp).filter((a) => gbpKnown || a.tier < 2).slice(0, TODAY_MAX);
+  eligibleActions(profile, gbp, gbpKnown).slice(0, TODAY_MAX);

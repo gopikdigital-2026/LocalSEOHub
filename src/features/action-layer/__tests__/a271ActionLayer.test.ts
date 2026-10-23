@@ -207,9 +207,25 @@ describe('A2.7.1 · Action Layer', () => {
     expect(ACTION_COPY.es.actions.reviews.why).toContain('LocalSEOHub no gestiona reseñas');
     expect(ACTION_COPY.en.actions.reviews.why).toContain("LocalSEOHub doesn't manage reviews");
   });
-  it('70. no review management fabricated', () => {
+  it('70. no review management fabricated (A3.4.2: real read-only reviews tool lives outside the action layer)', () => {
+    // The Action Layer itself still never fabricates review management.
     expect(layerSrc).not.toMatch(/reviewInbox|replyToReview|review_replies|monitor/i);
-    expect(readdirSync(join(ROOT, 'src/features'))).not.toContain('reviews');
+    // A3.4.2 legitimately adds src/features/reviews + supabase/functions/gbp-reviews. They read real
+    // Google reviews and only draft replies: no fabricated/demo reviews and never publish to Google.
+    const reviewFiles = [
+      ...readdirSync(join(ROOT, 'src/features/reviews')).map((f) => `src/features/reviews/${f}`),
+      ...readdirSync(join(ROOT, 'supabase/functions/gbp-reviews')).map((f) => `supabase/functions/gbp-reviews/${f}`),
+    ].filter((f) => /\.(ts|tsx)$/.test(f));
+    expect(reviewFiles.length).toBeGreaterThan(0);
+    for (const f of reviewFiles) {
+      const code = src(f);
+      expect(code, f).not.toMatch(/updateReply|replyToReview|publishReply|postReply/i);
+      expect(code, f).not.toMatch(/\/reply\b/);
+      expect(code, f).not.toMatch(/method:\s*['"`](PUT|PATCH|DELETE)['"`]/i);
+      expect(code, f).not.toMatch(/demoReviews|fakeReviews|mockReviews|sampleReviews|DEMO_REVIEWS|FAKE_REVIEWS/);
+    }
+    // The only Google call made by gbp-reviews is a plain GET (no method/body) to the reviews endpoint.
+    expect(src('supabase/functions/gbp-reviews/index.ts')).toMatch(/google: \(url, accessToken\) => fetch\(url, \{ headers: \{ Authorization: `Bearer \$\{accessToken\}` \} \}\)/);
   });
   it('71. empty fixture safe', () => {
     expect(keys(maps(EMPTY, OFF))).toEqual(['identity']);
@@ -279,11 +295,12 @@ describe('A2.7.1 · Regression', () => {
   ];
   it('88. all CTA routes exist', () => { for (const r of ACTION_DESTINATIONS) expect(routeExists(r), r).toBe(true); });
   it('89. no dead CTA', () => { for (const r of Object.values(SUPPORTING_ROUTES)) expect(routeExists(r)).toBe(true); });
-  it('90. no unnecessary new route', () => {
-    expect((app.match(/<Route path=/g) ?? []).length).toBe(27);
+  it('90. no unnecessary new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback; A3.5.4.3 adds /herramientas/social)', () => {
+    expect((app.match(/<Route path=/g) ?? []).length).toBe(33);
+    expect(app).toContain('<Route path="/herramientas/resenas"');
     expect(app).not.toContain('action-layer');
   });
-  it('91. all seven tools remain available', () => expect(TOOLS.map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice']));
+  it('91. all nine tools remain available (A3.4.2 added reviews, A3.5.4.3 social)', () => expect(TOOLS.map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews', 'social']));
   it('92. all fourteen legacy functions remain retired', () => { for (const fn of RETIRED) expect(src(`supabase/functions/${fn}/index.ts`)).toContain('status: 410'); });
   it('93. AI global cap remains 80', () => expect(caps).toContain("WHEN 'global' THEN 80"));
   it('94. weekly remains 22', () => expect(caps).toContain("WHEN 'weekly-content' THEN 22"));

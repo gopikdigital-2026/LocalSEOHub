@@ -1,0 +1,153 @@
+import type { Lang } from '../../../lib/i18n';
+import type { FindingParams, FindingPlatform } from './types';
+
+type Messages = Record<string, string>;
+
+const PLATFORM_NAME: Record<Lang, Record<FindingPlatform, string>> = {
+  es: { facebook: 'Facebook', instagram: 'Instagram', cross_platform: 'Facebook e Instagram' },
+  en: { facebook: 'Facebook', instagram: 'Instagram', cross_platform: 'Facebook and Instagram' },
+};
+
+const es: Messages = {
+  'social.finding.RECENT_ACTIVITY.title': 'Actividad reciente en {platform}',
+  'social.finding.RECENT_ACTIVITY.summary': 'Hay actividad reciente observada: la última publicación es de hace {daysSinceLastPost} días completos (umbral: {thresholdDays} días).',
+  'social.finding.INTERMEDIATE_ACTIVITY.title': 'Última publicación en {platform}',
+  'social.finding.INTERMEDIATE_ACTIVITY.summary': 'La última publicación observada es de hace {daysSinceLastPost} días completos. No se considera actividad reciente ni una inactividad prolongada.',
+  'social.finding.LONG_INACTIVITY.title': 'Sin publicaciones recientes en {platform}',
+  'social.finding.LONG_INACTIVITY.summary': 'Hace al menos {thresholdDays} días completos que no observamos una publicación en esta plataforma (la última es de hace {daysSinceLastPost} días).',
+  'social.finding.NO_CONTENT.title': 'Sin publicaciones observadas en {platform}',
+  'social.finding.NO_CONTENT.summary': 'La sincronización se completó, pero no hemos observado publicaciones en esta plataforma.',
+  'social.finding.RECENCY_INSUFFICIENT.title': 'Fechas de publicación no disponibles',
+  'social.finding.RECENCY_INSUFFICIENT.summary': 'Las publicaciones observadas en {platform} no incluyen fecha, así que no podemos saber cuándo se publicaron.',
+  'social.finding.FREQUENCY_OBSERVED.title': 'Ritmo de publicación observado en {platform}',
+  'social.finding.FREQUENCY_OBSERVED.summary': 'Hemos observado {postsWithTimestamp} publicaciones en {observedSpanDays} días, con una separación habitual de {medianIntervalDays} días entre ellas.',
+  'social.finding.FREQUENCY_INSUFFICIENT.title': 'Frecuencia aún no evaluable',
+  'social.finding.FREQUENCY_INSUFFICIENT.summary': 'No hay suficiente historial para evaluar la frecuencia habitual en {platform} (publicaciones con fecha observadas: {postsWithTimestamp}).',
+  'social.finding.TEXT_MISSING.title': 'Publicaciones sin texto en {platform}',
+  'social.finding.TEXT_MISSING.summary': 'Parte del contenido observado en Facebook no incluye texto: {postsWithoutText} de {observedPostCount} publicaciones.',
+  'social.finding.CAPTION_MISSING.title': 'Publicaciones sin descripción en {platform}',
+  'social.finding.CAPTION_MISSING.summary': 'Parte del contenido observado en Instagram no incluye descripción: {postsWithoutText} de {observedPostCount} publicaciones.',
+  'social.finding.CONTENT_TYPE_MIX.title': 'Formatos observados en {platform}',
+  'social.finding.CONTENT_TYPE_MIX.summary': 'Formatos distintos observados: {distinctContentTypes}, en {observedPostCount} publicaciones ({contentTypes}).',
+  'social.finding.CONTENT_TYPE_INSUFFICIENT.title': 'Variedad de formatos aún no evaluable',
+  'social.finding.CONTENT_TYPE_INSUFFICIENT.summary': 'No hay suficiente muestra para evaluar la variedad de formatos en {platform} (publicaciones observadas: {observedPostCount}).',
+  'social.finding.ENGAGEMENT_DATA_AVAILABLE.title': 'Datos de interacción disponibles',
+  'social.finding.ENGAGEMENT_DATA_AVAILABLE.summary': 'Meta ha proporcionado datos de interacción para {availableEngagementCount} de {eligibleEngagementCount} publicaciones evaluables en {platform}.',
+  'social.finding.ENGAGEMENT_METRICS_UNAVAILABLE.title': 'Métricas de interacción no disponibles',
+  'social.finding.ENGAGEMENT_METRICS_UNAVAILABLE.summary': 'Meta no ha proporcionado suficientes métricas de interacción en {platform} para analizar este aspecto.',
+  'social.finding.ENGAGEMENT_SAMPLE_INSUFFICIENT.title': 'Interacción aún no evaluable',
+  'social.finding.ENGAGEMENT_SAMPLE_INSUFFICIENT.summary': 'Todavía no hay suficiente muestra para valorar la interacción en {platform}.',
+  'social.finding.LIMITED_HISTORY.title': 'Historial todavía limitado en {platform}',
+  'social.finding.LIMITED_HISTORY.summary': 'Con las publicaciones sincronizadas hasta ahora aún no podemos evaluar algunos aspectos. Esto describe los límites del análisis, no la situación de tu negocio.',
+  'social.finding.DATA_STALE.title': 'Datos desactualizados',
+  'social.finding.DATA_STALE.summary': 'Los últimos datos disponibles de {platform} tienen más de 7 días desde la sincronización.',
+  'social.finding.ACCESS_REAUTH_REQUIRED.title': 'Hace falta volver a conectar',
+  'social.finding.ACCESS_REAUTH_REQUIRED.summary': 'No podemos analizar {platform} hasta recuperar el acceso a los datos: la conexión con Meta necesita autorizarse de nuevo.',
+  'social.finding.ACCESS_RATE_LIMITED.title': 'Consultas limitadas temporalmente',
+  'social.finding.ACCESS_RATE_LIMITED.summary': 'No podemos analizar {platform} en este momento porque Meta ha limitado temporalmente las consultas.',
+  'social.finding.ACCESS_PERMISSION_UNAVAILABLE.title': 'Falta un permiso',
+  'social.finding.ACCESS_PERMISSION_UNAVAILABLE.summary': 'No podemos analizar {platform} porque falta un permiso necesario para leer sus datos.',
+  'social.finding.ACCESS_SYNC_ERROR.title': 'Error al sincronizar',
+  'social.finding.ACCESS_SYNC_ERROR.summary': 'No podemos analizar {platform} hasta que la sincronización se complete correctamente.',
+  'social.finding.ACCESS_NOT_CONNECTED.title': '{platform}: sin conexión',
+  'social.finding.ACCESS_NOT_CONNECTED.summary': 'No hay una conexión activa con {platform}, así que todavía no hay datos que analizar.',
+  'social.finding.ACCESS_NOT_LINKED.title': '{platform}: cuenta no vinculada',
+  'social.finding.ACCESS_NOT_LINKED.summary': 'No hay una cuenta de {platform} vinculada a la página conectada.',
+  'social.finding.ACCESS_NEVER_SYNCED.title': 'Sin sincronizar todavía',
+  'social.finding.ACCESS_NEVER_SYNCED.summary': 'Todavía no se han sincronizado datos de {platform}.',
+  'social.finding.FB_ONLY_RECENT.title': 'Actividad reciente solo en Facebook',
+  'social.finding.FB_ONLY_RECENT.summary': 'Se ha observado actividad reciente en Facebook (hace {facebookDaysSinceLastPost} días), pero no actividad reciente equivalente en Instagram (hace {instagramDaysSinceLastPost} días).',
+  'social.finding.IG_ONLY_RECENT.title': 'Actividad reciente solo en Instagram',
+  'social.finding.IG_ONLY_RECENT.summary': 'Se ha observado actividad reciente en Instagram (hace {instagramDaysSinceLastPost} días), pero no actividad reciente equivalente en Facebook (hace {facebookDaysSinceLastPost} días).',
+  'social.finding.RECENCY_DIFFERENCE.title': 'Diferencia de fechas entre plataformas',
+  'social.finding.RECENCY_DIFFERENCE.summary': 'Última publicación observada: Facebook hace {facebookDaysSinceLastPost} días, Instagram hace {instagramDaysSinceLastPost} días ({recencyDifferenceDays} días de diferencia). Solo describe fechas.',
+
+  'social.rec.REVIEW_POSTS_WITHOUT_TEXT': 'Revisa si las publicaciones sin texto ({postsWithoutText}) necesitan unas palabras que expliquen o den contexto al contenido.',
+  'social.rec.REVIEW_POSTS_WITHOUT_CAPTION': 'Revisa si las publicaciones sin descripción ({postsWithoutText}) necesitan unas palabras que expliquen o den contexto al contenido.',
+  'social.rec.CONSIDER_NEW_CONTENT': 'Si {platform} forma parte de tu estrategia activa, puedes valorar planificar contenido nuevo.',
+  'social.rec.REFRESH_DATA': 'Actualiza los datos antes de sacar conclusiones sobre la situación actual.',
+  'social.rec.RECONNECT_META': 'Vuelve a conectar tu cuenta de Meta para recuperar el acceso a los datos.',
+  'social.rec.REVIEW_META_PERMISSIONS': 'Revisa los permisos concedidos a LocalSEOHub en Meta.',
+  'social.rec.CONNECT_PLATFORM': 'Si quieres incluir {platform} en el análisis, puedes conectarlo.',
+  'social.rec.RETRY_LATER': 'Vuelve a intentarlo más tarde; los datos se podrán analizar cuando Meta responda con normalidad.',
+  'social.rec.WAIT_FOR_MORE_HISTORY': 'El análisis será más completo a medida que se sincronicen más publicaciones.',
+};
+
+const en: Messages = {
+  'social.finding.RECENT_ACTIVITY.title': 'Recent activity on {platform}',
+  'social.finding.RECENT_ACTIVITY.summary': 'Recent activity observed: the latest post is {daysSinceLastPost} full days old (threshold: {thresholdDays} days).',
+  'social.finding.INTERMEDIATE_ACTIVITY.title': 'Latest post on {platform}',
+  'social.finding.INTERMEDIATE_ACTIVITY.summary': 'The latest observed post is {daysSinceLastPost} full days old. This is neither recent activity nor a long inactive period.',
+  'social.finding.LONG_INACTIVITY.title': 'No recent posts on {platform}',
+  'social.finding.LONG_INACTIVITY.summary': 'We have not observed a post on this platform for at least {thresholdDays} full days (the latest is {daysSinceLastPost} days old).',
+  'social.finding.NO_CONTENT.title': 'No posts observed on {platform}',
+  'social.finding.NO_CONTENT.summary': 'The sync completed, but we have not observed any posts on this platform.',
+  'social.finding.RECENCY_INSUFFICIENT.title': 'Publish dates unavailable',
+  'social.finding.RECENCY_INSUFFICIENT.summary': 'The posts observed on {platform} have no date, so we cannot tell when they were published.',
+  'social.finding.FREQUENCY_OBSERVED.title': 'Observed posting rhythm on {platform}',
+  'social.finding.FREQUENCY_OBSERVED.summary': 'We observed {postsWithTimestamp} posts over {observedSpanDays} days, usually {medianIntervalDays} days apart.',
+  'social.finding.FREQUENCY_INSUFFICIENT.title': 'Frequency not assessable yet',
+  'social.finding.FREQUENCY_INSUFFICIENT.summary': 'There is not enough history to assess the usual posting frequency on {platform} (dated posts observed: {postsWithTimestamp}).',
+  'social.finding.TEXT_MISSING.title': 'Posts without text on {platform}',
+  'social.finding.TEXT_MISSING.summary': 'Some of the content observed on Facebook has no text: {postsWithoutText} of {observedPostCount} posts.',
+  'social.finding.CAPTION_MISSING.title': 'Posts without a caption on {platform}',
+  'social.finding.CAPTION_MISSING.summary': 'Some of the content observed on Instagram has no caption: {postsWithoutText} of {observedPostCount} posts.',
+  'social.finding.CONTENT_TYPE_MIX.title': 'Formats observed on {platform}',
+  'social.finding.CONTENT_TYPE_MIX.summary': 'Distinct formats observed: {distinctContentTypes}, across {observedPostCount} posts ({contentTypes}).',
+  'social.finding.CONTENT_TYPE_INSUFFICIENT.title': 'Format variety not assessable yet',
+  'social.finding.CONTENT_TYPE_INSUFFICIENT.summary': 'There is not enough sample to assess format variety on {platform} (posts observed: {observedPostCount}).',
+  'social.finding.ENGAGEMENT_DATA_AVAILABLE.title': 'Interaction data available',
+  'social.finding.ENGAGEMENT_DATA_AVAILABLE.summary': 'Meta provided interaction data for {availableEngagementCount} of {eligibleEngagementCount} assessable posts on {platform}.',
+  'social.finding.ENGAGEMENT_METRICS_UNAVAILABLE.title': 'Interaction metrics unavailable',
+  'social.finding.ENGAGEMENT_METRICS_UNAVAILABLE.summary': 'Meta has not provided enough interaction metrics on {platform} to analyse this aspect.',
+  'social.finding.ENGAGEMENT_SAMPLE_INSUFFICIENT.title': 'Interaction not assessable yet',
+  'social.finding.ENGAGEMENT_SAMPLE_INSUFFICIENT.summary': 'There is not enough sample yet to assess interaction on {platform}.',
+  'social.finding.LIMITED_HISTORY.title': 'Limited history on {platform} so far',
+  'social.finding.LIMITED_HISTORY.summary': 'With the posts synced so far we cannot assess some aspects yet. This describes the limits of the analysis, not the state of your business.',
+  'social.finding.DATA_STALE.title': 'Out-of-date data',
+  'social.finding.DATA_STALE.summary': 'The latest available {platform} data was synced more than 7 days ago.',
+  'social.finding.ACCESS_REAUTH_REQUIRED.title': 'Reconnection needed',
+  'social.finding.ACCESS_REAUTH_REQUIRED.summary': 'We cannot analyse {platform} until data access is restored: the Meta connection needs to be authorised again.',
+  'social.finding.ACCESS_RATE_LIMITED.title': 'Requests temporarily limited',
+  'social.finding.ACCESS_RATE_LIMITED.summary': 'We cannot analyse {platform} right now because Meta has temporarily limited requests.',
+  'social.finding.ACCESS_PERMISSION_UNAVAILABLE.title': 'Missing permission',
+  'social.finding.ACCESS_PERMISSION_UNAVAILABLE.summary': 'We cannot analyse {platform} because a permission needed to read its data is missing.',
+  'social.finding.ACCESS_SYNC_ERROR.title': 'Sync error',
+  'social.finding.ACCESS_SYNC_ERROR.summary': 'We cannot analyse {platform} until the sync completes successfully.',
+  'social.finding.ACCESS_NOT_CONNECTED.title': '{platform}: not connected',
+  'social.finding.ACCESS_NOT_CONNECTED.summary': 'There is no active connection to {platform}, so there is no data to analyse yet.',
+  'social.finding.ACCESS_NOT_LINKED.title': '{platform}: account not linked',
+  'social.finding.ACCESS_NOT_LINKED.summary': 'No {platform} account is linked to the connected page.',
+  'social.finding.ACCESS_NEVER_SYNCED.title': 'Not synced yet',
+  'social.finding.ACCESS_NEVER_SYNCED.summary': 'No {platform} data has been synced yet.',
+  'social.finding.FB_ONLY_RECENT.title': 'Recent activity on Facebook only',
+  'social.finding.FB_ONLY_RECENT.summary': 'Recent activity was observed on Facebook ({facebookDaysSinceLastPost} days ago), but no equivalent recent activity on Instagram ({instagramDaysSinceLastPost} days ago).',
+  'social.finding.IG_ONLY_RECENT.title': 'Recent activity on Instagram only',
+  'social.finding.IG_ONLY_RECENT.summary': 'Recent activity was observed on Instagram ({instagramDaysSinceLastPost} days ago), but no equivalent recent activity on Facebook ({facebookDaysSinceLastPost} days ago).',
+  'social.finding.RECENCY_DIFFERENCE.title': 'Date gap between platforms',
+  'social.finding.RECENCY_DIFFERENCE.summary': 'Latest observed post: Facebook {facebookDaysSinceLastPost} days ago, Instagram {instagramDaysSinceLastPost} days ago ({recencyDifferenceDays} days apart). This only describes dates.',
+
+  'social.rec.REVIEW_POSTS_WITHOUT_TEXT': 'Check whether the posts without text ({postsWithoutText}) need a few words to explain or give context to the content.',
+  'social.rec.REVIEW_POSTS_WITHOUT_CAPTION': 'Check whether the posts without a caption ({postsWithoutText}) need a few words to explain or give context to the content.',
+  'social.rec.CONSIDER_NEW_CONTENT': 'If {platform} is part of your active strategy, you may consider planning new content.',
+  'social.rec.REFRESH_DATA': 'Refresh the data before drawing conclusions about the current situation.',
+  'social.rec.RECONNECT_META': 'Reconnect your Meta account to restore access to the data.',
+  'social.rec.REVIEW_META_PERMISSIONS': 'Review the permissions granted to LocalSEOHub in Meta.',
+  'social.rec.CONNECT_PLATFORM': 'If you want to include {platform} in the analysis, you can connect it.',
+  'social.rec.RETRY_LATER': 'Try again later; the data can be analysed once Meta responds normally.',
+  'social.rec.WAIT_FOR_MORE_HISTORY': 'The analysis will become more complete as more posts are synced.',
+};
+
+export const SOCIAL_FINDINGS_MESSAGES: Record<Lang, Messages> = { es, en };
+
+function formatValue(value: FindingParams[string] | undefined): string {
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'object') return Object.entries(value).map(([k, n]) => `${k}: ${n}`).join(', ');
+  return String(value);
+}
+
+export function formatSocialMessage(lang: Lang, key: string, params: FindingParams, platform: FindingPlatform): string {
+  const template = SOCIAL_FINDINGS_MESSAGES[lang][key];
+  if (template === undefined) throw new Error(`MISSING_SOCIAL_MESSAGE:${key}`);
+  return template.replace(/\{(\w+)\}/g, (_, name: string) => (name === 'platform' ? PLATFORM_NAME[lang][platform] : formatValue(params[name])));
+}

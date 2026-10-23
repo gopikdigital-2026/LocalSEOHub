@@ -40,10 +40,10 @@ describe('A2.6.1 spec checklist', () => {
     for (const s of ['## A. Current auth architecture', 'admin.createUser', 'email_confirm: true', 'mailer_autoconfirm']) expect(report).toContain(s);
   });
 
-  it('S2/S3. no app code writes email_confirmed_at; signup-instant pre-confirmation is the open F-03', () => {
+  it('S2/S3. no app code writes email_confirmed_at; signup-instant no longer pre-confirms (F-03 Stage 2B)', () => {
     expect(frontendText).not.toMatch(/email_confirmed_at\s*[:=]/);
     expect(functionsText).not.toMatch(/email_confirmed_at\s*[:=]/);
-    expect(signup.match(/email_confirm:/g)).toHaveLength(1);
+    expect(signup.match(/email_confirm:/g)).toBeNull();
     expect(report).toContain('F-03 = OPEN');
   });
 
@@ -92,13 +92,19 @@ describe('A2.6.1 spec checklist', () => {
   });
 
   it('S41. Premium and trials stay server-authoritative (frontend never writes billing tables)', () => {
-    expect(frontendText).not.toMatch(/\.from\(['"](user_trials|subscriptions|stripe_subscriptions|stripe_customers|ai_usage_monthly)['"]\)/);
+    expect(frontendText).not.toMatch(/\.from\(['"](user_trials|subscriptions|stripe_customers|ai_usage_monthly)['"]\)/);
+    expect(frontendText).not.toMatch(/\.from\(['"]stripe_subscriptions['"]\)\s*\.(insert|update|upsert|delete)/);
+    expect(frontendText.match(/\.from\(['"]stripe_subscriptions['"]\)/g) ?? []).toHaveLength(1);
+    const purchase = readFileSync(resolve(__dirname, '../../billing/purchase.ts'), 'utf8');
+    expect(purchase).toMatch(/\.from\('stripe_subscriptions'\)\s*\.select\(/);
+    expect(purchase).not.toMatch(/\.(insert|update|upsert|delete)\(/);
     expect(frontendText).not.toContain("rpc('billing_state_for'");
   });
 
-  it('S50. all seven tools are available by name', () => {
+  it('S50. all eight tools (reviews added in A3.4.2) are available by name', () => {
     const enabled = TOOLS.filter((t) => t.enabled).map((t) => t.id).sort();
-    expect(enabled).toEqual(['advisor', 'geo', 'maps', 'radar', 'seo', 'twin', 'voice']);
+    expect(enabled).toEqual(['advisor', 'geo', 'maps', 'radar', 'reviews', 'seo', 'twin', 'voice']);
+    expect(TOOLS.find((t) => t.id === 'reviews')?.copy.es.name).toBe('Reseñas IA');
   });
 
   it('Q. the report carries the required stage status and confirmations', () => {

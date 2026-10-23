@@ -11,6 +11,7 @@ import { buildDigitalTwin, TWIN_TOOL_ROUTES, type KnowledgeBand } from './engine
 import { TwinBlockCard } from './TwinBlockCard';
 import { ActionDetail } from '../action-layer/ActionDetail';
 import { ACTION_COPY } from '../action-layer/copy';
+import { primaryAction } from '../action-layer/primary';
 import { twinActions } from '../action-layer/model';
 
 const btnPrimary = 'inline-flex items-center justify-center gap-2 rounded-v2-lg bg-v2-primary-600 px-4 py-2.5 text-v2-sm font-semibold text-white hover:bg-v2-primary-700 active:scale-[0.99] transition-all';
@@ -99,6 +100,7 @@ export default function DigitalTwinPage() {
             <h1 className="text-v2-2xl sm:text-v2-3xl font-bold text-v2-text-primary tracking-tight">{t.title}</h1>
             <p className="text-v2-sm text-v2-text-secondary mt-1">{t.subtitle}</p>
             <p className="text-v2-xs text-v2-text-tertiary mt-0.5 max-w-2xl">{t.definition}</p>
+            <p data-testid="twin-purpose" className="text-v2-xs text-v2-text-secondary mt-0.5 max-w-2xl">{t.purpose}</p>
           </div>
         </div>
         {hasPremium && twin && (
@@ -216,8 +218,8 @@ export default function DigitalTwinPage() {
                   <p className="text-v2-sm font-medium text-v2-text-primary">{t.gaps[p.id].title}</p>
                   {actions.has(p.id) && <ActionDetail item={actions.get(p.id)!} c={ac} showUsedBy />}
                 </div>
-                <Link to={p.cta} className="shrink-0 mt-0.5 inline-flex items-center gap-1 text-v2-xs font-medium text-v2-primary-600 hover:text-v2-primary-700 hover:gap-1.5 transition-all">
-                  {t.gaps[p.id].cta} <ArrowRight size={12} />
+                <Link to={primaryAction(l, actions.get(p.id), { to: p.cta, label: t.gaps[p.id].cta }).to} data-testid="diagnostic-primary-cta" className="shrink-0 mt-0.5 inline-flex items-center gap-1 text-v2-xs font-medium text-v2-primary-600 hover:text-v2-primary-700 hover:gap-1.5 transition-all">
+                  {primaryAction(l, actions.get(p.id), { to: p.cta, label: t.gaps[p.id].cta }).label} <ArrowRight size={12} />
                 </Link>
               </li>
             ))}
