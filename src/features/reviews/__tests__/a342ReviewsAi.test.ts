@@ -342,7 +342,7 @@ describe('A3.4.2 · UI and read-only guarantees', () => {
   });
 
   it('24. other tools unaffected; reviews registered once; no Meta events or billing changes', () => {
-    expect(TOOLS.map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews']);
+    expect(TOOLS.map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews', 'social']);
     const reviews = TOOLS.find((t) => t.id === 'reviews')!;
     expect(reviews.enabled && reviews.path).toBe('/herramientas/resenas');
     expect(reviews.copy.es).toMatchObject({ name: 'Reseñas IA', description: 'Gestiona tus reseñas y prepara respuestas personalizadas con IA.', cta: 'Gestionar reseñas' });

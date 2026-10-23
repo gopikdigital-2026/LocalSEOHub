@@ -587,7 +587,19 @@ describe('A3.5.4.2 boundaries', () => {
       return statSync(p).isDirectory() ? walk(p) : [p];
     });
     const outside = walk(join(root, 'src')).filter((p) => /\.(ts|tsx)$/.test(p) && !p.includes(join('features', 'social-intelligence')));
-    for (const file of outside) expect(readFileSync(file, 'utf8')).not.toMatch(/social-intelligence/);
+    // A3.5.4.3: the only approved external reference is the lazy route import of the UI page in App.tsx.
+    const approvedImport = "const SocialIntelligencePage = lazy(() => import('./features/social-intelligence/ui/SocialIntelligencePage'));";
+    const appPath = join(root, 'src', 'App.tsx');
+    for (const file of outside) {
+      let text = readFileSync(file, 'utf8');
+      if (file === appPath) {
+        expect(text.split(approvedImport).length - 1).toBe(1);
+        expect(text.match(/SocialIntelligencePage/g)).toHaveLength(3);
+        expect(text).toContain('<Route path="/herramientas/social" element={<SocialIntelligencePage />} />');
+        text = text.replace(approvedImport, '');
+      }
+      expect(text, file).not.toMatch(/social-intelligence/);
+    }
     expect(findingsSources).not.toMatch(/action-layer|today-intelligence|business-advisor|digital-twin|weekly|roadmap|from 'react'/i);
   });
 });

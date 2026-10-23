@@ -69,7 +69,7 @@ const FROZEN: Record<string, string> = {
   'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
   'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
   'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
-  'src/App.tsx': '008a96fe660a7852b2a3fe4bb708bf15b856b6cca0a69972b6476a358d27b199', // A3.5.1: /oauth/meta/callback
+  'src/App.tsx': '36074bedfe7a79ecb92e47ec795abd1b9d263f3a37a1f8422146206f86f49078', // A3.5.4.3: /herramientas/social
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
 
@@ -324,7 +324,7 @@ describe('A2.7.3 · Platform regression', () => {
     'generate-content-plan', 'generate-countermeasure', 'generate-gbp-description', 'generate-geo-audit', 'generate-pitch',
     'generate-seo', 'generate-voice-script', 'scan-directories', 'simulate-campaign',
   ];
-  it('96. all eight tools remain (reviews added in A3.4.2)', () => expect(TOOLS.map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews']));
+  it('96. all nine tools remain (reviews added in A3.4.2, social in A3.5.4.3)', () => expect(TOOLS.map((t) => t.id)).toEqual(['seo', 'maps', 'twin', 'radar', 'geo', 'advisor', 'voice', 'reviews', 'social']));
   it('97. all 14 retired functions remain retired', () => { for (const fn of RETIRED) expect(src(`supabase/functions/${fn}/index.ts`)).toContain('status: 410'); });
   it('98. GBP trust fix used by Plan', () => {
     expect(normalizeGbp({ status: 'connected', metadata: { name: 'Fake' }, last_sync_at: '2026-10-10T00:00:00Z' } as never).data).toBeNull();
@@ -360,7 +360,7 @@ describe('A2.7.3 · Platform regression', () => {
   });
   it('113. no new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback) and every CTA is real', () => {
     frozen('src/App.tsx');
-    expect((app.match(/<Route path=/g) ?? []).length).toBe(32);
+    expect((app.match(/<Route path=/g) ?? []).length).toBe(33);
     for (const r of ACTION_DESTINATIONS) expect(routeExists(r)).toBe(true);
     for (const p of PROFILES) for (const g of SNAPSHOTS) for (const i of road(p, g)) {
       expect(routeExists(i.destination), i.destination).toBe(true);

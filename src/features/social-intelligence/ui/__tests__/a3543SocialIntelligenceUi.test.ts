@@ -267,7 +267,7 @@ describe('A3.5.4.3 Social Intelligence UI', () => {
       'src/features/social-intelligence/findings/policy.ts': '8f40dfbe7480c1cb7d43876f7396a623',
       'src/features/social-intelligence/findings/rules.ts': '2dbf1084d04d7855f8fd476054a351ee',
       'src/features/social-intelligence/findings/types.ts': '06e724e679c4de177b2cf1ca00ccbaa6',
-      'src/features/social-intelligence/findings/__tests__/a3542SocialFindings.test.ts': '25e8e1cebfc4457e01b7615f6f17d9b1',
+      'src/features/social-intelligence/findings/__tests__/a3542SocialFindings.test.ts': 'ce2a491f5dc65e6d113ef4401bc34746', // re-frozen in A3.5.4.3-FIX1 (test 40 scoped route exception)
       'src/features/meta-connection/metaRepository.ts': '521963d28bd06b212afd630dedf8bb4c',
     };
     for (const [f, h] of Object.entries(FROZEN)) {

@@ -103,7 +103,7 @@ describe('A2.6.1 spec checklist', () => {
 
   it('S50. all eight tools (reviews added in A3.4.2) are available by name', () => {
     const enabled = TOOLS.filter((t) => t.enabled).map((t) => t.id).sort();
-    expect(enabled).toEqual(['advisor', 'geo', 'maps', 'radar', 'reviews', 'seo', 'twin', 'voice']);
+    expect(enabled).toEqual(['advisor', 'geo', 'maps', 'radar', 'reviews', 'seo', 'social', 'twin', 'voice']);
     expect(TOOLS.find((t) => t.id === 'reviews')?.copy.es.name).toBe('Reseñas IA');
   });
 
