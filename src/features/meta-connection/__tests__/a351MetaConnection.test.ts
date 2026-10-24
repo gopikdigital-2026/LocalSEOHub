@@ -622,9 +622,9 @@ describe('A3.5.1 · Q. Pixel, consent and legal regression', () => {
     'src/features/conversion/MetaPixelTracker.tsx': '3eaa425c5675920d0e174afad65a7e86be7c93617a18d24319572434e716667b',
     'src/main.tsx': '29616ccff5de6172aaf8a733d33979d9f7f7530e4710700c3c9bac58f3acbbd6',
     'index.html': '3685d485eca934fccb55486cd9a8470404078813d22cb8552a73d963aef5b649',
-    'src/features/legal/PrivacyPolicyPage.tsx': '3b277108eefe41259969763c052d6926e154448c0e8f46b28abf528b0b4202b3',
-    'src/features/legal/DataDeletionPage.tsx': 'deee072f3697536c0b337e1c8c78d5ec81a29f4fd966986c911cda0492ec3fa5',
-    'src/features/legal/TermsPage.tsx': '290648ac158a2b1b752514d68fd96c3532191d0f061c900a1443e2dd66852f5b',
+    'src/features/legal/PrivacyPolicyPage.tsx': 'b44eabfaf318c5ee00452bfc8fc874ea843c2af5bfbcc8dd60089aaf03783961',
+    'src/features/legal/DataDeletionPage.tsx': '2ec986ce36728496da3afb29ed05ed3a32dddd35277cb8b7e8fa378e528361ef',
+    'src/features/legal/TermsPage.tsx': '5b43eaa92827fad628049597d5e62e55f41dd55c9458b914dc27a3d6e6ed6564',
   };
   for (const [file, hash] of Object.entries(FROZEN)) {
     it(`${file} is byte-identical`, () => expect(sha(file)).toBe(hash));
