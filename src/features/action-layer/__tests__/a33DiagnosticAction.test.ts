@@ -122,8 +122,8 @@ describe('A3.3 · preservation', () => {
     'src/features/maps-scanner/engine.ts': '1c18dfe0ee2ede9001e5aafe5ff19e4316d5b6600a818f26988b11d3333d380f',
     'src/features/geo-audit/engine.ts': '410253d10b015657bc0e6c2872b31473e3dcce5054bdc29189fd211e2507fe46',
     'src/features/digital-twin/engine.ts': '5ee583c39f7335c42faff29411be0c13c21c66ef08680fc0478445957fbf1cbd',
-    'src/app-v2/routes/TodayPage.tsx': '423bd478877709a069bbb2921429a484b11414f5d83688f418edad71368e781c',
-    'src/app-v2/routes/PlanPage.tsx': 'adfa7e58cb5e18e25237329e09431a6049effe0adedd188ee83e940abde9d9f1',
+    'src/app-v2/routes/TodayPage.tsx': '78cdf392ae270d805046632ecb5e0b4872134d8a6ff5f24bd91b0f0a9e8129da', // AUTHORIZED A3.5.4.4.1 TODAYPAGE INTEGRATION RE-PIN
+    'src/app-v2/routes/PlanPage.tsx': '109a1a58060ac4b2ef412b62ce3699e751452e904f88d3b4285bdab1e0da8dc0', // AUTHORIZED A3.5.4.4.1 PLANPAGE INTEGRATION RE-PIN
     'src/features/today-intelligence/model.ts': 'bac214444294e6b4dd43a139ec8a318dd8180c299ec55d8c0222d5bf6f6148e4',
     'src/features/roadmap/model.ts': '288b2ae4cda6571d01dcafd680f7c4c4451a9e82372be22cd3b338dba1d68cb5',
   };

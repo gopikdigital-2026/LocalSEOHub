@@ -121,7 +121,7 @@ describe('A2.8.1 · preservation', () => {
     'src/features/action-layer/ActionDetail.tsx': '1444e520b6bf497e5b710b13184837d59b67114efaf31ed4d00307a0a0ed8336',
     'src/features/today-intelligence/copy.ts': '064f5308a14b2274efbcd9008b9012ad2c93e83c1ceb8e49170879211653ec1f',
     'src/features/today-intelligence/TodayPriorities.tsx': 'c7e6555cc8bbbc516c92948a9ea6e0c6b7e862321fd5aff8c2fda7cfce7074ef',
-    'src/app-v2/routes/TodayPage.tsx': '423bd478877709a069bbb2921429a484b11414f5d83688f418edad71368e781c',
+    'src/app-v2/routes/TodayPage.tsx': '78cdf392ae270d805046632ecb5e0b4872134d8a6ff5f24bd91b0f0a9e8129da', // AUTHORIZED A3.5.4.4.1 TODAYPAGE INTEGRATION RE-PIN
     'src/features/dashboard/TodaysMissions.tsx': '22684ca84042aa83ef018bb7855e4493a6338eb2cc880359b5a10c011a91b79d',
     'src/features/actions/engine.ts': '2fa3eb2913328eb1a8e859f2e5db95d1e8158bd6cce135b277d3dc86284d3896',
     'src/features/actions/rules.ts': 'd32c4bb98a2819f7b09baabd692e97ef1ed878c8559f5d35a626cacd9b40654f',

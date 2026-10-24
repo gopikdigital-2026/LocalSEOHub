@@ -590,6 +590,7 @@ describe('A3.5.4.2 boundaries', () => {
     // A3.5.4.3: the only approved external reference is the lazy route import of the UI page in App.tsx.
     const approvedImport = "const SocialIntelligencePage = lazy(() => import('./features/social-intelligence/ui/SocialIntelligencePage'));";
     const appPath = join(root, 'src', 'App.tsx');
+    const approvedIntegrationPages = ['src/app-v2/routes/TodayPage.tsx', 'src/app-v2/routes/PlanPage.tsx'];
     for (const file of outside) {
       let text = readFileSync(file, 'utf8');
       if (file === appPath) {
@@ -597,6 +598,12 @@ describe('A3.5.4.2 boundaries', () => {
         expect(text.match(/SocialIntelligencePage/g)).toHaveLength(3);
         expect(text).toContain('<Route path="/herramientas/social" element={<SocialIntelligencePage />} />');
         text = text.replace(approvedImport, '');
+      }
+      // AUTHORIZED A3.5.4.4.1 GUARD CHANGE: Hoy and Plan may import only the integration card.
+      const integrationImport = "import SocialIntegrationCard from '../../features/social-intelligence/integration/SocialIntegrationCard';";
+      if (approvedIntegrationPages.some((page) => file === join(root, page))) {
+        expect(text.split(integrationImport).length - 1, file).toBe(1);
+        text = text.replace(integrationImport, '');
       }
       expect(text, file).not.toMatch(/social-intelligence/);
     }

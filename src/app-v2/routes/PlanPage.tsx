@@ -22,6 +22,7 @@ import type { ConnectedSource } from '../../features/reality-engine/types';
 import { normalizeGbp } from '../../features/maps-scanner/engine';
 import { buildRoadmap } from '../../features/roadmap/model';
 import RoadmapCard from '../../features/roadmap/RoadmapCard';
+import SocialIntegrationCard from '../../features/social-intelligence/integration/SocialIntegrationCard';
 
 const L = {
   es: {
@@ -273,6 +274,7 @@ export default function PlanPage() {
       </div>
 
       {roadmap && <RoadmapCard items={roadmap} lang={lang} />}
+      <SocialIntegrationCard consumer="plan" businessId={businessId ?? null} lang={lang} />
 
       {open === 0 && <p className="text-v2-sm text-v2-text-secondary">{l.allDone}</p>}
 

@@ -36,6 +36,7 @@ import { offersImprovement } from '../../features/improvement/model';
 import { normalizeGbp } from '../../features/maps-scanner/engine';
 import { todayActions } from '../../features/today-intelligence/model';
 import TodayPriorities from '../../features/today-intelligence/TodayPriorities';
+import SocialIntegrationCard from '../../features/social-intelligence/integration/SocialIntegrationCard';
 
 const ACTION_ERRORS = {
   es: {
@@ -251,6 +252,7 @@ export default function TodayPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
         <div className="lg:col-span-2 space-y-5 lg:space-y-6">
           {priorities && <TodayPriorities actions={priorities} lang={lang} />}
+          <SocialIntegrationCard consumer="hoy" businessId={business?.id ?? null} lang={lang} />
           <TodaysMissions
             actions={today.map((a) => toDashboardAction(a, lang))}
             state={todayState}
