@@ -1,14 +1,5 @@
-import LegalLayout from './LegalLayout';
+import LegalLayout, { MailLink } from './LegalLayout';
 import { useI18n } from '../../lib/i18n';
-
-// Approved terms text, unchanged from the former landing modal (including its contact address).
-const TERMS_CONTACT_EMAIL = 'gopik.digital@gmail.com';
-
-function ContactLink() {
-  return (
-    <a href={`mailto:${TERMS_CONTACT_EMAIL}`} className="font-medium text-emerald-700 hover:text-emerald-800 underline underline-offset-2">{TERMS_CONTACT_EMAIL}</a>
-  );
-}
 
 export default function TermsPage() {
   const { lang } = useI18n();
@@ -48,7 +39,7 @@ function TermsEs() {
       </section>
       <section>
         <h2>8. Contacto</h2>
-        <p>Para cualquier consulta sobre estos términos, contáctanos en <ContactLink />.</p>
+        <p>Para cualquier consulta sobre estos términos, contáctanos en <MailLink />.</p>
       </section>
     </LegalLayout>
   );
@@ -87,7 +78,7 @@ function TermsEn() {
       </section>
       <section>
         <h2>8. Contact</h2>
-        <p>For any question about these terms, contact us at <ContactLink />.</p>
+        <p>For any question about these terms, contact us at <MailLink />.</p>
       </section>
     </LegalLayout>
   );

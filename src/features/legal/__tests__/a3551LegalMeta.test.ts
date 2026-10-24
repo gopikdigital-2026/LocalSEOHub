@@ -129,6 +129,19 @@ describe('A3.5.5.1 · Terms third-party integration clause', () => {
   });
 });
 
+describe('A3.5.5.2 · Legal contact consistency', () => {
+  it('all legal pages use the single LocalSEOHub legal contact', () => {
+    expect(read('src/features/legal/LegalLinks.tsx')).toContain("LEGAL_CONTACT_EMAIL = 'admin@localseohub.io'");
+    for (const file of ['PrivacyPolicyPage', 'DataDeletionPage', 'TermsPage']) {
+      const src = read(`src/features/legal/${file}.tsx`);
+      expect(src).toContain('<MailLink />');
+      expect(src).not.toMatch(/gopik\.digital@gmail\.com/);
+    }
+    expect(terms.es).toContain('contáctanos en <MailLink />');
+    expect(terms.en).toContain('contact us at <MailLink />');
+  });
+});
+
 describe('A3.5.5.1 · Legal layout language switch', () => {
   it('lets visitors switch between Spanish and English', () => {
     const layout = read('src/features/legal/LegalLayout.tsx');
