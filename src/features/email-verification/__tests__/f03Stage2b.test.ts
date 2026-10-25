@@ -258,7 +258,7 @@ describe('F-03 Stage 2B · secrets and preservation', () => {
   });
 
   it('28-31. frozen layers (App routes, Today, Missions, engines) stay byte-frozen elsewhere; App untouched here (A3.4.2 adds /herramientas/resenas; A3.5.1A 3 public legal routes; A3.5.1 /oauth/meta/callback)', () => {
-    expect(app.match(/<Route [^>]*path=/g)).toHaveLength(33);
+    expect(app.match(/<Route [^>]*path=/g)).toHaveLength(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
     expect(app).toContain("const PENDING_BIZ_KEY = 'pending_business_name';");
     expect(TOOLS).toHaveLength(9);
   });
@@ -281,7 +281,7 @@ describe('F-03 Stage 2B · secrets and preservation', () => {
 
   it('34/35. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback)', () => {
     expect(migrations).toHaveLength(51); // A3.7.1 publications foundation; A3.7.2 proposals engine
-    expect(app.match(/<Route [^>]*path=/g)).toHaveLength(33);
+    expect(app.match(/<Route [^>]*path=/g)).toHaveLength(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
   });
 
   it('orphan landings are not imported by any active file', () => {

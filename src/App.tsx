@@ -33,6 +33,8 @@ const CompetitorRadarPage = lazy(() => import('./features/competitor-radar/Compe
 const VoiceSimulatorPage = lazy(() => import('./features/voice-simulator/VoiceSimulatorPage'));
 const ReviewsPage = lazy(() => import('./features/reviews/ReviewsPage'));
 const SocialIntelligencePage = lazy(() => import('./features/social-intelligence/ui/SocialIntelligencePage'));
+// Temporary internal validation harness; intentionally not linked from any navigation.
+const PublicationsValidationPage = lazy(() => import('./features/publications/validation/PublicationsValidationPage'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
@@ -216,6 +218,14 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
           <AppGuard>
             <Suspense fallback={SKELETON}>
               <MetaCallbackPage />
+            </Suspense>
+          </AppGuard>
+        } />
+
+        <Route path="/internal/publications-validation" element={
+          <AppGuard>
+            <Suspense fallback={SKELETON}>
+              <PublicationsValidationPage />
             </Suspense>
           </AppGuard>
         } />

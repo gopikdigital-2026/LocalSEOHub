@@ -69,7 +69,7 @@ const FROZEN: Record<string, string> = {
   'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
   'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
   'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
-  'src/App.tsx': '36074bedfe7a79ecb92e47ec795abd1b9d263f3a37a1f8422146206f86f49078', // A3.5.4.3: /herramientas/social
+  'src/App.tsx': '5f7353d212936b410ba7d72d009fdba06be9b199875a79ccb26a24945c169ad1', // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
 
@@ -360,7 +360,7 @@ describe('A2.7.3 · Platform regression', () => {
   });
   it('113. no new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback) and every CTA is real', () => {
     frozen('src/App.tsx');
-    expect((app.match(/<Route path=/g) ?? []).length).toBe(33);
+    expect((app.match(/<Route path=/g) ?? []).length).toBe(34); /* A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation */
     for (const r of ACTION_DESTINATIONS) expect(routeExists(r)).toBe(true);
     for (const p of PROFILES) for (const g of SNAPSHOTS) for (const i of road(p, g)) {
       expect(routeExists(i.destination), i.destination).toBe(true);

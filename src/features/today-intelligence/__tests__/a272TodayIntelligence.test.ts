@@ -40,7 +40,7 @@ const FROZEN: Record<string, string> = {
   'src/features/action-layer/model.ts': '38edfb9004c9a6bea8ca680d71d374eedfacc221fa4229cbbfe5efe4b4994075',
   'src/features/action-layer/copy.ts': '3dbbe24bcd674fd9f684bf6a2a5a40862ca1ca49ab4efcc86471ec035c54330d',
   'src/features/action-layer/ActionDetail.tsx': '1444e520b6bf497e5b710b13184837d59b67114efaf31ed4d00307a0a0ed8336',
-  'src/App.tsx': '36074bedfe7a79ecb92e47ec795abd1b9d263f3a37a1f8422146206f86f49078', // A3.5.4.3: /herramientas/social
+  'src/App.tsx': '5f7353d212936b410ba7d72d009fdba06be9b199875a79ccb26a24945c169ad1', // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
   'src/features/dashboard/TodaysMissions.tsx': '22684ca84042aa83ef018bb7855e4493a6338eb2cc880359b5a10c011a91b79d',
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
@@ -256,7 +256,7 @@ describe('A2.7.2 · Copy, layout and scope', () => {
   });
   // Plan integration was authorised in A2.7.3; A2.7.2 itself only guaranteed Plan did not consume Today directly.
   it('90. no Plan implementation inside A2.7.2', () => { expect(src('src/app-v2/routes/PlanPage.tsx')).not.toContain('today-intelligence'); expect(tiSrc).not.toContain('PlanPage'); });
-  it('91. no new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback; A3.5.4.3 adds /herramientas/social)', () => { frozen('src/App.tsx'); expect((app.match(/<Route path=/g) ?? []).length).toBe(33); });
+  it('91. no new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback; A3.5.4.3 adds /herramientas/social)', () => { frozen('src/App.tsx'); expect((app.match(/<Route path=/g) ?? []).length).toBe(34); /* A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation */ });
   it('92. Today CTA routes valid', () => {
     for (const r of ACTION_DESTINATIONS) expect(routeExists(r)).toBe(true);
     expect(routeExists('/herramientas')).toBe(true);

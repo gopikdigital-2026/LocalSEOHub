@@ -78,7 +78,15 @@ export type PublicationErrorCode =
   | 'ai_limit'
   | 'image_not_understandable'
   | 'generation_failed'
+  | 'premium_required'
+  | 'rate_limited'
+  | 'provider_timeout'
   | 'unavailable';
+
+export interface PublicationGrounding {
+  observed: string[];
+  uncertain: string[];
+}
 
 export class PublicationError extends Error {
   constructor(public readonly code: PublicationErrorCode) {

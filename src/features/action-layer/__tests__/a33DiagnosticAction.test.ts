@@ -138,7 +138,7 @@ describe('A3.3 · preservation', () => {
     expect(readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(51); // A3.7.2 adds the publication proposals engine migration
   });
   it('no routes added or removed (A3.4.2 added only /herramientas/resenas; A3.5.1A the 3 public legal routes; A3.5.1 /oauth/meta/callback; A3.5.4.3 /herramientas/social)', () => {
-    expect(ROUTES).toHaveLength(32);
+    expect(ROUTES).toHaveLength(33); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
     expect(ROUTES).toContain('/oauth/meta/callback');
     expect(ROUTES).toContain('/herramientas/resenas');
   });

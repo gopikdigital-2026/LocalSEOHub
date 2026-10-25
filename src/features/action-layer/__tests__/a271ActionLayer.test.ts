@@ -296,7 +296,7 @@ describe('A2.7.1 · Regression', () => {
   it('88. all CTA routes exist', () => { for (const r of ACTION_DESTINATIONS) expect(routeExists(r), r).toBe(true); });
   it('89. no dead CTA', () => { for (const r of Object.values(SUPPORTING_ROUTES)) expect(routeExists(r)).toBe(true); });
   it('90. no unnecessary new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback; A3.5.4.3 adds /herramientas/social)', () => {
-    expect((app.match(/<Route path=/g) ?? []).length).toBe(33);
+    expect((app.match(/<Route path=/g) ?? []).length).toBe(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
     expect(app).toContain('<Route path="/herramientas/resenas"');
     expect(app).not.toContain('action-layer');
   });

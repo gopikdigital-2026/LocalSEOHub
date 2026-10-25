@@ -146,7 +146,8 @@ describe('A3.7.2 client repository', () => {
     const cases: [string, string][] = [
       ['REGENERATION_LIMIT_REACHED', 'regeneration_limit'], ['IMAGE_NOT_UNDERSTANDABLE', 'image_not_understandable'],
       ['AI_LIMIT_REACHED', 'ai_limit'], ['GENERATION_UNSAFE', 'generation_failed'], ['GENERATION_IN_PROGRESS', 'generation_in_progress'],
-      ['PROVIDER_TIMEOUT', 'unavailable'], ['__proto__', 'unavailable'],
+      ['PROVIDER_TIMEOUT', 'provider_timeout'], // A3.7.2.1A: timeout now has its own safe client code
+      ['PROVIDER_UNAVAILABLE', 'unavailable'], ['__proto__', 'unavailable'],
     ];
     for (const [code, expected] of cases) {
       const { db } = fakeDb(READY_ROW, ROWS, err(code));

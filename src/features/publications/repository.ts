@@ -8,6 +8,7 @@ import {
   PUBLICATION_PROPOSAL_ROLES,
   type Publication,
   type PublicationErrorCode,
+  type PublicationGrounding,
   type PublicationImage,
   type PublicationImageMime,
   type PublicationLang,
@@ -47,7 +48,17 @@ const SERVER_CODES: Record<string, PublicationErrorCode> = {
   GENERATION_UNSAFE: 'generation_failed',
   PROPOSALS_NOT_DISTINCT: 'generation_failed',
   INVALID_MODEL_OUTPUT: 'generation_failed',
+  PROVIDER_TIMEOUT: 'provider_timeout',
 };
+
+const GATE_CODES: Record<string, PublicationErrorCode> = {
+  unauthorized: 'unauthenticated',
+  premium_required: 'premium_required',
+  rate_limited: 'rate_limited',
+};
+
+const has = (o: Record<string, unknown>, k: unknown): k is string =>
+  typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
 
 const isMime = (v: unknown): v is PublicationImageMime =>
   typeof v === 'string' && (PUBLICATION_UPLOAD_MIMES as readonly string[]).includes(v);
@@ -128,7 +139,8 @@ async function serverErrorCode(error: unknown): Promise<PublicationErrorCode> {
   if (ctx instanceof Response) {
     try {
       const body = await ctx.clone().json();
-      if (typeof body?.code === 'string' && Object.prototype.hasOwnProperty.call(SERVER_CODES, body.code)) return SERVER_CODES[body.code];
+      if (has(SERVER_CODES, body?.code)) return SERVER_CODES[body.code];
+      if (has(GATE_CODES, body?.error)) return GATE_CODES[body.error];
     } catch {
       return 'unavailable';
     }
@@ -198,12 +210,19 @@ export async function getProposals(publicationId: string, db: Db = supabase): Pr
   return proposals as PublicationProposal[];
 }
 
+const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : []);
+
+function toGrounding(v: unknown): PublicationGrounding {
+  const g = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
+  return { observed: strings(g.observed), uncertain: strings(g.uncertain) };
+}
+
 export async function generateProposals(
   publicationId: string,
   lang: PublicationLang,
   requestId: string = crypto.randomUUID(),
   db: Db = supabase,
-): Promise<{ publication: Publication; proposals: PublicationProposal[] }> {
+): Promise<{ publication: Publication; proposals: PublicationProposal[]; grounding: PublicationGrounding }> {
   const { data, error } = await db.functions.invoke(PROPOSALS_FUNCTION, {
     method: 'POST',
     body: { publication_id: publicationId, request_id: requestId, lang },
@@ -216,5 +235,5 @@ export async function generateProposals(
   if (proposals.length !== 3 || proposals[0].generationId !== publication.proposals.generationId) {
     throw new PublicationError('unavailable');
   }
-  return { publication, proposals };
+  return { publication, proposals, grounding: toGrounding((data as { grounding?: unknown }).grounding) };
 }

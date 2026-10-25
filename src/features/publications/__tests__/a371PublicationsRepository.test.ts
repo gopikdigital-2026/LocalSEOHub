@@ -166,7 +166,8 @@ describe('A3.7.1 schema, storage and architecture guards', () => {
   });
 
   it('no Publications route or UI yet', () => {
-    expect(src('src/App.tsx')).not.toMatch(/publicaciones|publications/i);
+    // A3.7.2.1A: only the temporary hidden validation harness may reference publications.
+    expect(src('src/App.tsx').replace(/.*PublicationsValidationPage.*|.*publications-validation.*/g, '')).not.toMatch(/publicaciones|publications/i);
   });
 
   it('frozen Meta handlers are byte-identical', () => {

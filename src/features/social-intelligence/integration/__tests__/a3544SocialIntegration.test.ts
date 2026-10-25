@@ -303,7 +303,7 @@ describe('A3.5.4.4.1 Social Integration — consumers', () => {
     expect(userText).not.toMatch(/inactiv|rendimiento|performance|seguidores|followers|mejora tu|improve your|garantiza|guarantee/i);
   });
   it('frozen A3.5.4.3 UI files and App.tsx unchanged', () => {
-    expect(sha('src/App.tsx')).toBe('36074bedfe7a79ecb92e47ec795abd1b9d263f3a37a1f8422146206f86f49078');
+    expect(sha('src/App.tsx')).toBe('5f7353d212936b410ba7d72d009fdba06be9b199875a79ccb26a24945c169ad1'); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
     expect(sha('src/features/social-intelligence/ui/viewModel.ts')).toBe('c92c4ee4e782274260cda418ef4f963cc300b29fcd35eb5b4149d71ae785aee1');
     expect(sha('src/features/social-intelligence/ui/repository.ts')).toBe('dc2cc79c122679a478e5bfc31374b9a0f8e68c033dc425a1217f58c6ea2d5817');
     expect(sha('src/features/social-intelligence/findings/engine.ts')).toBe('fe37139fc142dc2912f956addb8ccc5c20083cc1429fabdc678b5ad47812d2ca');
