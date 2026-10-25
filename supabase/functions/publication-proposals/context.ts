@@ -58,7 +58,10 @@ export function buildFacts(row: Record<string, unknown> | null): BusinessFacts |
 
 export type Certainty = "observed" | "uncertain";
 export interface VisualItem { label: string; certainty: Certainty }
-export type InsufficientReason = "blank_or_dark" | "blurry" | "no_clear_subject" | "unrelated" | "unsafe_content" | "other";
+// "Not understandable" only: an understandable photo of a different business is a consistency verdict, never a reason here.
+export type InsufficientReason = "blank_or_dark" | "blurry" | "no_clear_subject" | "unsafe_content" | "other";
+export type BusinessFit = "consistent" | "plausibly_related" | "unknown" | "material_mismatch";
+const FITS: readonly BusinessFit[] = ["consistent", "plausibly_related", "unknown", "material_mismatch"];
 
 export interface VisualUnderstanding {
   usable: boolean;
@@ -70,11 +73,11 @@ export interface VisualUnderstanding {
   peopleVisible: boolean;
   notObserved: string[];
   unsafeToInfer: string[];
-  businessRelevance: "clear" | "possible" | "none";
+  businessFit: BusinessFit;
 }
 
-const REASONS: readonly InsufficientReason[] = ["blank_or_dark", "blurry", "no_clear_subject", "unrelated", "unsafe_content", "other"];
-const VISUAL_KEYS = ["usable", "insufficient_reason", "primary_subject", "elements", "setting", "visible_text", "people_visible", "not_observed", "unsafe_to_infer", "business_relevance"];
+const REASONS: readonly InsufficientReason[] = ["blank_or_dark", "blurry", "no_clear_subject", "unsafe_content", "other"];
+const VISUAL_KEYS = ["usable", "insufficient_reason", "primary_subject", "elements", "setting", "visible_text", "people_visible", "not_observed", "unsafe_to_infer", "business_fit"];
 
 const item = { type: ["object", "null"], additionalProperties: false, required: ["label", "certainty"], properties: { label: { type: "string" }, certainty: { type: "string", enum: ["observed", "uncertain"] } } };
 
@@ -95,7 +98,7 @@ export const VISUAL_SCHEMA = {
       people_visible: { type: "boolean" },
       not_observed: { type: "array", items: { type: "string" } },
       unsafe_to_infer: { type: "array", items: { type: "string" } },
-      business_relevance: { type: "string", enum: ["clear", "possible", "none"] },
+      business_fit: { type: "string", enum: [...FITS] },
     },
   },
 };
@@ -121,7 +124,7 @@ export function parseVisual(raw: string): VisualUnderstanding | null {
   if (!isObj(b) || Object.keys(b).some((k) => !VISUAL_KEYS.includes(k)) || VISUAL_KEYS.some((k) => !(k in b))) return null;
   if (typeof b.usable !== "boolean" || typeof b.people_visible !== "boolean") return null;
   if (b.insufficient_reason !== null && !REASONS.includes(b.insufficient_reason as InsufficientReason)) return null;
-  if (!["clear", "possible", "none"].includes(b.business_relevance as string)) return null;
+  if (!FITS.includes(b.business_fit as BusinessFit)) return null;
   if (![b.elements, b.visible_text, b.not_observed, b.unsafe_to_infer].every(Array.isArray)) return null;
   const primary = parseItem(b.primary_subject);
   const setting = parseItem(b.setting);
@@ -148,15 +151,44 @@ export function parseVisual(raw: string): VisualUnderstanding | null {
     peopleVisible: b.people_visible,
     notObserved: strings(b.not_observed, 8),
     unsafeToInfer: strings(b.unsafe_to_infer, 8),
-    businessRelevance: b.business_relevance as VisualUnderstanding["businessRelevance"],
+    businessFit: b.business_fit as BusinessFit,
   };
 }
 
 export function insufficiency(v: VisualUnderstanding): InsufficientReason | null {
   if (!v.usable) return v.insufficientReason ?? "other";
   if (!v.primarySubject || v.primarySubject.certainty !== "observed") return "no_clear_subject";
-  if (v.businessRelevance === "none") return "unrelated";
   return null;
+}
+
+export type Consistency = "CONSISTENT" | "PLAUSIBLY_RELATED" | "UNKNOWN" | "MATERIAL_MISMATCH";
+
+const VAGUE_CATEGORY = /^(otros?|other|general|varios|various|negocio|business|empresa|company|local|tienda|shop|store|servicios?|services?)$/i;
+
+// A mismatch needs something concrete to mismatch against; sparse context is UNKNOWN, never a mismatch.
+export function hasActivityContext(facts: BusinessFacts): boolean {
+  return (!!facts.category && !VAGUE_CATEGORY.test(facts.category.trim())) || facts.services.length > 0;
+}
+
+const VERDICT: Record<BusinessFit, Consistency> = {
+  consistent: "CONSISTENT", plausibly_related: "PLAUSIBLY_RELATED", unknown: "UNKNOWN", material_mismatch: "MATERIAL_MISMATCH",
+};
+
+export function consistencyVerdict(facts: BusinessFacts, v: VisualUnderstanding): Consistency {
+  const verdict = VERDICT[v.businessFit];
+  return verdict === "MATERIAL_MISMATCH" && !hasActivityContext(facts) ? "UNKNOWN" : verdict;
+}
+
+export interface MismatchNotice { imageSummary: string; businessSummary: string; message: string }
+
+export function mismatchNotice(lang: Lang, env: GroundingEnvelope): MismatchNotice {
+  const imageSummary = env.image.setting ?? env.image.subject;
+  const { name, category } = env.business;
+  const businessSummary = category ? `${name} (${category})` : name;
+  const message = lang === "es"
+    ? `${imageSummary ? `La imagen parece mostrar «${imageSummary}», pero no coincide` : "La imagen no coincide"} claramente con la actividad que conocemos de ${name}. Comprueba que has seleccionado la fotografía correcta.`
+    : `${imageSummary ? `The image appears to show “${imageSummary}”, but it does not clearly match` : "The image does not clearly match"} what we know about ${name}'s activity. Please check that you selected the right photo.`;
+  return { imageSummary, businessSummary, message };
 }
 
 export const INSUFFICIENT_MESSAGE: Record<Lang, string> = {
@@ -167,14 +199,33 @@ export const INSUFFICIENT_MESSAGE: Record<Lang, string> = {
 const INJECTION = /\b(ignore|ignora|disregard|olvida|instruc|system|sistema|prompt|assistant|asistente|jailbreak|developer|override)\w*/i;
 const MARKUP = /[<>{}[\]`\\]|https?:|www\.|@|#/i;
 
+// Where every envelope fact comes from. USER_EXPLICIT_FACT and VERIFIED_EXTERNAL_FACT have no source in this flow yet.
+export type Provenance = "IMAGE_OBSERVED" | "BUSINESS_FACT" | "USER_EXPLICIT_FACT" | "VERIFIED_EXTERNAL_FACT" | "UNCERTAIN" | "DO_NOT_USE";
+
+export const RELATION_TYPES = ["owns", "operates", "offers", "provides", "sells", "located_at", "created", "available", "new_product", "recommends"] as const;
+export type RelationType = (typeof RELATION_TYPES)[number];
+export interface Relation { type: RelationType | "is_a"; subject: string; object: string; provenance: Provenance }
+
 export interface GroundingEnvelope {
   lang: Lang;
+  consistency: Consistency;
   image: { subject: string; observed: string[]; setting: string | null; people_visible: boolean; visible_text: string[] };
   business: { name: string; category: string; city: string; services: string[] };
   tone_context: { audience: string; goal: string };
   cta: { booking_declared: boolean };
   uncertain: string[];
+  relationships: { supported: Relation[]; unsupported: Relation[] };
   withheld: number;
+}
+
+// Supported relations come only from BUSINESS_FACT; image facts never establish any relation to the business.
+function relationships(b: GroundingEnvelope["business"]): GroundingEnvelope["relationships"] {
+  const supported: Relation[] = [];
+  if (b.category) supported.push({ type: "is_a", subject: b.name, object: b.category, provenance: "BUSINESS_FACT" });
+  if (b.city) supported.push({ type: "located_at", subject: b.name, object: b.city, provenance: "BUSINESS_FACT" });
+  for (const s of b.services) supported.push({ type: "offers", subject: b.name, object: s, provenance: "BUSINESS_FACT" });
+  const unsupported = RELATION_TYPES.map((type): Relation => ({ type, subject: b.name, object: "anything shown in the image", provenance: "DO_NOT_USE" }));
+  return { supported, unsupported };
 }
 
 export function buildEnvelope(
@@ -201,13 +252,16 @@ export function buildEnvelope(
   const services = facts.services.filter((sv) => !INJECTION.test(sv) && !MARKUP.test(sv));
   withheld += facts.services.length - services.length;
   const declared = [facts.category, ...services].join(" ");
+  const business = { name: facts.name, category: facts.category, city: facts.city, services };
   return {
     lang,
+    consistency: consistencyVerdict(facts, v),
     image: { subject, observed, setting, people_visible: v.peopleVisible, visible_text: visible },
-    business: { name: facts.name, category: facts.category, city: facts.city, services },
+    business,
     tone_context: { audience: INJECTION.test(facts.audience) ? "" : facts.audience, goal: INJECTION.test(facts.goal) ? "" : facts.goal },
     cta: { booking_declared: /\b(reserva|cita|book|booking|appointment)/i.test(declared) },
     uncertain: [...uncertain, ...v.unsafeToInfer.filter(safeLabel)].slice(0, 10),
+    relationships: relationships(business),
     withheld,
   };
 }

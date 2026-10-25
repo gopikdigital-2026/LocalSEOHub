@@ -1,6 +1,6 @@
 import {
-  buildEnvelope, buildFacts, insufficiency, parseVisual, INSUFFICIENT_MESSAGE, VISUAL_SCHEMA,
-  type GroundingEnvelope, type InsufficientReason, type Lang,
+  buildEnvelope, buildFacts, insufficiency, mismatchNotice, parseVisual, INSUFFICIENT_MESSAGE, VISUAL_SCHEMA,
+  type Consistency, type GroundingEnvelope, type InsufficientReason, type Lang, type MismatchNotice,
 } from "./context.ts";
 import { normalizeImage, type NormalizedMime } from "./normalize.ts";
 import { repairMessages, visionMessages, writerMessages, type ChatMessage } from "./prompts.ts";
@@ -23,14 +23,14 @@ export type ErrorCode =
   | "INVALID_REQUEST" | "NOT_FOUND" | "IMAGE_REQUIRED" | "IMAGE_NOT_NORMALIZED" | "BUSINESS_CONTEXT_MISSING"
   | "GENERATION_IN_PROGRESS" | "REGENERATION_LIMIT_REACHED" | "IMAGE_CHANGED" | "DUPLICATE_REQUEST"
   | "AI_LIMIT_REACHED" | "AI_GLOBAL_LIMIT_REACHED" | "AI_UNAVAILABLE" | "STORAGE_UNAVAILABLE"
-  | "IMAGE_NOT_UNDERSTANDABLE" | "PROVIDER_TIMEOUT" | "PROVIDER_UNAVAILABLE" | "INVALID_MODEL_OUTPUT"
+  | "IMAGE_NOT_UNDERSTANDABLE" | "BUSINESS_IMAGE_MISMATCH" | "PROVIDER_TIMEOUT" | "PROVIDER_UNAVAILABLE" | "INVALID_MODEL_OUTPUT"
   | "GENERATION_UNSAFE" | "PROPOSALS_NOT_DISTINCT" | "UNKNOWN_ERROR";
 
 const STATUS: Record<ErrorCode, number> = {
   INVALID_REQUEST: 400, NOT_FOUND: 404, IMAGE_REQUIRED: 409, IMAGE_NOT_NORMALIZED: 409, BUSINESS_CONTEXT_MISSING: 409,
   GENERATION_IN_PROGRESS: 409, REGENERATION_LIMIT_REACHED: 429, IMAGE_CHANGED: 409, DUPLICATE_REQUEST: 409,
   AI_LIMIT_REACHED: 429, AI_GLOBAL_LIMIT_REACHED: 429, AI_UNAVAILABLE: 503, STORAGE_UNAVAILABLE: 503,
-  IMAGE_NOT_UNDERSTANDABLE: 422, PROVIDER_TIMEOUT: 504, PROVIDER_UNAVAILABLE: 503, INVALID_MODEL_OUTPUT: 502,
+  IMAGE_NOT_UNDERSTANDABLE: 422, BUSINESS_IMAGE_MISMATCH: 422, PROVIDER_TIMEOUT: 504, PROVIDER_UNAVAILABLE: 503, INVALID_MODEL_OUTPUT: 502,
   GENERATION_UNSAFE: 422, PROPOSALS_NOT_DISTINCT: 422, UNKNOWN_ERROR: 500,
 };
 
@@ -108,7 +108,8 @@ export function toBase64(bytes: Uint8Array): string {
 type PipelineResult =
   | { kind: "ok"; proposals: Proposal[]; envelope: GroundingEnvelope }
   | { kind: "insufficient"; reason: InsufficientReason }
-  | { kind: "error"; code: ErrorCode };
+  | { kind: "mismatch"; notice: MismatchNotice }
+  | { kind: "error"; code: ErrorCode; consistency?: Consistency };
 
 interface Meter { calls: number; billed: boolean; repairs: number }
 
@@ -127,7 +128,7 @@ export async function runPipeline(
   deps: ProposalDeps, meter: Meter, lang: Lang, facts: NonNullable<ReturnType<typeof buildFacts>>, image: { dataUrl: string; orientation: number },
 ): Promise<PipelineResult> {
   const vreq: ModelRequest = {
-    stage: "vision", messages: visionMessages(lang, facts.category, image.orientation, image.dataUrl),
+    stage: "vision", messages: visionMessages(lang, facts, image.orientation, image.dataUrl),
     schema: VISUAL_SCHEMA, maxTokens: VISION.maxTokens, temperature: VISION.temperature, timeoutMs: VISION.timeoutMs,
   };
   let visual = null;
@@ -148,6 +149,7 @@ export async function runPipeline(
   if (reason) return { kind: "insufficient", reason };
   const envelope = buildEnvelope(lang, facts, visual, isClaim);
   if (!envelope.image.subject) return { kind: "insufficient", reason: "no_clear_subject" };
+  if (envelope.consistency === "MATERIAL_MISMATCH") return { kind: "mismatch", notice: mismatchNotice(lang, envelope) };
 
   const base = writerMessages(envelope);
   let messages = base;
@@ -175,7 +177,7 @@ export async function runPipeline(
     meter.repairs++;
     messages = repairMessages(base, res.raw, [...review.safety, ...review.differentiation]);
   }
-  return { kind: "error", code: rejection };
+  return { kind: "error", code: rejection, consistency: envelope.consistency };
 }
 
 export async function generate(userId: string, rawBody: string | null, deps: ProposalDeps): Promise<Response> {
@@ -218,11 +220,17 @@ export async function generate(userId: string, rawBody: string | null, deps: Pro
         dataUrl: `data:${pub.imageMime};base64,${toBase64(bytes)}`,
         orientation: check.orientation,
       });
-      deps.log("pipeline", { result: result.kind, code: result.kind === "error" ? result.code : null, calls: meter.calls, repairs: meter.repairs, billed: meter.billed });
+      deps.log("pipeline", {
+        result: result.kind, code: result.kind === "error" ? result.code : null,
+        consistency: result.kind === "ok" ? result.envelope.consistency : result.kind === "mismatch" ? "MATERIAL_MISMATCH" : result.kind === "error" ? result.consistency ?? null : null,
+        calls: meter.calls, repairs: meter.repairs, billed: meter.billed,
+      });
 
       if (result.kind === "insufficient") {
         return fail("IMAGE_NOT_UNDERSTANDABLE", { reason: result.reason, message: INSUFFICIENT_MESSAGE[input.lang] });
       }
+      // Nothing is stored and the generation counter is untouched; the paid vision call settles as consumed below.
+      if (result.kind === "mismatch") return fail("BUSINESS_IMAGE_MISMATCH", { mismatch: result.notice });
       if (result.kind === "error") return fail(result.code);
 
       const saved = await deps.complete(pub.id, userId, input.requestId, pub.imagePath, input.lang, result.proposals);

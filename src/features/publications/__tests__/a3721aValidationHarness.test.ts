@@ -151,7 +151,9 @@ describe('A3.7.2.1A error mapping', () => {
 
   it('renders only the mapped message, never raw error bodies', () => {
     expect(PAGE).toMatch(/ERROR_TEXT\[error\]\[appLang\]/);
-    expect(PAGE).not.toMatch(/\.message\b|JSON\.stringify/);
+    // The only server text shown is the vetted mismatch notice, and only for that code.
+    expect(PAGE).toMatch(/error === 'business_image_mismatch' && mismatch && <p>\{mismatch\.message\}<\/p>/);
+    expect(PAGE.replace(/mismatch\.message/g, '')).not.toMatch(/\.message\b|JSON\.stringify/);
   });
 
   it('repository maps premium gate, rate limit and provider timeout responses', async () => {

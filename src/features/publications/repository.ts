@@ -11,6 +11,7 @@ import {
   type PublicationGrounding,
   type PublicationImage,
   type PublicationImageMime,
+  type PublicationMismatch,
   type PublicationLang,
   type PublicationProposal,
 } from './types';
@@ -136,20 +137,31 @@ export async function listDrafts(businessId: string, db: Db = supabase): Promise
   return data.map(toPublication).filter((p): p is Publication => p !== null);
 }
 
-async function responseErrorCode(res: Response): Promise<PublicationErrorCode> {
+async function responseError(res: Response): Promise<PublicationError> {
   try {
     const body = await res.clone().json();
-    if (has(SERVER_CODES, body?.code)) return SERVER_CODES[body.code];
-    if (has(GATE_CODES, body?.error)) return GATE_CODES[body.error];
+    if (body?.code === 'BUSINESS_IMAGE_MISMATCH') return new PublicationError('business_image_mismatch', toMismatch(body.mismatch));
+    if (has(SERVER_CODES, body?.code)) return new PublicationError(SERVER_CODES[body.code]);
+    if (has(GATE_CODES, body?.error)) return new PublicationError(GATE_CODES[body.error]);
   } catch {
-    return 'unavailable';
+    return new PublicationError('unavailable');
   }
-  return 'unavailable';
+  return new PublicationError('unavailable');
 }
 
-async function serverErrorCode(error: unknown): Promise<PublicationErrorCode> {
+async function serverError(error: unknown): Promise<PublicationError> {
   const ctx = (error as { context?: unknown })?.context;
-  return ctx instanceof Response ? responseErrorCode(ctx) : 'unavailable';
+  return ctx instanceof Response ? responseError(ctx) : new PublicationError('unavailable');
+}
+
+function toMismatch(v: unknown): PublicationMismatch | undefined {
+  const m = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
+  if (typeof m.message !== 'string' || !m.message) return undefined;
+  return {
+    imageSummary: typeof m.imageSummary === 'string' ? m.imageSummary : '',
+    businessSummary: typeof m.businessSummary === 'string' ? m.businessSummary : '',
+    message: m.message,
+  };
 }
 
 // Fast feedback only; the server re-validates bytes, type and dimensions.
@@ -165,7 +177,7 @@ const functionPath = (action: 'attach' | 'replace' | 'delete', id: string) =>
 
 async function deleteViaFunction(id: string, db: Db) {
   const { data, error } = await db.functions.invoke(functionPath('delete', id), { method: 'POST' });
-  if (error) throw new PublicationError(await serverErrorCode(error));
+  if (error) throw await serverError(error);
   if ((data as { ok?: unknown } | null)?.ok !== true) throw new PublicationError('unavailable');
 }
 
@@ -185,7 +197,7 @@ async function uploadBytes(action: 'attach' | 'replace', id: string, file: Blob,
   } catch {
     throw new PublicationError('unavailable');
   }
-  if (!res.ok) throw new PublicationError(await responseErrorCode(res));
+  if (!res.ok) throw await responseError(res);
   const body = await res.json().catch(() => null);
   if ((body as { ok?: unknown } | null)?.ok !== true) throw new PublicationError('unavailable');
 }
@@ -252,7 +264,7 @@ export async function generateProposals(
     method: 'POST',
     body: { publication_id: publicationId, request_id: requestId, lang },
   });
-  if (error) throw new PublicationError(await serverErrorCode(error));
+  if (error) throw await serverError(error);
   if ((data as { ok?: unknown } | null)?.ok !== true) throw new PublicationError('unavailable');
   const publication = await getDraft(publicationId, db);
   if (!publication || publication.status !== 'proposals_ready') throw new PublicationError('unavailable');

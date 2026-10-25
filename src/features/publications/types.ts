@@ -77,6 +77,7 @@ export type PublicationErrorCode =
   | 'duplicate_request'
   | 'ai_limit'
   | 'image_not_understandable'
+  | 'business_image_mismatch'
   | 'generation_failed'
   | 'premium_required'
   | 'rate_limited'
@@ -88,8 +89,14 @@ export interface PublicationGrounding {
   uncertain: string[];
 }
 
+export interface PublicationMismatch {
+  imageSummary: string;
+  businessSummary: string;
+  message: string;
+}
+
 export class PublicationError extends Error {
-  constructor(public readonly code: PublicationErrorCode) {
+  constructor(public readonly code: PublicationErrorCode, public readonly mismatch?: PublicationMismatch) {
     super(code);
     this.name = 'PublicationError';
   }

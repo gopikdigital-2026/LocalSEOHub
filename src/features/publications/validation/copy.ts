@@ -76,6 +76,7 @@ export const ERROR_TEXT: Record<PublicationErrorCode, Text> = {
   image_changed: { es: 'La foto ha cambiado durante la generación.', en: 'The photo changed during generation.' },
   duplicate_request: { es: 'Solicitud duplicada.', en: 'Duplicate request.' },
   ai_limit: { es: 'Has alcanzado el límite de generaciones disponible.', en: 'You reached the available generation limit.' },
+  business_image_mismatch: { es: 'Posible incompatibilidad entre imagen y negocio', en: 'Possible mismatch between image and business' },
   image_not_understandable: {
     es: 'No hemos podido entender esta imagen con suficiente seguridad. Prueba con otra fotografía.',
     en: 'We could not understand this image with enough confidence. Try another photo.',

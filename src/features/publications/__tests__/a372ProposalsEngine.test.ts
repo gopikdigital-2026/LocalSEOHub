@@ -40,14 +40,14 @@ const VISUAL = {
   elements: [{ label: 'plato blanco', certainty: 'observed' }, { label: 'mesa de madera', certainty: 'uncertain' }],
   setting: { label: 'interior de cafetería', certainty: 'observed' },
   visible_text: [{ text: 'Tarta casera', legible: true }],
-  people_visible: false, not_observed: ['precio'], unsafe_to_infer: ['ingredientes'], business_relevance: 'clear',
+  people_visible: false, not_observed: ['precio'], unsafe_to_infer: ['ingredientes'], business_fit: 'consistent',
 };
 
 const GOOD = {
   proposals: [
-    { role: 'direct', body: 'Nuestra tarta de queso te espera en Café Lumbre, en pleno Valencia. Ven a probarla con un café en nuestra cafetería.', cta: 'Ven a probarla' },
-    { role: 'close', body: 'Hay tardes que piden algo dulce y una mesa tranquila. Por aquí la tarta de queso acaba de salir y huele a casa.', cta: 'Pásate a saludarnos' },
-    { role: 'professional', body: 'Cada porción de tarta de queso se sirve en plato blanco, preparada en nuestro obrador de repostería casera para acompañar el café.', cta: 'Pregúntanos por la repostería' },
+    { role: 'direct', body: 'En la imagen se aprecia una tarta de queso servida en un plato blanco. Café Lumbre es una cafetería de Valencia: pásate y pregunta por la repostería casera.', cta: 'Ven a vernos' },
+    { role: 'close', body: 'Hay tardes que piden algo dulce y una pausa tranquila. Esta foto de una tarta de queso lo dice todo, ¿te apetece un café con calma?', cta: 'Pásate a saludarnos' },
+    { role: 'professional', body: 'La fotografía muestra una tarta de queso. En Café Lumbre trabajamos los desayunos y la repostería casera para el barrio.', cta: 'Pregúntanos por la repostería' },
   ],
 };
 
@@ -162,9 +162,9 @@ describe('A3.7.2 proposals engine: success path', () => {
   it('supports English output', async () => {
     const en = {
       proposals: [
-        { role: 'direct', body: 'Our cheesecake is waiting for you at Café Lumbre in Valencia. Come and try it with a coffee at the counter.', cta: 'Come and try it' },
-        { role: 'close', body: 'Some afternoons just call for something sweet and a quiet table. The cheesecake is out and it smells like home.', cta: 'Drop by and say hello' },
-        { role: 'professional', body: 'Each slice of cheesecake is served on a white plate, made in our bakery to go with your coffee in the café.', cta: 'Ask us about the bakery' },
+        { role: 'direct', body: 'The image shows a cheesecake served on a white plate. Café Lumbre is a café in Valencia, so drop by and ask about the homemade pastries.', cta: 'Come and see us' },
+        { role: 'close', body: 'Some afternoons just call for something sweet and a quiet pause. This photo of a cheesecake says it all, fancy a coffee?', cta: 'Drop by and say hello' },
+        { role: 'professional', body: 'This photograph shows a cheesecake on a white plate. Café Lumbre is a neighbourhood café that focuses on breakfasts and homemade pastries.', cta: 'Ask us about breakfasts' },
       ],
     };
     const { res, json } = await run({ models: [ok(VISUAL), ok(en)] }, body({ lang: 'en' }));
@@ -185,9 +185,10 @@ describe('A3.7.2 proposals engine: insufficient image', () => {
     }
   });
 
-  it('treats unrelated or uncertain subjects as insufficient', async () => {
-    const unrelated = await run({ models: [ok({ ...VISUAL, business_relevance: 'none' })] });
-    expect(unrelated.json.reason).toBe('unrelated');
+  it('treats an uncertain subject as insufficient, and a clear but different business as a mismatch, not as not-understandable', async () => {
+    const different = await run({ models: [ok({ ...VISUAL, business_fit: 'material_mismatch' })] });
+    expect(different.json.code).toBe('BUSINESS_IMAGE_MISMATCH');
+    expect(different.json.reason).toBeUndefined();
     const unsure = await run({ models: [ok({ ...VISUAL, primary_subject: { label: 'algo', certainty: 'uncertain' } })] });
     expect(unsure.json.reason).toBe('no_clear_subject');
   });

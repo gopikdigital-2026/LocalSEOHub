@@ -117,6 +117,10 @@
       "hasChanged": false,
       "hash": "1c9e7886bfa0853c7a77f883b6667dbe91f503d70cdbfe47fcd30009f7bc3005"
     },
+    "publication-proposals": {
+      "hasChanged": false,
+      "hash": "865a6d32195bd0f00d68d01d83336e381267a00c62827cb0993e311ee6b62219"
+    },
     "scan-directories": {
       "hasChanged": false,
       "hash": "e590fc59ba439cde7854d22daf6ff7520c01904c51b8a792c97ee13141a1f4ad"
@@ -156,10 +160,6 @@
     "weekly-content": {
       "hasChanged": false,
       "hash": "0bb0ae31d6510a5b48e6be53f18452131073f02a0729426a0a59448eaeee72b9"
-    },
-    "publication-proposals": {
-      "hasChanged": false,
-      "hash": "c06d797040ce5b34593db05cb9443b70ffe788b778ea4328f9007ea4ae01b1d4"
     }
   }
 }

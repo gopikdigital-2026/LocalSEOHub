@@ -1,5 +1,6 @@
 // Deterministic checks applied to every model answer before anything is stored.
 import { declaredText, type GroundingEnvelope, type Lang } from "./context.ts";
+import { relationalIssues, words } from "./relational.ts";
 
 export const ROLES = ["direct", "close", "professional"] as const;
 export type Role = (typeof ROLES)[number];
@@ -57,6 +58,9 @@ export function parseProposals(raw: string): Proposal[] | null {
   return out;
 }
 
+// Unicode-aware word boundaries so accented initials (última, ¡nuevo) still match.
+const word = (src: string) => new RegExp(`(?<![\\p{L}\\p{N}])(${src})(?![\\p{L}\\p{N}])`, "iu");
+
 export const CLAIM_RULES: { id: string; re: RegExp }[] = [
   { id: "price", re: /\d+\s?(€|eur|euros?|\$|usd|dólares|dollars)|(€|\$)\s?\d|\b(precios?|prices?|cuesta|costs?|barat[oa]s?|cheap)\b/i },
   { id: "percentage", re: /\d+\s?%/ },
@@ -69,7 +73,11 @@ export const CLAIM_RULES: { id: string; re: RegExp }[] = [
   { id: "social_proof", re: /\b(rese[nñ]as?|opiniones|testimonios?|valoraciones|estrellas|reviews?|testimonials?|stars|rated)\b|\b(nuestros clientes (dicen|aman|adoran)|our (customers|clients) (say|love))\b/i },
   { id: "schedule", re: /\b(horarios?|abrimos|cerramos|abierto (hoy|todos)|opening hours|we open|open (today|daily|every))\b/i },
   { id: "urgency", re: /\b(solo hoy|hoy mismo|[uú]ltimas (unidades|plazas)|plazas limitadas|por tiempo limitado|today only|limited time|last chance|while (stocks|supplies) last|hurry)\b/i },
-  { id: "availability", re: /\b(en stock|disponible (hoy|ahora|ya)|available (now|today)|in stock)\b/i },
+  { id: "availability", re: word("en stock|in stock|disponibles?|a la venta|available|for sale|puedes (comprar|encontrar|conseguir)|encontrar[aá]s|you can (buy|find|get)|you('ll| will) find") },
+  { id: "novelty", re: word("novedad(es)?|nuev[oa]s?|reci[eé]n llegad[oa]s?|[uú]ltimas? colecci[oó]n(es)?|new|newest|latest|new arrivals?|just arrived|just in") },
+  { id: "invented_behaviour", re: word("nos (encanta(r[ií]a)?|apasiona|gusta(r[ií]a)?)|estamos (encantad[oa]s|deseando)|estaremos encantad[oa]s|nuestro equipo|nuestra pasi[oó]n|we('d| would)? love|we('re| are) (passionate|happy to|delighted)|our (team|passion)|we can'?t wait") },
+  { id: "unsupported_intent", re: word("(diseñad|pensad|cread|hech|perfect)[oa]s? para|ideal(es)? para|designed (for|to)|made for|perfect for|ideal for|created for|built for") },
+  { id: "unsupported_quality", re: word("acogedor(a|es|as)?|cozy|cosy|welcoming|de (alta )?calidad|(high|top)[- ]quality|premium|exclusiv[oa]s?|exclusive|de lujo|lujos[oa]s?|luxur(y|ious)|artesanal(es)?|handmade|handcrafted|confortables?|comfortable") },
   { id: "delivery", re: /\b(env[ií]os?|a domicilio|delivery|we deliver|shipping)\b/i },
   { id: "launch", re: /\b(inauguraci[oó]n|nueva apertura|reci[eé]n abiert[oa]|grand opening|new opening|just opened)\b/i },
   { id: "health", re: /\b(curar?|cura|adelgaza|cures?|heals?|clinically|cl[ií]nicamente|m[eé]dicamente)\b/i },
@@ -96,6 +104,7 @@ export function safetyIssues(text: string, env: GroundingEnvelope): string[] {
   const allowedDigits = new Set(declared.match(/\d+/g) ?? []);
   if ((text.match(/\d+/g) ?? []).some((d) => !allowedDigits.has(d))) issues.push("number");
   if ((text.match(EMOJI) ?? []).length > MAX_EMOJIS) issues.push("emoji_excess");
+  issues.push(...relationalIssues(text, env));
   return [...new Set(issues)];
 }
 
@@ -109,8 +118,6 @@ export function matchesLang(text: string, lang: Lang): boolean {
   const other = (text.match(MARKERS[lang === "es" ? "en" : "es"]) ?? []).length;
   return own >= 3 && own > other;
 }
-
-const words = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9ñ]+/g, " ").trim().split(" ").filter(Boolean);
 
 export function similarity(a: string, b: string): number {
   const A = new Set(words(a).filter((w) => w.length >= 4));
@@ -136,6 +143,19 @@ export function differentiationIssues(ps: Proposal[]): string[] {
   return issues;
 }
 
+export const SAME_INVENTORY = 3;
+
+// Three proposals that each enumerate the same set of photo items are one proposal written three times.
+export function inventoryIssue(ps: Proposal[], env: GroundingEnvelope): string[] {
+  const labels = [env.image.subject, ...env.image.observed].map((l) => ` ${words(l).join(" ")} `).filter((l) => l.trim());
+  const mentioned = ps.map((p) => {
+    const text = ` ${words(p.body).join(" ")} `;
+    return labels.filter((l) => text.includes(l));
+  });
+  const shared = labels.filter((l) => mentioned.every((m) => m.includes(l)));
+  return shared.length >= SAME_INVENTORY ? ["same_inventory"] : [];
+}
+
 export interface SetReview { safety: string[]; differentiation: string[] }
 
 export function reviewSet(ps: Proposal[], env: GroundingEnvelope): SetReview {
@@ -145,5 +165,5 @@ export function reviewSet(ps: Proposal[], env: GroundingEnvelope): SetReview {
     for (const issue of safetyIssues(text, env)) safety.push(`${issue}:${p.position}`);
     if (!matchesLang(text, env.lang)) safety.push(`language:${p.position}`);
   }
-  return { safety, differentiation: differentiationIssues(ps) };
+  return { safety, differentiation: [...differentiationIssues(ps), ...inventoryIssue(ps, env)] };
 }
