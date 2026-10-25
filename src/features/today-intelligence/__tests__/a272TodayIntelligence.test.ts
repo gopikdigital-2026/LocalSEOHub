@@ -128,9 +128,9 @@ describe('A2.7.2 · Completion and promotion', () => {
   it('28. no manual completion flag', () => expect(tiSrc).not.toMatch(/done\s*[:=]\s*true|completed\s*[:=]|localStorage|sessionStorage/));
   it('29. no Today persistence table', () => expect(tiSrc).not.toMatch(/\.from\(|insert|upsert|today_actions/));
   it('30. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)', () => {
-    expect(readdirSync(MIG_DIR)).toHaveLength(49);
+    expect(readdirSync(MIG_DIR)).toHaveLength(50); // A3.7.1 adds the publications data/storage foundation
     const migs = readdirSync(MIG_DIR).sort();
-    expect(migs.slice(-3)).toEqual([
+    expect(migs.filter((m) => !m.includes('_a371_')).slice(-3)).toEqual([
       '20261022152358_a3512_meta_oauth_stuck_connection_recovery.sql',
       '20261022170333_a353_meta_read_layer.sql',
       '20261022170523_a353_meta_sync_claim_min_interval.sql',

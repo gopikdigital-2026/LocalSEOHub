@@ -134,8 +134,8 @@ describe('A3.3 · preservation', () => {
     expect(read('src/features/maps-scanner/copy.ts')).toMatch(/No comprobado/i);
     expect(read('src/features/geo-audit/copy.ts')).toMatch(/No comprobado/i);
   });
-  it('16. no new migrations (A3.4.2 added the a342 ledger; A3.4.2.2 the GBP server-owned guard; A3.5.1 the Meta connection foundation)', () => {
-    expect(readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(49);
+  it('16. no new migrations (A3.4.2 added the a342 ledger; A3.4.2.2 the GBP server-owned guard; A3.5.1 the Meta connection foundation; A3.7.1 the publications data/storage foundation)', () => {
+    expect(readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(50);
   });
   it('no routes added or removed (A3.4.2 added only /herramientas/resenas; A3.5.1A the 3 public legal routes; A3.5.1 /oauth/meta/callback; A3.5.4.3 /herramientas/social)', () => {
     expect(ROUTES).toHaveLength(32);

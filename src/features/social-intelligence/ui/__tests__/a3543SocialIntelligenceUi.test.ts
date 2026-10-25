@@ -267,7 +267,7 @@ describe('A3.5.4.3 Social Intelligence UI', () => {
       'src/features/social-intelligence/findings/policy.ts': '8f40dfbe7480c1cb7d43876f7396a623',
       'src/features/social-intelligence/findings/rules.ts': '2dbf1084d04d7855f8fd476054a351ee',
       'src/features/social-intelligence/findings/types.ts': '06e724e679c4de177b2cf1ca00ccbaa6',
-      'src/features/social-intelligence/findings/__tests__/a3542SocialFindings.test.ts': '18600f4583c50a09a6168d0acdac1fb3', // AUTHORIZED A3.5.4.4.1 GUARD RE-PIN (test 40 scoped Hoy/Plan integration import exception)
+      'src/features/social-intelligence/findings/__tests__/a3542SocialFindings.test.ts': 'f5eafa217eef3ccf800af5ed9bb268b3', // A3.7.1 GUARD RE-PIN (test 39 excludes the a371 publications migration; Social sources unchanged)
       'src/features/meta-connection/metaRepository.ts': '521963d28bd06b212afd630dedf8bb4c',
     };
     for (const [f, h] of Object.entries(FROZEN)) {

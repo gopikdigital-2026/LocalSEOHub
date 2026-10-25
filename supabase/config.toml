@@ -111,3 +111,6 @@ verify_jwt = true
 
 [functions.meta-read]
 verify_jwt = true
+
+[functions.publication-media]
+verify_jwt = true

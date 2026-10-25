@@ -153,8 +153,8 @@ describe('A2.8.1 · preservation', () => {
     }
   });
 
-  it('18. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback)', () => {
-    expect(readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(49);
+  it('18. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback; A3.7.1: publications data/storage migration, no route)', () => {
+    expect(readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(50);
     expect(src('src/App.tsx').match(/<Route [^>]*path=/g)).toHaveLength(33);
   });
 
