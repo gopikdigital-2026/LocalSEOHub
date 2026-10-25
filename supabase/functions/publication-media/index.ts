@@ -55,6 +55,7 @@ const handle = createHandler({
         image_width: image.width,
         image_height: image.height,
         image_uploaded_at: uploadedAt,
+        image_normalized: true,
       })
       .eq("id", publicationId);
     q = expectedPath === null ? q.is("image_path", null) : q.eq("image_path", expectedPath);

@@ -1,3 +1,5 @@
+import { normalizeImage } from "./normalize.ts";
+
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -188,15 +190,21 @@ export function createHandler(deps: MediaDeps) {
       const inspected = inspectImage(body, req.headers.get("Content-Type"));
       if (!inspected.ok) return fail(inspected.code, inspected.code === "UNSUPPORTED_MEDIA_TYPE" ? 415 : inspected.code === "FILE_EMPTY" ? 400 : 422);
 
+      // Only the normalized bytes are ever stored; the raw upload never leaves memory.
+      const normalized = normalizeImage(body, inspected.image.mime);
+      if (!normalized.ok || normalized.width !== inspected.image.width || normalized.height !== inspected.image.height) {
+        return fail("IMAGE_UNREADABLE", 422);
+      }
+
       const id = randomId();
       if (!UUID.test(id)) return fail("UNKNOWN_ERROR", 500);
       const stored: StoredImage = {
         ...inspected.image,
-        bytes: body.length,
+        bytes: normalized.bytes.length,
         path: objectPath(userId, pub.businessId, pub.id, id, inspected.image.mime),
       };
 
-      if (!(await deps.putObject(stored.path, body, stored.mime))) return fail("STORAGE_UNAVAILABLE", 503);
+      if (!(await deps.putObject(stored.path, normalized.bytes, stored.mime))) return fail("STORAGE_UNAVAILABLE", 503);
 
       const uploadedAt = now().toISOString();
       let saved = false;

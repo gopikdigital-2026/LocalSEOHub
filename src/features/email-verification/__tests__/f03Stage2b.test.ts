@@ -226,7 +226,7 @@ describe('F-03 Stage 2B · trial, OAuth, users, reset', () => {
   });
 
   it('21. existing users are not modified: no admin writes and no new migrations (46 after A3.5.1)', () => {
-    expect(migrations).toHaveLength(50); // A3.7.1 adds the publications data/storage foundation
+    expect(migrations).toHaveLength(51); // A3.7.1 publications foundation; A3.7.2 proposals engine
     expect(frontendText).not.toMatch(/updateUserById|deleteUser|email_confirmed_at\s*[:=]/);
   });
 
@@ -280,7 +280,7 @@ describe('F-03 Stage 2B · secrets and preservation', () => {
   });
 
   it('34/35. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback)', () => {
-    expect(migrations).toHaveLength(50); // A3.7.1 adds the publications data/storage foundation
+    expect(migrations).toHaveLength(51); // A3.7.1 publications foundation; A3.7.2 proposals engine
     expect(app.match(/<Route [^>]*path=/g)).toHaveLength(33);
   });
 

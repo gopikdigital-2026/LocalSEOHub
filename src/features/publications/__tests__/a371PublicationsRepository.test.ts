@@ -16,6 +16,8 @@ const BIZ = 'a0a0a0a0-a0a0-4a0a-8a0a-a0a0a0a0a0a0';
 const DRAFT_ROW = {
   id: ID, business_id: BIZ, status: 'draft', image_path: null, image_mime: null, image_bytes: null,
   image_width: null, image_height: null, image_uploaded_at: null, created_at: '2026-10-25T10:00:00Z', updated_at: '2026-10-25T10:00:00Z',
+  // A3.7.2: rows now carry the proposal columns added by the proposals engine migration.
+  proposal_generation_id: null, proposals_lang: null, proposals_generated_at: null, proposal_generations_used: 0,
 };
 const READY_ROW = {
   ...DRAFT_ROW, status: 'image_ready', image_path: `u/${BIZ}/${ID}/r.jpg`, image_mime: 'image/jpeg',
@@ -47,7 +49,7 @@ describe('A3.7.1 publications repository', () => {
     const { db, calls } = fakeDb({ data: DRAFT_ROW, error: null });
     const pub = await createDraft(BIZ, db);
     expect(calls[0]).toEqual({ op: 'insert', args: [{ business_id: BIZ }] });
-    expect(pub).toEqual({ id: ID, businessId: BIZ, status: 'draft', image: null, createdAt: DRAFT_ROW.created_at, updatedAt: DRAFT_ROW.updated_at });
+    expect(pub).toEqual({ id: ID, businessId: BIZ, status: 'draft', image: null, generationsUsed: 0, proposals: null, createdAt: DRAFT_ROW.created_at, updatedAt: DRAFT_ROW.updated_at }); // A3.7.2: + generationsUsed/proposals
   });
 
   it('maps draft limit, foreign business and unknown failures to typed codes without raw messages', async () => {

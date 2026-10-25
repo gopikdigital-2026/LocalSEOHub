@@ -17,6 +17,7 @@ import {
   PUBLICATION_IMAGE_MAX_SIDE,
   PUBLICATION_IMAGE_MIN_SIDE,
 } from '../types';
+import { normalizeImage, pngChunk } from '../../../../supabase/functions/publication-media/normalize.ts';
 
 const UA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const UB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -28,11 +29,12 @@ const PB = 'b1b1b1b1-b1b1-4b1b-8b1b-b1b1b1b1b1b1';
 const be32 = (n: number) => [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
 const be16 = (n: number) => [(n >>> 8) & 255, n & 255];
 
+// A3.7.2: structurally complete (valid CRCs, IDAT, IEND) so the upload normalizer accepts it.
 function png(width: number, height: number, extra = 16): Uint8Array {
+  const ihdr = new Uint8Array([...be32(width), ...be32(height), 8, 2, 0, 0, 0]);
   return new Uint8Array([
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-    ...be32(13), 0x49, 0x48, 0x44, 0x52, ...be32(width), ...be32(height), 8, 2, 0, 0, 0, 0, 0, 0, 0,
-    ...new Array(extra).fill(0),
+    ...pngChunk('IHDR', ihdr), ...pngChunk('IDAT', new Uint8Array(extra)), ...pngChunk('IEND', new Uint8Array(0)),
   ]);
 }
 
@@ -42,6 +44,13 @@ function jpeg(width: number, height: number, { sof = 0xc0, withExif = true } = {
   const sofSeg = [0xff, sof, ...be16(17), 8, ...be16(height), ...be16(width), 3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1];
   return new Uint8Array([0xff, 0xd8, ...app0, ...app1, 0xff, 0xff, ...sofSeg, 0xff, 0xda, 0, 2, 0xff, 0xd9]);
 }
+
+// A3.7.2: stored size is the normalized (metadata-stripped) size, not the raw upload size.
+const normalizedLength = (b: Uint8Array) => {
+  const r = normalizeImage(b, 'image/jpeg');
+  if (!r.ok) throw new Error('fixture not normalizable');
+  return r.bytes.length;
+};
 
 const GIF = new TextEncoder().encode('GIF89a\x01\x00\x01\x00');
 const SVG = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>');
@@ -247,7 +256,7 @@ describe('A3.7.1 publication-media handler security', () => {
     const res = await read(await call(handle, { body: jpeg(1080, 1350), extraQuery: `&path=${UB}/${BB}/x.jpg&user_id=${UB}` }));
     expect(res).toEqual({
       status: 200,
-      body: { ok: true, publication: { id: PA, status: 'image_ready', image: { mime: 'image/jpeg', bytes: jpeg(1080, 1350).length, width: 1080, height: 1350, uploadedAt: '2026-10-25T10:00:00.000Z' } } },
+      body: { ok: true, publication: { id: PA, status: 'image_ready', image: { mime: 'image/jpeg', bytes: normalizedLength(jpeg(1080, 1350)), width: 1080, height: 1350, uploadedAt: '2026-10-25T10:00:00.000Z' } } },
     });
     const path = pubs.get(PA)!.imagePath!;
     expect(path).toBe(`${UA}/${BA}/${PA}/00000000-0000-4000-8000-000000000001.jpg`);

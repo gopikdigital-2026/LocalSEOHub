@@ -23,9 +23,34 @@ interface PublicationBase {
   updatedAt: string;
 }
 
+export const PUBLICATION_GENERATIONS_LIMIT = 4;
+export const PUBLICATION_PROPOSAL_ROLES = ['direct', 'close', 'professional'] as const;
+export const PUBLICATION_LANGS = ['es', 'en'] as const;
+
+export type PublicationProposalRole = (typeof PUBLICATION_PROPOSAL_ROLES)[number];
+export type PublicationLang = (typeof PUBLICATION_LANGS)[number];
+
+export interface PublicationProposalSet {
+  generationId: string;
+  lang: PublicationLang;
+  generatedAt: string;
+  generationsUsed: number;
+}
+
+export interface PublicationProposal {
+  id: string;
+  generationId: string;
+  position: 1 | 2 | 3;
+  role: PublicationProposalRole;
+  lang: PublicationLang;
+  body: string;
+  cta: string;
+}
+
 export type Publication =
-  | (PublicationBase & { status: 'draft'; image: null })
-  | (PublicationBase & { status: 'image_ready'; image: PublicationImage });
+  | (PublicationBase & { status: 'draft'; image: null; generationsUsed: number; proposals: null })
+  | (PublicationBase & { status: 'image_ready'; image: PublicationImage; generationsUsed: number; proposals: null })
+  | (PublicationBase & { status: 'proposals_ready'; image: PublicationImage; generationsUsed: number; proposals: PublicationProposalSet });
 
 export type PublicationStatus = Publication['status'];
 
@@ -43,6 +68,16 @@ export type PublicationErrorCode =
   | 'image_already_attached'
   | 'no_image_to_replace'
   | 'conflict'
+  | 'image_required'
+  | 'image_not_normalized'
+  | 'business_context_missing'
+  | 'generation_in_progress'
+  | 'regeneration_limit'
+  | 'image_changed'
+  | 'duplicate_request'
+  | 'ai_limit'
+  | 'image_not_understandable'
+  | 'generation_failed'
   | 'unavailable';
 
 export class PublicationError extends Error {
