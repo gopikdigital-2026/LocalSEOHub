@@ -15,9 +15,11 @@ import {
   type PublicationProposal,
 } from './types';
 
-type Db = Pick<SupabaseClient, 'from' | 'functions'>;
+type Db = Pick<SupabaseClient, 'from' | 'functions' | 'auth'>;
 
 const FUNCTION = 'publication-media';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 const PROPOSALS_FUNCTION = 'publication-proposals';
 const COLUMNS = 'id, business_id, status, image_path, image_mime, image_bytes, image_width, image_height, image_uploaded_at, '
   + 'proposal_generation_id, proposals_lang, proposals_generated_at, proposal_generations_used, created_at, updated_at';
@@ -134,18 +136,20 @@ export async function listDrafts(businessId: string, db: Db = supabase): Promise
   return data.map(toPublication).filter((p): p is Publication => p !== null);
 }
 
-async function serverErrorCode(error: unknown): Promise<PublicationErrorCode> {
-  const ctx = (error as { context?: unknown })?.context;
-  if (ctx instanceof Response) {
-    try {
-      const body = await ctx.clone().json();
-      if (has(SERVER_CODES, body?.code)) return SERVER_CODES[body.code];
-      if (has(GATE_CODES, body?.error)) return GATE_CODES[body.error];
-    } catch {
-      return 'unavailable';
-    }
+async function responseErrorCode(res: Response): Promise<PublicationErrorCode> {
+  try {
+    const body = await res.clone().json();
+    if (has(SERVER_CODES, body?.code)) return SERVER_CODES[body.code];
+    if (has(GATE_CODES, body?.error)) return GATE_CODES[body.error];
+  } catch {
+    return 'unavailable';
   }
   return 'unavailable';
+}
+
+async function serverErrorCode(error: unknown): Promise<PublicationErrorCode> {
+  const ctx = (error as { context?: unknown })?.context;
+  return ctx instanceof Response ? responseErrorCode(ctx) : 'unavailable';
 }
 
 // Fast feedback only; the server re-validates bytes, type and dimensions.
@@ -156,32 +160,53 @@ function precheck(file: Blob): PublicationImageMime {
   return file.type;
 }
 
-async function invoke(action: 'attach' | 'replace' | 'delete', id: string, db: Db, file?: Blob) {
-  const name = `${FUNCTION}?action=${action}&publication_id=${encodeURIComponent(id)}`;
-  const { data, error } = await db.functions.invoke(name, file
-    ? { method: 'POST', body: file, headers: { 'Content-Type': precheck(file) } }
-    : { method: 'POST' });
+const functionPath = (action: 'attach' | 'replace' | 'delete', id: string) =>
+  `${FUNCTION}?action=${action}&publication_id=${encodeURIComponent(id)}`;
+
+async function deleteViaFunction(id: string, db: Db) {
+  const { data, error } = await db.functions.invoke(functionPath('delete', id), { method: 'POST' });
   if (error) throw new PublicationError(await serverErrorCode(error));
   if ((data as { ok?: unknown } | null)?.ok !== true) throw new PublicationError('unavailable');
 }
 
-async function uploadAndReload(action: 'attach' | 'replace', id: string, file: Blob, db: Db): Promise<Publication> {
-  await invoke(action, id, db, file);
+// functions.invoke drops the body whenever a Content-Type header is supplied, and the server
+// needs the real image MIME, so raw image bytes are posted with fetch using the user's session.
+async function uploadBytes(action: 'attach' | 'replace', id: string, file: Blob, db: Db, fetchFn: typeof fetch) {
+  const mime = precheck(file);
+  const { data: { session } } = await db.auth.getSession();
+  if (!session?.access_token) throw new PublicationError('unauthenticated');
+  let res: Response;
+  try {
+    res = await fetchFn(`${SUPABASE_URL}/functions/v1/${functionPath(action, id)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_ANON_KEY, 'Content-Type': mime },
+      body: file,
+    });
+  } catch {
+    throw new PublicationError('unavailable');
+  }
+  if (!res.ok) throw new PublicationError(await responseErrorCode(res));
+  const body = await res.json().catch(() => null);
+  if ((body as { ok?: unknown } | null)?.ok !== true) throw new PublicationError('unavailable');
+}
+
+async function uploadAndReload(action: 'attach' | 'replace', id: string, file: Blob, db: Db, fetchFn: typeof fetch): Promise<Publication> {
+  await uploadBytes(action, id, file, db, fetchFn);
   const pub = await getDraft(id, db);
   if (!pub || pub.status !== 'image_ready') throw new PublicationError('unavailable');
   return pub;
 }
 
-export function attachImage(id: string, file: Blob, db: Db = supabase): Promise<Publication> {
-  return uploadAndReload('attach', id, file, db);
+export function attachImage(id: string, file: Blob, db: Db = supabase, fetchFn: typeof fetch = fetch): Promise<Publication> {
+  return uploadAndReload('attach', id, file, db, fetchFn);
 }
 
-export function replaceImage(id: string, file: Blob, db: Db = supabase): Promise<Publication> {
-  return uploadAndReload('replace', id, file, db);
+export function replaceImage(id: string, file: Blob, db: Db = supabase, fetchFn: typeof fetch = fetch): Promise<Publication> {
+  return uploadAndReload('replace', id, file, db, fetchFn);
 }
 
 export async function deleteDraft(id: string, db: Db = supabase): Promise<void> {
-  await invoke('delete', id, db);
+  await deleteViaFunction(id, db);
 }
 
 export function toProposal(row: unknown): PublicationProposal | null {

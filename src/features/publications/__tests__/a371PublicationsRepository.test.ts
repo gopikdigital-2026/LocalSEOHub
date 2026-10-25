@@ -37,8 +37,9 @@ function fakeDb(result: Result, invokeResult: { data: unknown; error: unknown } 
   }
   chain.maybeSingle = () => Promise.resolve(result);
   const invoke = vi.fn(async (_name: string, _options?: unknown) => invokeResult);
-  const db = { from: vi.fn(() => chain), functions: { invoke } };
-  return { db: db as never, calls, invoke, from: db.from };
+  const auth = { getSession: vi.fn(async () => ({ data: { session: { access_token: 'user-jwt' } }, error: null })) };
+  const db = { from: vi.fn(() => chain), functions: { invoke }, auth };
+  return { db: db as never, calls, invoke, from: db.from, auth };
 }
 
 const file = (bytes: number, type: string) => new Blob([new Uint8Array(bytes)], { type });
@@ -92,23 +93,35 @@ describe('A3.7.1 publications repository', () => {
   });
 
   it('attach/replace send raw bytes to the server function and reload the row', async () => {
+    // A3.7.2.1A.1: uploads bypass functions.invoke, which drops the body when Content-Type is set.
     const { db, invoke } = fakeDb({ data: READY_ROW, error: null });
     const f = file(100, 'image/png');
-    expect((await attachImage(ID, f, db)).status).toBe('image_ready');
-    expect(invoke).toHaveBeenCalledWith(`publication-media?action=attach&publication_id=${ID}`, { method: 'POST', body: f, headers: { 'Content-Type': 'image/png' } });
-    await replaceImage(ID, f, db);
-    expect(invoke.mock.calls[1][0]).toBe(`publication-media?action=replace&publication_id=${ID}`);
+    const fetchFn = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    expect((await attachImage(ID, f, db, fetchFn as never)).status).toBe('image_ready');
+    const [url, init] = fetchFn.mock.calls[0];
+    expect(url).toMatch(new RegExp(`/functions/v1/publication-media\\?action=attach&publication_id=${ID}$`));
+    expect(init).toMatchObject({ method: 'POST', body: f, headers: { Authorization: 'Bearer user-jwt', 'Content-Type': 'image/png' } });
+    await replaceImage(ID, f, db, fetchFn as never);
+    expect(fetchFn.mock.calls[1][0]).toMatch(new RegExp(`publication-media\\?action=replace&publication_id=${ID}$`));
+    expect(invoke).not.toHaveBeenCalled();
   });
 
   it('maps server error codes and treats unknown or malformed replies as unavailable', async () => {
-    const err = (status: number, body: unknown) => ({ data: null, error: { context: new Response(JSON.stringify(body), { status }) } });
-    const run = (r: { data: unknown; error: unknown }) => codeOf(attachImage(ID, file(10, 'image/jpeg'), fakeDb({ data: READY_ROW, error: null }, r).db));
+    const err = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
+    const run = (r: Response) => codeOf(attachImage(ID, file(10, 'image/jpeg'), fakeDb({ data: READY_ROW, error: null }).db, (async () => r) as never));
     expect(await run(err(415, { ok: false, code: 'UNSUPPORTED_MEDIA_TYPE' }))).toBe('unsupported_media_type');
+    expect(await run(err(400, { ok: false, code: 'FILE_EMPTY' }))).toBe('file_empty');
     expect(await run(err(422, { ok: false, code: 'IMAGE_DIMENSIONS_OUT_OF_RANGE' }))).toBe('image_dimensions_out_of_range');
     expect(await run(err(409, { ok: false, code: 'IMAGE_ALREADY_ATTACHED' }))).toBe('image_already_attached');
     expect(await run(err(404, { ok: false, code: 'NOT_FOUND' }))).toBe('not_found');
     expect(await run(err(500, { ok: false, code: '__proto__' }))).toBe('unavailable');
-    expect(await run({ data: { ok: false }, error: null })).toBe('unavailable');
+    expect(await run(new Response(JSON.stringify({ ok: false }), { status: 200 }))).toBe('unavailable');
+    expect(await codeOf(attachImage(ID, file(10, 'image/jpeg'), fakeDb({ data: READY_ROW, error: null }).db, (async () => { throw new TypeError('network'); }) as never))).toBe('unavailable');
+    const noSession = fakeDb({ data: READY_ROW, error: null });
+    noSession.auth.getSession.mockResolvedValueOnce({ data: { session: null }, error: null } as never);
+    const neverCalled = vi.fn();
+    expect(await codeOf(attachImage(ID, file(10, 'image/jpeg'), noSession.db, neverCalled as never))).toBe('unauthenticated');
+    expect(neverCalled).not.toHaveBeenCalled();
   });
 
   it('deleteDraft goes through the server so the stored photo is removed with the row', async () => {
