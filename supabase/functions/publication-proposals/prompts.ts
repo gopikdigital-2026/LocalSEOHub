@@ -16,6 +16,7 @@ export function visionMessages(lang: Lang, facts: BusinessFacts, orientation: nu
     "Never identify people or guess their names, ages, emotions or health.",
     `Write every label as a short noun phrase in ${LANG_NAME[lang]}, without numbers.`,
     "Set usable=false with an insufficient_reason when the photo is blank, too dark, too blurry, has no clear subject, or shows unsafe content.",
+    "usable describes ONLY whether the photo itself can be understood. A clear photo of a different business or activity is usable=true; express that through business_fit, never through usable or insufficient_reason.",
     "business_fit: compare what the photo shows with the declared business activity (name, category and services, given as data).",
     "- consistent: the photo shows the typical products, services, premises or work of that activity.",
     "- plausibly_related: not literally the activity, but something such a business would reasonably post (a laptop or workspace for a marketing agency, a home interior for a real-estate agency, a product bottle for a hair salon, a dish for a restaurant).",

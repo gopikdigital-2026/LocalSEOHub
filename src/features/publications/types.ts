@@ -78,6 +78,7 @@ export type PublicationErrorCode =
   | 'ai_limit'
   | 'image_not_understandable'
   | 'business_image_mismatch'
+  | 'ai_response_invalid'
   | 'generation_failed'
   | 'premium_required'
   | 'rate_limited'
@@ -95,8 +96,18 @@ export interface PublicationMismatch {
   message: string;
 }
 
+// Stable server code and pipeline stage only; never provider text.
+export interface PublicationDiagnostic {
+  code: string;
+  stage: string | null;
+}
+
 export class PublicationError extends Error {
-  constructor(public readonly code: PublicationErrorCode, public readonly mismatch?: PublicationMismatch) {
+  constructor(
+    public readonly code: PublicationErrorCode,
+    public readonly mismatch?: PublicationMismatch,
+    public readonly diagnostic?: PublicationDiagnostic,
+  ) {
     super(code);
     this.name = 'PublicationError';
   }

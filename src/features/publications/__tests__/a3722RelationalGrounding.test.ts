@@ -120,6 +120,7 @@ describe('A3.7.2.2 CASE 1: marketing business + clothing store photo', () => {
     expect(json).toEqual({
       ok: false,
       code: 'BUSINESS_IMAGE_MISMATCH',
+      stage: 'business_consistency',
       mismatch: {
         imageSummary: 'interior de tienda de ropa',
         businessSummary: 'Gopik.Digital (Marketing)',
@@ -161,7 +162,7 @@ describe('A3.7.2.2 CASE 1: marketing business + clothing store photo', () => {
 
     const { res, json, deps, requests } = await run({ models: [ok(CLOTHING('plausibly_related')), ok(CASE1_OUTPUT), ok(CASE1_OUTPUT)] });
     expect(res.status).toBe(422);
-    expect(json).toEqual({ ok: false, code: 'GENERATION_UNSAFE' });
+    expect(json).toEqual({ ok: false, code: 'GENERATION_UNSAFE', stage: 'output_validation' });
     expect(requests.map((r) => r.stage)).toEqual(['vision', 'writer', 'writer']);
     expect(deps.complete).not.toHaveBeenCalled();
   });

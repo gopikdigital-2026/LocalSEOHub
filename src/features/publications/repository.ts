@@ -8,6 +8,7 @@ import {
   PUBLICATION_PROPOSAL_ROLES,
   type Publication,
   type PublicationErrorCode,
+  type PublicationDiagnostic,
   type PublicationGrounding,
   type PublicationImage,
   type PublicationImageMime,
@@ -50,7 +51,7 @@ const SERVER_CODES: Record<string, PublicationErrorCode> = {
   IMAGE_NOT_UNDERSTANDABLE: 'image_not_understandable',
   GENERATION_UNSAFE: 'generation_failed',
   PROPOSALS_NOT_DISTINCT: 'generation_failed',
-  INVALID_MODEL_OUTPUT: 'generation_failed',
+  INVALID_MODEL_OUTPUT: 'ai_response_invalid',
   PROVIDER_TIMEOUT: 'provider_timeout',
 };
 
@@ -137,12 +138,24 @@ export async function listDrafts(businessId: string, db: Db = supabase): Promise
   return data.map(toPublication).filter((p): p is Publication => p !== null);
 }
 
+const DIAGNOSTIC_CODE = /^[A-Z_]{3,40}$/;
+const DIAGNOSTIC_STAGE = /^[a-z_]{3,40}$/;
+
+function toDiagnostic(body: Record<string, unknown>): PublicationDiagnostic | undefined {
+  if (typeof body.code !== 'string' || !DIAGNOSTIC_CODE.test(body.code)) return undefined;
+  return { code: body.code, stage: typeof body.stage === 'string' && DIAGNOSTIC_STAGE.test(body.stage) ? body.stage : null };
+}
+
 async function responseError(res: Response): Promise<PublicationError> {
   try {
     const body = await res.clone().json();
-    if (body?.code === 'BUSINESS_IMAGE_MISMATCH') return new PublicationError('business_image_mismatch', toMismatch(body.mismatch));
-    if (has(SERVER_CODES, body?.code)) return new PublicationError(SERVER_CODES[body.code]);
+    const diagnostic = body && typeof body === 'object' ? toDiagnostic(body) : undefined;
+    if (body?.code === 'BUSINESS_IMAGE_MISMATCH') return new PublicationError('business_image_mismatch', toMismatch(body.mismatch), diagnostic);
+    // A writer answer that could not be parsed is a generation failure, not an image-analysis failure.
+    if (body?.code === 'INVALID_MODEL_OUTPUT' && body.stage === 'writer') return new PublicationError('generation_failed', undefined, diagnostic);
+    if (has(SERVER_CODES, body?.code)) return new PublicationError(SERVER_CODES[body.code], undefined, diagnostic);
     if (has(GATE_CODES, body?.error)) return new PublicationError(GATE_CODES[body.error]);
+    if (diagnostic) return new PublicationError('unavailable', undefined, diagnostic);
   } catch {
     return new PublicationError('unavailable');
   }

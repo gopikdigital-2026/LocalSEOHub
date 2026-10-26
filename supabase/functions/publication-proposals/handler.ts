@@ -1,5 +1,5 @@
 import {
-  buildEnvelope, buildFacts, insufficiency, mismatchNotice, parseVisual, INSUFFICIENT_MESSAGE, VISUAL_SCHEMA,
+  buildEnvelope, buildFacts, insufficiency, mismatchNotice, parseVisual, visualFailure, INSUFFICIENT_MESSAGE, VISUAL_SCHEMA,
   type Consistency, type GroundingEnvelope, type InsufficientReason, type Lang, type MismatchNotice,
 } from "./context.ts";
 import { normalizeImage, type NormalizedMime } from "./normalize.ts";
@@ -105,11 +105,14 @@ export function toBase64(bytes: Uint8Array): string {
   return btoa(s);
 }
 
+// Safe, content-free attribution of which pipeline branch produced the result.
+export type Stage = "vision_provider" | "vision_parse" | "vision_usability" | "business_consistency" | "writer" | "output_validation";
+
 type PipelineResult =
   | { kind: "ok"; proposals: Proposal[]; envelope: GroundingEnvelope }
   | { kind: "insufficient"; reason: InsufficientReason }
   | { kind: "mismatch"; notice: MismatchNotice }
-  | { kind: "error"; code: ErrorCode; consistency?: Consistency };
+  | { kind: "error"; code: ErrorCode; stage: Stage; reason: string; consistency?: Consistency };
 
 interface Meter { calls: number; billed: boolean; repairs: number }
 
@@ -133,17 +136,22 @@ export async function runPipeline(
   };
   let visual = null;
   let lastFailure: ErrorCode = "INVALID_MODEL_OUTPUT";
+  let failure: { stage: Stage; reason: string } = { stage: "vision_parse", reason: "invalid_shape" };
   for (let i = 0; i < VISION.maxCalls && !visual; i++) {
     const res = await call(deps, meter, vreq);
     if (!res.ok) {
       lastFailure = providerCode(res.failure);
+      failure = { stage: res.failure === "empty" ? "vision_parse" : "vision_provider", reason: res.failure };
       if (!retryable(res.failure)) break;
       continue;
     }
     visual = parseVisual(res.raw);
-    if (!visual) lastFailure = "INVALID_MODEL_OUTPUT";
+    if (!visual) {
+      lastFailure = "INVALID_MODEL_OUTPUT";
+      failure = visualFailure(res.raw);
+    }
   }
-  if (!visual) return { kind: "error", code: lastFailure };
+  if (!visual) return { kind: "error", code: lastFailure, ...failure };
 
   const reason = insufficiency(visual);
   if (reason) return { kind: "insufficient", reason };
@@ -154,6 +162,7 @@ export async function runPipeline(
   const base = writerMessages(envelope);
   let messages = base;
   let rejection: ErrorCode = "INVALID_MODEL_OUTPUT";
+  let rejected: { stage: Stage; reason: string } = { stage: "writer", reason: "invalid_shape" };
   for (let i = 0; i < WRITER.maxCalls; i++) {
     const res = await call(deps, meter, {
       stage: "writer", messages, schema: PROPOSALS_SCHEMA,
@@ -161,6 +170,7 @@ export async function runPipeline(
     });
     if (!res.ok) {
       rejection = providerCode(res.failure);
+      rejected = { stage: "writer", reason: res.failure };
       if (!retryable(res.failure)) break;
       messages = base;
       continue;
@@ -168,16 +178,18 @@ export async function runPipeline(
     const proposals = parseProposals(res.raw);
     if (!proposals) {
       rejection = "INVALID_MODEL_OUTPUT";
+      rejected = { stage: "writer", reason: "invalid_shape" };
       messages = base;
       continue;
     }
     const review = reviewSet(proposals, envelope);
     if (!review.safety.length && !review.differentiation.length) return { kind: "ok", proposals, envelope };
     rejection = review.safety.length ? "GENERATION_UNSAFE" : "PROPOSALS_NOT_DISTINCT";
+    rejected = { stage: "output_validation", reason: review.safety.length ? "unsafe" : "not_distinct" };
     meter.repairs++;
     messages = repairMessages(base, res.raw, [...review.safety, ...review.differentiation]);
   }
-  return { kind: "error", code: rejection, consistency: envelope.consistency };
+  return { kind: "error", code: rejection, ...rejected, consistency: envelope.consistency };
 }
 
 export async function generate(userId: string, rawBody: string | null, deps: ProposalDeps): Promise<Response> {
@@ -220,18 +232,20 @@ export async function generate(userId: string, rawBody: string | null, deps: Pro
         dataUrl: `data:${pub.imageMime};base64,${toBase64(bytes)}`,
         orientation: check.orientation,
       });
+      const stage: Stage = result.kind === "ok" ? "output_validation" : result.kind === "insufficient" ? "vision_usability" : result.kind === "mismatch" ? "business_consistency" : result.stage;
       deps.log("pipeline", {
-        result: result.kind, code: result.kind === "error" ? result.code : null,
+        result: result.kind, code: result.kind === "error" ? result.code : null, stage,
+        reason: result.kind === "insufficient" ? result.reason : result.kind === "error" ? result.reason : null,
         consistency: result.kind === "ok" ? result.envelope.consistency : result.kind === "mismatch" ? "MATERIAL_MISMATCH" : result.kind === "error" ? result.consistency ?? null : null,
         calls: meter.calls, repairs: meter.repairs, billed: meter.billed,
       });
 
       if (result.kind === "insufficient") {
-        return fail("IMAGE_NOT_UNDERSTANDABLE", { reason: result.reason, message: INSUFFICIENT_MESSAGE[input.lang] });
+        return fail("IMAGE_NOT_UNDERSTANDABLE", { stage, reason: result.reason, message: INSUFFICIENT_MESSAGE[input.lang] });
       }
       // Nothing is stored and the generation counter is untouched; the paid vision call settles as consumed below.
-      if (result.kind === "mismatch") return fail("BUSINESS_IMAGE_MISMATCH", { mismatch: result.notice });
-      if (result.kind === "error") return fail(result.code);
+      if (result.kind === "mismatch") return fail("BUSINESS_IMAGE_MISMATCH", { stage, mismatch: result.notice });
+      if (result.kind === "error") return fail(result.code, { stage });
 
       const saved = await deps.complete(pub.id, userId, input.requestId, pub.imagePath, input.lang, result.proposals);
       if (!saved) return fail("IMAGE_CHANGED");

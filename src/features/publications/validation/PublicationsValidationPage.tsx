@@ -8,6 +8,7 @@ import {
   PUBLICATION_LANGS,
   PublicationError,
   type Publication,
+  type PublicationDiagnostic,
   type PublicationErrorCode,
   type PublicationGrounding,
   type PublicationLang,
@@ -58,6 +59,7 @@ export default function PublicationsValidationPage() {
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState<PublicationErrorCode | null>(null);
   const [mismatch, setMismatch] = useState<PublicationMismatch | null>(null);
+  const [diagnostic, setDiagnostic] = useState<PublicationDiagnostic | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const t = (k: keyof typeof UI) => UI[k][appLang];
 
@@ -95,6 +97,7 @@ export default function PublicationsValidationPage() {
     setBusy('generate');
     setError(null);
     setMismatch(null);
+    setDiagnostic(null);
     const started = performance.now();
     try {
       const out = await generateProposals(pub.id, lang);
@@ -104,6 +107,7 @@ export default function PublicationsValidationPage() {
       setElapsedMs(Math.round(performance.now() - started));
     } catch (e) {
       setError(codeOf(e));
+      if (e instanceof PublicationError) setDiagnostic(e.diagnostic ?? null);
       if (e instanceof PublicationError && e.code === 'business_image_mismatch') {
         setMismatch(e.mismatch ?? null);
         setProposals([]);
@@ -125,6 +129,7 @@ export default function PublicationsValidationPage() {
       setProposals([]);
       setGrounding(null);
       setMismatch(null);
+      setDiagnostic(null);
       setElapsedMs(null);
       setFile(null);
       setPreview(null);
@@ -203,6 +208,11 @@ export default function PublicationsValidationPage() {
         <div role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 space-y-1">
           <p className={mismatch ? 'font-medium' : undefined}>{ERROR_TEXT[error][appLang]}</p>
           {error === 'business_image_mismatch' && mismatch && <p>{mismatch.message}</p>}
+          {diagnostic && (
+            <p className="text-xs font-mono text-red-800/80">
+              {t('diagnostic')}: {diagnostic.code}{diagnostic.stage ? ` · ${diagnostic.stage}` : ''}
+            </p>
+          )}
         </div>
       )}
 

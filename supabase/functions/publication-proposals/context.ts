@@ -155,10 +155,31 @@ export function parseVisual(raw: string): VisualUnderstanding | null {
   };
 }
 
+// Where a vision answer that failed to parse went wrong; a bad business_fit is a consistency failure, not an image one.
+export function visualFailure(raw: string): { stage: "vision_parse" | "business_consistency"; reason: string } {
+  let b: unknown;
+  try {
+    b = JSON.parse(raw);
+  } catch {
+    return { stage: "vision_parse", reason: "invalid_json" };
+  }
+  // Only a vision answer that is otherwise valid counts as a consistency failure.
+  if (isObj(b) && !FITS.includes(b.business_fit as BusinessFit) && parseVisual(JSON.stringify({ ...b, business_fit: "unknown" }))) {
+    return { stage: "business_consistency", reason: "invalid_business_fit" };
+  }
+  return { stage: "vision_parse", reason: "invalid_shape" };
+}
+
+const VISUAL_DEFECTS: readonly InsufficientReason[] = ["blank_or_dark", "blurry", "unsafe_content"];
+const seen = (i: VisualItem | null) => (i?.certainty === "observed" ? i : null);
+
+// A named visual defect is trusted. A generic "unusable" is overridden by clearly observed content, because doubt about
+// how the photo relates to the business is a consistency question and must never read as "not understandable".
 export function insufficiency(v: VisualUnderstanding): InsufficientReason | null {
-  if (!v.usable) return v.insufficientReason ?? "other";
-  if (!v.primarySubject || v.primarySubject.certainty !== "observed") return "no_clear_subject";
-  return null;
+  if (v.insufficientReason && VISUAL_DEFECTS.includes(v.insufficientReason)) return v.insufficientReason;
+  const anchor = seen(v.primarySubject) ?? seen(v.setting);
+  if (anchor && (v.usable || v.elements.some((e) => e.certainty === "observed"))) return null;
+  return v.usable ? "no_clear_subject" : v.insufficientReason ?? "other";
 }
 
 export type Consistency = "CONSISTENT" | "PLAUSIBLY_RELATED" | "UNKNOWN" | "MATERIAL_MISMATCH";
@@ -247,8 +268,11 @@ export function buildEnvelope(
     if (t.legible && t.text.length <= 40 && visible.length < 3 && safeLabel(t.text)) visible.push(t.text);
     else withheld++;
   }
-  const subject = v.primarySubject && safeLabel(v.primarySubject.label) ? v.primarySubject.label : "";
+  const primary = v.primarySubject && safeLabel(v.primarySubject.label) ? v.primarySubject : null;
+  if (v.primarySubject && !primary) withheld++;
+  if (primary && primary.certainty !== "observed") uncertain.push(primary.label);
   const setting = v.setting && v.setting.certainty === "observed" && safeLabel(v.setting.label) ? v.setting.label : null;
+  const subject = primary?.certainty === "observed" ? primary.label : setting ?? observed.shift() ?? "";
   const services = facts.services.filter((sv) => !INJECTION.test(sv) && !MARKUP.test(sv));
   withheld += facts.services.length - services.length;
   const declared = [facts.category, ...services].join(" ");

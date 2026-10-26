@@ -178,7 +178,7 @@ describe('A3.7.2 proposals engine: insufficient image', () => {
     for (const lang of ['es', 'en'] as const) {
       const { res, json, deps, requests } = await run({ models: [ok({ ...VISUAL, usable: false, insufficient_reason: 'blurry', primary_subject: null })] }, body({ lang }));
       expect(res.status).toBe(422);
-      expect(json).toEqual({ ok: false, code: 'IMAGE_NOT_UNDERSTANDABLE', reason: 'blurry', message: INSUFFICIENT_MESSAGE[lang] });
+      expect(json).toEqual({ ok: false, code: 'IMAGE_NOT_UNDERSTANDABLE', stage: 'vision_usability', reason: 'blurry', message: INSUFFICIENT_MESSAGE[lang] });
       expect(requests).toHaveLength(1);
       expect(deps.complete).not.toHaveBeenCalled();
       expect(outcome(deps)).toBe('consumed');
@@ -189,7 +189,7 @@ describe('A3.7.2 proposals engine: insufficient image', () => {
     const different = await run({ models: [ok({ ...VISUAL, business_fit: 'material_mismatch' })] });
     expect(different.json.code).toBe('BUSINESS_IMAGE_MISMATCH');
     expect(different.json.reason).toBeUndefined();
-    const unsure = await run({ models: [ok({ ...VISUAL, primary_subject: { label: 'algo', certainty: 'uncertain' } })] });
+    const unsure = await run({ models: [ok({ ...VISUAL, primary_subject: { label: 'algo', certainty: 'uncertain' }, setting: null, elements: [] })] });
     expect(unsure.json.reason).toBe('no_clear_subject');
   });
 });
@@ -250,7 +250,7 @@ describe('A3.7.2 proposals engine: safety and differentiation repairs', () => {
   it('fails truthfully after one failed repair, with no fallback copy', async () => {
     const { res, json, deps, requests } = await run({ models: [ok(VISUAL), ok(UNSAFE), ok(UNSAFE)] });
     expect(res.status).toBe(422);
-    expect(json).toEqual({ ok: false, code: 'GENERATION_UNSAFE' });
+    expect(json).toEqual({ ok: false, code: 'GENERATION_UNSAFE', stage: 'output_validation' });
     expect(requests).toHaveLength(3);
     expect(deps.complete).not.toHaveBeenCalled();
     expect(outcome(deps)).toBe('consumed');
@@ -258,13 +258,13 @@ describe('A3.7.2 proposals engine: safety and differentiation repairs', () => {
 
   it('rejects proposals that are not distinct', async () => {
     const { json, requests } = await run({ models: [ok(VISUAL), ok(SAME), ok(SAME)] });
-    expect(json).toEqual({ ok: false, code: 'PROPOSALS_NOT_DISTINCT' });
+    expect(json).toEqual({ ok: false, code: 'PROPOSALS_NOT_DISTINCT', stage: 'output_validation' });
     expect(requests[2].messages[requests[2].messages.length - 1].content).toMatch(/same_opening|same_cta|too_similar/);
   });
 
   it('rejects invalid model JSON without leaking it', async () => {
     const { json, deps } = await run({ models: [ok(VISUAL), { ok: true, raw: '{"proposals": "nope"' }, { ok: true, raw: 'not json' }] });
-    expect(json).toEqual({ ok: false, code: 'INVALID_MODEL_OUTPUT' });
+    expect(json).toEqual({ ok: false, code: 'INVALID_MODEL_OUTPUT', stage: 'writer' });
     expect(outcome(deps)).toBe('consumed');
   });
 
@@ -279,7 +279,7 @@ describe('A3.7.2 proposals engine: provider failures', () => {
   it('maps a timeout to PROVIDER_TIMEOUT and releases an unbilled reservation', async () => {
     const { res, json, deps } = await run({ models: [failure('timeout'), failure('timeout')] });
     expect(res.status).toBe(504);
-    expect(json).toEqual({ ok: false, code: 'PROVIDER_TIMEOUT' });
+    expect(json).toEqual({ ok: false, code: 'PROVIDER_TIMEOUT', stage: 'vision_provider' });
     expect(outcome(deps)).toBe('released');
   });
 
@@ -292,7 +292,7 @@ describe('A3.7.2 proposals engine: provider failures', () => {
   it('does not retry a client error and never leaks provider details', async () => {
     const { res, json, requests } = await run({ models: [failure('client')] });
     expect(res.status).toBe(503);
-    expect(json).toEqual({ ok: false, code: 'PROVIDER_UNAVAILABLE' });
+    expect(json).toEqual({ ok: false, code: 'PROVIDER_UNAVAILABLE', stage: 'vision_provider' });
     expect(requests).toHaveLength(1);
   });
 

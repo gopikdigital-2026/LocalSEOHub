@@ -47,6 +47,7 @@ export const UI = {
     en: 'To test another photo, delete this test and start again.',
   },
   limitReached: { es: 'Límite de generaciones de esta publicación alcanzado.', en: 'Generation limit for this publication reached.' },
+  diagnostic: { es: 'Diagnóstico interno', en: 'Internal diagnostic' },
 } satisfies Record<string, Text>;
 
 export const ERROR_TEXT: Record<PublicationErrorCode, Text> = {
@@ -77,6 +78,10 @@ export const ERROR_TEXT: Record<PublicationErrorCode, Text> = {
   duplicate_request: { es: 'Solicitud duplicada.', en: 'Duplicate request.' },
   ai_limit: { es: 'Has alcanzado el límite de generaciones disponible.', en: 'You reached the available generation limit.' },
   business_image_mismatch: { es: 'Posible incompatibilidad entre imagen y negocio', en: 'Possible mismatch between image and business' },
+  ai_response_invalid: {
+    es: 'No hemos podido completar el análisis de la imagen de forma segura. Inténtalo de nuevo más tarde.',
+    en: 'We could not complete the image analysis safely. Please try again later.',
+  },
   image_not_understandable: {
     es: 'No hemos podido entender esta imagen con suficiente seguridad. Prueba con otra fotografía.',
     en: 'We could not understand this image with enough confidence. Try another photo.',
