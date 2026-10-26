@@ -106,13 +106,13 @@ export function toBase64(bytes: Uint8Array): string {
 }
 
 // Safe, content-free attribution of which pipeline branch produced the result.
-export type Stage = "vision_provider" | "vision_parse" | "vision_usability" | "business_consistency" | "writer" | "output_validation";
+export type Stage = "vision_provider" | "vision_parse" | "vision_usability" | "business_consistency" | "writer" | "output_validation" | "copy_quality";
 
 type PipelineResult =
   | { kind: "ok"; proposals: Proposal[]; envelope: GroundingEnvelope }
   | { kind: "insufficient"; reason: InsufficientReason }
   | { kind: "mismatch"; notice: MismatchNotice }
-  | { kind: "error"; code: ErrorCode; stage: Stage; reason: string; consistency?: Consistency };
+  | { kind: "error"; code: ErrorCode; stage: Stage; reason: string; consistency?: Consistency; rules?: string[] };
 
 interface Meter { calls: number; billed: boolean; repairs: number }
 
@@ -162,7 +162,7 @@ export async function runPipeline(
   const base = writerMessages(envelope);
   let messages = base;
   let rejection: ErrorCode = "INVALID_MODEL_OUTPUT";
-  let rejected: { stage: Stage; reason: string } = { stage: "writer", reason: "invalid_shape" };
+  let rejected: { stage: Stage; reason: string; rules?: string[] } = { stage: "writer", reason: "invalid_shape" };
   for (let i = 0; i < WRITER.maxCalls; i++) {
     const res = await call(deps, meter, {
       stage: "writer", messages, schema: PROPOSALS_SCHEMA,
@@ -183,11 +183,16 @@ export async function runPipeline(
       continue;
     }
     const review = reviewSet(proposals, envelope);
-    if (!review.safety.length && !review.differentiation.length) return { kind: "ok", proposals, envelope };
-    rejection = review.safety.length ? "GENERATION_UNSAFE" : "PROPOSALS_NOT_DISTINCT";
-    rejected = { stage: "output_validation", reason: review.safety.length ? "unsafe" : "not_distinct" };
+    if (!review.safety.length && !review.quality.length) return { kind: "ok", proposals, envelope };
+    // Fact safety outranks copy quality: an unsafe set is never reported as merely weak.
+    const unsafe = review.safety.length > 0;
+    rejection = unsafe ? "GENERATION_UNSAFE" : "PROPOSALS_NOT_DISTINCT";
+    rejected = {
+      stage: unsafe ? "output_validation" : "copy_quality", reason: unsafe ? "unsafe" : "quality",
+      rules: [...new Set([...review.safety, ...review.quality].map((i) => i.split(":")[0]))],
+    };
     meter.repairs++;
-    messages = repairMessages(base, res.raw, [...review.safety, ...review.differentiation]);
+    messages = repairMessages(base, res.raw, review.safety, review.quality);
   }
   return { kind: "error", code: rejection, ...rejected, consistency: envelope.consistency };
 }
@@ -237,6 +242,8 @@ export async function generate(userId: string, rawBody: string | null, deps: Pro
         result: result.kind, code: result.kind === "error" ? result.code : null, stage,
         reason: result.kind === "insufficient" ? result.reason : result.kind === "error" ? result.reason : null,
         consistency: result.kind === "ok" ? result.envelope.consistency : result.kind === "mismatch" ? "MATERIAL_MISMATCH" : result.kind === "error" ? result.consistency ?? null : null,
+        image_use: result.kind === "ok" ? result.envelope.image_use : null,
+        rules: result.kind === "error" ? result.rules ?? null : null,
         calls: meter.calls, repairs: meter.repairs, billed: meter.billed,
       });
 

@@ -42,7 +42,7 @@ const SAFE_ES = {
   proposals: [
     { role: 'direct', body: 'En la imagen se aprecia un interior con prendas expuestas y un abrigo rojo en primer plano. Escríbenos si quieres saber más.', cta: 'Contacta con el negocio para obtener más información.' },
     { role: 'close', body: 'Hay fotos que invitan a pararse un momento: unas camisetas bien colocadas y mucha luz. ¿Qué te transmite esta imagen?', cta: 'Cuéntanos qué te parece' },
-    { role: 'professional', body: 'La fotografía muestra un bolso rojo junto a unos pantalones, con una composición limpia y ordenada en el interior.', cta: 'Escríbenos con tus dudas' },
+    { role: 'professional', body: 'Un solo color intenso, como el rojo, basta para dar carácter a un conjunto sencillo. Es un recurso fácil de aplicar al combinar prendas básicas.', cta: 'Escríbenos con tus dudas' },
   ],
 };
 

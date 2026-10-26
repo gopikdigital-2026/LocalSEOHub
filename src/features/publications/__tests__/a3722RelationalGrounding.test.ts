@@ -52,7 +52,7 @@ const SAFE_ES = {
   proposals: [
     { role: 'direct', body: 'En la imagen se aprecia un interior con prendas expuestas y un abrigo rojo en primer plano. Escríbenos si quieres saber más.', cta: 'Contacta con el negocio para obtener más información.' },
     { role: 'close', body: 'Hay fotos que invitan a pararse un momento: unas camisetas bien colocadas y mucha luz. ¿Qué te transmite esta imagen?', cta: 'Cuéntanos qué te parece' },
-    { role: 'professional', body: 'La fotografía muestra un bolso rojo junto a unos pantalones, con una composición limpia y ordenada en el interior.', cta: 'Escríbenos con tus dudas' },
+    { role: 'professional', body: 'Un solo color intenso, como el rojo, basta para dar carácter a un conjunto sencillo. Es un recurso fácil de aplicar al combinar prendas básicas.', cta: 'Escríbenos con tus dudas' },
   ],
 };
 
@@ -60,7 +60,7 @@ const SAFE_EN = {
   proposals: [
     { role: 'direct', body: 'The image shows an interior with garments on display and a red coat in the foreground. Send us a message to know more.', cta: 'Contact the business for more information.' },
     { role: 'close', body: 'Some photos make you stop for a moment: neatly folded t-shirts and plenty of light. What does this image say to you?', cta: 'Tell us what you think' },
-    { role: 'professional', body: 'The photograph shows a red bag next to a pair of trousers, in a clean and orderly composition inside the room.', cta: 'Write to us with questions' },
+    { role: 'professional', body: 'A single strong colour, such as red, is enough to give character to a simple outfit. It is an easy idea to apply when combining basic pieces.', cta: 'Write to us with questions' },
   ],
 };
 
@@ -68,7 +68,7 @@ const REALTY_SAFE = {
   proposals: [
     { role: 'direct', body: 'En la imagen se aprecia un salón luminoso con un sofá gris. Inmobiliaria Costa trabaja la venta de viviendas: escríbenos.', cta: 'Escríbenos' },
     { role: 'close', body: 'Un ventanal y mucha luz natural: así de sencilla puede ser una tarde en casa. ¿Te imaginas aquí con un café?', cta: 'Cuéntanos qué buscas' },
-    { role: 'professional', body: 'La fotografía muestra un interior de vivienda ordenado y con buena entrada de luz, con el ventanal como protagonista.', cta: 'Consulta con la agencia' },
+    { role: 'professional', body: 'Antes de visitar una vivienda conviene fijarse en la orientación y en cómo entra la luz natural en las estancias principales.', cta: 'Consulta con la agencia' },
   ],
 };
 
@@ -158,7 +158,7 @@ describe('A3.7.2.2 CASE 1: marketing business + clothing store photo', () => {
     for (const issue of ['unsupported_possessive:1', 'location_composition:1', 'unsupported_quality:1', 'novelty:1', 'invented_behaviour:2', 'location_composition:2', 'unsupported_intent:3', 'availability:3', 'unsupported_possessive:3']) {
       expect(review.safety).toContain(issue);
     }
-    expect(review.differentiation).toContain('same_inventory');
+    expect(review.quality.some((r) => r === 'repeated_objects' || r.startsWith('object_enumeration'))).toBe(true);
 
     const { res, json, deps, requests } = await run({ models: [ok(CLOTHING('plausibly_related')), ok(CASE1_OUTPUT), ok(CASE1_OUTPUT)] });
     expect(res.status).toBe(422);
@@ -258,7 +258,7 @@ describe('A3.7.2.2 relational grounding: image fact + business fact is not a rel
     expect(data.must_not_claim.length).toBeGreaterThan(0);
     const system = String(requests[1].messages[0].content);
     expect(system).toMatch(/RELATIONSHIP BOUNDARIES/);
-    expect(system).toMatch(/at most two items from the image/);
+    expect(system).toMatch(/Mention at most two items in a proposal/);
   });
 });
 
@@ -302,8 +302,8 @@ describe('A3.7.2.2 unsupported language (body and CTA) and safe controls', () =>
     expect(safetyIssues('Contacta con el negocio para obtener más información.', env)).toEqual([]);
     expect(safetyIssues('The image shows an interior with garments on display.', envEn)).toEqual([]);
     expect(safetyIssues('Contact the business for more information.', envEn)).toEqual([]);
-    expect(reviewSet(parseProposals(JSON.stringify(SAFE_ES))!, env)).toEqual({ safety: [], differentiation: [] });
-    expect(reviewSet(parseProposals(JSON.stringify(SAFE_EN))!, { ...envEn, lang: 'en' })).toEqual({ safety: [], differentiation: [] });
+    expect(reviewSet(parseProposals(JSON.stringify(SAFE_ES))!, env)).toEqual({ safety: [], quality: [] });
+    expect(reviewSet(parseProposals(JSON.stringify(SAFE_EN))!, { ...envEn, lang: 'en' })).toEqual({ safety: [], quality: [] });
   });
 
   it('a safe English generation for a plausibly related image succeeds', async () => {

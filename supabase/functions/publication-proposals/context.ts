@@ -227,9 +227,20 @@ export const RELATION_TYPES = ["owns", "operates", "offers", "provides", "sells"
 export type RelationType = (typeof RELATION_TYPES)[number];
 export interface Relation { type: RelationType | "is_a"; subject: string; object: string; provenance: Provenance }
 
+export type ImageUse = "direct_subject" | "contextual_support" | "thematic_inspiration";
+
+// How the writer may lean on the photo; never a licence to relate photo items to the business.
+const IMAGE_USE: Record<Consistency, ImageUse> = {
+  CONSISTENT: "direct_subject",
+  PLAUSIBLY_RELATED: "thematic_inspiration",
+  UNKNOWN: "contextual_support",
+  MATERIAL_MISMATCH: "contextual_support",
+};
+
 export interface GroundingEnvelope {
   lang: Lang;
   consistency: Consistency;
+  image_use: ImageUse;
   image: { subject: string; observed: string[]; setting: string | null; people_visible: boolean; visible_text: string[] };
   business: { name: string; category: string; city: string; services: string[] };
   tone_context: { audience: string; goal: string };
@@ -277,9 +288,11 @@ export function buildEnvelope(
   withheld += facts.services.length - services.length;
   const declared = [facts.category, ...services].join(" ");
   const business = { name: facts.name, category: facts.category, city: facts.city, services };
+  const consistency = consistencyVerdict(facts, v);
   return {
     lang,
-    consistency: consistencyVerdict(facts, v),
+    consistency,
+    image_use: IMAGE_USE[consistency],
     image: { subject, observed, setting, people_visible: v.peopleVisible, visible_text: visible },
     business,
     tone_context: { audience: INJECTION.test(facts.audience) ? "" : facts.audience, goal: INJECTION.test(facts.goal) ? "" : facts.goal },

@@ -1,6 +1,7 @@
 // Deterministic checks applied to every model answer before anything is stored.
 import { declaredText, type GroundingEnvelope, type Lang } from "./context.ts";
-import { relationalIssues, words } from "./relational.ts";
+import { qualityIssues } from "./quality.ts";
+import { relationalIssues } from "./relational.ts";
 
 export const ROLES = ["direct", "close", "professional"] as const;
 export type Role = (typeof ROLES)[number];
@@ -80,6 +81,8 @@ export const CLAIM_RULES: { id: string; re: RegExp }[] = [
   { id: "unsupported_quality", re: word("acogedor(a|es|as)?|cozy|cosy|welcoming|de (alta )?calidad|(high|top)[- ]quality|premium|exclusiv[oa]s?|exclusive|de lujo|lujos[oa]s?|luxur(y|ious)|artesanal(es)?|handmade|handcrafted|confortables?|comfortable") },
   { id: "delivery", re: /\b(env[ií]os?|a domicilio|delivery|we deliver|shipping)\b/i },
   { id: "launch", re: /\b(inauguraci[oó]n|nueva apertura|reci[eé]n abiert[oa]|grand opening|new opening|just opened)\b/i },
+  { id: "statistic", re: word("(los |varios )?estudios (demuestran|indican|dicen|confirman)|seg[uú]n (los )?estudios|est[aá] demostrado|la mayor[ií]a de (los |las )?(clientes|consumidores|usuarios|personas|negocios)|(studies|research|data) (shows?|proves?|confirms?)|it is proven|most (customers|consumers|people|businesses|users)") },
+  { id: "promised_outcome", re: word("(conseguir[aá]s|tendr[aá]s|atraer[aá]s|aumentar[aá]s|multiplicar[aá]s|duplicar[aá]s|vender[aá]s|ganar[aá]s) m[aá]s|m[aá]s (clientes|ventas|conversiones|facturaci[oó]n)|(aumenta|dispara|multiplica|duplica)r? (tus|las|sus) (ventas|visitas|clientes|conversiones)|(hacer )?crecer (tu|su) negocio|primer(a|os)? (puesto|posici[oó]n|lugar) en google|(get|win|attract|bring( in)?) more (customers|clients|sales|leads)|more (customers|sales|leads|conversions|revenue)|(boost|increase|double|grow) (your )?(sales|revenue|rankings?|conversions|business)|rank (higher|first)|top of google") },
   { id: "health", re: /\b(curar?|cura|adelgaza|cures?|heals?|clinically|cl[ií]nicamente|m[eé]dicamente)\b/i },
 ];
 
@@ -119,44 +122,8 @@ export function matchesLang(text: string, lang: Lang): boolean {
   return own >= 3 && own > other;
 }
 
-export function similarity(a: string, b: string): number {
-  const A = new Set(words(a).filter((w) => w.length >= 4));
-  const B = new Set(words(b).filter((w) => w.length >= 4));
-  if (!A.size || !B.size) return 0;
-  let inter = 0;
-  for (const w of A) if (B.has(w)) inter++;
-  return inter / (A.size + B.size - inter);
-}
-
-export const MAX_SIMILARITY = 0.5;
-
-export function differentiationIssues(ps: Proposal[]): string[] {
-  const issues: string[] = [];
-  for (let i = 0; i < ps.length; i++) {
-    for (let j = i + 1; j < ps.length; j++) {
-      const pair = `${ps[i].position}-${ps[j].position}`;
-      if (words(ps[i].body).slice(0, 3).join(" ") === words(ps[j].body).slice(0, 3).join(" ")) issues.push(`same_opening:${pair}`);
-      if (words(ps[i].cta).join(" ") === words(ps[j].cta).join(" ")) issues.push(`same_cta:${pair}`);
-      if (similarity(ps[i].body, ps[j].body) > MAX_SIMILARITY) issues.push(`too_similar:${pair}`);
-    }
-  }
-  return issues;
-}
-
-export const SAME_INVENTORY = 3;
-
-// Three proposals that each enumerate the same set of photo items are one proposal written three times.
-export function inventoryIssue(ps: Proposal[], env: GroundingEnvelope): string[] {
-  const labels = [env.image.subject, ...env.image.observed].map((l) => ` ${words(l).join(" ")} `).filter((l) => l.trim());
-  const mentioned = ps.map((p) => {
-    const text = ` ${words(p.body).join(" ")} `;
-    return labels.filter((l) => text.includes(l));
-  });
-  const shared = labels.filter((l) => mentioned.every((m) => m.includes(l)));
-  return shared.length >= SAME_INVENTORY ? ["same_inventory"] : [];
-}
-
-export interface SetReview { safety: string[]; differentiation: string[] }
+// Fact safety and copy quality are reported separately; both must be empty before anything is stored.
+export interface SetReview { safety: string[]; quality: string[] }
 
 export function reviewSet(ps: Proposal[], env: GroundingEnvelope): SetReview {
   const safety: string[] = [];
@@ -165,5 +132,5 @@ export function reviewSet(ps: Proposal[], env: GroundingEnvelope): SetReview {
     for (const issue of safetyIssues(text, env)) safety.push(`${issue}:${p.position}`);
     if (!matchesLang(text, env.lang)) safety.push(`language:${p.position}`);
   }
-  return { safety, differentiation: [...differentiationIssues(ps), ...inventoryIssue(ps, env)] };
+  return { safety, quality: qualityIssues(ps, env) };
 }

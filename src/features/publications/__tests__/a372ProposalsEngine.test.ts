@@ -47,7 +47,7 @@ const GOOD = {
   proposals: [
     { role: 'direct', body: 'En la imagen se aprecia una tarta de queso servida en un plato blanco. Café Lumbre es una cafetería de Valencia: pásate y pregunta por la repostería casera.', cta: 'Ven a vernos' },
     { role: 'close', body: 'Hay tardes que piden algo dulce y una pausa tranquila. Esta foto de una tarta de queso lo dice todo, ¿te apetece un café con calma?', cta: 'Pásate a saludarnos' },
-    { role: 'professional', body: 'La fotografía muestra una tarta de queso. En Café Lumbre trabajamos los desayunos y la repostería casera para el barrio.', cta: 'Pregúntanos por la repostería' },
+    { role: 'professional', body: 'Un desayuno sin prisas cambia el ritmo de toda la mañana. En Café Lumbre trabajamos los desayunos y la repostería casera para el barrio.', cta: 'Pregúntanos por la repostería' },
   ],
 };
 
@@ -164,7 +164,7 @@ describe('A3.7.2 proposals engine: success path', () => {
       proposals: [
         { role: 'direct', body: 'The image shows a cheesecake served on a white plate. Café Lumbre is a café in Valencia, so drop by and ask about the homemade pastries.', cta: 'Come and see us' },
         { role: 'close', body: 'Some afternoons just call for something sweet and a quiet pause. This photo of a cheesecake says it all, fancy a coffee?', cta: 'Drop by and say hello' },
-        { role: 'professional', body: 'This photograph shows a cheesecake on a white plate. Café Lumbre is a neighbourhood café that focuses on breakfasts and homemade pastries.', cta: 'Ask us about breakfasts' },
+        { role: 'professional', body: 'A calm breakfast sets the pace for the rest of the morning. Café Lumbre is a neighbourhood café that focuses on breakfasts and homemade pastries.', cta: 'Ask us about breakfasts' },
       ],
     };
     const { res, json } = await run({ models: [ok(VISUAL), ok(en)] }, body({ lang: 'en' }));
@@ -258,7 +258,7 @@ describe('A3.7.2 proposals engine: safety and differentiation repairs', () => {
 
   it('rejects proposals that are not distinct', async () => {
     const { json, requests } = await run({ models: [ok(VISUAL), ok(SAME), ok(SAME)] });
-    expect(json).toEqual({ ok: false, code: 'PROPOSALS_NOT_DISTINCT', stage: 'output_validation' });
+    expect(json).toEqual({ ok: false, code: 'PROPOSALS_NOT_DISTINCT', stage: 'copy_quality' });
     expect(requests[2].messages[requests[2].messages.length - 1].content).toMatch(/same_opening|same_cta|too_similar/);
   });
 
@@ -429,7 +429,7 @@ describe('A3.7.2 context assembler and grounding envelope', () => {
   it('accepts the reference good set and flags the wrong language', () => {
     const env = buildEnvelope('es', buildFacts(BUSINESS)!, parseVisual(JSON.stringify(VISUAL))!, isClaim);
     const good = parseProposals(JSON.stringify(GOOD))!;
-    expect(reviewSet(good, env)).toEqual({ safety: [], differentiation: [] });
+    expect(reviewSet(good, env)).toEqual({ safety: [], quality: [] });
     const envEn = { ...env, lang: 'en' as const };
     expect(reviewSet(good, envEn).safety.some((s) => s.startsWith('language'))).toBe(true);
   });
