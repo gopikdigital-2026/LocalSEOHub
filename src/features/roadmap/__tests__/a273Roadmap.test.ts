@@ -69,7 +69,7 @@ const FROZEN: Record<string, string> = {
   'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
   'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
   'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
-  'src/App.tsx': '5f7353d212936b410ba7d72d009fdba06be9b199875a79ccb26a24945c169ad1', // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
+  'src/App.tsx': 'f4523a4d043ae93b072c58b9f48201f68035119ef160802f50d15358f7a1e2d5', // A3.7.3.2 HARNESS RE-PIN: channel adaptation panel on the hidden /internal/publications-validation route (no new route)
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
 
