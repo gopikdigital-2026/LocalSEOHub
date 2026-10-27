@@ -323,7 +323,7 @@ describe('A2.3 — §9 Regression checks', () => {
     }
     // A3.4.2: gbp-reviews drafts review replies (gpt-4o-mini, ledger-capped) and is an approved AI caller.
     // A3.7.2: publication-proposals (photo understanding + three proposals, premium-gated, ledger cap 20) is an approved AI caller.
-    expect(aiCallers.sort()).toEqual(['business-advisor-v2', 'business-improvement', 'gbp-reviews', 'publication-proposals', 'seo-generator-v2', 'voice-simulator-v2', 'weekly-content']);
+    expect(aiCallers.sort()).toEqual(['business-advisor-v2', 'business-improvement', 'gbp-reviews', 'publication-adaptations', 'publication-proposals', 'seo-generator-v2', 'voice-simulator-v2', 'weekly-content']);
   });
 });
 

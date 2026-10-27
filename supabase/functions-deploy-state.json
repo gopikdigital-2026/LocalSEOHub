@@ -160,6 +160,10 @@
     "weekly-content": {
       "hasChanged": false,
       "hash": "0bb0ae31d6510a5b48e6be53f18452131073f02a0729426a0a59448eaeee72b9"
+    },
+    "publication-adaptations": {
+      "hasChanged": false,
+      "hash": "26e4c0cdceffb8342fc088ee3947b744f723ad2e6d12d3953c98f724abac5ce6"
     }
   }
 }

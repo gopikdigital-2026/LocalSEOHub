@@ -351,8 +351,8 @@ describe('A2.7.3 · Platform regression', () => {
   it('111. no AI counter reset', () => expect(rmSrc).not.toMatch(/reset|counter/i));
   it('112. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)', () => {
     const migs = readdirSync(MIG_DIR).sort();
-    expect(migs).toHaveLength(52); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts
-    expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_')).slice(-3)).toEqual([
+    expect(migs).toHaveLength(53); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine
+    expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_')).slice(-3)).toEqual([
       '20261022152358_a3512_meta_oauth_stuck_connection_recovery.sql',
       '20261022170333_a353_meta_read_layer.sql',
       '20261022170523_a353_meta_sync_claim_min_interval.sql',

@@ -117,3 +117,6 @@ verify_jwt = true
 
 [functions.publication-proposals]
 verify_jwt = true
+
+[functions.publication-adaptations]
+verify_jwt = true

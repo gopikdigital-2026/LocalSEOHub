@@ -267,7 +267,7 @@ describe('A3.5.4.3 Social Intelligence UI', () => {
       'src/features/social-intelligence/findings/policy.ts': '8f40dfbe7480c1cb7d43876f7396a623',
       'src/features/social-intelligence/findings/rules.ts': '2dbf1084d04d7855f8fd476054a351ee',
       'src/features/social-intelligence/findings/types.ts': '06e724e679c4de177b2cf1ca00ccbaa6',
-      'src/features/social-intelligence/findings/__tests__/a3542SocialFindings.test.ts': 'a6ff85be9816c32588cc641a6fd806af', // A3.7.3.1 GUARD RE-PIN (test 39 also excludes the a3731 drafts migration; Social sources unchanged)
+      'src/features/social-intelligence/findings/__tests__/a3542SocialFindings.test.ts': '6abce40164ec26ffbcf228d1a7f30470', // A3.7.3.2 GUARD RE-PIN (test 39 also excludes the a3731 drafts and a3732 adaptation migrations; Social sources unchanged)
       'src/features/meta-connection/metaRepository.ts': '521963d28bd06b212afd630dedf8bb4c',
     };
     for (const [f, h] of Object.entries(FROZEN)) {

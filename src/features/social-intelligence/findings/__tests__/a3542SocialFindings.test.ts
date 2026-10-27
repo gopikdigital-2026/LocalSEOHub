@@ -577,7 +577,7 @@ describe('A3.5.4.2 boundaries', () => {
 
   it('39. no persistence: no database access, no new migrations', () => {
     expect(findingsSources).not.toMatch(/supabase|\.from\(|\.insert\(|\.upsert\(|\.rpc\(|localStorage|indexedDB/i);
-    const migrations = readdirSync(join(root, 'supabase/migrations')).filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_')).sort();
+    const migrations = readdirSync(join(root, 'supabase/migrations')).filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_')).sort();
     expect(migrations[migrations.length - 1]).toBe('20261022170523_a353_meta_sync_claim_min_interval.sql');
   });
 
