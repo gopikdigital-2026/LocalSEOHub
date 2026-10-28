@@ -491,17 +491,47 @@ describe('A3.7.4.1 · J. Separate publishing consent', () => {
 });
 
 describe('A3.7.4.1 · K. Freeze and scope', () => {
-  it('every A3.7.3.4 frozen file is byte-identical', () => {
+  // Authorized A3.7.4.1 test-only re-pins: migration count 55 -> 57 and a3741 migration exclusion (a281, a273, a272);
+  // a3733 test 29 now allows exactly the readiness-only meta-publishing function and asserts it calls no Graph publish edge.
+  const AUTHORIZED_REPINS: Record<string, { was: string; now: string }> = {
+    'src/components/__tests__/a281TrustCleanup.test.ts': {
+      was: 'cb6a925ab209873f69222303e0b7afc27a1ebfe0e4aaf3d6eecba3364da36c92',
+      now: '5dec386ec1da6cf6859b0bc569918e082ed494a9bc5f34e869813bb6f641dcee',
+    },
+    'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
+      was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
+      now: '2f3281bb3976732f1df8c6c5691c372d11919671a8ed1c74d67792be0d3cef5f',
+    },
+    'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
+      was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',
+      now: 'aa4e95245b5b187877840b8cbff21858c4b2ad3381d97e5934ebfbc7508d7f9c',
+    },
+    'src/features/publications/__tests__/a3733ChannelReview.test.ts': {
+      was: 'd62c66187e16c6200e1327b5709def5e2fe781fd344e2202585560249b8759c9',
+      now: '6a528660c5ccc30163e9757e7241378920c0d531fdc11fd4af14a4873859785b',
+    },
+  };
+  it('every A3.7.3.4 frozen file is byte-identical, except the enumerated authorized re-pins', () => {
     const manifest = read('auditoria-a2/A3_7_3_4_FREEZE_MANIFEST.md');
     let checked = 0;
+    const repinned: string[] = [];
     for (const line of manifest.split('\n')) {
       const m = line.match(/^\|\s*([^|\s]+\.[a-z]+)\s*\|(.*)$/);
       const hashes = m?.[2].match(/[a-f0-9]{64}/g);
       if (!m || !hashes) continue;
-      expect(sha(m[1]), m[1]).toBe(hashes[hashes.length - 1]);
+      const recorded = hashes[hashes.length - 1];
+      const repin = AUTHORIZED_REPINS[m[1]];
+      if (repin) {
+        expect(recorded, `${m[1]} manifest still proves previous hash`).toBe(repin.was);
+        expect(sha(m[1]), m[1]).toBe(repin.now);
+        repinned.push(m[1]);
+      } else {
+        expect(sha(m[1]), m[1]).toBe(recorded);
+      }
       checked++;
     }
     expect(checked).toBe(36);
+    expect(repinned.sort()).toEqual(Object.keys(AUTHORIZED_REPINS).sort());
   });
   it('the other frozen Meta handlers are untouched', () => {
     expect(sha('supabase/functions/meta-connection/handler.ts').slice(0, 8)).toBe('57e8341f');

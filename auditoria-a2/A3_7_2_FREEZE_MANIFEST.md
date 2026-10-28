@@ -47,7 +47,7 @@ Combined hash of the A3.7.1 storage files (`find supabase/functions/publication-
 | File | SHA-256 |
 |---|---|
 | src/features/publications/__tests__/a371PublicationsMedia.test.ts | cc49ccdbd72711824c5a312d2fde53e8ffe5e70429cd323142c3a148edac7c0a |
-| src/features/publications/__tests__/a371PublicationsRepository.test.ts | 5a915591d58138f8372543a05c6a303490df4b56c1f9c7995a963b9a5bc0a12a |
+| src/features/publications/__tests__/a371PublicationsRepository.test.ts | 76ec5d97cdc320d925fff117c2068125848f0d1c68f442e6d3231f98b1a8c38e | A3.7.4.1 RE-PIN (authorized): was 5a915591d58138f8372543a05c6a303490df4b56c1f9c7995a963b9a5bc0a12a; re-pins the additive publishing-consent branch in meta-oauth-callback while still proving the original read-only path is unchanged. Test-only change. |
 | src/features/publications/__tests__/a37211aUploadBytes.test.ts | 30e0da757f206eb117a04839c89ff0eb33ea118aa46371c151fb2dc2dcc394df |
 | src/features/publications/__tests__/a3721aValidationHarness.test.ts | c20a942e4e8cad4a2c8514e2e258050bc0bd64ee2deb2c966ffcd7854ee306cc |
 | src/features/publications/__tests__/a37221ClassificationRouting.test.ts | 1cf94bbc2c429769e1acdb568e23f6fb904211db276e702771ebc3da9d84e8f2 |
