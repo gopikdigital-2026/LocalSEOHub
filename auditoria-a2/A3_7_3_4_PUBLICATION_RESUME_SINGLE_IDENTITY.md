@@ -245,8 +245,103 @@ Manual edits are flagged when a current adapted draft has `facebook_text ≠ fac
 - **No thumbnails in the chooser.** There is no safe client-side signed-URL path, and the tests forbid `createSignedUrl` in the client. An icon placeholder is shown instead.
 - **Unsaved edits do not survive F5,** by design and stated truthfully. Only saved drafts persist.
 - **The chooser lists all of the business's publications.** There is no "published/finished" status yet, so every publication counts as unfinished.
-- **Real-browser behaviour is unverified** until Manuel runs section 14. This environment has no browser.
+- Real-browser behaviour was verified by Manuel in production on 2026-10-28 (section 16).
 
-## Verdict
+## Pre-E2E verdict (historical)
 
 GO — A3.7.3.4 READY FOR REAL RESUME E2E VALIDATION
+
+## 16. REAL PRODUCTION E2E — PASS
+
+Performed by Manuel on 2026-10-28 in a real production browser session.
+
+Two distinct real publications of the **same** authenticated business (`91a0c7d4…`) were used.
+
+### 16.1 Publications and final state
+
+| | Publication A | Publication B |
+|---|---|---|
+| UUID | `65569535-5d89-4df3-a8d4-c2af6df8606d` | `442059e5-11e4-4bdd-a5bc-c714b0a03b72` |
+| Starting point | already adapted and edited | `image_ready`, 0 proposals (the former orphan) |
+| Selected proposal | 1 · direct | 2 · "Cercana" (close) |
+| Manual marker, Facebook | `MODIFICADO` | `E2E442-FB` |
+| Manual marker, Instagram | `MODIFICADO` | `E2E442-IG` |
+| "Editado por ti" | both channels | both channels |
+| Status shown | Borrador listo | Borrador listo |
+| Draft version | **4** | **3** |
+| Ctrl+F5 | exact server state restored automatically | exact server state restored automatically |
+| Foreign markers present | no `E2E442` | no `MODIFICADO` |
+
+The brief quoted Publication A's id as `…c2af6df8686d`. The database row, under the same prefix and business, is `…c2af6df8606d`, so this report uses the database value.
+
+**Read-only database corroboration** (no writes):
+
+- **Both publications:**
+  - status `proposals_ready`;
+  - 3 proposals in the current generation;
+  - the draft is bound to the current generation;
+  - both channels differ from the generated text.
+- **Publication A:**
+  - version 4;
+  - position 1 `direct`;
+  - `MODIFICADO` in both channels;
+  - no `E2E442`.
+- **Publication B:**
+  - version 3;
+  - position 2 `close`;
+  - `E2E442-FB` in Facebook and `E2E442-IG` in Instagram.
+
+### 16.2 Single-identity lifecycle (Publication B)
+
+`442059e5-…` stayed the one identity across the whole flow, and the URL stayed `?pub=442059e5-…` throughout:
+
+photo → generation of exactly 3 proposals → `proposals_ready` → selection of proposal 2 → Facebook + Instagram adaptation → review → manual edit → save → Ctrl+F5 → resume
+
+The original A3.7.3.3.1 defect cannot recur in this flow. That defect was a photo on one publication while later steps used another, chosen by "latest ready".
+
+### 16.3 Explicit chooser and no silent latest selection
+
+- Without `?pub`, the page showed the explicit "Continuar una publicación" list and selected nothing by itself.
+- At first the list told the two publications apart: "Textos adaptados · en revisión" and "Foto subida · falta generar propuestas".
+- After B was finished, both appeared independently as "Textos adaptados · en revisión". Each had its own last-modified time and manual-change indicator.
+- Each "Continuar" button opened its own publication.
+
+### 16.4 Server persistence
+
+The following all survive Ctrl+F5 with no manual reload button:
+
+- the publication identity;
+- the selected proposal;
+- the generated adaptations;
+- the manual edits;
+- the version;
+- the status.
+
+### 16.5 Same-business isolation
+
+Switching between A and B through the chooser showed no cross-publication contamination. A kept only `MODIFICADO`, and B kept only `E2E442-FB` / `E2E442-IG`. This proves isolation between publications of the same business, beyond the per-user and per-business isolation covered by tests F and G.
+
+### 16.6 Final regression at freeze
+
+| Check | Result |
+|---|---|
+| Publications and resume tests | 16 files, 457 tests, PASS |
+| Full suite | 79 files, 2712 tests, PASS (equals the baseline) |
+| `npx tsc --noEmit -p tsconfig.app.json` | 20 inherited errors, 0 new |
+| `npm run build` | PASS |
+| Upstream manifests | A3.7.2 28/28, A3.7.3.1 4/4, A3.7.3.3 9/9 |
+
+Final fingerprints, separated into A (changed), B (upstream unchanged) and C (test/report-only), are in `A3_7_3_4_FREEZE_MANIFEST.md`.
+
+**Freeze scope:**
+- no code changed for this freeze;
+- no migration;
+- no production data modified;
+- both E2E publications preserved as validation evidence;
+- no Meta permission or publishing work.
+
+## Final verdict
+
+GO — FINAL FREEZE A3.7.3.4 PUBLICATION RESUME & SINGLE IDENTITY
+
+A3.7.3.4 is FROZEN. A3.7.4 is not started. Facebook and Instagram publishing are not implemented, and Meta permissions are unchanged.
