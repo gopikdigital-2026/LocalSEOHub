@@ -303,7 +303,7 @@ describe('A3.5.4.4.1 Social Integration — consumers', () => {
     expect(userText).not.toMatch(/inactiv|rendimiento|performance|seguidores|followers|mejora tu|improve your|garantiza|guarantee/i);
   });
   it('frozen A3.5.4.3 UI files and App.tsx unchanged', () => {
-    expect(sha('src/App.tsx')).toBe('c8e503d2a1cb4c1947a337b238c0ef078277f2c9cc313919aa50ff820f3c7210'); // A3.7.3.3 HARNESS RE-PIN: channel review panel on the hidden /internal/publications-validation route (no new route)
+    expect(sha('src/App.tsx')).toBe('7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba'); // A3.7.3.4 RESUME RE-PIN: hidden /internal/publications-validation route wrapped in the publication resume layout route
     expect(sha('src/features/social-intelligence/ui/viewModel.ts')).toBe('c92c4ee4e782274260cda418ef4f963cc300b29fcd35eb5b4149d71ae785aee1');
     expect(sha('src/features/social-intelligence/ui/repository.ts')).toBe('dc2cc79c122679a478e5bfc31374b9a0f8e68c033dc425a1217f58c6ea2d5817');
     expect(sha('src/features/social-intelligence/findings/engine.ts')).toBe('fe37139fc142dc2912f956addb8ccc5c20083cc1429fabdc678b5ad47812d2ca');

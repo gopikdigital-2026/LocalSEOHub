@@ -37,6 +37,7 @@ const SocialIntelligencePage = lazy(() => import('./features/social-intelligence
 const PublicationsValidationPage = lazy(() => import('./features/publications/validation/PublicationsValidationPage'));
 const ChannelAdaptationPanel = lazy(() => import('./features/channel-adaptation/ChannelAdaptationPanel'));
 const ChannelReviewPanel = lazy(() => import('./features/channel-review/ChannelReviewPanel'));
+const PublicationResumeProvider = lazy(() => import('./features/publication-resume/PublicationResumeProvider'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
@@ -224,6 +225,7 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
           </AppGuard>
         } />
 
+        <Route element={<Suspense fallback={SKELETON}><PublicationResumeProvider /></Suspense>}>
         <Route path="/internal/publications-validation" element={
           <AppGuard>
             <Suspense fallback={SKELETON}>
@@ -233,6 +235,7 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
             </Suspense>
           </AppGuard>
         } />
+        </Route>
 
         {/* ── Execution (auth, no shell) ── */}
         <Route path="/ejecutar/:recommendationId" element={

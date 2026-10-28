@@ -241,7 +241,7 @@ describe('A3.7.3.2 internal harness', () => {
   });
 
   it('frozen A3.7.2 harness files are untouched', () => {
-    expect(sha('src/features/publications/validation/PublicationsValidationPage.tsx')).toBe('4754251850c7c2d0ea75a38258445718aff1c689f876af214205b840294a726c');
+    expect(sha('src/features/publications/validation/PublicationsValidationPage.tsx')).toBe('1eb1a91eda49dcaaba496acb7072131c153bd022de0e87a637100584c61bbad0'); // A3.7.3.4 RESUME RE-PIN: page reads the single URL-backed publication identity
     expect(sha('src/features/publications/validation/copy.ts')).toBe('faa38cd547814aa9054d73052daf0d2f61062291fa766e88bbbdada209070110');
   });
 });

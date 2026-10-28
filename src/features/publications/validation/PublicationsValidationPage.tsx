@@ -2,7 +2,9 @@ import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'r
 import { Check, Copy, ImageUp, Loader2, Sparkles, Trash2 } from 'lucide-react';
 import { useBusiness } from '../../business-memory/BusinessContext';
 import { useI18n } from '../../../lib/i18n';
-import { attachImage, createDraft, deleteDraft, generateProposals } from '../repository';
+import { attachImage, createDraft, deleteDraft, generateProposals, getProposals } from '../repository';
+import { usePublicationResume } from '../../publication-resume/context';
+import ResumeBar from '../../publication-resume/ResumeBar';
 import {
   PUBLICATION_GENERATIONS_LIMIT,
   PUBLICATION_LANGS,
@@ -52,7 +54,8 @@ export default function PublicationsValidationPage() {
   const [lang, setLang] = useState<PublicationLang>(appLang);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [pub, setPub] = useState<Publication | null>(null);
+  const resume = usePublicationResume();
+  const pub = resume.publication;
   const [proposals, setProposals] = useState<PublicationProposal[]>([]);
   const [grounding, setGrounding] = useState<PublicationGrounding | null>(null);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
@@ -64,6 +67,37 @@ export default function PublicationsValidationPage() {
   const t = (k: keyof typeof UI) => UI[k][appLang];
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+
+  const pubId = pub?.id ?? null;
+  const pubGeneration = pub?.proposals?.generationId ?? null;
+  const pubLang = pub?.proposals?.lang ?? null;
+
+  useEffect(() => {
+    setGrounding(null);
+    setMismatch(null);
+    setDiagnostic(null);
+    setElapsedMs(null);
+    setError(null);
+    if (pubId) return;
+    setFile(null);
+    setPreview(null);
+    if (inputRef.current) inputRef.current.value = '';
+  }, [pubId]);
+
+  // The server is the source of truth: on resume, show the proposal set that is current for this publication.
+  useEffect(() => {
+    if (!pubId || !pubGeneration) {
+      setProposals([]);
+      return;
+    }
+    if (pubLang) setLang(pubLang);
+    let active = true;
+    getProposals(pubId).then(
+      (list) => { if (active) setProposals(list.length === 3 && list[0].generationId === pubGeneration ? list : []); },
+      () => { if (active) setError('unavailable'); },
+    );
+    return () => { active = false; };
+  }, [pubId, pubGeneration, pubLang]);
 
   if (loading) return <Shell><p className="text-sm text-slate-600"><Loader2 className="inline w-4 h-4 animate-spin mr-2" aria-hidden />...</p></Shell>;
   if (!currentBusiness) return <Shell><p role="alert" className="text-sm text-red-700">{t('noBusiness')}</p></Shell>;
@@ -82,8 +116,8 @@ export default function PublicationsValidationPage() {
     setError(null);
     let draft: Publication | null = null;
     try {
-      draft = await createDraft(businessId);
-      setPub(await attachImage(draft.id, file));
+      const target = pub ?? (draft = await createDraft(businessId));
+      resume.adopt(await attachImage(target.id, file));
     } catch (e) {
       setError(codeOf(e));
       if (draft) await deleteDraft(draft.id).catch(() => {});
@@ -101,10 +135,10 @@ export default function PublicationsValidationPage() {
     const started = performance.now();
     try {
       const out = await generateProposals(pub.id, lang);
-      setPub(out.publication);
       setProposals(out.proposals);
       setGrounding(out.grounding);
       setElapsedMs(Math.round(performance.now() - started));
+      await resume.refresh();
     } catch (e) {
       setError(codeOf(e));
       if (e instanceof PublicationError) setDiagnostic(e.diagnostic ?? null);
@@ -125,15 +159,7 @@ export default function PublicationsValidationPage() {
     setError(null);
     try {
       await deleteDraft(pub.id);
-      setPub(null);
-      setProposals([]);
-      setGrounding(null);
-      setMismatch(null);
-      setDiagnostic(null);
-      setElapsedMs(null);
-      setFile(null);
-      setPreview(null);
-      if (inputRef.current) inputRef.current.value = '';
+      resume.close(true);
     } catch (e) {
       setError(codeOf(e));
     } finally {
@@ -153,6 +179,10 @@ export default function PublicationsValidationPage() {
         <p className="text-sm text-slate-700"><span className="font-medium">{t('business')}:</span> {currentBusiness.name}</p>
       </header>
 
+      <ResumeBar />
+
+      {(resume.state.status === 'none' || resume.state.status === 'ready') && (<>
+
       <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
         <h2 className="font-semibold text-slate-900">{t('step1')}</h2>
         <label className="block text-sm text-slate-700">
@@ -162,22 +192,22 @@ export default function PublicationsValidationPage() {
             type="file"
             accept="image/jpeg,image/png"
             onChange={onFile}
-            disabled={!!pub || !!busy}
+            disabled={!!pub?.image || !!busy}
             className="mt-2 block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-white disabled:opacity-50"
           />
         </label>
         {preview && <img src={preview} alt="" className="max-h-80 w-auto max-w-full rounded-lg border border-slate-200 object-contain" />}
-        {!pub && (
+        {!pub?.image && (
           <button type="button" onClick={upload} disabled={!file || !!busy} className={BTN}>
             {busy === 'upload' ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden /> : <ImageUp className="w-4 h-4" aria-hidden />}
             {busy === 'upload' ? t('uploading') : t('upload')}
           </button>
         )}
-        {pub && <p className="text-sm text-emerald-700 flex items-center gap-1"><Check className="w-4 h-4" aria-hidden />{t('uploaded')}</p>}
-        {pub && <p className="text-xs text-slate-500">{t('replaceHint')}</p>}
+        {pub?.image && <p className="text-sm text-emerald-700 flex items-center gap-1"><Check className="w-4 h-4" aria-hidden />{t('uploaded')}</p>}
+        {pub?.image && <p className="text-xs text-slate-500">{t('replaceHint')}</p>}
       </section>
 
-      {pub && (
+      {pub?.image && (
         <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
           <h2 className="font-semibold text-slate-900">{t('step2')}</h2>
           <fieldset className="flex gap-4" disabled={!!busy}>
@@ -249,6 +279,7 @@ export default function PublicationsValidationPage() {
           </dl>
         </section>
       )}
+      </>)}
     </Shell>
   );
 }

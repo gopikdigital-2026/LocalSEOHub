@@ -391,8 +391,8 @@ describe('A3.7.3.3 security and scope', () => {
 describe('A3.7.3.3 frozen baselines', () => {
   const PREFIXES: Record<string, string> = {
     'supabase/migrations/20261027165527_a3732_publication_adaptation_engine.sql': '04e4d0af14d2',
-    'src/features/channel-adaptation/ChannelAdaptationPanel.tsx': 'f3d7f22da5cf',
-    'src/features/channel-adaptation/copy.ts': 'aa04e4767103',
+    'src/features/channel-adaptation/ChannelAdaptationPanel.tsx': 'f3cc00fdaa24', // A3.7.3.4 RESUME RE-PIN: latestReady removed, auto-loads the resumed publication
+    'src/features/channel-adaptation/copy.ts': '31da9d1af14a', // A3.7.3.4 RESUME RE-PIN: manual load button copy removed
     'src/features/channel-adaptation/repository.ts': 'd4a46bd50d65',
     'src/features/channel-adaptation/types.ts': '2a46a61f1818',
   };

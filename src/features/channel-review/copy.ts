@@ -13,7 +13,6 @@ export const REVIEW = {
     es: 'Puedes editar libremente ambos textos. El texto generado se conserva siempre y puedes restaurarlo. Guardar no usa IA.',
     en: 'You can freely edit both texts. The generated text is always kept and you can restore it. Saving does not use AI.',
   },
-  load: { es: 'Cargar textos para revisar', en: 'Load texts to review' },
   reload: { es: 'Recargar la versión más reciente', en: 'Reload the latest version' },
   loading: { es: 'Cargando…', en: 'Loading…' },
   empty: { es: 'Todavía no hay textos adaptados. Adapta primero la propuesta en el paso 3.', en: 'No adapted texts yet. Adapt the proposal in step 3 first.' },

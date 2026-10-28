@@ -13,7 +13,6 @@ export const PANEL = {
     es: 'La adaptación se genera a partir del texto elegido, sin volver a enviar la imagen. No se publica nada en Facebook, Instagram ni Google.',
     en: 'The adaptation is generated from the chosen text without resending the image. Nothing is published on Facebook, Instagram or Google.',
   },
-  load: { es: 'Cargar propuestas generadas', en: 'Load generated proposals' },
   loading: { es: 'Cargando…', en: 'Loading…' },
   empty: { es: 'Todavía no hay propuestas. Genera primero las 3 propuestas en el paso 2 y vuelve a cargar.', en: 'No proposals yet. Generate the 3 proposals in step 2 first, then load again.' },
   choose: { es: 'Elegir esta', en: 'Choose this one' },

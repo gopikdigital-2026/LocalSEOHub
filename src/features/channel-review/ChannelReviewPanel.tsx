@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, CircleDot, Loader2, RefreshCw, RotateCcw, Save } from 'lucide-react';
 import { useBusiness } from '../business-memory/BusinessContext';
 import { useI18n, type Lang } from '../../lib/i18n';
-import { listDrafts } from '../publications/repository';
 import type { Publication } from '../publications/types';
+import { usePublicationResume } from '../publication-resume/context';
 import { countChars, isDirty, isEdited, readiness, textIssue } from './model';
 import { getReviewDraft, saveChannelDrafts } from './repository';
 import { CHANNEL_LIMITS, ReviewError, type Channel, type ChannelChange, type ReviewDraft } from './types';
@@ -15,11 +15,7 @@ type Texts = Record<Channel, string>;
 
 const CHANNELS: readonly Channel[] = ['facebook', 'instagram'];
 
-function latestReady(pubs: Publication[]): Ready | null {
-  const ready = pubs.filter((p): p is Ready => p.status === 'proposals_ready');
-  ready.sort((a, b) => b.proposals.generatedAt.localeCompare(a.proposals.generatedAt));
-  return ready[0] ?? null;
-}
+const isReady = (p: Publication | null): p is Ready => p?.status === 'proposals_ready';
 
 const savedText = (d: ReviewDraft, c: Channel) => (c === 'facebook' ? d.facebookText : d.instagramText);
 const generatedText = (d: ReviewDraft, c: Channel) => (c === 'facebook' ? d.facebookGenerated : d.instagramGenerated);
@@ -28,7 +24,10 @@ const textsOf = (d: ReviewDraft): Texts => ({ facebook: d.facebookText, instagra
 export default function ChannelReviewPanel() {
   const { currentBusiness } = useBusiness();
   const { lang } = useI18n();
-  const [pub, setPub] = useState<Ready | null>(null);
+  const { publication, revision, setUnsaved } = usePublicationResume();
+  const pub = isReady(publication) && publication.businessId === currentBusiness?.id ? publication : null;
+  const pubId = pub?.id ?? null;
+  const generationId = pub?.proposals.generationId ?? null;
   const [draft, setDraft] = useState<ReviewDraft | null>(null);
   const [local, setLocal] = useState<Texts>({ facebook: '', instagram: '' });
   const [loaded, setLoaded] = useState(false);
@@ -40,21 +39,51 @@ export default function ChannelReviewPanel() {
   const dirty = (c: Channel) => !!draft && isDirty(local[c], savedText(draft, c));
   const anyDirty = !!draft && CHANNELS.some(dirty);
 
+  const dirtyRef = useRef(anyDirty);
+  dirtyRef.current = anyDirty;
+
   useEffect(() => {
+    setUnsaved(anyDirty);
     if (!anyDirty) return;
     const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [anyDirty]);
+  }, [anyDirty, setUnsaved]);
 
-  if (!currentBusiness) return null;
-  const businessId = currentBusiness.id;
+  useEffect(() => () => setUnsaved(false), [setUnsaved]);
 
   const fail = (e: unknown) => {
     const err = e instanceof ReviewError ? e : new ReviewError('internal_error');
     const base = REVIEW_ERROR_TEXT[err.code][lang];
     setError({ text: err.reason ? `${base} ${ISSUE_TEXT[err.reason][lang]}` : base, stale: err.code === 'stale_draft' || err.code === 'busy' });
   };
+
+  // Same publication, newer server state (selection or adaptation in step 3): never drop unsaved text silently.
+  const shown = useRef<string | null>(null);
+  useEffect(() => {
+    const samePublication = shown.current === pubId;
+    shown.current = pubId;
+    if (samePublication && dirtyRef.current && !window.confirm(t('leaveWarning'))) return;
+    setDraft(null);
+    setLocal({ facebook: '', instagram: '' });
+    setError(null);
+    setJustSaved(false);
+    setLoaded(false);
+    setBusy(null);
+    if (!pubId) return;
+    let active = true;
+    setBusy('load');
+    getReviewDraft(pubId).then(
+      (next) => { if (active) { setDraft(next); if (next) setLocal(textsOf(next)); } },
+      (e) => { if (active) fail(e); },
+    ).finally(() => {
+      if (active) { setLoaded(true); setBusy(null); }
+    });
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t and fail only format text for the current language
+  }, [pubId, generationId, revision]);
+
+  if (!currentBusiness || !pub) return null;
 
   const load = async () => {
     if (busy) return;
@@ -63,9 +92,7 @@ export default function ChannelReviewPanel() {
     setError(null);
     setJustSaved(false);
     try {
-      const latest = latestReady(await listDrafts(businessId));
-      const next = latest ? await getReviewDraft(latest.id) : null;
-      setPub(latest);
+      const next = await getReviewDraft(pub.id);
       setDraft(next);
       if (next) setLocal(textsOf(next));
     } catch (e) {
@@ -115,10 +142,12 @@ export default function ChannelReviewPanel() {
           <h2 className="font-semibold text-slate-900">{t('title')}</h2>
           <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">{INTERNAL_NOTICE}</p>
           <p className="text-xs text-slate-600">{t('intro')} {NOTHING_PUBLISHED[lang]}</p>
-          <button type="button" onClick={load} disabled={!!busy} className={BTN_SECONDARY}>
-            {busy === 'load' ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden /> : <RefreshCw className="w-4 h-4" aria-hidden />}
-            {busy === 'load' ? t('loading') : draft ? t('reload') : t('load')}
-          </button>
+          {(busy === 'load' || draft) && (
+            <button type="button" onClick={load} disabled={!!busy} className={BTN_SECONDARY}>
+              {busy === 'load' ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden /> : <RefreshCw className="w-4 h-4" aria-hidden />}
+              {busy === 'load' ? t('loading') : t('reload')}
+            </button>
+          )}
           {loaded && !current && busy !== 'load' && !error && <p className="text-sm text-slate-600">{t('empty')}</p>}
         </div>
 

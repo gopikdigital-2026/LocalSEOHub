@@ -40,7 +40,7 @@ const FROZEN: Record<string, string> = {
   'src/features/action-layer/model.ts': '38edfb9004c9a6bea8ca680d71d374eedfacc221fa4229cbbfe5efe4b4994075',
   'src/features/action-layer/copy.ts': '3dbbe24bcd674fd9f684bf6a2a5a40862ca1ca49ab4efcc86471ec035c54330d',
   'src/features/action-layer/ActionDetail.tsx': '1444e520b6bf497e5b710b13184837d59b67114efaf31ed4d00307a0a0ed8336',
-  'src/App.tsx': 'c8e503d2a1cb4c1947a337b238c0ef078277f2c9cc313919aa50ff820f3c7210', // A3.7.3.3 HARNESS RE-PIN: channel review panel on the hidden /internal/publications-validation route (no new route)
+  'src/App.tsx': '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba', // A3.7.3.4 RESUME RE-PIN: hidden /internal/publications-validation route wrapped in the publication resume layout route
   'src/features/dashboard/TodaysMissions.tsx': '22684ca84042aa83ef018bb7855e4493a6338eb2cc880359b5a10c011a91b79d',
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);

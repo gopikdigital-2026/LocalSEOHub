@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react';
-import { Check, Copy, Loader2, RefreshCw, Wand2 } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Check, Copy, Loader2, Wand2 } from 'lucide-react';
 import { useBusiness } from '../business-memory/BusinessContext';
 import { useI18n } from '../../lib/i18n';
-import { getProposals, listDrafts } from '../publications/repository';
+import { getProposals } from '../publications/repository';
+import { usePublicationResume } from '../publication-resume/context';
 import { selectPublicationProposal } from '../publications/drafts/repository';
 import { DraftError } from '../publications/drafts/types';
 import type { Publication, PublicationProposal } from '../publications/types';
@@ -13,18 +14,12 @@ import { ADAPTATION_ERROR_TEXT, INTERNAL_NOTICE, LIMIT_SCOPE_TEXT, PANEL, ROLE_T
 type Busy = 'load' | 'select' | 'adapt' | null;
 type Ready = Extract<Publication, { status: 'proposals_ready' }>;
 
-const isReady = (p: Publication): p is Ready => p.status === 'proposals_ready';
-
-function latestReady(pubs: Publication[]): Ready | null {
-  const ready = pubs.filter(isReady);
-  ready.sort((a, b) => b.proposals.generatedAt.localeCompare(a.proposals.generatedAt));
-  return ready[0] ?? null;
-}
+const isReady = (p: Publication | null): p is Ready => p?.status === 'proposals_ready';
 
 export default function ChannelAdaptationPanel() {
   const { currentBusiness } = useBusiness();
   const { lang } = useI18n();
-  const [pub, setPub] = useState<Ready | null>(null);
+  const { publication, refresh } = usePublicationResume();
   const [loaded, setLoaded] = useState(false);
   const [proposals, setProposals] = useState<PublicationProposal[]>([]);
   const [draft, setDraft] = useState<ChannelDraft | null>(null);
@@ -32,9 +27,9 @@ export default function ChannelAdaptationPanel() {
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState<string | null>(null);
   const t = (k: keyof typeof PANEL) => PANEL[k][lang];
-
-  if (!currentBusiness) return null;
-  const businessId = currentBusiness.id;
+  const pub = isReady(publication) && publication.businessId === currentBusiness?.id ? publication : null;
+  const pubId = pub?.id ?? null;
+  const generationId = pub?.proposals.generationId ?? null;
 
   const describe = (e: unknown): string => {
     if (e instanceof AdaptationError) {
@@ -45,23 +40,27 @@ export default function ChannelAdaptationPanel() {
     return ADAPTATION_ERROR_TEXT.unavailable[lang];
   };
 
-  const load = async () => {
-    if (busy) return;
-    setBusy('load');
-    setError(null);
+  useEffect(() => {
+    setProposals([]);
+    setDraft(null);
     setResult(null);
-    try {
-      const latest = latestReady(await listDrafts(businessId));
-      setPub(latest);
-      setProposals(latest ? await getProposals(latest.id) : []);
-      setDraft(latest ? await getChannelDraft(latest.id) : null);
-    } catch (e) {
-      setError(describe(e));
-    } finally {
-      setLoaded(true);
-      setBusy(null);
-    }
-  };
+    setError(null);
+    setLoaded(false);
+    setBusy(null);
+    if (!pubId) return;
+    let active = true;
+    setBusy('load');
+    Promise.all([getProposals(pubId), getChannelDraft(pubId)]).then(
+      ([list, next]) => { if (active) { setProposals(list); setDraft(next); } },
+      (e) => { if (active) setError(describe(e)); },
+    ).finally(() => {
+      if (active) { setLoaded(true); setBusy(null); }
+    });
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- describe only formats text for the current language
+  }, [pubId, generationId]);
+
+  if (!currentBusiness || !pub) return null;
 
   const choose = async (p: PublicationProposal) => {
     if (!pub || busy) return;
@@ -71,6 +70,7 @@ export default function ChannelAdaptationPanel() {
       await selectPublicationProposal(pub.id, p.position, p.generationId);
       setDraft(await getChannelDraft(pub.id));
       setResult(null);
+      await refresh();
     } catch (e) {
       setError(describe(e));
     } finally {
@@ -86,6 +86,7 @@ export default function ChannelAdaptationPanel() {
       const out = await adaptPublication(pub.id, draft.version);
       setResult(out);
       setDraft(await getChannelDraft(pub.id));
+      await refresh();
     } catch (e) {
       setError(describe(e));
     } finally {
@@ -106,11 +107,10 @@ export default function ChannelAdaptationPanel() {
           <h2 className="font-semibold text-slate-900">{t('title')}</h2>
           <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">{INTERNAL_NOTICE}</p>
           <p className="text-xs text-slate-600">{t('privacy')}</p>
-          <button type="button" onClick={load} disabled={!!busy} className={BTN_SECONDARY}>
-            {busy === 'load' ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden /> : <RefreshCw className="w-4 h-4" aria-hidden />}
-            {busy === 'load' ? t('loading') : t('load')}
-          </button>
-          {loaded && !pub && busy !== 'load' && !error && <p className="text-sm text-slate-600">{t('empty')}</p>}
+          {busy === 'load' && (
+            <p role="status" className="inline-flex items-center gap-2 text-sm text-slate-600"><Loader2 className="w-4 h-4 animate-spin" aria-hidden />{t('loading')}</p>
+          )}
+          {loaded && proposals.length === 0 && !error && <p className="text-sm text-slate-600">{t('empty')}</p>}
         </div>
 
         {error && <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
@@ -181,7 +181,6 @@ export default function ChannelAdaptationPanel() {
 }
 
 const BTN = 'inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50';
-const BTN_SECONDARY = 'inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50';
 const BTN_SMALL = 'rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50';
 
 function Block({ title, children }: { title: string; children: ReactNode }) {

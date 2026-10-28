@@ -40,7 +40,7 @@ Combined hash of the A3.7.1 storage files (`find supabase/functions/publication-
 |---|---|---|
 | src/features/publications/repository.ts | e5ddd8bb80df97c211a47f876d14913e6c2e8e5b62931f4f18ba6c05e962c0e5 | Upload and generate calls, mapping of server codes to client codes, sanitized diagnostic, mismatch parsing. |
 | src/features/publications/types.ts | 9f5ac9a2bf1908644e70ca41884abc23b6890a0be79189dc181ac285585991cf | Publication, proposal, error and diagnostic types. |
-| src/features/publications/validation/PublicationsValidationPage.tsx | 4754251850c7c2d0ea75a38258445718aff1c689f876af214205b840294a726c | Temporary internal harness. Not customer UI. |
+| src/features/publications/validation/PublicationsValidationPage.tsx | 1eb1a91eda49dcaaba496acb7072131c153bd022de0e87a637100584c61bbad0 | Temporary internal harness. Not customer UI. A3.7.3.4 RESUME RE-PIN (authorized): was 4754251850c7c2d0ea75a38258445718aff1c689f876af214205b840294a726c; now reads the single URL-backed publication identity. |
 | src/features/publications/validation/copy.ts | faa38cd547814aa9054d73052daf0d2f61062291fa766e88bbbdada209070110 | Harness texts (ES/EN). |
 
 ### Tests that define critical behaviour

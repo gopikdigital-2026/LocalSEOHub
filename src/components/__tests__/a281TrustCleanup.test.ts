@@ -129,7 +129,7 @@ describe('A2.8.1 · preservation', () => {
     'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
     'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
     'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
-    'src/App.tsx': 'c8e503d2a1cb4c1947a337b238c0ef078277f2c9cc313919aa50ff820f3c7210', // A3.7.3.3 HARNESS RE-PIN: channel review panel on the hidden /internal/publications-validation route (no new route)
+    'src/App.tsx': '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba', // A3.7.3.4 RESUME RE-PIN: hidden /internal/publications-validation route wrapped in the publication resume layout route
   };
 
   it.each(Object.entries(FROZEN))('15. %s is byte-identical', (p, hash) => {
