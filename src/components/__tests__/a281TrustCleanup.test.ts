@@ -129,7 +129,7 @@ describe('A2.8.1 · preservation', () => {
     'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
     'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
     'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
-    'src/App.tsx': 'f4523a4d043ae93b072c58b9f48201f68035119ef160802f50d15358f7a1e2d5', // A3.7.3.2 HARNESS RE-PIN: channel adaptation panel on the hidden /internal/publications-validation route (no new route)
+    'src/App.tsx': 'c8e503d2a1cb4c1947a337b238c0ef078277f2c9cc313919aa50ff820f3c7210', // A3.7.3.3 HARNESS RE-PIN: channel review panel on the hidden /internal/publications-validation route (no new route)
   };
 
   it.each(Object.entries(FROZEN))('15. %s is byte-identical', (p, hash) => {
@@ -154,7 +154,7 @@ describe('A2.8.1 · preservation', () => {
   });
 
   it('18. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback; A3.7.1: publications data/storage migration, no route)', () => {
-    expect(readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(53); // A3.7.2 adds the publication proposals engine migration; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine
+    expect(readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(55); // A3.7.2 adds the publication proposals engine migration; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
     expect(src('src/App.tsx').match(/<Route [^>]*path=/g)).toHaveLength(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
   });
 

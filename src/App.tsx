@@ -36,6 +36,7 @@ const SocialIntelligencePage = lazy(() => import('./features/social-intelligence
 // Temporary internal validation harness; intentionally not linked from any navigation.
 const PublicationsValidationPage = lazy(() => import('./features/publications/validation/PublicationsValidationPage'));
 const ChannelAdaptationPanel = lazy(() => import('./features/channel-adaptation/ChannelAdaptationPanel'));
+const ChannelReviewPanel = lazy(() => import('./features/channel-review/ChannelReviewPanel'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
 
@@ -228,6 +229,7 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
             <Suspense fallback={SKELETON}>
               <PublicationsValidationPage />
               <ChannelAdaptationPanel />
+              <ChannelReviewPanel />
             </Suspense>
           </AppGuard>
         } />

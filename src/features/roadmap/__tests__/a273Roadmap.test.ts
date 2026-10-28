@@ -69,7 +69,7 @@ const FROZEN: Record<string, string> = {
   'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
   'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
   'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
-  'src/App.tsx': 'f4523a4d043ae93b072c58b9f48201f68035119ef160802f50d15358f7a1e2d5', // A3.7.3.2 HARNESS RE-PIN: channel adaptation panel on the hidden /internal/publications-validation route (no new route)
+  'src/App.tsx': 'c8e503d2a1cb4c1947a337b238c0ef078277f2c9cc313919aa50ff820f3c7210', // A3.7.3.3 HARNESS RE-PIN: channel review panel on the hidden /internal/publications-validation route (no new route)
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
 
@@ -351,8 +351,8 @@ describe('A2.7.3 · Platform regression', () => {
   it('111. no AI counter reset', () => expect(rmSrc).not.toMatch(/reset|counter/i));
   it('112. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)', () => {
     const migs = readdirSync(MIG_DIR).sort();
-    expect(migs).toHaveLength(53); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine
-    expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_')).slice(-3)).toEqual([
+    expect(migs).toHaveLength(55); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+    expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_') && !m.includes('_a3733_')).slice(-3)).toEqual([
       '20261022152358_a3512_meta_oauth_stuck_connection_recovery.sql',
       '20261022170333_a353_meta_read_layer.sql',
       '20261022170523_a353_meta_sync_claim_min_interval.sql',

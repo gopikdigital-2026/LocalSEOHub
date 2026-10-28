@@ -40,7 +40,7 @@ const FROZEN: Record<string, string> = {
   'src/features/action-layer/model.ts': '38edfb9004c9a6bea8ca680d71d374eedfacc221fa4229cbbfe5efe4b4994075',
   'src/features/action-layer/copy.ts': '3dbbe24bcd674fd9f684bf6a2a5a40862ca1ca49ab4efcc86471ec035c54330d',
   'src/features/action-layer/ActionDetail.tsx': '1444e520b6bf497e5b710b13184837d59b67114efaf31ed4d00307a0a0ed8336',
-  'src/App.tsx': 'f4523a4d043ae93b072c58b9f48201f68035119ef160802f50d15358f7a1e2d5', // A3.7.3.2 HARNESS RE-PIN: channel adaptation panel on the hidden /internal/publications-validation route (no new route)
+  'src/App.tsx': 'c8e503d2a1cb4c1947a337b238c0ef078277f2c9cc313919aa50ff820f3c7210', // A3.7.3.3 HARNESS RE-PIN: channel review panel on the hidden /internal/publications-validation route (no new route)
   'src/features/dashboard/TodaysMissions.tsx': '22684ca84042aa83ef018bb7855e4493a6338eb2cc880359b5a10c011a91b79d',
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
@@ -128,9 +128,9 @@ describe('A2.7.2 · Completion and promotion', () => {
   it('28. no manual completion flag', () => expect(tiSrc).not.toMatch(/done\s*[:=]\s*true|completed\s*[:=]|localStorage|sessionStorage/));
   it('29. no Today persistence table', () => expect(tiSrc).not.toMatch(/\.from\(|insert|upsert|today_actions/));
   it('30. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)', () => {
-    expect(readdirSync(MIG_DIR)).toHaveLength(53); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine
+    expect(readdirSync(MIG_DIR)).toHaveLength(55); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
     const migs = readdirSync(MIG_DIR).sort();
-    expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_')).slice(-3)).toEqual([
+    expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_') && !m.includes('_a3733_')).slice(-3)).toEqual([
       '20261022152358_a3512_meta_oauth_stuck_connection_recovery.sql',
       '20261022170333_a353_meta_read_layer.sql',
       '20261022170523_a353_meta_sync_claim_min_interval.sql',

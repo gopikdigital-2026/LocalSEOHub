@@ -226,7 +226,7 @@ describe('F-03 Stage 2B · trial, OAuth, users, reset', () => {
   });
 
   it('21. existing users are not modified: no admin writes and no new migrations (46 after A3.5.1)', () => {
-    expect(migrations).toHaveLength(53); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine
+    expect(migrations).toHaveLength(55); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
     expect(frontendText).not.toMatch(/updateUserById|deleteUser|email_confirmed_at\s*[:=]/);
   });
 
@@ -280,7 +280,7 @@ describe('F-03 Stage 2B · secrets and preservation', () => {
   });
 
   it('34/35. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback)', () => {
-    expect(migrations).toHaveLength(53); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine
+    expect(migrations).toHaveLength(55); // A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
     expect(app.match(/<Route [^>]*path=/g)).toHaveLength(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
   });
 
