@@ -69,7 +69,7 @@ const FROZEN: Record<string, string> = {
   'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
   'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
   'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
-  'src/App.tsx': '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba', // A3.7.3.4 RESUME RE-PIN: hidden /internal/publications-validation route wrapped in the publication resume layout route
+  'src/App.tsx': '81b0de7cf84a5105ce09ec865c9180b5611651331f97ca5584cda84fd6e27692', // A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
 

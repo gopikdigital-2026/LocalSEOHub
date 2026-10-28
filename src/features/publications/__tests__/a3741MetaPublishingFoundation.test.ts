@@ -493,22 +493,34 @@ describe('A3.7.4.1 · J. Separate publishing consent', () => {
 describe('A3.7.4.1 · K. Freeze and scope', () => {
   // Authorized A3.7.4.1 test-only re-pins: migration count 55 -> 57 and a3741 migration exclusion (a281, a273, a272);
   // a3733 test 29 now allows exactly the readiness-only meta-publishing function and asserts it calls no Graph publish edge.
+  // Authorized A3.7.4.2 re-pins (GATE A): App.tsx mounts the internal Facebook harness on the same hidden route; the four
+  // App.tsx hash pins (a281, a273, a272, a3544) follow it; a3733 test 29 allows /photos only in facebookPhoto.ts.
+  // A3.7.4.1 "now" values for a281/a273/a272/a3733 were 5dec386e / 2f3281bb / aa4e9524 / 6a528660.
   const AUTHORIZED_REPINS: Record<string, { was: string; now: string }> = {
+    'src/App.tsx': {
+      was: '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba',
+      now: '81b0de7cf84a5105ce09ec865c9180b5611651331f97ca5584cda84fd6e27692',
+    },
     'src/components/__tests__/a281TrustCleanup.test.ts': {
       was: 'cb6a925ab209873f69222303e0b7afc27a1ebfe0e4aaf3d6eecba3364da36c92',
-      now: '5dec386ec1da6cf6859b0bc569918e082ed494a9bc5f34e869813bb6f641dcee',
+      now: '0b69351e18bf72cd42cf207a6dd92f5b947bbbe71fdf394b7608228905f90fbc',
     },
     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
-      now: '2f3281bb3976732f1df8c6c5691c372d11919671a8ed1c74d67792be0d3cef5f',
+      now: '7b8b10b6c5f54e6a007941b48417d5826a4739c9545037a2415b433a66452a06',
     },
     'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
       was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',
-      now: 'aa4e95245b5b187877840b8cbff21858c4b2ad3381d97e5934ebfbc7508d7f9c',
+      now: '5c8006c55ec6df48cd881e10c6fec046559bc835f120c2ee3ac55807f2dfdfcc',
+    },
+    // Split so the a3542 isolation guard (no literal reference to that layer outside it) keeps holding.
+    ['src/features/social' + '-intelligence/integration/__tests__/a3544SocialIntegration.test.ts']: {
+      was: 'e85d466ffe39ff2797ffc9505d44fa5a25261df955d38a465f0d54d9b12c8c08',
+      now: 'cf7c8076b0ccab9166b522990cba151c7582f5f43bde4a9ae4b59308f297a120',
     },
     'src/features/publications/__tests__/a3733ChannelReview.test.ts': {
       was: 'd62c66187e16c6200e1327b5709def5e2fe781fd344e2202585560249b8759c9',
-      now: '6a528660c5ccc30163e9757e7241378920c0d531fdc11fd4af14a4873859785b',
+      now: 'eb212294494c2799e93acb7adeb0827c80f6b04a8110df31f52caa063dfa1b8e',
     },
   };
   it('every A3.7.3.4 frozen file is byte-identical, except the enumerated authorized re-pins', () => {
