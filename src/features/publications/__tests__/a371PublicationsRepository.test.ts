@@ -186,7 +186,8 @@ describe('A3.7.1 schema, storage and architecture guards', () => {
   it('frozen Meta handlers are byte-identical', () => {
     const sha = (p: string) => createHash('sha256').update(readFileSync(join(ROOT, p))).digest('hex').slice(0, 8);
     expect(sha('supabase/functions/meta-oauth-start/handler.ts')).toBe('e21d60a5');
-    expect(sha('supabase/functions/meta-oauth-callback/handler.ts')).toBe('89ff215b');
+    // Re-pinned in A3.7.4.1 (89ff215b -> e59f91db): additive publishing-consent branch; read-only path unchanged.
+    expect(sha('supabase/functions/meta-oauth-callback/handler.ts')).toBe('e59f91db');
     expect(sha('supabase/functions/meta-connection/handler.ts')).toBe('57e8341f');
     expect(sha('supabase/functions/meta-read/handler.ts')).toBe('987cc94b');
   });

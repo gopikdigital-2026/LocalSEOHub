@@ -135,7 +135,7 @@ describe('A3.3 · preservation', () => {
     expect(read('src/features/geo-audit/copy.ts')).toMatch(/No comprobado/i);
   });
   it('16. no new migrations (A3.4.2 added the a342 ledger; A3.4.2.2 the GBP server-owned guard; A3.5.1 the Meta connection foundation; A3.7.1 the publications data/storage foundation)', () => {
-    expect(readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(55); // A3.7.2 adds the publication proposals engine migration; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+    expect(readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(57); // A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.2 adds the publication proposals engine migration; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
   });
   it('no routes added or removed (A3.4.2 added only /herramientas/resenas; A3.5.1A the 3 public legal routes; A3.5.1 /oauth/meta/callback; A3.5.4.3 /herramientas/social)', () => {
     expect(ROUTES).toHaveLength(33); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation

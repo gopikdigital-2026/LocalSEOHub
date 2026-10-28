@@ -4,12 +4,23 @@ import { AlertCircle, ArrowLeft, Loader2, Share2 } from 'lucide-react';
 import { useI18n } from '../../lib/i18n';
 import { META_COPY, metaErrorMessage } from './metaStatus';
 import { clearMetaBinding, completeMetaConnection } from './metaRepository';
+import { clearPublishingBinding, completePublishingAccess } from './metaPublishingRepository';
 
 const COMPLETION_PATTERN = /^[a-f0-9]{64}$/;
 
 export function readCallbackParams(search: string, hash: string): { completion: string | null; error: string | null } {
   const error = new URLSearchParams(search).get('error');
   const token = new URLSearchParams(hash.replace(/^#/, '')).get('token');
+  return {
+    completion: token && COMPLETION_PATTERN.test(token) ? token : null,
+    error: error && /^[A-Z_]{3,40}$/.test(error) ? error : error ? 'UNKNOWN_ERROR' : null,
+  };
+}
+
+export function readPublishingCallbackParams(search: string, hash: string): { completion: string | null; error: string | null } | null {
+  const error = new URLSearchParams(search).get('publishing_error');
+  const token = new URLSearchParams(hash.replace(/^#/, '')).get('publishing_token');
+  if (error === null && token === null) return null;
   return {
     completion: token && COMPLETION_PATTERN.test(token) ? token : null,
     error: error && /^[A-Z_]{3,40}$/.test(error) ? error : error ? 'UNKNOWN_ERROR' : null,
@@ -27,8 +38,24 @@ export default function MetaCallbackPage() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
+    const publishing = readPublishingCallbackParams(window.location.search, window.location.hash);
     const { completion, error } = readCallbackParams(window.location.search, window.location.hash);
     window.history.replaceState(null, '', window.location.pathname);
+
+    // A publishing-access return never touches the read-only connection, whatever its outcome.
+    if (publishing) {
+      if (publishing.error || !publishing.completion) {
+        clearPublishingBinding();
+        navigate('/fuentes', { replace: true, state: { metaPublishing: publishing.error ?? 'OAUTH_STATE_INVALID' } });
+        return;
+      }
+      const token = publishing.completion;
+      (async () => {
+        const result = await completePublishingAccess(token);
+        navigate('/fuentes', { replace: true, state: { metaPublishing: result.ok ? 'enabled' : result.code } });
+      })();
+      return;
+    }
 
     if (error || !completion) {
       clearMetaBinding();

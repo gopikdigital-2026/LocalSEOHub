@@ -37,6 +37,36 @@ const handle = createHandler({
     if (error) console.error("[meta-oauth-callback] store failed:", error.code ?? "unknown");
     return !error && data === true;
   },
+  async consumePublishingState(stateHash) {
+    const { data, error } = await supabaseAdmin.rpc("meta_consume_publishing_state", { p_state_hash: stateHash });
+    if (error) throw new Error("publishing consume failed");
+    const row = Array.isArray(data) ? data[0] : data;
+    return { result: row?.result ?? "unknown", connectionId: row?.connection_id ?? null };
+  },
+  async discardPublishingState(stateHash) {
+    const { error } = await supabaseAdmin.rpc("meta_discard_publishing_state", { p_state_hash: stateHash });
+    if (error) throw new Error("publishing discard failed");
+  },
+  async storePublishingConsent(c) {
+    const { data, error } = await supabaseAdmin.rpc("meta_store_publishing_consent", {
+      p_connection_id: c.connectionId,
+      p_state_hash: c.stateHash,
+      p_access_token: c.accessToken,
+      p_expires_at: c.expiresAt,
+      p_meta_user_id: c.metaUserId,
+      p_permissions: c.permissions,
+      p_pages: c.pages,
+      p_completion_hash: c.completionHash,
+      p_completion_expires_at: c.completionExpiresAt,
+    });
+    if (error) {
+      console.error("[meta-oauth-callback] publishing store failed:", error.code ?? "unknown");
+      return "stale";
+    }
+    return ["ok", "stale", "account_mismatch", "downgrade", "declined"].includes(data as string)
+      ? (data as "ok" | "stale" | "account_mismatch" | "downgrade" | "declined")
+      : "stale";
+  },
   env: (name) => Deno.env.get(name),
 });
 

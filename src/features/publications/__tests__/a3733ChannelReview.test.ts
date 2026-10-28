@@ -319,7 +319,11 @@ describe('A3.7.3.3 security and scope', () => {
     expect(CLIENT).not.toMatch(/Publicar/);
     expect(src('src/App.tsx')).not.toMatch(/publish-publication|media_publish/);
     const fns = readdirSync(join(ROOT, 'supabase/functions'));
-    expect(fns.filter((f) => /publish/i.test(f))).toEqual([]);
+    // A3.7.4.1 RE-PIN: meta-publishing is readiness/consent only and must never call a Graph publish edge.
+    expect(fns.filter((f) => /publish/i.test(f))).toEqual(['meta-publishing']);
+    for (const f of readdirSync(join(ROOT, 'supabase/functions/meta-publishing'))) {
+      expect(src(`supabase/functions/meta-publishing/${f}`)).not.toMatch(/\/photos|\/media_publish|\/media\b|\/feed/);
+    }
   });
 
   describe('migration history: original definition then corrective re-definition', () => {

@@ -28,8 +28,22 @@ export interface Authorization {
   completionExpiresAt: string;
 }
 
+export interface PageWithTasks extends Page {
+  tasks: string[];
+}
+
+export type PublishingStoreResult = "ok" | "stale" | "account_mismatch" | "downgrade" | "declined";
+
+export interface PublishingConsent extends Omit<Authorization, "pages"> {
+  pages: PageWithTasks[];
+}
+
 export interface CallbackDeps {
   consumeState(stateHash: string): Promise<{ result: ConsumeResult; connectionId: string | null }>;
+  // Publishing-consent mode: never touches the existing connection on failure, only its own single-use state.
+  consumePublishingState?(stateHash: string): Promise<{ result: ConsumeResult; connectionId: string | null }>;
+  discardPublishingState?(stateHash: string): Promise<void>;
+  storePublishingConsent?(c: PublishingConsent): Promise<PublishingStoreResult>;
   failConnection(connectionId: string, status: FailStatus, code: string): Promise<void>;
   storeAuthorization(a: Authorization): Promise<boolean>;
   env(name: string): string | undefined;
@@ -90,6 +104,27 @@ function logStage(stage: string, detail: Record<string, unknown> = {}) {
 }
 
 const PERMISSION_NAME = /^[a-z_]{1,64}$/;
+const TASK_NAME = /^[A-Z_]{1,32}$/;
+
+export function parsePageTasks(data: unknown): PageWithTasks[] {
+  if (!Array.isArray(data)) return [];
+  return (data as { id?: unknown; name?: unknown; tasks?: unknown }[])
+    .filter((p) => p && typeof p.id === "string" && /^\d+$/.test(p.id))
+    .map((p) => ({
+      id: p.id as string,
+      name: typeof p.name === "string" ? p.name.slice(0, 200) : "",
+      tasks: Array.isArray(p.tasks)
+        ? [...new Set((p.tasks as unknown[]).filter((t): t is string => typeof t === "string" && TASK_NAME.test(t)))].slice(0, 32)
+        : [],
+    }));
+}
+
+const PUBLISHING_STORE_ERRORS: Record<Exclude<PublishingStoreResult, "ok">, string> = {
+  stale: "OAUTH_STATE_INVALID",
+  account_mismatch: "PUBLISHING_ACCOUNT_MISMATCH",
+  downgrade: "PUBLISHING_CONSENT_DOWNGRADE",
+  declined: "PUBLISHING_CONSENT_DECLINED",
+};
 
 const STATE_PATTERN = /^[a-f0-9]{64}$/;
 
@@ -106,6 +141,114 @@ export function createHandler(deps: CallbackDeps) {
     const redirect = (location: string) =>
       new Response(null, { status: 302, headers: { ...corsHeaders, Location: location, "Cache-Control": "no-store" } });
     const fail = (code: string) => redirect(`${target}?error=${encodeURIComponent(code)}`);
+
+    const publishingFail = async (stateHash: string, code: string) => {
+      console.error("[meta-oauth-callback] publishing consent ended:", code);
+      try {
+        await deps.discardPublishingState?.(stateHash);
+      } catch {
+        console.error("[meta-oauth-callback] publishing discard failed");
+      }
+      return redirect(`${target}?publishing_error=${encodeURIComponent(code)}`);
+    };
+
+    const exchangeToken = async (appId: string, appSecret: string, redirectUri: string, code: string) => {
+      const shortRes = await doFetch(`${GRAPH}/oauth/access_token?${new URLSearchParams({
+        client_id: appId, client_secret: appSecret, redirect_uri: redirectUri, code,
+      })}`);
+      const shortBody = await shortRes.json().catch(() => null) as { access_token?: unknown } | null;
+      if (!shortRes.ok || typeof shortBody?.access_token !== "string") {
+        logStage("token_exchange_short", { ok: false, http: shortRes.status, ...graphErrorDetail(shortBody) });
+        throw new MetaError("TOKEN_EXCHANGE_FAILED");
+      }
+      const longRes = await doFetch(`${GRAPH}/oauth/access_token?${new URLSearchParams({
+        grant_type: "fb_exchange_token", client_id: appId, client_secret: appSecret, fb_exchange_token: shortBody.access_token,
+      })}`);
+      const longBody = await longRes.json().catch(() => null) as { access_token?: unknown; expires_in?: unknown } | null;
+      if (!longRes.ok || typeof longBody?.access_token !== "string") {
+        logStage("token_exchange_long", { ok: false, http: longRes.status, ...graphErrorDetail(longBody) });
+        throw new MetaError("TOKEN_EXCHANGE_FAILED");
+      }
+      const expiresIn = Number(longBody.expires_in);
+      return {
+        accessToken: longBody.access_token,
+        expiresAt: Number.isFinite(expiresIn) && expiresIn > 0 ? new Date(now().getTime() + expiresIn * 1000).toISOString() : null,
+      };
+    };
+
+    const graphGetWith = (appSecret: string) => async (stage: string, path: string, accessToken: string, fallback: string) => {
+      const sep = path.includes("?") ? "&" : "?";
+      const proof = await appSecretProof(accessToken, appSecret);
+      const res = await doFetch(`${GRAPH}${path}${sep}appsecret_proof=${proof}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body || (body as { error?: unknown }).error) {
+        const code = classifyGraphError(body, fallback);
+        logStage(stage, { ok: false, http: res.status, result: code, ...graphErrorDetail(body) });
+        throw new MetaError(code);
+      }
+      return body as Record<string, unknown>;
+    };
+
+    const handlePublishing = async (
+      url: URL,
+      stateHash: string,
+      consumed: { result: ConsumeResult; connectionId: string | null },
+    ): Promise<Response> => {
+      try {
+        if (consumed.result === "expired") return await publishingFail(stateHash, "OAUTH_STATE_EXPIRED");
+        if (consumed.result !== "ok" || !consumed.connectionId) return await publishingFail(stateHash, "OAUTH_STATE_INVALID");
+        const appId = deps.env("META_APP_ID");
+        const appSecret = deps.env("META_APP_SECRET");
+        const redirectUri = deps.env("META_REDIRECT_URI");
+        if (!appId || !appSecret || !redirectUri || !deps.storePublishingConsent) {
+          return await publishingFail(stateHash, "META_APP_NOT_CONFIGURED");
+        }
+        if (url.searchParams.get("error")) {
+          const denied = url.searchParams.get("error") === "access_denied";
+          return await publishingFail(stateHash, denied ? "PUBLISHING_CONSENT_DECLINED" : "UNKNOWN_ERROR");
+        }
+        const code = url.searchParams.get("code");
+        if (!code) return await publishingFail(stateHash, "TOKEN_EXCHANGE_FAILED");
+
+        const graphGet = graphGetWith(appSecret);
+        const { accessToken, expiresAt } = await exchangeToken(appId, appSecret, redirectUri, code);
+        logStage("publishing_token_exchange", { ok: true });
+
+        const me = await graphGet("publishing_me", "/me?fields=id", accessToken, "PAGE_DISCOVERY_FAILED");
+        if (typeof me.id !== "string") throw new MetaError("PAGE_DISCOVERY_FAILED");
+
+        const perms = await graphGet("publishing_permissions", "/me/permissions", accessToken, "PAGE_DISCOVERY_FAILED");
+        const permRows = Array.isArray(perms.data) ? (perms.data as { permission?: unknown; status?: unknown }[]) : [];
+        const permissions = permRows
+          .filter((p) => p.status === "granted" && typeof p.permission === "string" && PERMISSION_NAME.test(p.permission))
+          .map((p) => p.permission as string);
+        logStage("publishing_permissions", { granted: permissions });
+
+        const accounts = await graphGet("publishing_page_tasks", "/me/accounts?fields=id,name,tasks&limit=100", accessToken, "PAGE_DISCOVERY_FAILED");
+        if (!Array.isArray(accounts.data)) throw new MetaError("PAGE_DISCOVERY_FAILED");
+        const pages = parsePageTasks(accounts.data);
+        logStage("publishing_page_tasks", { ok: true, pages: pages.length });
+
+        const completion = token();
+        const stored = await deps.storePublishingConsent({
+          connectionId: consumed.connectionId,
+          stateHash,
+          accessToken,
+          expiresAt,
+          metaUserId: me.id,
+          permissions,
+          pages,
+          completionHash: await sha256Hex(completion),
+          completionExpiresAt: new Date(now().getTime() + COMPLETION_TTL_MS).toISOString(),
+        });
+        if (stored !== "ok") return await publishingFail(stateHash, PUBLISHING_STORE_ERRORS[stored] ?? "OAUTH_STATE_INVALID");
+        return redirect(`${target}#publishing_token=${completion}`);
+      } catch (err) {
+        return await publishingFail(stateHash, err instanceof MetaError ? err.code : "UNKNOWN_ERROR");
+      }
+    };
 
     let connectionId: string | null = null;
     const terminate = async (status: FailStatus, code: string) => {
@@ -127,6 +270,10 @@ export function createHandler(deps: CallbackDeps) {
       if (!STATE_PATTERN.test(state)) return terminate("error", "OAUTH_STATE_INVALID");
 
       const stateHash = await sha256Hex(state);
+      if (deps.consumePublishingState) {
+        const pub = await deps.consumePublishingState(stateHash);
+        if (pub.result !== "unknown") return await handlePublishing(url, stateHash, pub);
+      }
       const consumed = await deps.consumeState(stateHash);
       if (consumed.result === "expired") {
         connectionId = consumed.connectionId;

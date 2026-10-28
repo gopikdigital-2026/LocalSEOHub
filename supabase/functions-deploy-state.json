@@ -103,7 +103,7 @@
     },
     "meta-oauth-callback": {
       "hasChanged": false,
-      "hash": "19dcdac9938ec8063616808f755e86b25649c3935796a60377ec567e2d27caed"
+      "hash": "0d3dc722e5ae969b64ab65f5fb0db9e29a865290dd6d63cfe1fbffe046137bb3"
     },
     "meta-oauth-start": {
       "hasChanged": false,
@@ -112,6 +112,10 @@
     "meta-read": {
       "hasChanged": false,
       "hash": "54c35bd27de4b1f7fd534b5812e51600d23e1f6979da2df524430e656db60430"
+    },
+    "publication-adaptations": {
+      "hasChanged": false,
+      "hash": "26e4c0cdceffb8342fc088ee3947b744f723ad2e6d12d3953c98f724abac5ce6"
     },
     "publication-media": {
       "hasChanged": false,
@@ -161,9 +165,9 @@
       "hasChanged": false,
       "hash": "0bb0ae31d6510a5b48e6be53f18452131073f02a0729426a0a59448eaeee72b9"
     },
-    "publication-adaptations": {
+    "meta-publishing": {
       "hasChanged": false,
-      "hash": "26e4c0cdceffb8342fc088ee3947b744f723ad2e6d12d3953c98f724abac5ce6"
+      "hash": "e447fedc96561277c48ced984378b4bfb1bb8054a52045fd2436e103cfe08281"
     }
   }
 }
