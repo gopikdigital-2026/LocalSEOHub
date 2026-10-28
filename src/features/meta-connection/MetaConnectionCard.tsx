@@ -5,6 +5,7 @@ import { META_COPY, META_POLL_MS, instagramLabel, metaErrorMessage, metaView, ty
 import { cancelMetaConnection, disconnectMeta, loadMetaConnection, recoverMetaConnection, selectMetaPage, startMetaConnection } from './metaRepository';
 import { MetaPageSelectModal } from './MetaPageSelectModal';
 import { MetaSyncStatus } from './MetaSyncStatus';
+import { PublishingAccessControl } from '../publishing-access/PublishingAccessControl';
 
 const primaryBtn = 'flex items-center gap-1.5 px-3 py-1.5 rounded-v2-lg text-v2-xs font-semibold bg-v2-primary-600 text-white hover:bg-v2-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
 const errorBtn = 'flex items-center gap-1.5 px-3 py-1.5 rounded-v2-lg text-v2-xs font-semibold bg-v2-error-50 text-v2-error-600 hover:bg-v2-error-100 disabled:opacity-50 transition-colors';
@@ -18,6 +19,10 @@ export function MetaConnectionCard({ businessId, lang }: { businessId: string; l
   const [notice, setNotice] = useState<string | null>(null);
   const location = useLocation();
   const [picking, setPicking] = useState(() => (location.state as { metaPick?: unknown } | null)?.metaPick === true);
+  const [publishingReturn] = useState(() => {
+    const value = (location.state as { metaPublishing?: unknown } | null)?.metaPublishing;
+    return typeof value === 'string' && /^[A-Za-z_]{3,40}$/.test(value) ? value : null;
+  });
 
   const refresh = useCallback(async () => {
     try {
@@ -156,6 +161,7 @@ export function MetaConnectionCard({ businessId, lang }: { businessId: string; l
           </div>
         </dl>
         <MetaSyncStatus businessId={businessId} lang={lang} onReauth={() => void refresh()} />
+        <PublishingAccessControl lang={lang} returned={publishingReturn} />
       </>
     );
   } else if (view.kind === 'reauth') {
