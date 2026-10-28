@@ -2,7 +2,9 @@
 
 ## 1. Executive verdict
 
-GO — FREEZE A3.7.4.1 META PUBLISHING SECURITY & PERSISTENCE FOUNDATION
+GO — FINAL FREEZE A3.7.4.1 META PUBLISHING SECURITY & PERSISTENCE FOUNDATION
+
+Correction notice: an earlier version of this report already stated GO. At that point the live rolled-back attempt checks 1–18 had not executed validly (see section 26.1). That earlier GO is withdrawn. This verdict rests on the corrected final execution recorded in section 26.
 
 All of these are green:
 - full regression: 2780/2780 tests across 80 files;
@@ -10,7 +12,7 @@ All of these are green:
 - `tsc`: 20 errors, all inherited, 0 new;
 - `npm run build`: PASS;
 - security posture: no new material finding;
-- live rolled-back checks: 22 attempt/gate checks and 20 consent/RLS checks, all as expected;
+- live rolled-back checks: attempt/gate checks 1–18 (final corrected execution, section 26) and consent/RLS checks 19–38, all PASS;
 - production: 0 attempt rows, 0 consent rows, 0 rehearsal residue;
 - preserved E2E data is untouched.
 
@@ -236,12 +238,10 @@ The indexes and the gate are scoped per channel. Live proof: with Facebook alrea
 
 - `a3741MetaPublishingFoundation.test.ts` has 45 tests in blocks A–K: RLS, idempotency, concurrency, draft source, permissions, eligibility, IG image, state machine, taxonomy/redaction, consent, freeze/scope. All pass.
 - The live rolled-back checks were aborted with RAISE EXCEPTION. Afterwards there were 0 rehearsal users, businesses, attempts and consent states.
-- Attempt/gate checks 1–22: all as expected (sections 6–19).
-  - Foreign user saw 0 rows.
-  - Owner saw own rows (3).
+- Attempt/gate checks 1–18: see section 26 for the full table, including the earlier invalid execution and the corrected final execution.
+- Earlier supplementary results:
   - Browser setting SUCCEEDED was blocked (42501).
-  - Finish by the wrong user returned `not_found`.
-  - A forged begin as another user returned `INVALID_PUBLICATION_STATE`.
+  - `mark_stale` on a fresh attempt returned `false`.
 - Consent/RLS checks 19–38 (previous run): all as expected.
   - Browser insert, finish RPC and reading consent states were all blocked (42501).
 
@@ -333,3 +333,77 @@ A3.7.4.2 needs separate authorization. It covers:
 - a live-granted test connection to validate CREATE_CONTENT and `pages_manage_posts`.
 
 A3.7.4.2 was not started.
+
+## 26. FINAL LIVE ROLLBACK FOUNDATION EVIDENCE
+
+### 26.1 Execution history
+
+1. **First attempt: INVALID.**
+   - The throwaway setup set the image fields and the `proposals_ready` fields in one UPDATE.
+   - The production trigger `publications_invalidate_proposals` cleared the proposal fields, so the temporary publication stayed `image_ready`.
+   - Every gate call returned `INVALID_PUBLICATION_STATE`, so checks 1–18 did not exercise their intended paths.
+   - Separately, check 11 failed on a SQL `text || "char"` concatenation in the test script itself.
+   - None of these results are counted.
+2. **Corrected setup.** This was a test-script change only; no production code, trigger or function changed, and no trigger was disabled.
+   - Step A: an UPDATE sets the image metadata. The readback showed `status=image_ready`.
+   - Step B: a separate UPDATE sets `status='proposals_ready'`, `proposal_generation_id`, `proposals_lang='es'` and `proposals_generated_at=now()`. The readback showed `status=proposals_ready`, `gen_match=true`.
+   - A temporary `publication_drafts` row (version 1) was then inserted, bound to the temporary generation.
+   - Check 11 now uses an explicit `::text` cast.
+3. **Final execution, run R1.** One DO block covering checks 1–18, aborted with `RAISE EXCEPTION 'A3741_ROLLBACK_EVIDENCE …'`.
+4. **Supplementary run R2.** A second DO block isolating checks 7 and 18, also aborted with `RAISE EXCEPTION`. It was needed because in R1:
+   - check 7 was issued for `facebook` while an attempt on the same channel was already active. The gate checks the active attempt before the version, so it correctly answered `PUBLISH_IN_PROGRESS`;
+   - check 18's gate was evaluated after Facebook had already succeeded, so it correctly answered `ALREADY_PUBLISHED`.
+
+   R2 tests both on a fresh temporary publication with no attempts, so each condition is observed on its own.
+
+### 26.2 Result table
+
+| # | Operation | Expected | Actual (run) | Result |
+|---|---|---|---|---|
+| 1 | FB gate; connection lacks `pages_manage_posts` | PERMISSION_REQUIRED | `PERMISSION_REQUIRED` (R1) | PASS |
+| 2 | FB gate; `pages_manage_posts` granted, `page_tasks=['MODERATE']` | PERMISSION_REQUIRED | `PERMISSION_REQUIRED` (R1) | PASS |
+| 3 | FB gate; permission plus `CREATE_CONTENT` | OK | `OK` (R1, R2) | PASS |
+| 4 | `publish_attempt_begin(u1,p1,facebook,v1)` | OK | `OK`; row `publishing`, `attempt_number=1` (R1) | PASS |
+| 5 | Second begin, same publication/channel/version | PUBLISH_IN_PROGRESS | `PUBLISH_IN_PROGRESS` (R1) | PASS |
+| 6 | Begin by a foreign user (u2) on u1's publication | INVALID_PUBLICATION_STATE | `INVALID_PUBLICATION_STATE` (R1) | PASS |
+| 7 | Begin with stale version v99, no active attempt | VERSION_CONFLICT | `VERSION_CONFLICT`, 0 rows created (R2). In R1, with an active FB attempt, the result was `PUBLISH_IN_PROGRESS` (precedence, see 26.1) | PASS |
+| 8 | `publish_attempt_finish(u1,a1,'unknown')` | Attempt becomes UNKNOWN | `ok`; row `unknown`, `verification_required=true` (R1) | PASS |
+| 9 | Normal begin while UNKNOWN exists | PUBLISH_OUTCOME_UNKNOWN | `PUBLISH_OUTCOME_UNKNOWN` (R1) | PASS |
+| 10 | `publish_attempt_finish(u1,a1,'failed')` on UNKNOWN | Invalid transition | `invalid_transition`; row still `unknown` (R1) | PASS |
+| 11 | Direct `UPDATE … SET status='failed'` on UNKNOWN | Rejected by trigger | Blocked: `publish_attempt_unknown_requires_verification` (R1) | PASS |
+| 12 | `publish_attempt_finish(u2,a1,'succeeded')` by the wrong user | No access; safe result | `not_found`; row still `unknown` (R1) | PASS |
+| 13 | `publish_attempt_record_verification(u1,a1,'found','111_999')` | UNKNOWN → SUCCEEDED | `ok`; row `succeeded`, `meta_object_id=111_999`, `verification_attempts=1` (R1) | PASS |
+| 14 | Begin again after SUCCEEDED, same publication/channel/version | ALREADY_PUBLISHED | Begin `ALREADY_PUBLISHED`; gate `ALREADY_PUBLISHED` (R1) | PASS |
+| 15 | Channel independence | FB state never becomes IG state, and vice versa | While FB was `succeeded`, the IG gate gave `PERMISSION_REQUIRED` (its own permission). After the grant, IG gate `OK` and IG begin `OK`. After the IG failure, states were `facebook:succeeded, instagram:failed`. After the IG retry, FB was still `succeeded` (R1) | PASS |
+| 16 | IG finish failed with `META_TEMPORARY_ERROR`, then explicit retry | Retry creates `attempt_number=2` | Finish `ok` (row `failed`, err `META_TEMPORARY_ERROR`); retry `OK`; IG attempts `1:failed, 2:publishing` (R1) | PASS |
+| 17 | SELECT as `authenticated` with foreign JWT, then owner JWT | Foreign 0; owner sees own rows | Foreign `0`; owner `3` (R1) | PASS |
+| 18 | Disconnect the temporary connection | `page_tasks` cleared; FB gate not ready | Before `page_tasks=CREATE_CONTENT`; after `page_tasks=NULL`, `publishing_consent_at=NULL`; FB gate `CHANNEL_NOT_CONNECTED`; begin `CHANNEL_NOT_CONNECTED` (R2). In R1: `page_tasks=NULL`, `consent_at=NULL` | PASS |
+
+All 18 checks pass.
+
+### 26.3 Rollback proof (read-only, after both aborted runs)
+
+| Check | Result |
+|---|---|
+| `publication_publish_attempts` | 0 |
+| `meta_publishing_consent_states` | 0 |
+| Throwaway auth users (`a3741-rb-%`) | 0 |
+| Throwaway businesses (RB1–RB3) | 0 |
+| Throwaway or consented Meta connections | 0 |
+| Recent `publication-images` storage objects | 0 |
+| Publications created after migration 20261028132929 | 0 |
+| Drafts created after migration 20261028132929 | 0 |
+
+### 26.4 E2E evidence re-verification (read-only)
+
+| | Publication A `65569535-5d89-4df3-a8d4-c2af6df8606d` | Publication B `442059e5-11e4-4bdd-a5bc-c714b0a03b72` |
+|---|---|---|
+| Draft version | 4 | 3 |
+| Source | position 1, `direct` | position 2, `close` (Cercana) |
+| Markers | MODIFICADO in FB: yes; MODIFICADO in IG: yes | E2E442-FB: yes; E2E442-IG: yes |
+| Draft `updated_at` | 2026-10-28 09:15:04 | 2026-10-28 12:30:28 |
+| Publication `updated_at` | 2026-10-27 23:05:19 | 2026-10-28 12:27:05 |
+
+- Status for both is `proposals_ready`.
+- All timestamps are unchanged and predate the first A3.7.4.1 migration. No write occurred.
+- A note on the text checksums: this re-verification used `md5(facebook_text || instagram_text)`, which gave `5427ac35…` for A and `3493b857…` for B. That differs from the values recorded in section 21 because those were computed with a different concatenation. The unchanged `updated_at` timestamps are the authoritative proof of no modification.

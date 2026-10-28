@@ -55,5 +55,5 @@ All 36 A3.7.3.4 manifest entries are byte-identical, apart from the 4 enumerated
 
 | File | SHA-256 |
 |---|---|
-| auditoria-a2/A3_7_4_1_META_PUBLISHING_SECURITY_FOUNDATION.md | d6be95d7177e5fb874c30e1e8e2d250f86e5fac39839428c030fc10137214609 |
+| auditoria-a2/A3_7_4_1_META_PUBLISHING_SECURITY_FOUNDATION.md | 60ba153aa1654fc360fec4f6175fefa4e4dd66c4b8a8d64942ba971e968c099a (final; adds section 26 FINAL LIVE ROLLBACK FOUNDATION EVIDENCE; was d6be95d7177e5fb874c30e1e8e2d250f86e5fac39839428c030fc10137214609) |
 | auditoria-a2/A3_7_2_FREEZE_MANIFEST.md (after re-pin) | ced8edffe1020456cbe645c62991f310eb910a74d4e29d3fd6a77bba9fba917a |
