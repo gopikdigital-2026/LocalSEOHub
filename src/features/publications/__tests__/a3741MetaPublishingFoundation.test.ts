@@ -496,6 +496,8 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
   // Authorized A3.7.4.2 re-pins (GATE A): App.tsx mounts the internal Facebook harness on the same hidden route; the four
   // App.tsx hash pins (a281, a273, a272, a3544) follow it; a3733 test 29 allows /photos only in facebookPhoto.ts.
   // A3.7.4.1 "now" values for a281/a273/a272/a3733 were 5dec386e / 2f3281bb / aa4e9524 / 6a528660.
+  // Authorized A3.7.4.2 FIX02 re-pins: migration count 57 -> 58 and a3742 migration exclusion (a281, a273, a272);
+  // prior GATE A "now" values were 0b69351e / 7b8b10b6 / 5c8006c5.
   const AUTHORIZED_REPINS: Record<string, { was: string; now: string }> = {
     'src/App.tsx': {
       was: '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba',
@@ -503,15 +505,15 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     },
     'src/components/__tests__/a281TrustCleanup.test.ts': {
       was: 'cb6a925ab209873f69222303e0b7afc27a1ebfe0e4aaf3d6eecba3364da36c92',
-      now: '0b69351e18bf72cd42cf207a6dd92f5b947bbbe71fdf394b7608228905f90fbc',
+      now: '4db0f81965dd125da8f81968483b2558fc0565c187c6e3d8032d35197bc68198',
     },
     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
-      now: '7b8b10b6c5f54e6a007941b48417d5826a4739c9545037a2415b433a66452a06',
+      now: '2ce19c6b05c5052c3f98f9a40d39442088672efd36a9d82f749a2e743ff83938',
     },
     'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
       was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',
-      now: '5c8006c55ec6df48cd881e10c6fec046559bc835f120c2ee3ac55807f2dfdfcc',
+      now: '20296e5b93b6d88e046d27800737b45d6ccc0c4b57528214726feb5ae2fd91a7',
     },
     // Split so the a3542 isolation guard (no literal reference to that layer outside it) keeps holding.
     ['src/features/social' + '-intelligence/integration/__tests__/a3544SocialIntegration.test.ts']: {
