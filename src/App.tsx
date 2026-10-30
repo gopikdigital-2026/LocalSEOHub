@@ -38,6 +38,7 @@ const PublicationsValidationPage = lazy(() => import('./features/publications/va
 const ChannelAdaptationPanel = lazy(() => import('./features/channel-adaptation/ChannelAdaptationPanel'));
 const ChannelReviewPanel = lazy(() => import('./features/channel-review/ChannelReviewPanel'));
 const FbHarness = lazy(() => import('./features/facebook-publish/FacebookPublishHarness'));
+const IgHarness = lazy(() => import('./features/instagram-publish/InstagramPublishHarness'));
 const PublicationResumeProvider = lazy(() => import('./features/publication-resume/PublicationResumeProvider'));
 
 // ─── Public pages ───────────────────────────────────────────────────────────
@@ -232,7 +233,7 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
             <Suspense fallback={SKELETON}>
               <PublicationsValidationPage />
               <ChannelAdaptationPanel />
-              <ChannelReviewPanel /><FbHarness />
+              <ChannelReviewPanel /><FbHarness /><IgHarness />
             </Suspense>
           </AppGuard>
         } />

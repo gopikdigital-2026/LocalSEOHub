@@ -123,3 +123,6 @@ verify_jwt = true
 
 [functions.meta-publishing]
 verify_jwt = true
+
+[functions.instagram-publishing]
+verify_jwt = true
