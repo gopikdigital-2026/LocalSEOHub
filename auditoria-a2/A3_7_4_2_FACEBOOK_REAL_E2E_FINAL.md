@@ -3,6 +3,8 @@
 Date: 2026-10-30
 Scope: post-publish verification, disarm, final freeze. No publish, no retry, no Instagram, no Facebook write performed by this audit.
 
+**Result: real external Facebook E2E PASS. Post-disarm verification PASS. FINAL FREEZE.**
+
 ## 1. Publication C identity
 
 | Field | Value |
@@ -103,9 +105,10 @@ Read-only confirmation through Graph API was not performed from this environment
 ## 11. Arming / disarming evidence
 
 - Before Part 3A: neither secret existed.
-- After Part 3A: Manuel added `META_FACEBOOK_REAL_PUBLISH_USER_IDS` (his UUID) and `META_FACEBOOK_REAL_PUBLISH_ARMED=true`, and he published once.
-- **At this audit (Gate B.3): both secrets are STILL PRESENT in the edge function secrets list.** The audit tooling can list secret names but cannot delete secrets; removal must be done by the project owner in Bolt → database icon → Secrets.
-- Current residual exposure while armed: C itself is protected (ALREADY_PUBLISHED). Manuel could still publish a *different* eligible publication of his to Facebook through an explicit click. No other user can publish.
+- After Part 3A: Manuel added `META_FACEBOOK_REAL_PUBLISH_USER_IDS` and `META_FACEBOOK_REAL_PUBLISH_ARMED`, and he published once.
+- First Gate B.3 run: both secrets were still present, so the verdict was NO-GO.
+- **Post-disarm run: Manuel deleted both secrets manually.** The authoritative edge function secrets list from the production project no longer contains either name. The remaining names are SUPABASE_*, LocalSEO_AI, LocalSEO_KEY, STRIPE_*, ADMIN_EMAIL, GOOGLE_*, SITE_URL, META_APP_ID, META_APP_SECRET and META_REDIRECT_URI.
+- Neither secret was recreated for testing. No secret values appear in this report.
 
 ## 12. Final server fail-closed evidence
 
@@ -117,7 +120,13 @@ Code-level, verified on the deployed source (meta-publishing hash ae6e628c…, h
 - `facebook_publish_status` reports `armed:false` in that case, and the UI shows "Publicación real desactivada en el servidor".
 - Unit tests in `a3742FacebookPhotoPublishing.test.ts` assert both paths: flag absent, and user not in the list. Neither performs a fetch nor calls begin.
 
-**Runtime post-disarm proof is PENDING**, because the secrets have not been removed yet.
+Post-disarm proof:
+- The production config has no `META_FACEBOOK_REAL_PUBLISH_ARMED`, so `env()` returns undefined, `!== "true"`, and `isArmed` is false for every user, including Manuel.
+- The production config has no `META_FACEBOOK_REAL_PUBLISH_USER_IDS`, so the allow-list parses to `[]` and `isArmed` is false, even if the flag were ever re-added alone.
+- There is no default or fallback: the flag needs the exact string `"true"`, the list defaults to empty, and there is no other env var, DB setting, header or request field read by `isArmed`.
+- `publishFacebookPhoto` (the only POST /photos) is imported only by `facebookPublish.ts` and is reached only after the `isArmed` gate in `publish()`. Its source sha256 is unchanged and the deployed hash is ae6e628c… (hasChanged false), so production runs this exact code.
+- An otherwise eligible unpublished publication is therefore rejected with 403 `REAL_PUBLISH_DISABLED`, state NOT_REQUESTED, before preflight, attempt creation or any Meta call. The UI shows "Publicación real desactivada en el servidor" (`armedOff`) and "La publicación real está desactivada en el servidor." (`REAL_PUBLISH_DISABLED`).
+- No new publication or attempt was created to show this. Proof is the production secret state plus the deployed code path, and the unit tests in `a3742FacebookPhotoPublishing.test.ts` (flag absent; user not listed), which assert 403 with zero fetch and zero begin calls.
 
 ## 13. Tests / typecheck / build
 
@@ -146,24 +155,29 @@ Guarantees re-confirmed:
 
 No A3.7.4.1 guarantee was modified, and no code changed in this phase.
 
+Post-disarm global attempt accounting (whole `publication_publish_attempts`):
+
+| Metric | Count |
+|---|---|
+| total | 1 |
+| succeeded | 1 |
+| publishing | 0 |
+| unknown | 0 |
+| failed | 0 |
+| facebook | 1 |
+| instagram | 0 |
+
+After disarm, the attempt row is byte-identical to before: same id, key, meta_object_id, permalink and updated_at 22:40:42.724699+00. C preflight is still `ALREADY_PUBLISHED`; foreign user `INVALID_PUBLICATION_STATE`; C draft is still v3 with caption md5 5e3dd1d5…; A/B draft md5 and status timestamps are unchanged with 0 attempts. A repeated browser click on C now stops at the arming gate (403), and even if re-armed it would stop at preflight (ALREADY_PUBLISHED) and at the unique indexes, so a second Facebook post cannot be created.
+
 ## 14. Remaining known limitations
 
-1. Real-publish arming has not yet been removed. This blocks the freeze.
+1. The runtime 403 was not triggered with a live user session, because audit tooling holds no user JWT and creating an extra eligible publication was prohibited. Fail-closed is proven from the production secret state, the deployed code hash and the unit tests.
 2. There is no independent Graph API read-back from audit tooling; the external evidence is Manuel's visual confirmation plus the stored permalink.
 3. `publications.status` stays `proposals_ready` after a Facebook success; publication state is tracked per channel in the attempts table (by design).
 4. Instagram is out of scope (C's Instagram preflight: IMAGE_UNSUPPORTED).
 
 ## 15. Verdict
 
-**NO-GO — A3.7.4.2 FACEBOOK SINGLE-PHOTO PUBLISHING REQUIRES CORRECTION**
+**GO — FINAL FREEZE A3.7.4.2 FACEBOOK SINGLE-PHOTO PUBLISHING**
 
-The only correction required is operational, not a code defect:
-1. Delete `META_FACEBOOK_REAL_PUBLISH_ARMED` and `META_FACEBOOK_REAL_PUBLISH_USER_IDS` in Bolt → Secrets.
-2. Re-run this Gate B.3 check:
-   - secret names absent;
-   - attempts still 1, succeeded;
-   - C preflight ALREADY_PUBLISHED;
-   - A/B unchanged;
-   - status for an eligible candidate shows "Publicación real desactivada en el servidor".
-
-Every other freeze condition is met.
+The earlier NO-GO (arming secrets still present) is resolved: both secrets are deleted and the server fails closed. Every material check passes. A3.7.4.3 (Instagram) is not started.

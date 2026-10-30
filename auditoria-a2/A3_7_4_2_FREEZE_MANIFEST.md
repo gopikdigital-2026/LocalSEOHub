@@ -1,6 +1,6 @@
 # A3.7.4.2 — Freeze Manifest (Facebook Page Single-Photo Publishing)
 
-Status: PROVISIONAL. The manifest becomes final once the real-publish arming secrets are removed and Gate B.3 is re-run with a GO verdict.
+Status: FINAL — GO — FINAL FREEZE A3.7.4.2 FACEBOOK SINGLE-PHOTO PUBLISHING. All hashes below were re-verified after disarm and are unchanged.
 
 Date: 2026-10-30
 
@@ -69,4 +69,12 @@ Baseline:
 
 ## Required secret state at freeze
 
-`META_FACEBOOK_REAL_PUBLISH_ARMED` and `META_FACEBOOK_REAL_PUBLISH_USER_IDS` must both be ABSENT. At the time of writing they are still PRESENT, so the freeze is pending.
+`META_FACEBOOK_REAL_PUBLISH_ARMED` and `META_FACEBOOK_REAL_PUBLISH_USER_IDS` are both ABSENT, verified from the production edge function secrets list. Real Facebook writes are disabled for every user.
+
+Post-disarm attempt accounting: total 1, succeeded 1, publishing 0, unknown 0, failed 0, facebook 1, instagram 0.
+
+Final regression:
+- 84 files / 2874 tests pass;
+- focused publishing suites 4 files / 150 pass;
+- TypeScript 20 inherited errors, 0 new;
+- build PASS.
