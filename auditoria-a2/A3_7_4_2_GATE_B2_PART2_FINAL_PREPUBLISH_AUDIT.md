@@ -3,7 +3,9 @@
 Mode: audit, read-only, no Meta write. Date: 2026-10-30.
 This audit changed no code and no data, made no Meta write, created no attempt and did not arm publishing.
 
-## Verdict
+> **Update 2026-10-30:** D1 has been fixed by FIX03, and this audit was re-run. See the section "Re-run after FIX03" at the end of this file and `A3_7_4_2_GATE_B2_FIX03_PUBLISH_PANEL_REFRESH.md`. The original verdict and the D1 evidence below are kept unchanged as history.
+
+## Verdict (original run, historical)
 
 **NO-GO — A3.7.4.2 GATE B.2 PRE-PUBLISH HAS A TECHNICAL/SECURITY/IDENTITY DEFECT**
 
@@ -160,3 +162,60 @@ This **differs** from the caption in the brief ("En Gopik.Digital…", which is 
 3. Manuel must decide which caption he wants posted. Then reload the page, confirm the panel shows version 3 (or the newer version) with that exact caption, and re-run this audit to freeze it.
 
 STOP. Not armed. Not published. Awaiting Manuel.
+
+---
+
+## Re-run after FIX03 (2026-10-30)
+
+Items 1 and 2 above were implemented under Manuel's FIX03 authorization. Details are in `A3_7_4_2_GATE_B2_FIX03_PUBLISH_PANEL_REFRESH.md`.
+- The editor now triggers the existing shared refresh after a successful save or restore, so the Facebook publishing panel reloads.
+- 8 new rendered regression tests pass. With the refresh call removed, 3 of them fail (reproducing D1).
+- Label renamed to "Versión del borrador" / "Draft version".
+- Full suite: 84 files, 2874 tests passed. TypeScript: 20 inherited errors, 0 new. Build: passed.
+
+**D1 status: CLOSED.** The panel's version and caption now follow the authoritative saved draft. The server-side guard behaves as before: stale version 2 requests still fail with VERSION_CONFLICT.
+
+Item 3: the authoritative caption is the version 3 LocalSEOHub.io text below, as designated in the FIX03 brief.
+
+### Re-audit evidence (read-only)
+- C b140fc59-6458-47d7-b695-df8781610ea5:
+  - status proposals_ready;
+  - draft **version 3**, updated_at 2026-10-30 00:18:03.275237 (not incremented by the fix);
+  - Facebook caption md5 5e3dd1d5591f6f8267071ece78b1c6e5, 222 chars.
+- Image …/3b96d1a8-e860-48af-874f-4304d4af6905.png, image/png, 2,089,456 B, eTag 4bccc6fc6f6b6a3e31f5d60a656db8da (unchanged).
+- Page Localseohub.io 1393994523793266, connection connected:
+  - pages_show_list, pages_read_engagement and pages_manage_posts granted;
+  - CREATE_CONTENT present;
+  - not revoked, no last error.
+- Preflight at version 3: Facebook ready (no issue). At version 2: VERSION_CONFLICT.
+- Attempts: 0 for C, 0 table-wide.
+- Real publishing OFF: no arming or allow-list secret.
+- A and B unchanged: md5 5b7366bf… and fd3e4f7a…, matching this report.
+- No Meta endpoint or edge function was called.
+- Not done:
+  - The panel was not viewed in a browser as Manuel. Its rendering path is covered by the rendered regression test.
+  - The live Page-token derivation from Facebook was not run; it runs only on the armed path.
+
+### Frozen test C payload
+- Publication b140fc59-6458-47d7-b695-df8781610ea5; Page 1393994523793266; draft version 3.
+- Image as above.
+- Would-be idempotency key: **`b140fc59-6458-47d7-b695-df8781610ea5:facebook:v3`**.
+- Caption (md5 5e3dd1d5591f6f8267071ece78b1c6e5):
+
+```
+La visibilidad en Google es crucial para el éxito de cualquier negocio.
+
+En LocalSEOHub.io estamos aquí para ayudarte a mejorar tu presencia online.
+
+No dejes que tu competencia te supere.
+
+Escríbenos para más información.
+```
+
+Any further edit to the draft changes the version and voids this freeze.
+
+### Verdict (re-run)
+
+**GO — A3.7.4.2 GATE B.2 FIX03 CLOSED; PRE-PUBLISH VERIFIED; TEST C PAYLOAD FROZEN; REAL FACEBOOK POST REQUIRES MANUEL EXPLICIT AUTHORIZATION**
+
+STOP. Not armed. Not published. No attempt created. Awaiting Manuel's explicit authorization.

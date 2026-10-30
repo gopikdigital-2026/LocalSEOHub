@@ -24,7 +24,7 @@ const textsOf = (d: ReviewDraft): Texts => ({ facebook: d.facebookText, instagra
 export default function ChannelReviewPanel() {
   const { currentBusiness } = useBusiness();
   const { lang } = useI18n();
-  const { publication, revision, setUnsaved } = usePublicationResume();
+  const { publication, state: resumeState, revision, refresh, setUnsaved } = usePublicationResume();
   const pub = isReady(publication) && publication.businessId === currentBusiness?.id ? publication : null;
   const pubId = pub?.id ?? null;
   const generationId = pub?.proposals.generationId ?? null;
@@ -60,9 +60,16 @@ export default function ChannelReviewPanel() {
 
   // Same publication, newer server state (selection or adaptation in step 3): never drop unsaved text silently.
   const shown = useRef<string | null>(null);
+  // A save triggers the shared refresh for the publish step; this editor already holds that saved row, so it skips
+  // reloading only when the refreshed shared state reports exactly that row.
+  const ownRefresh = useRef<string | null>(null);
   useEffect(() => {
     const samePublication = shown.current === pubId;
     shown.current = pubId;
+    const own = ownRefresh.current;
+    ownRefresh.current = null;
+    const synced = resumeState.status === 'ready' && resumeState.publication.id === pubId ? resumeState.draft?.updatedAt : undefined;
+    if (samePublication && own !== null && own === synced) return;
     if (samePublication && dirtyRef.current && !window.confirm(t('leaveWarning'))) return;
     setDraft(null);
     setLocal({ facebook: '', instagram: '' });
@@ -113,6 +120,8 @@ export default function ChannelReviewPanel() {
       setDraft(next);
       setLocal(after(next));
       setJustSaved(true);
+      ownRefresh.current = next.updatedAt;
+      void refresh();
     } catch (e) {
       fail(e);
     } finally {

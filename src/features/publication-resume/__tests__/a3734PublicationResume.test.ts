@@ -198,7 +198,7 @@ describe('A3.7.3.4 single publication identity', () => {
     }
     expect(PAGE).toMatch(/const pub = resume\.publication;/);
     expect(STEP3).toMatch(/const \{ publication, refresh \} = usePublicationResume\(\);/);
-    expect(STEP4).toMatch(/const \{ publication, revision, setUnsaved \} = usePublicationResume\(\);/);
+    expect(STEP4).toMatch(/const \{ publication, state: resumeState, revision, refresh, setUnsaved \} = usePublicationResume\(\);/);
   });
 
   it('every step acts on that same id', () => {

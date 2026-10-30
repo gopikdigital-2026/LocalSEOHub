@@ -12,7 +12,7 @@ export const FB = {
   empty: { es: 'Abre una publicación con propuestas listas para comprobarla.', en: 'Open a publication with ready proposals to check it.' },
   publication: { es: 'Publicación', en: 'Publication' },
   page: { es: 'Página de Facebook', en: 'Facebook Page' },
-  version: { es: 'Versión del texto', en: 'Text version' },
+  version: { es: 'Versión del borrador', en: 'Draft version' },
   state: { es: 'Estado del intento', en: 'Attempt state' },
   preflight: { es: 'Comprobación previa', en: 'Preflight' },
   ready: { es: 'Lista para publicar', en: 'Ready to publish' },

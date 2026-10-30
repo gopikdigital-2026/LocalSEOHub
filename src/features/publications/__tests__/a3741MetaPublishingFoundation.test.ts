@@ -498,6 +498,8 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
   // A3.7.4.1 "now" values for a281/a273/a272/a3733 were 5dec386e / 2f3281bb / aa4e9524 / 6a528660.
   // Authorized A3.7.4.2 FIX02 re-pins: migration count 57 -> 58 and a3742 migration exclusion (a281, a273, a272);
   // prior GATE A "now" values were 0b69351e / 7b8b10b6 / 5c8006c5.
+  // Authorized A3.7.4.2 GATE B.2 FIX03 re-pins: the review editor refreshes the shared publication after a save so the
+  // Facebook publish panel never shows a stale version/caption; a3734 follows its context destructuring.
   const AUTHORIZED_REPINS: Record<string, { was: string; now: string }> = {
     'src/App.tsx': {
       was: '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba',
@@ -523,6 +525,14 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     'src/features/publications/__tests__/a3733ChannelReview.test.ts': {
       was: 'd62c66187e16c6200e1327b5709def5e2fe781fd344e2202585560249b8759c9',
       now: 'eb212294494c2799e93acb7adeb0827c80f6b04a8110df31f52caa063dfa1b8e',
+    },
+    'src/features/channel-review/ChannelReviewPanel.tsx': {
+      was: '5ab5259c24a48072d80535c13d1d4b5a5e5c432a2a66316cd3d4b30efa128989',
+      now: '0dc3a0e50b5f61c69d458313a5a7f9a672616af9f81906c32618239b8025f4be',
+    },
+    'src/features/publication-resume/__tests__/a3734PublicationResume.test.ts': {
+      was: '5ca2c7ba3f3c311a94f78565156199efcc6e2c4a95a8bc00583e1fb58ab94cf9',
+      now: '7778b24b8cf0e80c07fb33008a751bafd7dbe6c1d18ac395561e7e8ae4df35b1',
     },
   };
   it('every A3.7.3.4 frozen file is byte-identical, except the enumerated authorized re-pins', () => {
