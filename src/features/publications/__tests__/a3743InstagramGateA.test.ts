@@ -28,6 +28,7 @@ const UPNG = createRequire(import.meta.url)('upng-js') as {
 const ROOT = join(__dirname, '../../../..');
 const read = (p: string) => readFileSync(join(ROOT, p), 'utf8');
 const sha = (p: string) => createHash('sha256').update(readFileSync(join(ROOT, p))).digest('hex');
+const hex = (b: string | Uint8Array) => createHash('sha256').update(b).digest('hex');
 const MIGRATION = read('supabase/migrations/20261030232253_a3743_instagram_container_state.sql');
 const IG_DIR = 'supabase/functions/instagram-publishing';
 
@@ -211,6 +212,11 @@ function setup(over: Partial<Gate> = {}, meta: MetaOpts = {}, deps: Partial<Inst
   let n = 0;
   const d: InstagramPublishDeps = {
     getUserId: vi.fn(async (jwt: string) => (jwt === 'other' ? OTHER : jwt ? USER : null)),
+    // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED HARNESS EXTENSION: the server now pins the publication, version, caption and image
+    // and re-checks the internal-test entitlement; this fixture pins its own content. No behavioural assertion changed.
+    target: { publicationId: PUB, version: 4, captionSha256: hex(CAPTION), imageSha256: hex(BASE_JPEG) },
+    entitlementActive: vi.fn(async () => true),
+    downloadDerivative: vi.fn(async (path: string) => store.get(path) ?? null),
     preflight: vi.fn(async (userId: string, _p: string, v: number): Promise<PreflightRow[]> => {
       const row = igRow(g);
       return [
@@ -604,11 +610,13 @@ describe('A3.7.4.3 media_publish and UNKNOWN safety (mocked Graph)', () => {
     expect(s.g.rows[0]).toMatchObject({ status: 'succeeded', stage: 'publish_requested', container: CONTAINER, metaObjectId: MEDIA });
   });
 
-  it('T26 media_publish definite failure: FAILED, evidence kept', async () => {
+  // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED BEHAVIOURAL RE-PIN (F6; was: ['FAILED', 'META_REJECTED'] and status 'failed'): an error
+  // reply to media_publish cannot prove that nothing was published, so it is UNKNOWN (blocking, never retryable). Evidence checks kept.
+  it('T26 media_publish error reply: UNKNOWN (never FAILED), evidence kept', async () => {
     const s = setup({}, { publish: res({ error: { code: 100 } }, 400) });
     const body = await (await s.publish()).json();
-    expect([body.state, body.code]).toEqual(['FAILED', 'META_REJECTED']);
-    expect(s.g.rows[0]).toMatchObject({ stage: 'publish_requested', container: CONTAINER, status: 'failed' });
+    expect([body.state, body.code]).toEqual(['UNKNOWN', 'PUBLISH_OUTCOME_UNKNOWN']);
+    expect(s.g.rows[0]).toMatchObject({ stage: 'publish_requested', container: CONTAINER, status: 'unknown' });
     expect(postsTo(s.fetch, '/media_publish')).toHaveLength(1);
   });
 

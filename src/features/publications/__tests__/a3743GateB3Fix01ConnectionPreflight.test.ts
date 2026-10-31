@@ -426,8 +426,10 @@ describe('B.3 FIX01 browser panel', () => {
     expect(sha('src/App.tsx')).toBe('ef7f7cdca4c0c0a952a90cff7e68e427c1decdf2655c68c72d9f1468d2b5029b');
     expect(read('supabase/config.toml')).toMatch(/\[functions\.instagram-publishing\]\s*verify_jwt = true/);
     const frozen: Record<string, string> = {
-      [`${IG_DIR}/instagramPublish.ts`]: '5523a9c0481760a672e5d9373cd654f2af0a0c374614b39ca90e9682b95d63ca',
-      [`${IG_DIR}/graph.ts`]: '6a5909c494b09f653006affa8917cb7aa897b5ee9d2baa328aca24eb1416d28a',
+      // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED RE-PIN (was: 5523a9c0481760a672e5d9373cd654f2af0a0c374614b39ca90e9682b95d63ca)
+      [`${IG_DIR}/instagramPublish.ts`]: 'df94b08fcbd2134d17a85a3ecdaefdfcdda51a36014771585a6510787ad200f1',
+      // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED RE-PIN (was: 6a5909c494b09f653006affa8917cb7aa897b5ee9d2baa328aca24eb1416d28a)
+      [`${IG_DIR}/graph.ts`]: 'a107c840cba644967c9a911ef923755176de0b7674530372a506bdc1333bb61e',
       [`${IG_DIR}/shared.ts`]: '2de062eaf385236e303c043ff17434b45ff1d8b9200e12e65462bc8e95f623cd',
       [`${IG_DIR}/derivative.ts`]: 'be27cd6efba40260d86f09813316ccbcf36496de2615b62f1c3cb4e25f458dfa',
       'src/features/instagram-publish/repository.ts': '9b5f26d48f0ab2ea632ebe42d2c2247d49005eca292140ca4ea3d78a1fe190dd',

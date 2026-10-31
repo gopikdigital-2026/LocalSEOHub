@@ -87,9 +87,11 @@ export function createContainer(p: Auth & { igUserId: string; imageUrl: string; 
   return write(p, `${p.igUserId}/media`, { image_url: p.imageUrl, caption: p.caption }, "ig_container", p.timeoutMs ?? CREATE_TIMEOUT_MS);
 }
 
-export function publishContainer(p: Auth & { igUserId: string; containerId: string; timeoutMs?: number }): Promise<WriteOutcome> {
-  if (!NUMERIC_ID.test(p.igUserId) || !NUMERIC_ID.test(p.containerId)) return Promise.resolve({ kind: "failed", code: "INTERNAL_ERROR" });
-  return write(p, `${p.igUserId}/media_publish`, { creation_id: p.containerId }, "ig_media_publish", p.timeoutMs ?? PUBLISH_TIMEOUT_MS);
+// Once sent, only a returned media id is conclusive: any error reply (429, 4xx, 5xx) may still hide a published post.
+export async function publishContainer(p: Auth & { igUserId: string; containerId: string; timeoutMs?: number }): Promise<WriteOutcome> {
+  if (!NUMERIC_ID.test(p.igUserId) || !NUMERIC_ID.test(p.containerId)) return { kind: "failed", code: "INTERNAL_ERROR" };
+  const out = await write(p, `${p.igUserId}/media_publish`, { creation_id: p.containerId }, "ig_media_publish", p.timeoutMs ?? PUBLISH_TIMEOUT_MS);
+  return out.kind === "failed" ? { kind: "unknown" } : out;
 }
 
 export type ContainerStatus = "FINISHED" | "IN_PROGRESS" | "ERROR" | "EXPIRED" | "PUBLISHED" | "UNAVAILABLE";

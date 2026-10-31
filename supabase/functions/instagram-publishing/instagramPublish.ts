@@ -6,6 +6,7 @@ import { buildDerivative, orientedSize, planDerivative, probe, sourceIssue, type
 import {
   createContainer, derivePageToken, findPublishedMedia, publishContainer, readBackMedia, waitForContainer, type ReadBack,
 } from "./graph.ts";
+import { captionMatches, imageMatchesTarget, isTargetPublication, sha256Hex, type PublishTarget } from "./publishTarget.ts";
 
 export const INSTAGRAM_ACTIONS = new Set(["instagram_publish_status", "instagram_publish", "instagram_publish_verify"]);
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -52,6 +53,8 @@ export type ImageDownload = { ok: true; bytes: Uint8Array; contentType: string |
 
 export interface InstagramPublishDeps {
   getUserId(jwt: string): Promise<string | null>;
+  target: PublishTarget;
+  entitlementActive(userId: string): Promise<boolean>;
   preflight(userId: string, publicationId: string, expectedVersion: number): Promise<PreflightRow[]>;
   context(userId: string, publicationId: string): Promise<InstagramContext | null>;
   begin(userId: string, publicationId: string, expectedVersion: number): Promise<BeginRow>;
@@ -62,6 +65,7 @@ export interface InstagramPublishDeps {
   readUserToken(userId: string, pageId: string): Promise<string | null>;
   downloadImage(path: string, maxBytes: number): Promise<ImageDownload>;
   storeDerivative(path: string, bytes: Uint8Array): Promise<boolean>;
+  downloadDerivative(path: string): Promise<Uint8Array | null>;
   signDerivative(path: string, ttlSeconds: number): Promise<string | null>;
   removeDerivative(path: string): Promise<void>;
   codecs: Codecs;
@@ -193,8 +197,20 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
     });
   }
 
-  async function publish(userId: string, publicationId: string, expectedVersion: number, retry: boolean) {
-    if (!isAuthorizedToPublish(deps.env, userId, publicationId)) return json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "NOT_REQUESTED" }, 403);
+  const entitled = async (userId: string) => {
+    try {
+      return (await deps.entitlementActive(userId)) === true;
+    } catch {
+      return false;
+    }
+  };
+  const mayWrite = async (userId: string, publicationId: string) =>
+    isAuthorizedToPublish(deps.env, userId, publicationId) && isTargetPublication(deps.target, publicationId) && (await entitled(userId));
+
+  async function publish(userId: string, publicationId: string, requestedVersion: number, retry: boolean) {
+    if (!(await mayWrite(userId, publicationId))) return json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "NOT_REQUESTED" }, 403);
+    if (requestedVersion !== deps.target.version) return fail("VERSION_CONFLICT", "NOT_REQUESTED");
+    const expectedVersion = deps.target.version;
     const row = instagramReadModel(await deps.preflight(userId, publicationId, expectedVersion));
     if (row.issue) return fail(row.issue, ISSUE_STATE[row.issue] ?? row.state);
 
@@ -216,27 +232,32 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
     let mediaSent = false;
     let derivative: string | null = null;
 
-    const close = async (outcome: "succeeded" | "failed" | "unknown", objectId: string | null, permalink: string | null, code: PublishErrorCode | null) => {
+    const settle = async (outcome: "succeeded" | "failed" | "unknown", objectId: string | null, permalink: string | null, code: PublishErrorCode | null) => {
       try {
-        return (await deps.finish(userId, attemptId, outcome, objectId, permalink, code)) === "ok";
+        return await deps.finish(userId, attemptId, outcome, objectId, permalink, code);
       } catch {
-        return false;
+        return "error";
       }
     };
+    const close = async (outcome: "succeeded" | "failed" | "unknown", objectId: string | null, permalink: string | null, code: PublishErrorCode | null) =>
+      (await settle(outcome, objectId, permalink, code)) === "ok";
+    // The database stores a failure as UNKNOWN ("ok_unknown") once media_publish may have been requested.
+    const settled = (result: string, done: () => Response) =>
+      result === "ok" ? done()
+        : result === "ok_unknown" ? fail("PUBLISH_OUTCOME_UNKNOWN", "UNKNOWN", 202)
+        : fail("INTERNAL_ERROR", "PUBLISHING", 500);
     const failed = async (code: PublishErrorCode) => {
       const safe = FAILED_CODES.has(code) ? code : "INTERNAL_ERROR";
-      return (await close("failed", null, null, safe)) ? fail(safe, "FAILED") : fail("INTERNAL_ERROR", "PUBLISHING", 500);
+      return settled(await settle("failed", null, null, safe), () => fail(safe, "FAILED"));
     };
     const unknown = async () => {
       await close("unknown", null, null, null);
       return fail("PUBLISH_OUTCOME_UNKNOWN", "UNKNOWN", 202);
     };
-    // Arming is re-read before every Graph write so revoking it mid-flight stops the next request.
+    // Arming, allowlists and the entitlement are re-read before every Graph write so revoking any of them stops the next request.
     const disarmed = async () =>
-      (await close("failed", null, null, "INTERNAL_ERROR"))
-        ? json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "FAILED" }, 403)
-        : fail("INTERNAL_ERROR", "PUBLISHING", 500);
-    const stillAuthorized = () => isAuthorizedToPublish(deps.env, userId, publicationId);
+      settled(await settle("failed", null, null, "INTERNAL_ERROR"), () => json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "FAILED" }, 403));
+    const stillAuthorized = () => mayWrite(userId, publicationId);
     const advance = async (stage: Exclude<Stage, "none">, containerId: string | null) => {
       try {
         return (await deps.advance(userId, attemptId, stage, containerId)) === "ok";
@@ -253,6 +274,7 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
       const caption = begun.caption ?? "";
       if (!NUMERIC_ID.test(pageId) || !NUMERIC_ID.test(igUserId)) return await failed("CHANNEL_NOT_CONNECTED");
       if (!caption.trim()) return await failed("INTERNAL_ERROR");
+      if (begun.draft_version !== deps.target.version || !(await captionMatches(deps.target, caption))) return await failed("INTERNAL_ERROR");
       const businessId = (mime === "image/jpeg" || mime === "image/png") ? originalPathOwner(userId, publicationId, path, mime) : null;
       if (!businessId) return await failed("IMAGE_UNAVAILABLE");
       const appSecret = deps.env("META_APP_SECRET");
@@ -269,6 +291,7 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
       if (image.bytes.byteLength === 0 || !imageMatches(image.bytes, mime) || (image.contentType && image.contentType !== mime)) {
         return await failed("IMAGE_UNSUPPORTED");
       }
+      if (!(await imageMatchesTarget(deps.target, image.bytes))) return await failed("IMAGE_UNSUPPORTED");
       const built = buildDerivative(image.bytes, mime as SourceMime, deps.codecs);
       if (!built.ok) {
         log({ stage: "derivative", result: "IMAGE_UNSUPPORTED", reason: built.reason });
@@ -277,11 +300,26 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
       const target = derivativePath(userId, businessId, publicationId, attemptId);
       if (!(await deps.storeDerivative(target, built.bytes))) return await failed("INTERNAL_ERROR");
       derivative = target;
+      const derivativeSha = await sha256Hex(built.bytes);
       const imageUrl = await deps.signDerivative(target, SIGNED_URL_TTL_SECONDS);
       if (!imageUrl) return await failed("INTERNAL_ERROR");
 
+      // The saved draft and the stored derivative must still be exactly what was validated.
+      const snapshotIntact = async () => {
+        try {
+          const current = await deps.context(userId, publicationId);
+          if (!current || current.version !== deps.target.version || current.image?.path !== path || current.image.mime !== mime) return false;
+          if (current.caption !== caption || !(await captionMatches(deps.target, current.caption))) return false;
+          const stored = await deps.downloadDerivative(target);
+          return !!stored && (await sha256Hex(stored)) === derivativeSha;
+        } catch {
+          return false;
+        }
+      };
+
       // Write-ahead: the stage is persisted before each external write it describes.
-      if (!stillAuthorized()) return await disarmed();
+      if (!(await stillAuthorized())) return await disarmed();
+      if (!(await snapshotIntact())) return await failed("INTERNAL_ERROR");
       if (!(await advance("container_requested", null))) return await failed("INTERNAL_ERROR");
       mediaSent = true;
       const container = await createContainer({ ...auth, igUserId, imageUrl, caption });
@@ -294,11 +332,11 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
       if (ready === "ERROR") return await failed("META_REJECTED");
       if (ready !== "FINISHED") return await failed("META_TEMPORARY_ERROR");
 
-      if (!stillAuthorized()) return await disarmed();
+      if (!(await stillAuthorized())) return await disarmed();
+      if (!(await snapshotIntact())) return await failed("INTERNAL_ERROR");
       if (!(await advance("publish_requested", null))) return await failed("INTERNAL_ERROR");
       const published = await publishContainer({ ...auth, igUserId, containerId: container.id });
-      if (published.kind === "unknown") return await unknown();
-      if (published.kind === "failed") return await failed(published.code);
+      if (published.kind !== "created") return await unknown();
 
       let verification: ReadBack["verdict"] = "AMBIGUOUS";
       let permalink: string | null = null;
@@ -320,7 +358,9 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
   }
 
   // Resolves an UNKNOWN (or stale PUBLISHING) attempt. Before media_publish was requested no post can
-  // exist, so "absent" is certain; afterwards only an exact read-only match may settle it.
+  // exist, so "absent" is certain; afterwards only an exact read-only match may settle it. The database
+  // re-checks the stage under a row lock and refuses "absent" ("unsafe_absent") if this snapshot is stale.
+  // Deliberately not gated on the entitlement: investigating an UNKNOWN must stay possible after it expires.
   async function verify(userId: string, publicationId: string) {
     if (!isAuthorizedToPublish(deps.env, userId, publicationId)) return json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "NOT_REQUESTED" }, 403);
     const ctx = await deps.context(userId, publicationId);
@@ -335,7 +375,8 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
 
     if (attempt.externalStage !== "publish_requested") {
       const r = await deps.recordVerification(userId, attempt.id, "absent", null, null);
-      return r === "ok" ? json({ ok: true, state: "FAILED", verdict: "absent", retryable: true }) : fail("INTERNAL_ERROR", "UNKNOWN", 500);
+      if (r === "ok") return json({ ok: true, state: "FAILED", verdict: "absent", retryable: true });
+      if (r !== "unsafe_absent") return fail("INTERNAL_ERROR", "UNKNOWN", 500);
     }
 
     const appSecret = deps.env("META_APP_SECRET");

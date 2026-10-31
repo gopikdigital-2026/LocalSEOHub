@@ -8,6 +8,7 @@ import {
   ARMED_FLAG, ARMED_PUBLICATIONS, ARMED_USERS, createInstagramPublishHandler,
   type InstagramContext, type InstagramPublishDeps,
 } from '../../../../supabase/functions/instagram-publishing/instagramPublish.ts';
+import { APPROVED_TARGET } from '../../../../supabase/functions/instagram-publishing/publishTarget.ts';
 
 const ROOT = join(__dirname, '../../../..');
 const read = (p: string) => readFileSync(join(ROOT, p), 'utf8');
@@ -52,6 +53,11 @@ function setup(over: Partial<InstagramPublishDeps> = {}, env: Record<string, str
   const fetch = vi.fn(async () => new Response('{}', { status: 400 }));
   const d: InstagramPublishDeps = {
     getUserId: vi.fn(async (jwt: string) => (jwt === 'owner-jwt' ? USER : jwt === 'other-jwt' ? OTHER : null)),
+    // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED HARNESS EXTENSION: the real server-side pin; entitlement and derivative read-back
+    // must not run during status. No behavioural assertion changed.
+    target: APPROVED_TARGET,
+    entitlementActive: vi.fn(async () => { throw new Error('entitlement must not run during status'); }),
+    downloadDerivative: vi.fn(async () => { throw new Error('derivative read must not run during status'); }),
     preflight: vi.fn(async (): Promise<PreflightRow[]> => [okRow({ channel: 'facebook' }), okRow()]),
     context: vi.fn(async (u: string, p: string) => (u === USER && p === PUB_D ? ctxD() : null)),
     begin: vi.fn(async () => { throw new Error('begin must not run'); }),
@@ -249,11 +255,14 @@ describe('B.3 FIX02 P1/P2 protections intact', () => {
 
 describe('B.3 FIX02 frozen code untouched', () => {
   const PINS: Record<string, string> = {
-    'supabase/functions/instagram-publishing/index.ts': 'f18551589ef75ad1ff9a6c4d55dd6b4bca8c7898a43f1ed2ff2a59c858780c28',
-    'supabase/functions/instagram-publishing/instagramPublish.ts': '5523a9c0481760a672e5d9373cd654f2af0a0c374614b39ca90e9682b95d63ca',
+    // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED RE-PIN (was: f18551589ef75ad1ff9a6c4d55dd6b4bca8c7898a43f1ed2ff2a59c858780c28)
+    'supabase/functions/instagram-publishing/index.ts': '6312ea2ebf7210d10e0319373d3cf48381e2925b23934a169a65b475334ea675',
+    // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED RE-PIN (was: 5523a9c0481760a672e5d9373cd654f2af0a0c374614b39ca90e9682b95d63ca)
+    'supabase/functions/instagram-publishing/instagramPublish.ts': 'df94b08fcbd2134d17a85a3ecdaefdfcdda51a36014771585a6510787ad200f1',
     'supabase/functions/instagram-publishing/shared.ts': '2de062eaf385236e303c043ff17434b45ff1d8b9200e12e65462bc8e95f623cd',
     'supabase/functions/instagram-publishing/derivative.ts': 'be27cd6efba40260d86f09813316ccbcf36496de2615b62f1c3cb4e25f458dfa',
-    'supabase/functions/instagram-publishing/graph.ts': '6a5909c494b09f653006affa8917cb7aa897b5ee9d2baa328aca24eb1416d28a',
+    // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED RE-PIN (was: 6a5909c494b09f653006affa8917cb7aa897b5ee9d2baa328aca24eb1416d28a)
+    'supabase/functions/instagram-publishing/graph.ts': 'a107c840cba644967c9a911ef923755176de0b7674530372a506bdc1333bb61e',
     'supabase/functions/instagram-publishing/connectionPreflight.ts': 'b57c82c1d970ace3643b64de539ad5fdac8a2a3cb66d9e06e51a8570a356b9db',
     'src/features/instagram-publish/repository.ts': '9b5f26d48f0ab2ea632ebe42d2c2247d49005eca292140ca4ea3d78a1fe190dd',
     'src/features/instagram-publish/InstagramPublishHarness.tsx': '746e94b366d55e755fa5fa0b8e86696931a951bfc4ae8524773b2a0aaa84a42e',

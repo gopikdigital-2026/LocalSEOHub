@@ -13,6 +13,7 @@ import {
 const ROOT = join(__dirname, '../../../..');
 const read = (p: string) => readFileSync(join(ROOT, p), 'utf8');
 const sha = (p: string) => createHash('sha256').update(readFileSync(join(ROOT, p))).digest('hex');
+const hex = (b: string | Uint8Array) => createHash('sha256').update(b).digest('hex');
 
 const USER = 'aabe426e-f079-4db1-835b-17d9d126313e';
 const OTHER = '22222222-2222-4222-8222-222222222222';
@@ -46,6 +47,7 @@ interface Row { id: string; status: 'publishing' | 'succeeded' | 'failed' | 'unk
 
 function setup(env: Record<string, string>, hooks: { onSign?: () => void; onPoll?: () => void } = {}) {
   const rows: Row[] = [];
+  const stored = new Map<string, Uint8Array>();
   const last = () => rows[rows.length - 1] ?? null;
   const issue = (userId: string, v: number) => {
     const r = last();
@@ -69,6 +71,11 @@ function setup(env: Record<string, string>, hooks: { onSign?: () => void; onPoll
   });
   const d: InstagramPublishDeps = {
     getUserId: vi.fn(async (jwt: string) => (jwt === 'other' ? OTHER : jwt ? USER : null)),
+    // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED HARNESS EXTENSION: server-side content pin, entitlement and derivative read-back
+    // for this D-shaped fixture. No behavioural assertion changed.
+    target: { publicationId: PUB_D, version: 4, captionSha256: hex('caption'), imageSha256: hex(JPEG) },
+    entitlementActive: vi.fn(async () => true),
+    downloadDerivative: vi.fn(async (path: string) => stored.get(path) ?? null),
     preflight: vi.fn(async (userId: string, _p: string, v: number): Promise<PreflightRow[]> => [{
       channel: 'instagram', issue: issue(userId, v), draft_version: 4, attempt_status: last()?.status ?? null, attempt_error_code: last()?.errorCode ?? null,
       meta_object_id: null, permalink: null, attempt_updated_at: null, attempt_retryable: last()?.status === 'failed', attempt_verification_required: last()?.status === 'unknown',
@@ -95,7 +102,7 @@ function setup(env: Record<string, string>, hooks: { onSign?: () => void; onPoll
     recordVerification: vi.fn(async () => 'ok'),
     readUserToken: vi.fn(async () => 'EAAuser'),
     downloadImage: vi.fn(async () => ({ ok: true as const, bytes: JPEG, contentType: 'image/jpeg' })),
-    storeDerivative: vi.fn(async () => true),
+    storeDerivative: vi.fn(async (path: string, bytes: Uint8Array) => { stored.set(path, bytes); return true; }),
     signDerivative: vi.fn(async (path: string) => { hooks.onSign?.(); return `https://proj.supabase.co/storage/v1/object/sign/instagram-derivatives/${path}?token=t`; }),
     removeDerivative: vi.fn(async () => undefined),
     codecs,

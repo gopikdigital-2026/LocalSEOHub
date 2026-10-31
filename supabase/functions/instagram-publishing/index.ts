@@ -6,6 +6,7 @@ import type { PreflightRow } from "./shared.ts";
 import type { Codecs } from "./derivative.ts";
 import { createInstagramPublishHandler, type AttemptSummary, type BeginRow, type Stage } from "./instagramPublish.ts";
 import { createConnectionPreflightHandler, isConnectionPreflightRequest } from "./connectionPreflight.ts";
+import { APPROVED_TARGET } from "./publishTarget.ts";
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -38,6 +39,11 @@ async function getUserId(jwt: string) {
 
 const handle = createInstagramPublishHandler({
   getUserId,
+  target: APPROVED_TARGET,
+  async entitlementActive(userId) {
+    const { data, error } = await supabaseAdmin.rpc("internal_test_entitlement_active", { p_user_id: userId });
+    return !error && data === true;
+  },
   async preflight(userId, publicationId, expectedVersion) {
     const { data, error } = await supabaseAdmin.rpc("publication_publish_preflight", {
       p_user_id: userId,
@@ -159,6 +165,10 @@ const handle = createInstagramPublishHandler({
       cacheControl: "60",
     });
     return !error;
+  },
+  async downloadDerivative(path) {
+    const { data, error } = await supabaseAdmin.storage.from(DERIVATIVES).download(path);
+    return error || !data ? null : new Uint8Array(await data.arrayBuffer());
   },
   // Held in memory only: never persisted, logged or returned to the browser.
   async signDerivative(path, ttlSeconds) {
