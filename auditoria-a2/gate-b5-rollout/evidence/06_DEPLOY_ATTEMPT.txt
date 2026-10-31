@@ -1,0 +1,24 @@
+GATE B.5 — DEPLOY ATTEMPT EVIDENCE
+
+Precondition: migration applied and verified (05_MIGRATION_APPLY.txt).
+Scope proof before call: diff -rq baseline(localseohub-a3743-gateB4-audit.zip, sha 93cdc40b...) vs tree supabase/functions:
+  only instagram-publishing differs (graph.ts, index.ts, instagramPublish.ts modified; publishTarget.ts added). config.toml identical.
+functions-deploy-state.json before: sha 87f8bfce541362ee24dbb8280732a24dfcc627b75f91465c2e62cf5f7efeeade
+  instagram-publishing {hasChanged:false, hash:7daa1d6399f74a764be601df56015e82dc90a6501ab688868682c136e0992284}
+  meta-publishing      {hasChanged:false, hash:ae6e628c3337250914530e004cf6d2da55af55d622c3c85d1290f8a4f9c31e6a}
+
+Call: mcp supabase deploy_edge_functions (single call, no arguments)
+Result: "No Edge Functions changed since the last deploy. Nothing to deploy."
+
+After call:
+  functions-deploy-state.json sha 87f8bfce... (unchanged); instagram-publishing hash 7daa1d63... (unchanged); meta-publishing ae6e628c... (unchanged)
+  list_edge_functions: 43 functions, all ACTIVE; instagram-publishing id a3008491-be86-40c3-ae41-0a93ee773be4 ACTIVE;
+  meta-publishing id 3b3b0765-4c87-4f5b-ab64-d1025a7a49c1 ACTIVE. The tool exposes no version/updated_at field.
+
+Interpretation:
+  The tool's change detection does not register the FIX01 instagram-publishing source as changed, so NOTHING WAS DEPLOYED.
+  The deployed instagram-publishing artifact is therefore, to the best available evidence, still the pre-FIX01 version
+  (baseline sources graph 6a5909c4..., index f1855158..., instagramPublish 5523a9c0...). Direct download of deployed code is not
+  available: deployed-artifact identity = UNKNOWN, FIX01 code deployed = NOT DONE.
+  Per the failure rule (migration OK, deploy failed) the rollout was STOPPED: no retry with altered files, no forced change to
+  trigger detection, no rollback.

@@ -1,0 +1,32 @@
+GATE B.5 REGRESSION 2026-10-31T23:48:35Z
+ Test Files  90 passed (90)
+      Tests  3069 passed (3069)
+   Duration  46.88s (transform 16.16s, setup 0ms, import 42.85s, tests 65.66s, environment 2.30s)
+tsc errors: 20 (per-file counts identical to pre-B.5 baseline)
+      1 src/App.tsx
+      2 src/components/BusinessAuditLanding.tsx
+      2 src/components/ContentGeneratorLanding.tsx
+      1 src/components/DiagnosticLanding.tsx
+     10 src/components/LandingPage.tsx
+      2 src/components/MetaAdsLanding.tsx
+      1 src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts
+      1 src/legacy/components/AdminDashboard.tsx
+build exit: 0
+dist/assets/TodayPage-Bh3AtWWG.js                    71.75 kB │ gzip:  19.68 kB
+dist/assets/vendor-supabase-DeUGKTjq.js             126.39 kB │ gzip:  34.36 kB
+dist/assets/vendor-react-DGHss2H6.js                166.52 kB │ gzip:  54.12 kB
+dist/assets/index-v8c2PSZK.js                       334.45 kB │ gzip: 109.31 kB
+✓ built in 13.98s
+
+RE-PINNED FILE SHAS (post):
+a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981  supabase/migrations/20261031190000_a3743_gateb4_fix01_publish_safety.sql
+6ca06357b8a69c5880143e6b3166ba4621c1b63ea4e78fb0b270da1c50243211  src/components/__tests__/a281TrustCleanup.test.ts
+22fa8b5016f686562409a213cf97cc49ed407678a19abdc0fe14594d1196d224  src/features/action-layer/__tests__/a33DiagnosticAction.test.ts
+e1a06ec52984a1b0e9e81aba357961ec9cd8a5c4391e17a5554e68bcbd1fd6dc  src/features/email-verification/__tests__/f03Stage2b.test.ts
+d25610f06528ac2edf3723c5aa3659ab5ac03e0aab32c87dc25426aee799d301  src/features/roadmap/__tests__/a273Roadmap.test.ts
+3692440117ca7c82d7d3ebe4bad98a06f601c6e8d7dccd71fe09214b8544677c  src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts
+458a646e105190d195349110a30e8279d33422aeac18bbd0f999b9c2fcb8dd53  src/features/publications/__tests__/a3743GateB3Fix02StatusAttemptGrant.test.ts
+6e5ce39fcbf73fe91eb254889505d7e6db7f98c71a63657131250bcc8fa0c919  src/features/publications/__tests__/a3743GateB4Fix01DatabaseAndFreeze.test.ts
+5e6ca8880d1a153c6dc2468c163467f7e5013455f9290b21e4b29fec6ece3c56  src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts
+338d5c0423e7a7ace301837ffb7f3f211a07b5d7029449d7afecce6846f5eaeb  src/features/publications/__tests__/a3743InstagramGateA.test.ts
+migration files: 61

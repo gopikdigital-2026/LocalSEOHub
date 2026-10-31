@@ -1,0 +1,13 @@
+src/components/__tests__/a281TrustCleanup.test.ts:157:    expect(readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-
+src/features/action-layer/__tests__/a33DiagnosticAction.test.ts:138:    expect(readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(61); // A3.7.4.3 GATE B.5 
+src/features/email-verification/__tests__/f03Stage2b.test.ts:229:    expect(migrations).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190
+src/features/email-verification/__tests__/f03Stage2b.test.ts:283:    expect(migrations).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190
+src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts:516:      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 67ba5b56ce48065241d41032d74beab25c9960628f6
+src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts:521:      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 1225076b1f1f8a882c844e54541d7052b22f16cb45e
+src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts:526:      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: f5b72768a745b70ea7cba7684f41fb0b30aa3e302c0
+src/features/publications/__tests__/a3743GateB3Fix02StatusAttemptGrant.test.ts:103:    expect(readdirSync(join(ROOT, MIGRATIONS)).filter((f) => f.endsWith('.sql'))).toHaveLength(61); // A3.7.4.3 GATE 
+src/features/publications/__tests__/a3743GateB3Fix02StatusAttemptGrant.test.ts:296:  // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was: "change only the count to 60", /\.toHaveLength\(60\); \/\/ A3\.7\.4\.3
+src/features/publications/__tests__/a3743GateB4Fix01DatabaseAndFreeze.test.ts:201:  // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was: "is prepared outside supabase/migrations, is not applied, and the appli
+src/features/publications/__tests__/a3743InstagramGateA.test.ts:789:      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was 4760b8f3): only three AUTHORIZED_REPINS "now" hashes changed (migration count 60->
+src/features/roadmap/__tests__/a273Roadmap.test.ts:354:    expect(migs).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60). A
+src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts:131:    expect(readdirSync(MIG_DIR)).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety 

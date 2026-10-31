@@ -1,0 +1,157 @@
+--- /tmp/z41/src/components/__tests__/a281TrustCleanup.test.ts	2026-10-31 18:31:13.000000000 +0000
++++ src/components/__tests__/a281TrustCleanup.test.ts	2026-10-31 23:41:25.386414568 +0000
+@@ -154,7 +154,7 @@
+   });
+ 
+   it('18. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback; A3.7.1: publications data/storage migration, no route)', () => {
+-    expect(readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(60); // A3.7.4.3 GATE B.3 FIX02 AUTHORIZED RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.2 adds the publication proposals engine migration; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
++    expect(readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60). A3.7.4.3 GATE B.3 FIX02 AUTHORIZED RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.2 adds the publication proposals engine migration; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+     expect(src('src/App.tsx').match(/<Route [^>]*path=/g)).toHaveLength(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
+   });
+ 
+--- /tmp/z41/src/features/action-layer/__tests__/a33DiagnosticAction.test.ts	2026-10-31 18:31:13.000000000 +0000
++++ src/features/action-layer/__tests__/a33DiagnosticAction.test.ts	2026-10-31 23:41:25.390416568 +0000
+@@ -135,7 +135,7 @@
+     expect(read('src/features/geo-audit/copy.ts')).toMatch(/No comprobado/i);
+   });
+   it('16. no new migrations (A3.4.2 added the a342 ledger; A3.4.2.2 the GBP server-owned guard; A3.5.1 the Meta connection foundation; A3.7.1 the publications data/storage foundation)', () => {
+-    expect(readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(60); // A3.7.4.3 GATE B.3 FIX02 AUTHORIZED RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.2 adds the publication proposals engine migration; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
++    expect(readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql'))).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60). A3.7.4.3 GATE B.3 FIX02 AUTHORIZED RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.2 adds the publication proposals engine migration; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+   });
+   it('no routes added or removed (A3.4.2 added only /herramientas/resenas; A3.5.1A the 3 public legal routes; A3.5.1 /oauth/meta/callback; A3.5.4.3 /herramientas/social)', () => {
+     expect(ROUTES).toHaveLength(33); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
+--- /tmp/z41/src/features/email-verification/__tests__/f03Stage2b.test.ts	2026-10-31 18:31:13.000000000 +0000
++++ src/features/email-verification/__tests__/f03Stage2b.test.ts	2026-10-31 23:41:25.398420568 +0000
+@@ -226,7 +226,7 @@
+   });
+ 
+   it('21. existing users are not modified: no admin writes and no new migrations (46 after A3.5.1)', () => {
+-    expect(migrations).toHaveLength(60); // A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
++    expect(migrations).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60). A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+     expect(frontendText).not.toMatch(/updateUserById|deleteUser|email_confirmed_at\s*[:=]/);
+   });
+ 
+@@ -280,7 +280,7 @@
+   });
+ 
+   it('34/35. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback)', () => {
+-    expect(migrations).toHaveLength(60); // A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
++    expect(migrations).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60). A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+     expect(app.match(/<Route [^>]*path=/g)).toHaveLength(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
+   });
+ 
+--- /tmp/z41/src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts	2026-10-31 18:31:13.000000000 +0000
++++ src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts	2026-10-31 23:43:49.748852050 +0000
+@@ -513,15 +513,18 @@
+     },
+     'src/components/__tests__/a281TrustCleanup.test.ts': {
+       was: 'cb6a925ab209873f69222303e0b7afc27a1ebfe0e4aaf3d6eecba3364da36c92',
+-      now: '67ba5b56ce48065241d41032d74beab25c9960628f64b80c1c41fae667a3f821',
++      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 67ba5b56ce48065241d41032d74beab25c9960628f64b80c1c41fae667a3f821)
++      now: '6ca06357b8a69c5880143e6b3166ba4621c1b63ea4e78fb0b270da1c50243211',
+     },
+     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
+       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
+-      now: '1225076b1f1f8a882c844e54541d7052b22f16cb45e94d7025bf7091278e9606',
++      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 1225076b1f1f8a882c844e54541d7052b22f16cb45e94d7025bf7091278e9606)
++      now: 'd25610f06528ac2edf3723c5aa3659ab5ac03e0aab32c87dc25426aee799d301',
+     },
+     'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
+       was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',
+-      now: 'f5b72768a745b70ea7cba7684f41fb0b30aa3e302c0719e5a5f875711b5fedf6',
++      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: f5b72768a745b70ea7cba7684f41fb0b30aa3e302c0719e5a5f875711b5fedf6)
++      now: '3692440117ca7c82d7d3ebe4bad98a06f601c6e8d7dccd71fe09214b8544677c',
+     },
+     // Split so the a3542 isolation guard (no literal reference to that layer outside it) keeps holding.
+     ['src/features/social' + '-intelligence/integration/__tests__/a3544SocialIntegration.test.ts']: {
+--- /tmp/z41/src/features/publications/__tests__/a3743GateB3Fix02StatusAttemptGrant.test.ts	2026-10-31 18:55:28.000000000 +0000
++++ src/features/publications/__tests__/a3743GateB3Fix02StatusAttemptGrant.test.ts	2026-10-31 23:43:49.756852050 +0000
+@@ -98,9 +98,9 @@
+ const status = (publicationId = PUB_D, expectedVersion = 3) => ({ action: 'instagram_publish_status', publicationId, expectedVersion });
+ 
+ describe('B.3 FIX02 migration: exact read-only nine-column grant', () => {
+-  it('exactly one FIX02 grant migration exists and the total is 60', () => {
++  it('exactly one FIX02 grant migration exists and the total is 61', () => {
+     expect(grantFiles()).toHaveLength(1);
+-    expect(readdirSync(join(ROOT, MIGRATIONS)).filter((f) => f.endsWith('.sql'))).toHaveLength(60);
++    expect(readdirSync(join(ROOT, MIGRATIONS)).filter((f) => f.endsWith('.sql'))).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60, title "total is 60")
+   });
+ 
+   it('the only statement is SELECT on the nine authorized columns to service_role', () => {
+@@ -293,11 +293,13 @@
+     expect(m).toContain('b7705d22de2d2cbab4bbcf06f11d004c0bb11f448fba2701ac944c3ae4e9236e');
+   });
+ 
+-  it('the two re-pinned tests change only the count to 60 with the FIX02 annotation', () => {
++  // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was: "change only the count to 60", /\.toHaveLength\(60\); \/\/ A3\.7\.4\.3 GATE B\.3 FIX02/):
++  // the B.5 annotation now precedes the FIX02 one and the count is 61; the old 59 and 60 pins must both be gone.
++  it('the two re-pinned tests change only the count to 61 with the B.5 and FIX02 annotations', () => {
+     for (const p of ['src/components/__tests__/a281TrustCleanup.test.ts', 'src/features/action-layer/__tests__/a33DiagnosticAction.test.ts']) {
+       const src = read(p);
+-      expect(src).toMatch(/\.toHaveLength\(60\); \/\/ A3\.7\.4\.3 GATE B\.3 FIX02 AUTHORIZED RE-PIN/);
+-      expect(src).not.toMatch(/migrations'\)\)\.filter\(\(f\) => f\.endsWith\('\.sql'\)\)\)\.toHaveLength\(59\)/);
++      expect(src).toMatch(/\.toHaveLength\(61\); \/\/ A3\.7\.4\.3 GATE B\.5 AUTHORIZED RE-PIN: \+1 promoted FIX01 publish-safety migration 20261031190000 \(was: 60\)\. A3\.7\.4\.3 GATE B\.3 FIX02 AUTHORIZED RE-PIN/);
++      expect(src).not.toMatch(/migrations'\)\)\.filter\(\(f\) => f\.endsWith\('\.sql'\)\)\)\.toHaveLength\((59|60)\)/);
+     }
+   });
+ });
+--- /tmp/z41/src/features/publications/__tests__/a3743GateB4Fix01DatabaseAndFreeze.test.ts	2026-10-31 19:01:47.000000000 +0000
++++ src/features/publications/__tests__/a3743GateB4Fix01DatabaseAndFreeze.test.ts	2026-10-31 23:41:06.304726603 +0000
+@@ -198,12 +198,17 @@
+ describe('B.4 FIX01 prepared migration text', () => {
+   const FNS = ['publish_attempt_record_verification', 'publish_attempt_finish', 'publish_attempt_begin'];
+ 
+-  it('is prepared outside supabase/migrations, is not applied, and the applied count stays 60', () => {
++  // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was: "is prepared outside supabase/migrations, is not applied, and the applied count stays 60";
++  // count 60, promoted file absent, every file < 20261031190000). Gate B.5 promotes the byte-identical file as the single newest migration.
++  it('is promoted byte-identical into supabase/migrations as the single newest migration and the count is 61', () => {
++    const PROMOTED = 'supabase/migrations/20261031190000_a3743_gateb4_fix01_publish_safety.sql';
+     expect(sha(PREPARED)).toBe('a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981');
+-    const applied = readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql'));
+-    expect(applied).toHaveLength(60);
+-    expect(existsSync(join(ROOT, 'supabase/migrations/20261031190000_a3743_gateb4_fix01_publish_safety.sql'))).toBe(false);
+-    expect(applied.every((f) => f < '20261031190000')).toBe(true);
++    expect(existsSync(join(ROOT, PROMOTED))).toBe(true);
++    expect(sha(PROMOTED)).toBe('a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981');
++    const applied = readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql')).sort();
++    expect(applied).toHaveLength(61);
++    expect(applied[applied.length - 1]).toBe('20261031190000_a3743_gateb4_fix01_publish_safety.sql');
++    expect(applied.slice(0, -1).every((f) => f < '20261031190000')).toBe(true);
+   });
+ 
+   it('redefines only the three functions and the guard, each SECURITY DEFINER with an empty search_path', () => {
+--- /tmp/z41/src/features/publications/__tests__/a3743InstagramGateA.test.ts	2026-10-31 18:44:54.000000000 +0000
++++ src/features/publications/__tests__/a3743InstagramGateA.test.ts	2026-10-31 23:45:11.544915205 +0000
+@@ -786,8 +786,9 @@
+       'src/features/meta-connection/metaPublishingRepository.ts': '132b1fa4ffcb8a29afe7e048e40e97c4ba1c580359ad682d6aad21eeaa55b360',
+       'src/features/publications/validation/PublicationsValidationPage.tsx': '1eb1a91eda49dcaaba496acb7072131c153bd022de0e87a637100584c61bbad0',
+       'src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts': '8542f77b8bab82646f484036ef2cbda02cb92521aa165aa8ff1b55e556f66cad',
++      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was 4760b8f3): only three AUTHORIZED_REPINS "now" hashes changed (migration count 60->61).
+       // A3.7.4.3 GATE A CORRECTION 03 RE-PIN (was 170e4828; CORRECTION 02 was e7674f8f): only AUTHORIZED_REPINS entries changed, now including a3732.
+-      'src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts': '4760b8f315ba110767dbbe33d6c6ac07b0cc725a8db53f7a156fc44f649f7827',
++      'src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts': '5e6ca8880d1a153c6dc2468c163467f7e5013455f9290b21e4b29fec6ece3c56',
+     };
+     for (const [p, h] of Object.entries(frozen)) expect([p, sha(p)]).toEqual([p, h]);
+     expect(MIGRATION).toContain("publication_channel_text_issue(v_text, CASE p_channel WHEN 'facebook' THEN 5000 ELSE 2200 END)");
+--- /tmp/z41/src/features/roadmap/__tests__/a273Roadmap.test.ts	2026-10-31 18:31:13.000000000 +0000
++++ src/features/roadmap/__tests__/a273Roadmap.test.ts	2026-10-31 23:41:25.402422569 +0000
+@@ -351,7 +351,7 @@
+   it('111. no AI counter reset', () => expect(rmSrc).not.toMatch(/reset|counter/i));
+   it('112. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)', () => {
+     const migs = readdirSync(MIG_DIR).sort();
+-    expect(migs).toHaveLength(60); // A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
++    expect(migs).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60). A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+     expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_') && !m.includes('_a3733_') && !m.includes('_a3741_') && !m.includes('_a3742_') && !m.includes('_a3743_')).slice(-3)).toEqual([
+       '20261022152358_a3512_meta_oauth_stuck_connection_recovery.sql',
+       '20261022170333_a353_meta_read_layer.sql',
+--- /tmp/z41/src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts	2026-10-31 18:31:13.000000000 +0000
++++ src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts	2026-10-31 23:41:25.410426568 +0000
+@@ -128,7 +128,7 @@
+   it('28. no manual completion flag', () => expect(tiSrc).not.toMatch(/done\s*[:=]\s*true|completed\s*[:=]|localStorage|sessionStorage/));
+   it('29. no Today persistence table', () => expect(tiSrc).not.toMatch(/\.from\(|insert|upsert|today_actions/));
+   it('30. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)', () => {
+-    expect(readdirSync(MIG_DIR)).toHaveLength(60); // A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
++    expect(readdirSync(MIG_DIR)).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60). A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+     const migs = readdirSync(MIG_DIR).sort();
+     expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_') && !m.includes('_a3733_') && !m.includes('_a3741_') && !m.includes('_a3742_') && !m.includes('_a3743_')).slice(-3)).toEqual([
+       '20261022152358_a3512_meta_oauth_stuck_connection_recovery.sql',

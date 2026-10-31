@@ -98,9 +98,9 @@ function setup(over: Partial<InstagramPublishDeps> = {}, env: Record<string, str
 const status = (publicationId = PUB_D, expectedVersion = 3) => ({ action: 'instagram_publish_status', publicationId, expectedVersion });
 
 describe('B.3 FIX02 migration: exact read-only nine-column grant', () => {
-  it('exactly one FIX02 grant migration exists and the total is 60', () => {
+  it('exactly one FIX02 grant migration exists and the total is 61', () => {
     expect(grantFiles()).toHaveLength(1);
-    expect(readdirSync(join(ROOT, MIGRATIONS)).filter((f) => f.endsWith('.sql'))).toHaveLength(60);
+    expect(readdirSync(join(ROOT, MIGRATIONS)).filter((f) => f.endsWith('.sql'))).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60, title "total is 60")
   });
 
   it('the only statement is SELECT on the nine authorized columns to service_role', () => {
@@ -293,11 +293,13 @@ describe('B.3 FIX02 frozen code untouched', () => {
     expect(m).toContain('b7705d22de2d2cbab4bbcf06f11d004c0bb11f448fba2701ac944c3ae4e9236e');
   });
 
-  it('the two re-pinned tests change only the count to 60 with the FIX02 annotation', () => {
+  // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was: "change only the count to 60", /\.toHaveLength\(60\); \/\/ A3\.7\.4\.3 GATE B\.3 FIX02/):
+  // the B.5 annotation now precedes the FIX02 one and the count is 61; the old 59 and 60 pins must both be gone.
+  it('the two re-pinned tests change only the count to 61 with the B.5 and FIX02 annotations', () => {
     for (const p of ['src/components/__tests__/a281TrustCleanup.test.ts', 'src/features/action-layer/__tests__/a33DiagnosticAction.test.ts']) {
       const src = read(p);
-      expect(src).toMatch(/\.toHaveLength\(60\); \/\/ A3\.7\.4\.3 GATE B\.3 FIX02 AUTHORIZED RE-PIN/);
-      expect(src).not.toMatch(/migrations'\)\)\.filter\(\(f\) => f\.endsWith\('\.sql'\)\)\)\.toHaveLength\(59\)/);
+      expect(src).toMatch(/\.toHaveLength\(61\); \/\/ A3\.7\.4\.3 GATE B\.5 AUTHORIZED RE-PIN: \+1 promoted FIX01 publish-safety migration 20261031190000 \(was: 60\)\. A3\.7\.4\.3 GATE B\.3 FIX02 AUTHORIZED RE-PIN/);
+      expect(src).not.toMatch(/migrations'\)\)\.filter\(\(f\) => f\.endsWith\('\.sql'\)\)\)\.toHaveLength\((59|60)\)/);
     }
   });
 });

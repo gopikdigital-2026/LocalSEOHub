@@ -1,0 +1,78 @@
+# Gate B.5 — mandatory pre-deployment checks (read-only, production) — 2026-10-31
+# All production queries were read-only SELECTs.
+
+## 1. Approved candidate
+ZIP (41) localseohub-a3743-gateB4fix01-exception.zip sha256 545a65ec8f7aa4a33925f3eb27a422dae5facd70eafdaeeb6234790615ad2909  OK
+Independent verification: auditoria-a2/A3_7_4_3_GATE_B4_FIX01_INDEPENDENT_VERIFICATION.md (verdict GO)
+diff -rq ZIP41/supabase/functions  vs tree: identical
+diff -rq ZIP41/supabase/migrations vs tree: identical
+diff    ZIP41/supabase/config.toml vs tree: identical
+
+## 2. Hashes
+prepared SQL a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981  OK (expected value)
+rollback SQL 87a7ecf9c6a0552f689da70b69f8283ee60bbb6ba22053e0d64d1ffaf8b3c60a  OK (independent verification manifest)
+instagram-publishing sources (match FIX01 exception manifest):
+  b57c82c1d970ace3643b64de539ad5fdac8a2a3cb66d9e06e51a8570a356b9db  connectionPreflight.ts (unchanged)
+  be27cd6efba40260d86f09813316ccbcf36496de2615b62f1c3cb4e25f458dfa  derivative.ts (unchanged)
+  a107c840cba644967c9a911ef923755176de0b7674530372a506bdc1333bb61e  graph.ts
+  6312ea2ebf7210d10e0319373d3cf48381e2925b23934a169a65b475334ea675  index.ts
+  df94b08fcbd2134d17a85a3ecdaefdfcdda51a36014771585a6510787ad200f1  instagramPublish.ts
+  d58f363b11e2c02a027da341e0c46c97691fc0490d4435287442b09c16d1040d  publishTarget.ts
+  2de062eaf385236e303c043ff17434b45ff1d8b9200e12e65462bc8e95f623cd  shared.ts (unchanged)
+Historical manifests: verified by the full test suite freeze assertions (step 3) and the independent verification (23/23).
+
+## 3. Production pre-fix functions (whitespace-free md5 | ACL) — all equal expected pre-fix values
+internal_test_entitlement_active     325e375c25b198448ec80d9334065a12  postgres, service_role
+publication_publish_gate             12f9d6cfa192af2efc55038f2a2745d0  postgres
+publication_publish_preflight        356c5e36cba82ea003cf9654fededef7  postgres, service_role
+publish_attempt_advance              e13cee809bdeaa8381ba02096761454f  postgres, service_role
+publish_attempt_begin                165e0a4164230dc6db8bcdb6380a32bc  postgres, service_role
+publish_attempt_finish               104a927804a445e5485cba3d5521ef2d  postgres, service_role
+publish_attempt_mark_stale           b99f5731dca7b2d9a6df5b6c345b78a1  postgres, service_role
+publish_attempt_record_verification  4761518141834367425557445611d2f0  postgres, service_role
+publish_attempts_guard               913576bd366a66a6b60151af16030d98  postgres
+All SECURITY DEFINER; search_path '' (entitlement: public).
+Aggregate baselines (to compare after):
+  public function count                         91
+  all public function ACLs md5                  27a33051719c6ec49db44c4dbe888f45
+  source md5 of all OTHER public functions      fb511e927e6e8224a4065480041a37a8
+  table grants (anon/authenticated/service) md5 06557e88fb5ed93a9c17379f20280724
+  RLS enablement md5                            f7bf26607a8abca7e4ca49d13a355f2f
+  public policies                               93, md5 529a39b14d5a186440987fc1428c4466
+  publication* triggers md5                     a226db0106f10f2510beb143bcab462d
+
+## 4. Publication D 875587f5-0137-4477-904c-609e8e406ad6
+publications: proposals_ready, updated_at 2026-10-31 16:16:13.516242+00
+publication_drafts: version 3, updated_at 2026-10-31 16:22:09.849195+00, row md5 7c34b594984543cdf93171f6b600452a
+
+## 5. Attempts
+total 1 (Facebook, last change 2026-10-30 22:40:42.724699+00), Instagram 0
+instagram-derivatives storage objects: 0
+active internal test entitlements: 1 (not modified)
+
+## 6. Disarmed
+Edge function secrets: no META_INSTAGRAM_* (Meta secrets present: META_APP_ID, META_APP_SECRET, META_REDIRECT_URI only)
+
+## 7. Rollback availability
+rollback SQL present (hash above), rehearsed on disposable PostgreSQL 17.6 (independent verification)
+previous instagram-publishing source: localseohub-a3743-gateB4-audit.zip
+  (sha256 93cdc40b4b4aa6185289f952d8d7412d98c82c963f7381c95c95908d90bff735), files:
+  b57c82c1d970ace3643b64de539ad5fdac8a2a3cb66d9e06e51a8570a356b9db  connectionPreflight.ts
+  be27cd6efba40260d86f09813316ccbcf36496de2615b62f1c3cb4e25f458dfa  derivative.ts
+  6a5909c494b09f653006affa8917cb7aa897b5ee9d2baa328aca24eb1416d28a  graph.ts
+  f18551589ef75ad1ff9a6c4d55dd6b4bca8c7898a43f1ed2ff2a59c858780c28  index.ts
+  5523a9c0481760a672e5d9373cd654f2af0a0c374614b39ca90e9682b95d63ca  instagramPublish.ts
+  2de062eaf385236e303c043ff17434b45ff1d8b9200e12e65462bc8e95f623cd  shared.ts
+  Its deploy-state file is byte-identical to the current one (instagram-publishing deployed hash 7daa1d63...).
+
+## 8. Pending migrations / deploy scope
+production schema_migrations: 59, latest 20261031172241. Every local migration version is recorded except the
+pre-existing historical bootstrap pair 20260623191653_old_beacon / 20260623191709_precious_term, which production
+records as the single 20260623191647 silent_coast (known since earlier gates; not re-applied by anything here).
+apply_migration applies only the SQL passed to it: no unrelated migration can be applied.
+Edge functions: tree vs baseline (deployed) archive differs ONLY in supabase/functions/instagram-publishing
+(graph.ts, index.ts, instagramPublish.ts modified; publishTarget.ts added). The deploy tool deploys only changed
+functions, so the deployment scope is exactly instagram-publishing. meta-publishing is unchanged.
+deployed functions: 43, all ACTIVE; instagram-publishing id a3008491-be86-40c3-ae41-0a93ee773be4.
+
+RESULT: all preconditions PASS.

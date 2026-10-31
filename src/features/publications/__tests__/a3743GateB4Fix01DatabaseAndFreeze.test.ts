@@ -198,12 +198,17 @@ describe('B.4 FIX01 §8 Facebook preservation', () => {
 describe('B.4 FIX01 prepared migration text', () => {
   const FNS = ['publish_attempt_record_verification', 'publish_attempt_finish', 'publish_attempt_begin'];
 
-  it('is prepared outside supabase/migrations, is not applied, and the applied count stays 60', () => {
+  // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was: "is prepared outside supabase/migrations, is not applied, and the applied count stays 60";
+  // count 60, promoted file absent, every file < 20261031190000). Gate B.5 promotes the byte-identical file as the single newest migration.
+  it('is promoted byte-identical into supabase/migrations as the single newest migration and the count is 61', () => {
+    const PROMOTED = 'supabase/migrations/20261031190000_a3743_gateb4_fix01_publish_safety.sql';
     expect(sha(PREPARED)).toBe('a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981');
-    const applied = readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql'));
-    expect(applied).toHaveLength(60);
-    expect(existsSync(join(ROOT, 'supabase/migrations/20261031190000_a3743_gateb4_fix01_publish_safety.sql'))).toBe(false);
-    expect(applied.every((f) => f < '20261031190000')).toBe(true);
+    expect(existsSync(join(ROOT, PROMOTED))).toBe(true);
+    expect(sha(PROMOTED)).toBe('a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981');
+    const applied = readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql')).sort();
+    expect(applied).toHaveLength(61);
+    expect(applied[applied.length - 1]).toBe('20261031190000_a3743_gateb4_fix01_publish_safety.sql');
+    expect(applied.slice(0, -1).every((f) => f < '20261031190000')).toBe(true);
   });
 
   it('redefines only the three functions and the guard, each SECURITY DEFINER with an empty search_path', () => {

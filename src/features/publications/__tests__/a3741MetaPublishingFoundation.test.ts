@@ -513,15 +513,18 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     },
     'src/components/__tests__/a281TrustCleanup.test.ts': {
       was: 'cb6a925ab209873f69222303e0b7afc27a1ebfe0e4aaf3d6eecba3364da36c92',
-      now: '67ba5b56ce48065241d41032d74beab25c9960628f64b80c1c41fae667a3f821',
+      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 67ba5b56ce48065241d41032d74beab25c9960628f64b80c1c41fae667a3f821)
+      now: '6ca06357b8a69c5880143e6b3166ba4621c1b63ea4e78fb0b270da1c50243211',
     },
     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
-      now: '1225076b1f1f8a882c844e54541d7052b22f16cb45e94d7025bf7091278e9606',
+      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 1225076b1f1f8a882c844e54541d7052b22f16cb45e94d7025bf7091278e9606)
+      now: 'd25610f06528ac2edf3723c5aa3659ab5ac03e0aab32c87dc25426aee799d301',
     },
     'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
       was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',
-      now: 'f5b72768a745b70ea7cba7684f41fb0b30aa3e302c0719e5a5f875711b5fedf6',
+      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: f5b72768a745b70ea7cba7684f41fb0b30aa3e302c0719e5a5f875711b5fedf6)
+      now: '3692440117ca7c82d7d3ebe4bad98a06f601c6e8d7dccd71fe09214b8544677c',
     },
     // Split so the a3542 isolation guard (no literal reference to that layer outside it) keeps holding.
     ['src/features/social' + '-intelligence/integration/__tests__/a3544SocialIntegration.test.ts']: {

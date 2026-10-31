@@ -1,0 +1,32 @@
+GATE B.5 — MIGRATION APPLY EVIDENCE
+Pre-apply re-check (immediately before apply): schema_migrations=59 latest 20261031172241; 4 target fns at pre-fix ws-free md5
+(begin 165e0a41..., finish 104a9278..., record_verification 47615181..., guard 913576bd...); attempts=1 (instagram 0); D draft md5 7c34b594984543cdf93171f6b600452a.
+Mechanism: mcp supabase apply_migration, name a3743_gateb4_fix01_publish_safety, content = file sha a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981 verbatim. Result: {"success":true}
+Recorded version: 20261031234927 (tool-assigned; repo file is 20261031190000 — same content, name a3743_gateb4_fix01_publish_safety)
+schema_migrations: 60 (was 59)
+
+Post-apply (ws-free md5 | SECURITY DEFINER | search_path | ACL):
+publish_attempt_begin               c7a783fc795bb4f5eb5ebbc1246e943b EXPECTED MATCH | sd | '' | postgres,service_role
+publish_attempt_finish              b899c48ece67be21664ec8564e475cbb EXPECTED MATCH | sd | '' | postgres,service_role
+publish_attempt_record_verification eabb8a45d15c3127aecedbf2d5201255 EXPECTED MATCH | sd | '' | postgres,service_role
+publish_attempts_guard              3ae610d5cbf419af15dce170cb853d7a EXPECTED MATCH | sd | '' | postgres only
+publish_attempt_advance             e13cee809bdeaa8381ba02096761454f unchanged | postgres,service_role
+publish_attempt_mark_stale          b99f5731dca7b2d9a6df5b6c345b78a1 unchanged | postgres,service_role
+publication_publish_gate            12f9d6cfa192af2efc55038f2a2745d0 unchanged | postgres only
+publication_publish_preflight       356c5e36cba82ea003cf9654fededef7 unchanged | postgres,service_role
+internal_test_entitlement_active    325e375c25b198448ec80d9334065a12 unchanged | search_path=public | postgres,service_role
+
+Aggregates:
+public function count              91  (baseline 91)  PASS
+other-function source md5          fb511e927e6e8224a4065480041a37a8 (baseline identical) PASS
+table grants md5                   06557e88fb5ed93a9c17379f20280724 (baseline identical) PASS
+RLS enablement md5                 f7bf26607a8abca7e4ca49d13a355f2f (baseline identical) PASS
+policies                           93, md5 529a39b14d5a186440987fc1428c4466 (baseline identical) PASS
+   formula: md5(string_agg(policyname||tablename||cmd||coalesce(qual,'')||coalesce(with_check,'')||array_to_string(roles,','),'|' order by tablename,policyname))
+publication* triggers md5          a226db0106f10f2510beb143bcab462d (baseline identical) PASS
+all-function ACL md5               baseline 27a33051... could NOT be reproduced: exact pre-check formula not recorded (13+ variants tried, none
+                                   reproduce it on current state). Recorded post value (formula: proname||'('||identity_args||')'||coalesce(proacl::text,'')
+                                   '|' ordered by proname,args): 35a194e9e81695980e1727107bb5df06.
+   Substitute proof (catalog xmin): the newest pg_proc transaction (xmin 33612) touched exactly 4 rows = the 4 target functions;
+   0 pg_policy, 0 public pg_class, 0 pg_trigger rows written by it or later. Per-function ACLs of the 4 equal pre-fix ACLs.
+   => no ACL on any other function can have changed. Status: PASS (by substitute evidence); aggregate-hash comparison: UNKNOWN.

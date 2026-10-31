@@ -1,0 +1,17 @@
+GATE B.5 — POST-APPLY REPO SIDE EFFECT
+apply_migration also wrote supabase/migrations/20261031234927_a3743_gateb4_fix01_publish_safety.sql (23:49:30Z), byte-identical to the promoted file:
+a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981  supabase/migrations/20261031190000_a3743_gateb4_fix01_publish_safety.sql
+a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981  supabase/migrations/20261031234927_a3743_gateb4_fix01_publish_safety.sql
+local migration files now: 62 (61 expected by the re-pinned checks)
+vitest re-run after side effect:
+      Tests  8 failed | 3061 passed (3069)
+ FAIL  src/components/__tests__/a281TrustCleanup.test.ts > A2.8.1 · preservation > 18. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback; A3.7.1: publications data/storage migration, no route)
+ FAIL  src/features/action-layer/__tests__/a33DiagnosticAction.test.ts > A3.3 · preservation > 16. no new migrations (A3.4.2 added the a342 ledger; A3.4.2.2 the GBP server-owned guard; A3.5.1 the Meta connection foundation; A3.7.1 the publications data/storage foundation)
+ FAIL  src/features/email-verification/__tests__/f03Stage2b.test.ts > F-03 Stage 2B · secrets and preservation > 34/35. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback)
+ FAIL  src/features/email-verification/__tests__/f03Stage2b.test.ts > F-03 Stage 2B · trial, OAuth, users, reset > 21. existing users are not modified: no admin writes and no new migrations (46 after A3.5.1)
+ FAIL  src/features/publications/__tests__/a3743GateB3Fix02StatusAttemptGrant.test.ts > B.3 FIX02 migration: exact read-only nine-column grant > exactly one FIX02 grant migration exists and the total is 61
+ FAIL  src/features/publications/__tests__/a3743GateB4Fix01DatabaseAndFreeze.test.ts > B.4 FIX01 prepared migration text > is promoted byte-identical into supabase/migrations as the single newest migration and the count is 61
+ FAIL  src/features/roadmap/__tests__/a273Roadmap.test.ts > A2.7.3 · Platform regression > 112. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)
+ FAIL  src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts > A2.7.2 · Completion and promotion > 30. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)
+ Test Files  7 failed | 83 passed (90)
+All 8 failures are migration-count/newest-file checks (62 != 61). Not altered: resolving needs a decision on which of the two identical files to keep (production records version 20261031234927).

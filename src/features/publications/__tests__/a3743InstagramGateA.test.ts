@@ -786,8 +786,9 @@ describe('A3.7.4.3 channel isolation and boundaries', () => {
       'src/features/meta-connection/metaPublishingRepository.ts': '132b1fa4ffcb8a29afe7e048e40e97c4ba1c580359ad682d6aad21eeaa55b360',
       'src/features/publications/validation/PublicationsValidationPage.tsx': '1eb1a91eda49dcaaba496acb7072131c153bd022de0e87a637100584c61bbad0',
       'src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts': '8542f77b8bab82646f484036ef2cbda02cb92521aa165aa8ff1b55e556f66cad',
+      // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was 4760b8f3): only three AUTHORIZED_REPINS "now" hashes changed (migration count 60->61).
       // A3.7.4.3 GATE A CORRECTION 03 RE-PIN (was 170e4828; CORRECTION 02 was e7674f8f): only AUTHORIZED_REPINS entries changed, now including a3732.
-      'src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts': '4760b8f315ba110767dbbe33d6c6ac07b0cc725a8db53f7a156fc44f649f7827',
+      'src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts': '5e6ca8880d1a153c6dc2468c163467f7e5013455f9290b21e4b29fec6ece3c56',
     };
     for (const [p, h] of Object.entries(frozen)) expect([p, sha(p)]).toEqual([p, h]);
     expect(MIGRATION).toContain("publication_channel_text_issue(v_text, CASE p_channel WHEN 'facebook' THEN 5000 ELSE 2200 END)");
