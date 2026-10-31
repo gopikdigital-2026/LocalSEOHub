@@ -513,7 +513,7 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     },
     'src/components/__tests__/a281TrustCleanup.test.ts': {
       was: 'cb6a925ab209873f69222303e0b7afc27a1ebfe0e4aaf3d6eecba3364da36c92',
-      now: '2f4b6d27fd7f1d2f7851251f5a2fc3dfd71f6558be1b7dd9724e1b387d0a0a9a',
+      now: '67ba5b56ce48065241d41032d74beab25c9960628f64b80c1c41fae667a3f821',
     },
     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',

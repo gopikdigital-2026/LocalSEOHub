@@ -351,7 +351,7 @@ describe('A2.7.3 · Platform regression', () => {
   it('111. no AI counter reset', () => expect(rmSrc).not.toMatch(/reset|counter/i));
   it('112. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)', () => {
     const migs = readdirSync(MIG_DIR).sort();
-    expect(migs).toHaveLength(59); // A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+    expect(migs).toHaveLength(60); // A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
     expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_') && !m.includes('_a3733_') && !m.includes('_a3741_') && !m.includes('_a3742_') && !m.includes('_a3743_')).slice(-3)).toEqual([
       '20261022152358_a3512_meta_oauth_stuck_connection_recovery.sql',
       '20261022170333_a353_meta_read_layer.sql',

@@ -226,7 +226,7 @@ describe('F-03 Stage 2B · trial, OAuth, users, reset', () => {
   });
 
   it('21. existing users are not modified: no admin writes and no new migrations (46 after A3.5.1)', () => {
-    expect(migrations).toHaveLength(59); // A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+    expect(migrations).toHaveLength(60); // A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
     expect(frontendText).not.toMatch(/updateUserById|deleteUser|email_confirmed_at\s*[:=]/);
   });
 
@@ -280,7 +280,7 @@ describe('F-03 Stage 2B · secrets and preservation', () => {
   });
 
   it('34/35. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback)', () => {
-    expect(migrations).toHaveLength(59); // A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+    expect(migrations).toHaveLength(60); // A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
     expect(app.match(/<Route [^>]*path=/g)).toHaveLength(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
   });
 
