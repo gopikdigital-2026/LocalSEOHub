@@ -69,7 +69,7 @@ const FROZEN: Record<string, string> = {
   'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
   'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
   'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
-  'src/App.tsx': '81b0de7cf84a5105ce09ec865c9180b5611651331f97ca5584cda84fd6e27692', // A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
+  'src/App.tsx': 'ef7f7cdca4c0c0a952a90cff7e68e427c1decdf2655c68c72d9f1468d2b5029b', // A3.7.4.3 GATE A RE-PIN (was 81b0de7c): read-only Instagram harness panel on the same hidden route. A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
 
@@ -351,8 +351,8 @@ describe('A2.7.3 · Platform regression', () => {
   it('111. no AI counter reset', () => expect(rmSrc).not.toMatch(/reset|counter/i));
   it('112. no new migration (beyond A3.4.1, the A3.4.2 review-reply ledger and the A3.4.2.2 GBP guard and the A3.5.1 Meta connection foundation)', () => {
     const migs = readdirSync(MIG_DIR).sort();
-    expect(migs).toHaveLength(58); // A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
-    expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_') && !m.includes('_a3733_') && !m.includes('_a3741_') && !m.includes('_a3742_')).slice(-3)).toEqual([
+    expect(migs).toHaveLength(59); // A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
+    expect(migs.filter((m) => !m.includes('_a371_') && !m.includes('_a372_') && !m.includes('_a3731_') && !m.includes('_a3732_') && !m.includes('_a3733_') && !m.includes('_a3741_') && !m.includes('_a3742_') && !m.includes('_a3743_')).slice(-3)).toEqual([
       '20261022152358_a3512_meta_oauth_stuck_connection_recovery.sql',
       '20261022170333_a353_meta_read_layer.sql',
       '20261022170523_a353_meta_sync_claim_min_interval.sql',
