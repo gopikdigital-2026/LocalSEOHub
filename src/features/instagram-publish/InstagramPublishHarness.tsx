@@ -7,6 +7,7 @@ import { usePublicationResume } from '../publication-resume/context';
 import { getReviewDraft } from '../channel-review/repository';
 import { getInstagramStatus, requestInstagramPublish, type InstagramStatus } from './repository';
 import { CROP_TEXT, GENERIC_ERROR, IG, INTERNAL_NOTICE, STAGE_TEXT, STATE_TEXT } from './copy';
+import MetaConnectionCheck from './MetaConnectionCheck';
 
 type Ready = Extract<Publication, { status: 'proposals_ready' }>;
 const isReady = (p: Publication | null): p is Ready => p?.status === 'proposals_ready';
@@ -189,6 +190,7 @@ export default function InstagramPublishHarness() {
           )}
           {!status && !loading && !error && <p className="text-sm text-slate-600">{t('empty')}</p>}
         </div>
+        <MetaConnectionCheck publicationId={pub.id} />
       </div>
     </section>
   );

@@ -59,3 +59,47 @@ export const STATE_TEXT: Record<AttemptState, Text> = {
 };
 
 export const GENERIC_ERROR: Text = { es: 'No se pudo completar. Inténtalo de nuevo más tarde.', en: 'Could not complete. Try again later.' };
+
+export const CHECK = {
+  title: { es: 'Conexión en vivo con Meta (solo lectura)', en: 'Live Meta connection (read-only)' },
+  intro: { es: 'Consulta a Meta, en este momento, el estado de la autorización, los permisos, la Página y la cuenta de Instagram. No publica nada, no guarda el resultado y no activa la publicación.', en: 'Asks Meta, right now, about the authorization, permissions, Page and Instagram account. It posts nothing, stores nothing and does not enable publishing.' },
+  run: { es: 'Comprobar conexión con Meta', en: 'Check Meta connection' },
+  running: { es: 'Comprobando…', en: 'Checking…' },
+  incomplete: { es: 'Comprobación incompleta: algunos datos no se pudieron confirmar. No es lo mismo que un fallo.', en: 'Incomplete check: some items could not be confirmed. This is not the same as a failure.' },
+  failed: { es: 'Al menos una comprobación ha fallado.', en: 'At least one check failed.' },
+  passed: { es: 'Todas las comprobaciones han pasado.', en: 'All checks passed.' },
+  checkedAt: { es: 'Comprobado', en: 'Checked' },
+  page: { es: 'Página de Facebook', en: 'Facebook Page' },
+  account: { es: 'Cuenta de Instagram', en: 'Instagram account' },
+  tokenValid: { es: 'Autorización válida', en: 'Authorization valid' },
+  expiry: { es: 'Caducidad', en: 'Expiry' },
+  dataAccess: { es: 'Acceso a datos hasta', en: 'Data access until' },
+  eligibility: { es: 'Apta para publicar (profesional)', en: 'Publishing eligible (professional)' },
+  limit: { es: 'Límite de publicación (24 h)', en: 'Publishing limit (24 h)' },
+  subtype: { es: 'Meta no indica aquí si la cuenta es Business o Creator; la aptitud se deduce de la vinculación y del límite de publicación.', en: 'Meta does not say here whether the account is Business or Creator; eligibility is inferred from the link and the publishing limit.' },
+  notStored: { es: 'Resultado no guardado. No cambia el botón de publicación.', en: 'Result not stored. It does not change the publish button.' },
+  unknown: { es: 'desconocido', en: 'unknown' },
+} satisfies Record<string, Text>;
+
+export const EXPIRY_TEXT: Record<'never' | 'valid_until' | 'expired' | 'unknown', Text> = {
+  never: { es: 'no caduca', en: 'does not expire' },
+  valid_until: { es: 'válida hasta', en: 'valid until' },
+  expired: { es: 'caducada', en: 'expired' },
+  unknown: { es: 'desconocida', en: 'unknown' },
+};
+
+export const CHECK_TEXT: Record<'token' | 'permissions' | 'page' | 'instagram_account' | 'professional_eligibility' | 'publishing_limit', Text> = {
+  token: { es: 'Autorización', en: 'Authorization' },
+  permissions: { es: 'Permisos', en: 'Permissions' },
+  page: { es: 'Página y vinculación', en: 'Page and link' },
+  instagram_account: { es: 'Cuenta de Instagram', en: 'Instagram account' },
+  professional_eligibility: { es: 'Aptitud profesional', en: 'Professional eligibility' },
+  publishing_limit: { es: 'Límite de publicación', en: 'Publishing limit' },
+};
+
+export const STATUS_TEXT: Record<'pass' | 'fail' | 'inconclusive' | 'skipped', Text> = {
+  pass: { es: 'correcto', en: 'pass' },
+  fail: { es: 'fallo', en: 'fail' },
+  inconclusive: { es: 'sin confirmar', en: 'inconclusive' },
+  skipped: { es: 'no ejecutada', en: 'not run' },
+};

@@ -5,6 +5,7 @@ import UPNG from "npm:upng-js@2.1.0";
 import type { PreflightRow } from "./shared.ts";
 import type { Codecs } from "./derivative.ts";
 import { createInstagramPublishHandler, type AttemptSummary, type BeginRow, type Stage } from "./instagramPublish.ts";
+import { createConnectionPreflightHandler, isConnectionPreflightRequest } from "./connectionPreflight.ts";
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -30,11 +31,13 @@ const codecs: Codecs = {
   },
 };
 
+async function getUserId(jwt: string) {
+  const { data, error } = await supabaseAdmin.auth.getUser(jwt);
+  return error || !data.user ? null : data.user.id;
+}
+
 const handle = createInstagramPublishHandler({
-  async getUserId(jwt) {
-    const { data, error } = await supabaseAdmin.auth.getUser(jwt);
-    return error || !data.user ? null : data.user.id;
-  },
+  getUserId,
   async preflight(userId, publicationId, expectedVersion) {
     const { data, error } = await supabaseAdmin.rpc("publication_publish_preflight", {
       p_user_id: userId,
@@ -169,4 +172,41 @@ const handle = createInstagramPublishHandler({
   env: (name) => Deno.env.get(name),
 });
 
-Deno.serve(handle);
+// Read-only: SELECTs and the Vault token reader only; no inserts, updates, uploads or Graph writes.
+const connectionPreflight = createConnectionPreflightHandler({
+  getUserId,
+  async internalTestActive(userId) {
+    const { data, error } = await supabaseAdmin.rpc("internal_test_entitlement_active", { p_user_id: userId });
+    if (error) throw new Error("entitlement lookup failed");
+    return data === true;
+  },
+  async connection(userId, publicationId) {
+    const { data: pub, error } = await supabaseAdmin.from("publications").select("business_id")
+      .eq("id", publicationId).eq("user_id", userId).maybeSingle();
+    if (error) throw new Error("publication lookup failed");
+    if (!pub?.business_id) return { kind: "not_found" };
+    const { data: biz, error: bizError } = await supabaseAdmin.from("businesses").select("id")
+      .eq("id", pub.business_id).eq("user_id", userId).maybeSingle();
+    if (bizError) throw new Error("business lookup failed");
+    if (!biz) return { kind: "not_found" };
+    const { data: conn, error: connError } = await supabaseAdmin.from("meta_connections")
+      .select("id, page_id, instagram_account_id, instagram_username")
+      .eq("user_id", userId).eq("business_id", biz.id).eq("status", "connected").eq("instagram_status", "connected")
+      .maybeSingle();
+    if (connError) throw new Error("connection lookup failed");
+    if (!conn?.page_id || !conn.instagram_account_id) return { kind: "not_connected" };
+    return { kind: "ok", connection: { id: conn.id, pageId: conn.page_id, igUserId: conn.instagram_account_id, igUsername: conn.instagram_username ?? null } };
+  },
+  async readToken(connectionId) {
+    const { data, error } = await supabaseAdmin.rpc("meta_read_token", { p_connection_id: connectionId });
+    if (error) return null;
+    const row = Array.isArray(data) ? data[0] : data;
+    return typeof row?.access_token === "string" && row.access_token ? row.access_token : null;
+  },
+  env: (name) => Deno.env.get(name),
+});
+
+Deno.serve(async (req) => {
+  if (await isConnectionPreflightRequest(req.clone())) return connectionPreflight(req);
+  return handle(req);
+});
