@@ -1,66 +1,105 @@
-# A3.7.4.3 — Gate B.2 Part 2 — Publication D Readiness
+# A3.7.4.3 — Gate B.2 Part 2 — Publication D Readiness (owner-created, read-only verification)
 
-Baseline: Gate B.2 Part 1, ZIP (30). Real Instagram publishing NOT authorized.
+Date: 2026-10-31
+Scope: READ-ONLY AUDIT AND REPORT UPDATE ONLY. No database writes, no publication edits, no secrets, no Meta Graph calls.
 
-## Status: BLOCKED BEFORE D CREATION (owner action required)
+Supersedes the earlier Part 2 report (NO-GO, blocked on owner session). The owner has since created D through the normal authenticated workflow.
 
-Publication D was **not created**. Every step of the normal workflow requires the owner's own authenticated session:
+## 1. Publication D identity
 
-| Step | Server entry | Auth |
+| Check | Evidence (production DB, read-only SQL) | Result |
 |---|---|---|
-| Upload + normalization | `publication-media` | verify_jwt = true; handler returns 401 `UNAUTHENTICATED` without a user JWT |
-| Three proposals (AI) | `publication-proposals` | verify_jwt = true, entitlement + usage limits |
-| Proposal selection / draft | RLS-scoped RPC as `authenticated` | owner JWT |
-| Channel adaptation | `publication-adaptations` | verify_jwt = true |
-| Instagram caption edit (versioned) | channel review RPC | owner JWT |
+| Publication rows with UUID `875587f5-0137-4477-904c-609e8e406ad6` | count = 1 | PASS |
+| Business | `e6014022-370f-4ec0-a340-c7c55f808247` (Gopik.Digital) | PASS |
+| Publication owner | `aabe426e-f079-4db1-835b-17d9d126313e` | PASS |
+| Business owner | `aabe426e-f079-4db1-835b-17d9d126313e` (matches) | PASS |
+| Publication created_at | 2026-10-31 16:15:20.420329+00 | — |
+| Publication updated_at | 2026-10-31 16:16:13.516242+00 | — |
+| Publication status | `proposals_ready` (lifecycle of the proposals stage; draft readiness is tracked on the draft) | INFO |
+| Proposal generation | `144d009d-e74a-4af4-8692-1ed882e4b2ca`, lang `es` | PASS |
 
-The agent holds no session for user `aabe426e-…`. The only ways to proceed without the owner would be to forge or mint a user token, or to write rows directly with the service role. Both bypass the workflow and business rules and are prohibited by §4 ("Do not fabricate a publication through direct SQL"). Per §3/§4: STOP.
+## 2. Draft
 
-No production code was changed.
-
-## Read-only preflight (passed)
-
-| Item | Expected | Observed |
+| Check | Evidence | Result |
 |---|---|---|
-| Instagram account ID | 17841462487279994 | 17841462487279994 |
-| Username | @localseohub.io | localseohub.io |
-| Linked Page | 1393994523793266 | 1393994523793266 |
-| Connection status / IG status | connected | connected / connected |
-| Business | owned by connected user | e6014022-370f-4ec0-a340-c7c55f808247 (Gopik.Digital), owner aabe426e-f079-4db1-835b-17d9d126313e = connection user |
-| Permissions (stored grant) | instagram_basic, instagram_content_publish, pages_show_list, pages_read_engagement | all present (+ pages_manage_posts, business_management, public_profile) |
-| Publishing consent | present | 2026-10-29 18:06:07 UTC |
-| Internal test entitlement | active | 1 active |
-| Revocation / last error | none | none / none |
-| IG / FB arming secrets | absent | absent (no `META_INSTAGRAM_REAL_PUBLISH_*`, no `META_FACEBOOK_REAL_PUBLISH_*`) |
-| Instagram attempts | 0 | 0 |
-| Active / UNKNOWN attempts | 0 | 0 |
+| Draft version | 3 (expected 3) | PASS |
+| Selected proposal | position 3, role `professional`, lang `es`, selected_at 2026-10-31 16:18:11.396217+00 | PASS |
+| Adapted | adapted_at 2026-10-31 16:20:26.486356+00 | PASS |
+| Last draft edit | updated_at 2026-10-31 16:22:09.849195+00 | — |
+| Draft "ready" | `publication_drafts` has no status column. Readiness is the server preflight: `publication_publish_preflight(owner, D, 3)` returns `issue = null` for both `facebook` and `instagram`, `draft_version = 3`, `attempt_status = null` | PASS |
+| Version-binding control | Same preflight with expected version 2 returns `VERSION_CONFLICT` on both channels | PASS |
 
-Limitations (not invented):
-- The stored `token_expires_at` is null. Token validity was **not** independently re-verified against Meta in this phase, because no live read-only Graph call was made.
-- Permissions were taken from the stored grant snapshot (`permissions_checked_at` 2026-10-29 18:06 UTC), not re-queried live.
-- The Business vs Creator subtype is not verified, as in Gate A/B.1.
+The preflight function is `STABLE` and contains no INSERT/UPDATE/DELETE (verified from `pg_get_functiondef`), so running it did not write anything.
 
-## Test asset integrity and derivative (local, nothing uploaded)
+## 3. Caption integrity
 
-- Asset `auditoria-a2/gate-b1-assets/a3743-publication-d-test-image.png`: sha256 `6edee998611958567dead90b82eebc39bd15db2ea85fe02c3135942adcf853a7`, 901,643 bytes, PNG 1080×1350, 8-bit RGB. Chunks are only IHDR/IDAT/IEND, so there is no text or metadata.
-- Production derivative code (`derivative.ts`, unchanged), run locally with the test codecs:
-  - probe 1080×1350, orientation 1; plan `none` (4:5 already, no crop);
-  - output JPEG 1080×1350, quality 90, 87,040 bytes;
-  - sha256 `bc019d5ae146decf7dc22917027ccc4e0a1c7b2db2f3465bff14bd49ae726730`, identical on a second run (deterministic);
-  - JPEG metadata markers: none.
-- No signed URL or token was generated. Nothing was stored. The temporary check script was deleted.
+| Check | Evidence | Result |
+|---|---|---|
+| Instagram text exact match | `instagram_text = expected` → true | PASS |
+| Length | 157 characters (limit 2200) | PASS |
+| SHA-256 (UTF-8) | `537130129640e265530b14f0c6630124906ceae7964501ef76002eae2603915e` | — |
+| Edited by owner | `instagram_text <> instagram_generated` (owner replaced the generated text, as instructed) | PASS |
+| Hashtags / mentions | none | PASS |
+| Facebook text unchanged | `facebook_text = facebook_generated` → true; 302 chars; SHA-256 `b1c4786b85c8892a6dc85c5196df1093b561a1a64ca6930aac504354f8b6c5b2` | PASS |
 
-## Allowlist / trigger state
+Expected caption:
+`Publicación de prueba controlada de LocalSEOHub. Estamos verificando nuestra integración de publicación en Instagram. Controlled LocalSEOHub publishing test.`
 
-P1 and P2 are deployed and unchanged (`instagramPublish.ts` 5523a9c0…). The allowlist secret is absent, so every publication, including a future D, is refused, and the P2 button stays disabled (`trigger.reason = not_armed`). A/B/C are refused even under mocked arming (Part 1 suite, 24/24).
+## 4. Original image
 
-## Required to unblock (owner action in the app)
+| Check | Evidence | Result |
+|---|---|---|
+| Path | `aabe426e-…/e6014022-…/875587f5-0137-4477-904c-609e8e406ad6/ba93c54e-c0ee-4fa0-a7b4-8284cddaa808.png` (owner/business/publication scoped) | PASS |
+| Object exists in private bucket `publication-images` | 1 object, created 2026-10-31 16:15:22.690798+00 | PASS |
+| Bucket private | `public = false` | PASS |
+| Stored size / mime | 901,643 bytes, `image/png` (matches DB columns) | PASS |
+| Dimensions (DB) | 1080 × 1350, `image_normalized = true` | PASS |
+| Byte identity with test asset | storage eTag `fc3a190ee41708dc8b242ff5b711ae58` = MD5 of `gate-b1-assets/a3743-publication-d-test-image.png` | PASS |
 
-1. Signed in as the owner of Gopik.Digital, open the internal publications validation page and upload the test asset (from the audit ZIP).
-2. Generate proposals, select one, then run the adaptation.
-3. In channel review, set the Instagram text to exactly: "Publicación de prueba controlada de LocalSEOHub. Estamos verificando nuestra integración de publicación en Instagram. Controlled LocalSEOHub publishing test." Save it, and do not publish to Facebook.
-4. Report back; the agent then records the D UUID, version, image path, caption hash and preflight read-only, and completes this gate.
+Because the stored object is byte-identical to the asset, the local derivative evidence applies to D directly:
+asset SHA-256 `6edee998611958567dead90b82eebc39bd15db2ea85fe02c3135942adcf853a7`, PNG 1080×1350 RGB, chunks IHDR/IDAT/IEND only;
+derivative plan `none` (4:5, no crop), JPEG 1080×1350 q90, 87,040 bytes, SHA-256 `bc019d5ae146decf7dc22917027ccc4e0a1c7b2db2f3465bff14bd49ae726730`, deterministic, no metadata.
+No derivative was uploaded; `instagram-derivatives` holds 0 objects.
 
-## Outstanding for a future real E2E (unchanged)
+## 5. Instagram single-image eligibility
 
-D created; explicit authorization; set `META_INSTAGRAM_REAL_PUBLISH_ARMED`, `..._USER_IDS` (owner) and `..._PUBLICATION_IDS` (D only); live token/permission check; single trigger from the internal harness; disarm immediately after.
+- Aspect 4:5 (0.8), within the Instagram feed range 4:5–1.91:1. PASS
+- Width 1080, within 320–1440. PASS
+- JPEG derivative well under 8 MB. PASS
+- Caption ≤ 2200 characters, 0 hashtags. PASS
+- Server preflight Instagram issue: none. PASS
+
+## 6. Publishing attempts for D
+
+`publication_publish_attempts` rows for D: 0. PASS
+
+## 7. Instagram account readiness
+
+| Item | Stored DB evidence | Live Meta verification |
+|---|---|---|
+| Instagram account ID | `17841462487279994` (@localseohub.io), instagram_status `connected` | Not performed |
+| Facebook Page | `1393994523793266`, connection `connected`, business = Gopik.Digital | Not performed |
+| Permissions | snapshot includes `instagram_basic`, `instagram_content_publish`, `pages_show_list`, `pages_read_engagement`, `business_management`, `pages_manage_posts`, `public_profile` (checked 2026-10-29 18:06:07) | Not performed |
+| Publishing consent | 2026-10-29 18:06:07.726431+00, not revoked, no last_error | n/a (internal) |
+| Internal test entitlement | 1 active | n/a (internal) |
+| Token validity | `token_expires_at` is null (long-lived Page token, no stored expiry) | NOT independently verifiable read-only without a Graph call using the token; not performed |
+| Account subtype (Business/Creator) | not stored | NOT independently verifiable; not performed |
+
+Limitation: token validity and account subtype rest on stored evidence only. Both must be confirmed live at the start of the separately authorized real E2E (the publish flow fails safely with a mapped Meta error if they're wrong).
+
+## 8. Trigger state for D (P1/P2)
+
+- Arming secrets absent → `isArmed = false` → trigger reason `not_armed`; D is also not in any allowlist (`META_INSTAGRAM_REAL_PUBLISH_PUBLICATION_IDS` absent).
+- `isPublicationAllowed` / `isAuthorizedToPublish` unchanged (instagramPublish.ts SHA-256 `5523a9c0…`); mocked-arming coverage remains in the 24 Gate B.2 Part 1 security tests (passing).
+
+## 9. Outstanding prerequisites (not authorized here)
+
+1. Separate written authorization for the real Instagram E2E (Gate B.3).
+2. At that time only: set `META_INSTAGRAM_REAL_PUBLISH_ARMED`, `META_INSTAGRAM_REAL_PUBLISH_USER_IDS = aabe426e-f079-4db1-835b-17d9d126313e`, `META_INSTAGRAM_REAL_PUBLISH_PUBLICATION_IDS = 875587f5-0137-4477-904c-609e8e406ad6`.
+3. Publish with expected version 3; any further edit of D bumps the version and must be re-audited.
+4. Live confirmation of token validity and account subtype.
+5. Disarm (remove all three secrets) immediately after the single attempt.
+
+## 10. Verdict
+
+**GO — A3.7.4.3 GATE B.2 PART 2 PUBLICATION D READY; REAL INSTAGRAM E2E NOT AUTHORIZED**
