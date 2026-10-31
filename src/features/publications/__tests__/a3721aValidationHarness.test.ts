@@ -47,7 +47,8 @@ describe('A3.7.2.1A harness route and discoverability', () => {
   it('route exists, is guarded by the normal app auth guard and lives outside the app shell', () => {
     expect(VALIDATION_ROUTE).toBe('/internal/publications-validation');
     const block = APP.slice(APP.indexOf('path="/internal/publications-validation"'));
-    expect(block.slice(0, 300)).toMatch(/<AppGuard>[\s\S]*<PublicationsValidationPage \/>[\s\S]*<\/AppGuard>/);
+    // A3.7.4.3 GATE A RE-PIN (was 300): the read-only Instagram harness lengthens the same route block.
+    expect(block.slice(0, 400)).toMatch(/<AppGuard>[\s\S]*<PublicationsValidationPage \/>[\s\S]*<\/AppGuard>/);
     const shell = APP.slice(APP.indexOf('<AppShellV2 />'), APP.indexOf('</Route>', APP.indexOf('<AppShellV2 />')));
     expect(shell).not.toMatch(/internal|PublicationsValidation/);
   });

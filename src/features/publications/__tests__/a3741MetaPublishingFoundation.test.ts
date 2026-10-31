@@ -500,31 +500,35 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
   // prior GATE A "now" values were 0b69351e / 7b8b10b6 / 5c8006c5.
   // Authorized A3.7.4.2 GATE B.2 FIX03 re-pins: the review editor refreshes the shared publication after a save so the
   // Facebook publish panel never shows a stale version/caption; a3734 follows its context destructuring.
+  // Authorized A3.7.4.3 GATE A CORRECTION 02 re-pins: App.tsx mounts the read-only Instagram harness; migration count
+  // 58 -> 59 and a3743 exclusion (a281, a273, a272); a3544 follows App.tsx; a3733 test 29 allows instagram-publishing
+  // with /media and /media_publish confined to its graph.ts. Prior "now" values for App/a281/a273/a272/a3544/a3733 were
+  // 81b0de7c / 4db0f819 / 2ce19c6b / 20296e5b / cf7c8076 / eb212294.
   const AUTHORIZED_REPINS: Record<string, { was: string; now: string }> = {
     'src/App.tsx': {
       was: '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba',
-      now: '81b0de7cf84a5105ce09ec865c9180b5611651331f97ca5584cda84fd6e27692',
+      now: 'ef7f7cdca4c0c0a952a90cff7e68e427c1decdf2655c68c72d9f1468d2b5029b',
     },
     'src/components/__tests__/a281TrustCleanup.test.ts': {
       was: 'cb6a925ab209873f69222303e0b7afc27a1ebfe0e4aaf3d6eecba3364da36c92',
-      now: '4db0f81965dd125da8f81968483b2558fc0565c187c6e3d8032d35197bc68198',
+      now: '2f4b6d27fd7f1d2f7851251f5a2fc3dfd71f6558be1b7dd9724e1b387d0a0a9a',
     },
     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
-      now: '2ce19c6b05c5052c3f98f9a40d39442088672efd36a9d82f749a2e743ff83938',
+      now: '300a87c8605856aaae31fd6ef666cd2f02bd0868f1ddcf45e95918bb4dde03c0',
     },
     'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
       was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',
-      now: '20296e5b93b6d88e046d27800737b45d6ccc0c4b57528214726feb5ae2fd91a7',
+      now: 'b5df9213adbb8ef98712b733ec88ad46e44e56d083647027bf6a2f2e446d30b1',
     },
     // Split so the a3542 isolation guard (no literal reference to that layer outside it) keeps holding.
     ['src/features/social' + '-intelligence/integration/__tests__/a3544SocialIntegration.test.ts']: {
       was: 'e85d466ffe39ff2797ffc9505d44fa5a25261df955d38a465f0d54d9b12c8c08',
-      now: 'cf7c8076b0ccab9166b522990cba151c7582f5f43bde4a9ae4b59308f297a120',
+      now: 'c1b5c3c207d802e2f84f9c0e6fbe53a95beac5624d93e6fecb0b4b661fbf2290',
     },
     'src/features/publications/__tests__/a3733ChannelReview.test.ts': {
       was: 'd62c66187e16c6200e1327b5709def5e2fe781fd344e2202585560249b8759c9',
-      now: 'eb212294494c2799e93acb7adeb0827c80f6b04a8110df31f52caa063dfa1b8e',
+      now: '9dc24452f539a7fc0aa0bd4d28f1238babcf8c298b955a48edbb5088eadf7500',
     },
     'src/features/channel-review/ChannelReviewPanel.tsx': {
       was: '5ab5259c24a48072d80535c13d1d4b5a5e5c432a2a66316cd3d4b30efa128989',

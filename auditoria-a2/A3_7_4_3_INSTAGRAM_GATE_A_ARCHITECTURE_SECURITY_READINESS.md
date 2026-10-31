@@ -17,9 +17,7 @@ The Instagram implementation is complete and verified:
 - the build passes;
 - every production safety check holds.
 
-The verdict is NO-GO for one reason only: the full regression suite has **14 failures in older-phase pin tests**, and fixing them requires editing a file frozen by A3.7.4.2. The brief says "If a shared frozen file must change: STOP and justify it", so I stopped. No frozen file was edited.
-
-What is required to reach GO is a test-only re-pin authorization (§17). No production code needs to change.
+Correction 02 applied every authorized test-only re-pin, reducing 14 failures to **1**. The verdict stays NO-GO for one reason: the remaining failure is a cascade the authorization did not cover. `a3731SelectionFoundation.test.ts` checks the A3.7.2 freeze manifest, and that manifest pins `a3721aValidationHarness.test.ts`, whose authorized 300 → 400 window edit changed its hash. Fixing it means changing either a historical freeze record or further frozen tests (§17), so I stopped. No production code changed.
 
 ## 2. Frozen baseline
 
@@ -226,13 +224,13 @@ The derivative tests use the real codecs (jpeg-js and upng-js) with fixtures car
 | Check | Result |
 |---|---|
 | Instagram suite | 39/39 PASS |
-| A3.7.4.1 suite | PASS except its own freeze test ("every A3.7.3.4 frozen file is byte-identical…"), which fails only because of the App.tsx pin |
-| A3.7.4.2 suite (a3742 tests) | PASS |
-| Full suite | 2899 PASS / **14 FAIL** (85 files; baseline 2874) |
+| A3.7.4.1 suite | 68/68 PASS |
+| A3.7.4.2 suites | a3742FacebookPhotoPublishing 55/55; B2Fix03 8/8; B1Fix01 19/19; Fix02 12/12 — PASS |
+| Full suite (Correction 02) | 2912 PASS / **1 FAIL** of 2913 (previously 2899 / 14) |
 | tsc | 20 inherited errors, 0 new |
 | build | PASS |
 
-All 14 failures are scope pins in older phases. None is a behaviour failure:
+Before Correction 02, 14 tests failed. All were scope pins in older phases; none was a behaviour failure. They are now fixed. The remaining failure is a3731 "frozen A3.7.2 files still match the freeze manifest" (a3721a: expected c20a942e…, actual 6c32bfcd…). The original causes were:
 
 | Cause | Failing tests |
 |---|---|
@@ -266,7 +264,23 @@ All 14 failures are scope pins in older phases. None is a behaviour failure:
 
 facebookPhoto.ts 7225bc3d…, facebookPublish.ts 48da8e2f…, handler.ts b7525645…, meta-publishing/index.ts 027ee4fe…, FacebookPublishHarness.tsx 78cc2a49…, facebook-publish/copy.ts e47fa991…, facebook-publish/repository.ts 4242ea4c…, plus every other file in the A3.7.4.2 freeze manifest. T36 asserts these hashes on every run.
 
-## 17. Justification for stopping, and the minimum correction
+## 17. Correction 02 — authorized re-pins applied, and the remaining cascade
+
+Applied (test-only; every security and behaviour assertion is kept):
+- Migration count 58 → 59 and `_a3743_` exclusion in a281, a273, a272, a33, f03 and a3542 #39; a3543 follows the a3542 md5 (6895742f → a0473304).
+- App.tsx pin 81b0de7c → ef7f7cdc in a281, a273, a272 and a3544.
+- a3721a route window 300 → 400. The same AppGuard / PublicationsValidationPage regex and the shell check are kept.
+- a3733 #29 allows exactly ['instagram-publishing', 'meta-publishing']. meta-publishing keeps its rules. In instagram-publishing, /media and /media_publish are allowed only in graph.ts, and /photos and /feed are banned everywhere.
+- a3741 `AUTHORIZED_REPINS`: `was` values kept. `now` values were App 81b0de7c → ef7f7cdc, a281 4db0f819 → 2f4b6d27, a273 2ce19c6b → 300a87c8, a272 20296e5b → b5df9213, a3544 cf7c8076 → c1b5c3c2, a3733 eb212294 → 9dc24452. The test file goes e7674f8f → 170e4828.
+- Instagram T36: a3741 pin e7674f8f → 170e4828.
+
+Remaining cascade (not authorized, not applied). `a3731SelectionFoundation.test.ts` reads `A3_7_2_FREEZE_MANIFEST.md`, and line 52 of that manifest pins a3721a at c20a942e…. Options for a further authorization:
+- (a) Add an `AUTHORIZED_REPINS`-style exception for a3721a (was c20a942e, now 6c32bfcd) in a3731. a3731 is pinned by `A3_7_3_1_FREEZE_MANIFEST.md` (38e88e4f), which a3732 checks, so a3732 needs the same exception. a3732 is pinned in `A3_7_3_4_FREEZE_MANIFEST.md` (b0125ea3), which a3741 checks, so it needs one more `AUTHORIZED_REPINS` entry and T36 needs another a3741 re-pin.
+- (b) Update the single a3721a row in the historical A3.7.2 freeze manifest, with a dated re-pin note. This is one documentation change and leaves the other tests alone.
+
+Option (b) is the smallest change; option (a) leaves historical records untouched.
+
+### Original justification for stopping (Correction 01)
 
 The frozen file that would have to change is `src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts`, frozen by A3.7.4.2 at hash e7674f8f…. Its `AUTHORIZED_REPINS` table pins the hashes of App.tsx and of the older pin tests (a281, a273, a272, a3544, a3733). Any edit to those files, which is exactly what A3.7.4.1 and A3.7.4.2 did through authorized re-pins, must be recorded there.
 

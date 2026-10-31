@@ -321,10 +321,15 @@ describe('A3.7.3.3 security and scope', () => {
     const fns = readdirSync(join(ROOT, 'supabase/functions'));
     // A3.7.4.1 RE-PIN: meta-publishing is readiness/consent only and must never call a Graph publish edge.
     // A3.7.4.2 RE-PIN: the single Facebook /photos edge is allowed only in the dedicated transport file.
-    expect(fns.filter((f) => /publish/i.test(f))).toEqual(['meta-publishing']);
+    // A3.7.4.3 GATE A RE-PIN: the separate instagram-publishing function may reach /media and /media_publish only from graph.ts.
+    expect(fns.filter((f) => /publish/i.test(f)).sort()).toEqual(['instagram-publishing', 'meta-publishing']);
     for (const f of readdirSync(join(ROOT, 'supabase/functions/meta-publishing'))) {
       const forbidden = f === 'facebookPhoto.ts' ? /\/media_publish|\/media\b|\/feed/ : /\/photos|\/media_publish|\/media\b|\/feed/;
       expect(src(`supabase/functions/meta-publishing/${f}`)).not.toMatch(forbidden);
+    }
+    for (const f of readdirSync(join(ROOT, 'supabase/functions/instagram-publishing'))) {
+      const forbidden = f === 'graph.ts' ? /\/photos|\/feed/ : /\/photos|\/media_publish|\/media\b|\/feed/;
+      expect(src(`supabase/functions/instagram-publishing/${f}`)).not.toMatch(forbidden);
     }
   });
 

@@ -767,7 +767,8 @@ describe('A3.7.4.3 channel isolation and boundaries', () => {
       'src/features/meta-connection/metaPublishingRepository.ts': '132b1fa4ffcb8a29afe7e048e40e97c4ba1c580359ad682d6aad21eeaa55b360',
       'src/features/publications/validation/PublicationsValidationPage.tsx': '1eb1a91eda49dcaaba496acb7072131c153bd022de0e87a637100584c61bbad0',
       'src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts': '8542f77b8bab82646f484036ef2cbda02cb92521aa165aa8ff1b55e556f66cad',
-      'src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts': 'e7674f8fcfaeb2b6e4f786f060fa059d3c017b9d4b33459fe8b7d331afdd4b07',
+      // A3.7.4.3 GATE A CORRECTION 02 RE-PIN (was e7674f8f): only the authorized AUTHORIZED_REPINS "now" values changed.
+      'src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts': '170e482873d48fca58eb05c90a64b6ff680e9572ad962f865f961b2a85c2384f',
     };
     for (const [p, h] of Object.entries(frozen)) expect([p, sha(p)]).toEqual([p, h]);
     expect(MIGRATION).toContain("publication_channel_text_issue(v_text, CASE p_channel WHEN 'facebook' THEN 5000 ELSE 2200 END)");

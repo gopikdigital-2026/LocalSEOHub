@@ -303,7 +303,7 @@ describe('A3.5.4.4.1 Social Integration — consumers', () => {
     expect(userText).not.toMatch(/inactiv|rendimiento|performance|seguidores|followers|mejora tu|improve your|garantiza|guarantee/i);
   });
   it('frozen A3.5.4.3 UI files and App.tsx unchanged', () => {
-    expect(sha('src/App.tsx')).toBe('81b0de7cf84a5105ce09ec865c9180b5611651331f97ca5584cda84fd6e27692'); // A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
+    expect(sha('src/App.tsx')).toBe('ef7f7cdca4c0c0a952a90cff7e68e427c1decdf2655c68c72d9f1468d2b5029b'); // A3.7.4.3 GATE A RE-PIN (was 81b0de7c): read-only Instagram harness panel on the same hidden route. A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
     expect(sha('src/features/social-intelligence/ui/viewModel.ts')).toBe('c92c4ee4e782274260cda418ef4f963cc300b29fcd35eb5b4149d71ae785aee1');
     expect(sha('src/features/social-intelligence/ui/repository.ts')).toBe('dc2cc79c122679a478e5bfc31374b9a0f8e68c033dc425a1217f58c6ea2d5817');
     expect(sha('src/features/social-intelligence/findings/engine.ts')).toBe('fe37139fc142dc2912f956addb8ccc5c20083cc1429fabdc678b5ad47812d2ca');

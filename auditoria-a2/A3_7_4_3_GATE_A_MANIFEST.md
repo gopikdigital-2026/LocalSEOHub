@@ -1,9 +1,9 @@
-# A3.7.4.3 — Gate A Manifest (Correction 01)
+# A3.7.4.3 — Gate A Manifest (Correction 01 + Correction 02)
 
 Date: 2026-10-30
 Verdict: NO-GO — A3.7.4.3 INSTAGRAM GATE A REQUIRES CORRECTION
 
-The Instagram code is complete and passes 39/39. The Gate stopped under the brief's frozen-file rule: 14 older-phase pin tests need a test-only re-pin that must be recorded in the A3.7.4.2-frozen a3741 test. See readiness report §17.
+The Instagram code is complete and passes 39/39. Correction 02 applied every authorized test-only re-pin: 14 failures down to 1. The remaining failure is an unauthorized cascade: the A3.7.2 freeze manifest pins `a3721aValidationHarness.test.ts`. See readiness report §17.
 
 ## Migration (applied)
 
@@ -68,10 +68,29 @@ App.tsx is not in the A3.7.4.2 freeze manifest. It is, however, hash-pinned by o
 
 The remaining A3.7.4.2 manifest files are also unchanged, including ChannelReviewPanel, PublicationResumeProvider, the publishing-access files, metaPublishingRepository, PublicationsValidationPage and the a3741/a3742 tests. T36 asserts these hashes. meta-publishing was not redeployed (deploy hash ae6e628c…).
 
-## Regression snapshot
+## Correction 02 — test files re-pinned (sha256 now; test-only, no production change)
 
-- Instagram: 39/39.
-- Full suite: 2899 pass / 14 fail (older-phase pins only).
+| File | Before | Now | Change |
+|---|---|---|---|
+| src/components/__tests__/a281TrustCleanup.test.ts | 4db0f819… | 2f4b6d27fd7f1d2f7851251f5a2fc3dfd71f6558be1b7dd9724e1b387d0a0a9a | App pin ef7f7cdc; count 59 |
+| src/features/roadmap/__tests__/a273Roadmap.test.ts | 2ce19c6b… | 300a87c8605856aaae31fd6ef666cd2f02bd0868f1ddcf45e95918bb4dde03c0 | App pin; count 59; `_a3743_` exclusion |
+| src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts | 20296e5b… | b5df9213adbb8ef98712b733ec88ad46e44e56d083647027bf6a2f2e446d30b1 | App pin; count 59; `_a3743_` exclusion |
+| src/features/action-layer/__tests__/a33DiagnosticAction.test.ts | — | b7705d22de2d2cbab4bbcf06f11d004c0bb11f448fba2701ac944c3ae4e9236e | count 59 |
+| src/features/email-verification/__tests__/f03Stage2b.test.ts | — | ac94b043dcc87dd2acd0d68e239f0de14d051dd24a34bcfdc7f4e021bb58b390 | count 59 (x2) |
+| src/features/social-intelligence/findings/__tests__/a3542SocialFindings.test.ts | md5 6895742f… | d0aee86db7cdfa4fc292b70fce119c9277952f81cba36b55293d59f3de523f09 (md5 a0473304903dfddc4aefb32cad93068b) | #39 excludes `_a3743_` |
+| src/features/social-intelligence/ui/__tests__/a3543SocialIntelligenceUi.test.ts | — | 442308d8502b81e8f8c9dc6d5ac1bad431e1701a27aeb5b1be28f306edf451ce | a3542 md5 pin |
+| src/features/social-intelligence/integration/__tests__/a3544SocialIntegration.test.ts | cf7c8076… | c1b5c3c207d802e2f84f9c0e6fbe53a95beac5624d93e6fecb0b4b661fbf2290 | App pin |
+| src/features/publications/__tests__/a3721aValidationHarness.test.ts | c20a942e… | 6c32bfcdde9cb03a79eb2e6d109eb4a2c98166094a40b51803fcf2e4891126fd | route window 300 → 400 |
+| src/features/publications/__tests__/a3733ChannelReview.test.ts | eb212294… | 9dc24452f539a7fc0aa0bd4d28f1238babcf8c298b955a48edbb5088eadf7500 | #29 allows instagram-publishing; /media, /media_publish only in graph.ts |
+| src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts | e7674f8f… | 170e482873d48fca58eb05c90a64b6ff680e9572ad962f865f961b2a85c2384f | AUTHORIZED_REPINS `now` values (was values kept) |
+| src/features/publications/__tests__/a3743InstagramGateA.test.ts | 4bfd5b1e… | 296015bd806a25b0b8c7098c524a750a8658b2a1d3f2462f5f8e941c8398ca58 | T36 a3741 pin |
+
+Instagram production files, migration, App.tsx (ef7f7cdc…) and config.toml are unchanged by Correction 02.
+
+## Regression snapshot (Correction 02)
+
+- Instagram: 39/39. A3.7.4.1: 68/68. A3.7.4.2: 55/55, 8/8, 19/19, 12/12.
+- Full suite: 2912 pass / 1 fail of 2913. The failure is a3731 "frozen A3.7.2 files still match the freeze manifest" (a3721a hash).
 - tsc: 20 inherited errors, 0 new.
 - Build: PASS.
 
