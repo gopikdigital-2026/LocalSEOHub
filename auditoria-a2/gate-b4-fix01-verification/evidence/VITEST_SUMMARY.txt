@@ -1,0 +1,7 @@
+# vitest full run (2026-10-31T21:47:44Z)
+
+ Test Files  90 passed (90)
+      Tests  3069 passed (3069)
+   Start at  21:44:27
+   Duration  49.84s (transform 22.34s, setup 0ms, import 57.94s, tests 78.46s, environment 2.91s)
+

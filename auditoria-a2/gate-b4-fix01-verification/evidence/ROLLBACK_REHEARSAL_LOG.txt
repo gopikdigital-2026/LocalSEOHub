@@ -1,0 +1,239 @@
+# Gate B.4 FIX01 — rollback rehearsal on disposable PostgreSQL (NOT production)
+# generated: 2026-10-31T21:47:24Z
+## 1. Generate rollback SQL from fresh pre-fix replay
+replayed 60/60 migrations into audit
+wrote auditoria-a2/gate-b4-fix01-verification/rollback/ROLLBACK_a3743_gateb4_fix01_publish_safety.sql
+rollback sha256: 87a7ecf9c6a0552f689da70b69f8283ee60bbb6ba22053e0d64d1ffaf8b3c60a
+## 2. audit_rollback = replay + FIX01 + rollback
+replayed 60/60 migrations into audit_rollback
+applied 20261031190000_a3743_gateb4_fix01_publish_safety.sql to audit_rollback in one transaction
+applied ROLLBACK_a3743_gateb4_fix01_publish_safety.sql to audit_rollback in one transaction
+## 3. Fingerprints after rollback (must equal pre-fix / production whitespace-free md5 and ACL)
+internal_test_entitlement_active 72a756cc70f13a91a972c5737d4e06c8 325e375c25b198448ec80d9334065a12 postgres=X/postgres service_role=X/postgres
+publication_publish_gate 547dc5ee145a5abac0b26f5ce0f432c3 12f9d6cfa192af2efc55038f2a2745d0 postgres=X/postgres
+publication_publish_preflight 7ea0237f8d04bb7d60b8fdf00707c861 356c5e36cba82ea003cf9654fededef7 postgres=X/postgres service_role=X/postgres
+publish_attempt_advance 8b23859c0abeac3b3b3c5ba08fc3c476 e13cee809bdeaa8381ba02096761454f postgres=X/postgres service_role=X/postgres
+publish_attempt_begin 9a98e04cf10f7333e922a3de2496a7fd 165e0a4164230dc6db8bcdb6380a32bc postgres=X/postgres service_role=X/postgres
+publish_attempt_finish 4b190191c3cda28f156d03c4d7d2d5f4 104a927804a445e5485cba3d5521ef2d postgres=X/postgres service_role=X/postgres
+publish_attempt_mark_stale 6d098d0ec5d47c72c55705307e0d3713 b99f5731dca7b2d9a6df5b6c345b78a1 postgres=X/postgres service_role=X/postgres
+publish_attempt_record_verification dd7427678472bd679f42f8dbc72a3848 4761518141834367425557445611d2f0 postgres=X/postgres service_role=X/postgres
+publish_attempts_guard 33d76842d66ce269584c8044a706399b 913576bd366a66a6b60151af16030d98 postgres=X/postgres
+## 4. Behaviour: audit_rollback must behave exactly like pre-fix ('prefix' expectations); the fixed DB is re-created for comparison
+replayed 60/60 migrations into audit_fixed
+applied 20261031190000_a3743_gateb4_fix01_publish_safety.sql to audit_fixed in one transaction
+
+===== PREFIX database: audit_rollback =====
+PASS [prefix] S1.1 mark_stale on publish_requested attempt -> true
+PASS [prefix] S1.2 row after stale -> "unknown/publish_requested/PUBLISH_OUTCOME_UNKNOWN/retry=false/vreq=true/v=0"
+PASS [prefix] S1.3 verification 'absent' at publish_requested -> "ok"
+PASS [prefix] S1.4 row after absent verdict -> "failed/publish_requested/META_TEMPORARY_ERROR/retry=true/vreq=false/v=1"
+PASS [prefix] S1.5 retry begin after absent verdict -> "OK"
+PASS [prefix] S1.6 instagram attempts for publication -> 2
+PASS [prefix] S1.12 'absent' before publish request (container_created) still allowed -> "ok"
+PASS [prefix] S1.13 row after safe absent -> "failed/container_created/META_TEMPORARY_ERROR/retry=true/vreq=false/v=1"
+PASS [prefix] S1.14 retry begin after provably-unpublished failure -> "OK"
+PASS [prefix] C1.1 session A advance publish_requested (uncommitted) -> "ok"
+PASS [prefix] C1.2 session B mark_stale blocks on row lock -> true
+PASS [prefix] C1.3 session B mark_stale after A commits -> true
+PASS [prefix] C1.4 session B 'absent' verdict -> "ok"
+PASS [prefix] C1.5 final row -> "failed"
+PASS [prefix] C2.1 record_verification blocks behind row lock -> true
+PASS [prefix] C2.2 record_verification result after lock release -> "ok"
+PASS [prefix] C3.1 finish blocks behind publisher row lock -> true
+PASS [prefix] C3.2 finish('failed') after publish_requested committed -> "ok"
+PASS [prefix] C3.3 final row -> "failed/publish_requested/META_TEMPORARY_ERROR/retry=true/vreq=false/v=0"
+PASS [prefix] C3.4 retry begin -> "OK"
+PASS [prefix] C4.1 instagram session A begin (uncommitted) -> "OK"
+PASS [prefix] C4.2 instagram session B begin blocks -> true
+PASS [prefix] C4.3 instagram session B result -> "PUBLISH_IN_PROGRESS"
+PASS [prefix] C4.4 instagram attempts created -> 1
+PASS [prefix] C4.1 facebook session A begin (uncommitted) -> "OK"
+PASS [prefix] C4.2 facebook session B begin blocks -> true
+PASS [prefix] C4.3 facebook session B result -> "PUBLISH_IN_PROGRESS"
+PASS [prefix] C4.4 facebook attempts created -> 1
+PASS [prefix] C5.1 eight parallel instagram begins: OK count -> 1
+PASS [prefix] C5.2 others report in-progress -> 7
+PASS [prefix] C5.3 attempts created -> 1
+PASS [prefix] U1 begin while publishing -> "PUBLISH_IN_PROGRESS"
+PASS [prefix] U2 finish('unknown') -> "ok"
+PASS [prefix] U3 row -> "unknown/publish_requested/PUBLISH_OUTCOME_UNKNOWN/retry=false/vreq=true/v=0"
+PASS [prefix] U4 begin while unknown -> "PUBLISH_OUTCOME_UNKNOWN"
+PASS [prefix] U5 second finish on unknown -> "invalid_transition"
+PASS [prefix] U6 advance on unknown -> "invalid_transition"
+PASS [prefix] U7 verification by another user -> "not_found"
+PASS [prefix] U8 invalid verdict -> "invalid_payload"
+PASS [prefix] U9 finish('failed') before publish request -> "ok"
+PASS [prefix] U10 row -> "failed/container_created/META_TEMPORARY_ERROR/retry=true/vreq=false/v=0"
+PASS [prefix] U11 retry begin allowed -> "OK"
+PASS [prefix] U12 finish('failed', META_REJECTED) after publish request -> "ok"
+PASS [prefix] U13 retry begin -> "OK"
+PASS [prefix] U14 begin for a non-existent publication -> "INVALID_PUBLICATION_STATE"
+PASS [prefix] T1 advance skipping a stage -> "invalid_transition"
+PASS [prefix] T2 container_created without numeric id -> "invalid_payload"
+PASS [prefix] T3 direct UPDATE publishing->failed at publish_requested -> "updated"
+PASS [prefix] T4 direct UPDATE unknown->failed with verification bump -> "updated"
+PASS [prefix] T5 stage backwards -> "ERR:publish_attempt_stage_backwards"
+PASS [prefix] T6 identity change -> "ERR:publish_attempt_identity_immutable"
+PASS [prefix] T7 container id change -> "ERR:publish_attempt_container_immutable"
+PASS [prefix] T8 unknown->succeeded without verification -> "ERR:publish_attempt_unknown_requires_verification"
+PASS [prefix] T9 advance after stale -> "invalid_transition"
+PASS [prefix] T10 direct stage change after stale -> "ERR:publish_attempt_stage_frozen"
+PASS [prefix] T11 succeeded->failed -> "ERR:publish_attempt_invalid_transition"
+PASS [prefix] T12 advance on facebook attempt -> "invalid_channel"
+PASS [prefix] T13 insert attempt not in publishing -> "ERR:publish_attempt_must_start_publishing"
+PASS [prefix] E1 instagram begin with entitlement=none -> "OK"
+PASS [prefix] E2 instagram attempts with entitlement=none -> 1
+PASS [prefix] E3 facebook begin with entitlement=none -> "OK"
+PASS [prefix] E1 instagram begin with entitlement=expired -> "OK"
+PASS [prefix] E2 instagram attempts with entitlement=expired -> 1
+PASS [prefix] E3 facebook begin with entitlement=expired -> "OK"
+PASS [prefix] E1 instagram begin with entitlement=revoked -> "OK"
+PASS [prefix] E2 instagram attempts with entitlement=revoked -> 1
+PASS [prefix] E3 facebook begin with entitlement=revoked -> "OK"
+PASS [prefix] E4 instagram begin wrong version -> "VERSION_CONFLICT"
+PASS [prefix] E5 instagram begin by non-owner -> "INVALID_PUBLICATION_STATE"
+PASS [prefix] E6 entitled instagram begin returns pinned caption and account -> ["OK",3,"Visit us this weekend for fresh bread #local","178414000000001","111222333"]
+PASS [prefix] P1 anon calls begin -> "permission denied"
+PASS [prefix] P1 anon calls finish -> "permission denied"
+PASS [prefix] P1 anon calls record_verification -> "permission denied"
+PASS [prefix] P1 anon calls entitlement -> "permission denied"
+PASS [prefix] P1 authenticated calls begin -> "permission denied"
+PASS [prefix] P1 authenticated calls finish -> "permission denied"
+PASS [prefix] P1 authenticated calls record_verification -> "permission denied"
+PASS [prefix] P1 authenticated calls entitlement -> "permission denied"
+
+===== FIXED database: audit_fixed =====
+PASS [fixed] S1.1 mark_stale on publish_requested attempt -> true
+PASS [fixed] S1.2 row after stale -> "unknown/publish_requested/PUBLISH_OUTCOME_UNKNOWN/retry=false/vreq=true/v=0"
+PASS [fixed] S1.3 verification 'absent' at publish_requested -> "unsafe_absent"
+PASS [fixed] S1.4 row after absent verdict -> "unknown/publish_requested/PUBLISH_OUTCOME_UNKNOWN/retry=false/vreq=true/v=0"
+PASS [fixed] S1.5 retry begin after absent verdict -> "PUBLISH_OUTCOME_UNKNOWN"
+PASS [fixed] S1.6 instagram attempts for publication -> 1
+PASS [fixed] S1.7 verification 'inconclusive' keeps unknown -> "ok"
+PASS [fixed] S1.8 row after inconclusive -> "unknown/publish_requested/PUBLISH_OUTCOME_UNKNOWN/retry=false/vreq=true/v=1"
+PASS [fixed] S1.9 verification 'found' -> "ok"
+PASS [fixed] S1.10 row after found -> "succeeded/publish_requested/-/retry=false/vreq=false/v=2"
+PASS [fixed] S1.11 begin after success -> "ALREADY_PUBLISHED"
+PASS [fixed] S1.12 'absent' before publish request (container_created) still allowed -> "ok"
+PASS [fixed] S1.13 row after safe absent -> "failed/container_created/META_TEMPORARY_ERROR/retry=true/vreq=false/v=1"
+PASS [fixed] S1.14 retry begin after provably-unpublished failure -> "OK"
+PASS [fixed] C1.1 session A advance publish_requested (uncommitted) -> "ok"
+PASS [fixed] C1.2 session B mark_stale blocks on row lock -> true
+PASS [fixed] C1.3 session B mark_stale after A commits -> true
+PASS [fixed] C1.4 session B 'absent' verdict -> "unsafe_absent"
+PASS [fixed] C1.5 final row -> "unknown"
+PASS [fixed] C2.1 record_verification blocks behind row lock -> true
+PASS [fixed] C2.2 record_verification result after lock release -> "unsafe_absent"
+PASS [fixed] C3.1 finish blocks behind publisher row lock -> true
+PASS [fixed] C3.2 finish('failed') after publish_requested committed -> "ok_unknown"
+PASS [fixed] C3.3 final row -> "unknown/publish_requested/PUBLISH_OUTCOME_UNKNOWN/retry=false/vreq=true/v=0"
+PASS [fixed] C3.4 retry begin -> "PUBLISH_OUTCOME_UNKNOWN"
+PASS [fixed] C4.1 instagram session A begin (uncommitted) -> "OK"
+PASS [fixed] C4.2 instagram session B begin blocks -> true
+PASS [fixed] C4.3 instagram session B result -> "PUBLISH_IN_PROGRESS"
+PASS [fixed] C4.4 instagram attempts created -> 1
+PASS [fixed] C4.1 facebook session A begin (uncommitted) -> "OK"
+PASS [fixed] C4.2 facebook session B begin blocks -> true
+PASS [fixed] C4.3 facebook session B result -> "PUBLISH_IN_PROGRESS"
+PASS [fixed] C4.4 facebook attempts created -> 1
+PASS [fixed] C5.1 eight parallel instagram begins: OK count -> 1
+PASS [fixed] C5.2 others report in-progress -> 7
+PASS [fixed] C5.3 attempts created -> 1
+PASS [fixed] U1 begin while publishing -> "PUBLISH_IN_PROGRESS"
+PASS [fixed] U2 finish('unknown') -> "ok"
+PASS [fixed] U3 row -> "unknown/publish_requested/PUBLISH_OUTCOME_UNKNOWN/retry=false/vreq=true/v=0"
+PASS [fixed] U4 begin while unknown -> "PUBLISH_OUTCOME_UNKNOWN"
+PASS [fixed] U5 second finish on unknown -> "invalid_transition"
+PASS [fixed] U6 advance on unknown -> "invalid_transition"
+PASS [fixed] U7 verification by another user -> "not_found"
+PASS [fixed] U8 invalid verdict -> "invalid_payload"
+PASS [fixed] U9 finish('failed') before publish request -> "ok"
+PASS [fixed] U10 row -> "failed/container_created/META_TEMPORARY_ERROR/retry=true/vreq=false/v=0"
+PASS [fixed] U11 retry begin allowed -> "OK"
+PASS [fixed] U12 finish('failed', META_REJECTED) after publish request -> "ok_unknown"
+PASS [fixed] U13 retry begin -> "PUBLISH_OUTCOME_UNKNOWN"
+PASS [fixed] U14 begin for a non-existent publication -> "INVALID_PUBLICATION_STATE"
+PASS [fixed] T1 advance skipping a stage -> "invalid_transition"
+PASS [fixed] T2 container_created without numeric id -> "invalid_payload"
+PASS [fixed] T3 direct UPDATE publishing->failed at publish_requested -> "ERR:publish_attempt_outcome_unprovable"
+PASS [fixed] T4 direct UPDATE unknown->failed with verification bump -> "ERR:publish_attempt_outcome_unprovable"
+PASS [fixed] T5 stage backwards -> "ERR:publish_attempt_stage_backwards"
+PASS [fixed] T6 identity change -> "ERR:publish_attempt_identity_immutable"
+PASS [fixed] T7 container id change -> "ERR:publish_attempt_container_immutable"
+PASS [fixed] T8 unknown->succeeded without verification -> "ERR:publish_attempt_unknown_requires_verification"
+PASS [fixed] T9 advance after stale -> "invalid_transition"
+PASS [fixed] T10 direct stage change after stale -> "ERR:publish_attempt_stage_frozen"
+PASS [fixed] T11 succeeded->failed -> "ERR:publish_attempt_invalid_transition"
+PASS [fixed] T12 advance on facebook attempt -> "invalid_channel"
+PASS [fixed] T13 insert attempt not in publishing -> "ERR:publish_attempt_must_start_publishing"
+PASS [fixed] E1 instagram begin with entitlement=none -> "PERMISSION_REQUIRED"
+PASS [fixed] E2 instagram attempts with entitlement=none -> 0
+PASS [fixed] E3 facebook begin with entitlement=none -> "OK"
+PASS [fixed] E1 instagram begin with entitlement=expired -> "PERMISSION_REQUIRED"
+PASS [fixed] E2 instagram attempts with entitlement=expired -> 0
+PASS [fixed] E3 facebook begin with entitlement=expired -> "OK"
+PASS [fixed] E1 instagram begin with entitlement=revoked -> "PERMISSION_REQUIRED"
+PASS [fixed] E2 instagram attempts with entitlement=revoked -> 0
+PASS [fixed] E3 facebook begin with entitlement=revoked -> "OK"
+PASS [fixed] E4 instagram begin wrong version -> "VERSION_CONFLICT"
+PASS [fixed] E5 instagram begin by non-owner -> "INVALID_PUBLICATION_STATE"
+PASS [fixed] E6 entitled instagram begin returns pinned caption and account -> ["OK",3,"Visit us this weekend for fresh bread #local","178414000000001","111222333"]
+PASS [fixed] P1 anon calls begin -> "permission denied"
+PASS [fixed] P1 anon calls finish -> "permission denied"
+PASS [fixed] P1 anon calls record_verification -> "permission denied"
+PASS [fixed] P1 anon calls entitlement -> "permission denied"
+PASS [fixed] P1 authenticated calls begin -> "permission denied"
+PASS [fixed] P1 authenticated calls finish -> "permission denied"
+PASS [fixed] P1 authenticated calls record_verification -> "permission denied"
+PASS [fixed] P1 authenticated calls entitlement -> "permission denied"
+
+===== FACEBOOK PARITY (identical call sequence on both databases) =====
+  = begin1=["OK",3,"Visit us this weekend for fresh bread #local","111222333",null]
+  = finish_bad_code=invalid_payload
+  = finish_success_no_id=invalid_payload
+  = finish_success=ok
+  = row1=succeeded/none/-/retry=false/vreq=false/v=0
+  = begin_again=ALREADY_PUBLISHED
+  = fail_temp=ok
+  = row_fail_temp=failed/none/META_TEMPORARY_ERROR/retry=true/vreq=false/v=0
+  = retry_after_temp=["OK"]
+  = fail_rejected=ok
+  = row_fail_rejected=failed/none/META_REJECTED/retry=false/vreq=false/v=0
+  = retry_after_rejected=["OK"]
+  = finish_unknown=ok
+  = begin_while_unknown=PUBLISH_OUTCOME_UNKNOWN
+  = verify_inconclusive=ok
+  = verify_absent=ok
+  = row_after_absent=failed/none/META_TEMPORARY_ERROR/retry=true/vreq=false/v=2
+  = retry_after_absent=["OK"]
+  = finish_unknown2=ok
+  = verify_found=ok
+  = row_after_found=succeeded/none/-/retry=false/vreq=false/v=1
+  = verify_again=invalid_transition
+  = attempt_numbers=[1,2,3,4]
+  = fb_mark_stale=true
+  = fb_stale_absent=ok
+  = fb_stale_row=failed/none/META_TEMPORARY_ERROR/retry=true/vreq=false/v=1
+  = fb_finish_after_verify=invalid_transition
+PASS [both] F1 facebook RPC trace identical before/after -> ["begin1=[\"OK\",3,\"Visit us this weekend for fresh bread #local\",\"111222333\",null]","finish_bad_code=invalid_payload","finish_success_no_id=invalid_payload","finish_success=ok","row1=succeeded/none/-/retry=false/vreq=false/v=0","begin_again=ALREADY_PUBLISHED","fail_temp=ok","row_fail_temp=failed/none/META_TEMPORARY_ERROR/retry=true/vreq=false/v=0","retry_after_temp=[\"OK\"]","fail_rejected=ok","row_fail_rejected=failed/none/META_REJECTED/retry=false/vreq=false/v=0","retry_after_rejected=[\"OK\"]","finish_unknown=ok","begin_while_unknown=PUBLISH_OUTCOME_UNKNOWN","verify_inconclusive=ok","verify_absent=ok","row_after_absent=failed/none/META_TEMPORARY_ERROR/retry=true/vreq=false/v=2","retry_after_absent=[\"OK\"]","finish_unknown2=ok","verify_found=ok","row_after_found=succeeded/none/-/retry=false/vreq=false/v=1","verify_again=invalid_transition","attempt_numbers=[1,2,3,4]","fb_mark_stale=true","fb_stale_absent=ok","fb_stale_row=failed/none/META_TEMPORARY_ERROR/retry=true/vreq=false/v=1","fb_finish_after_verify=invalid_transition"]
+
+===== PRIVILEGES / POLICIES / RLS =====
+  internal_test_entitlement_active(p_user_id uuid) secdef=true config=["search_path=public"] anon=false auth=false service=true
+  meta_publish_channel_issue(p_user_id uuid, p_business_id uuid, p_channel text) secdef=true config=["search_path=\"\""] anon=false auth=false service=false
+  publication_publish_gate(p_user_id uuid, p_publication_id uuid, p_channel text, p_expected_version integer) secdef=true config=["search_path=\"\""] anon=false auth=false service=false
+  publication_publish_preflight(p_user_id uuid, p_publication_id uuid, p_expected_version integer) secdef=true config=["search_path=\"\""] anon=false auth=false service=true
+  publish_attempt_advance(p_user_id uuid, p_attempt_id uuid, p_stage text, p_container_id text) secdef=true config=["search_path=\"\""] anon=false auth=false service=true
+  publish_attempt_begin(p_user_id uuid, p_publication_id uuid, p_channel text, p_expected_version integer) secdef=true config=["search_path=\"\""] anon=false auth=false service=true
+  publish_attempt_finish(p_user_id uuid, p_attempt_id uuid, p_outcome text, p_meta_object_id text, p_permalink text, p_error_code text) secdef=true config=["search_path=\"\""] anon=false auth=false service=true
+  publish_attempt_mark_stale(p_attempt_id uuid, p_stale_before timestamp with time zone) secdef=true config=["search_path=\"\""] anon=false auth=false service=true
+  publish_attempt_record_verification(p_user_id uuid, p_attempt_id uuid, p_verdict text, p_meta_object_id text, p_permalink text) secdef=true config=["search_path=\"\""] anon=false auth=false service=true
+  publish_attempts_guard() secdef=true config=["search_path=\"\""] anon=false auth=false service=false
+PASS [both] G1 function security attributes and EXECUTE privileges unchanged -> [{"proname":"internal_test_entitlement_active","prosecdef":true,"proconfig":["search_path=public"],"owner":"postgres","anon":false,"authd":false,"svc":true,"args":"p_user_id uuid"},{"proname":"meta_publish_channel_issue","prosecdef":true,"proconfig":["search_path=\"\""],"owner":"postgres","anon":false,"authd":false,"svc":false,"args":"p_user_id uuid, p_business_id uuid, p_channel text"},{"proname":"publication_publish_gate","prosecdef":true,"proconfig":["search_path=\"\""],"owner":"postgres","anon":false,"authd":false,"svc":false,"args":"p_user_id uuid, p_publication_id uuid, p_channel text, p_expected_version integer"},{"proname":"publication_publish_preflight","prosecdef":true,"proconfig":["search_path=\"\""],"owner":"postgres","anon":false,"authd":false,"svc":true,"args":"p_user_id uuid, p_publication_id uuid, p_expected_version integer"},{"proname":"publish_attempt_advance","prosecdef":true,"proconfig":["search_path=\"\""],"owner":"postgres","anon":false,"authd":false,"svc":true,"args":"p_user_id uuid, p_attempt_id uuid, p_stage text, p_container_id text"},{"proname":"publish_attempt_begin","prosecdef":true,"proconfig":["search_path=\"\""],"owner":"postgres","anon":false,"authd":false,"svc":true,"args":"p_user_id uuid, p_publication_id uuid, p_channel text, p_expected_version integer"},{"proname":"publish_attempt_finish","prosecdef":true,"proconfig":["search_path=\"\""],"owner":"postgres","anon":false,"authd":false,"svc":true,"args":"p_user_id uuid, p_attempt_id uuid, p_outcome text, p_meta_object_id text, p_permalink text, p_error_code text"},{"proname":"publish_attempt_mark_stale","prosecdef":true,"proconfig":["search_path=\"\""],"owner":"postgres","anon":false,"authd":false,"svc":true,"args":"p_attempt_id uuid, p_stale_before timestamp with time zone"},{"proname":"publish_attempt_record_verification","prosecdef":true,"proconfig":["search_path=\"\""],"owner":"postgres","anon":false,"authd":false,"svc":true,"args":"p_user_id uuid, p_attempt_id uuid, p_verdict text, p_meta_object_id text, p_permalink text"},{"proname":"publish_attempts_guard","prosecdef":true,"proconfig":["search_path=\"\""],"owner":"postgres","anon":false,"authd":false,"svc":false,"args":""}]
+PASS [both] G2 publication_publish_attempts table grants unchanged -> [{"grantee":"authenticated","privs":"SELECT"}]
+PASS [both] G3 all 94 RLS policies (public+storage) unchanged -> [{"tablename":"ai_usage_monthly","policyname":"no_delete_ai_usage","cmd":"DELETE","roles":"{authenticated}","qual":"false","with_check":null},{"tablename":"ai_usage_monthly","policyname":"no_insert_ai_usage","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"false"},{"tablename":"ai_usage_monthly","policyname":"no_update_ai_usage","cmd":"UPDATE","roles":"{authenticated}","qual":"false","with_check":"false"},{"tablename":"ai_usage_monthly","policyname":"select_own_ai_usage","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"ai_usage_reservations","policyname":"no_delete_ai_reservations","cmd":"DELETE","roles":"{authenticated}","qual":"false","with_check":null},{"tablename":"ai_usage_reservations","policyname":"no_insert_ai_reservations","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"false"},{"tablename":"ai_usage_reservations","policyname":"no_update_ai_reservations","cmd":"UPDATE","roles":"{authenticated}","qual":"false","with_check":"false"},{"tablename":"ai_usage_reservations","policyname":"select_own_ai_reservations","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"analytics_events","policyname":"insert_analytics_events","cmd":"INSERT","roles":"{anon,authenticated}","qual":null,"with_check":"true"},{"tablename":"analytics_events","policyname":"select_own_analytics_events","cmd":"SELECT","roles":"{authenticated}","qual":"(user_id = auth.uid())","with_check":null},{"tablename":"beta_access_requests","policyname":"anon_insert_beta_requests","cmd":"INSERT","roles":"{anon,authenticated}","qual":null,"with_check":"true"},{"tablename":"beta_access_requests","policyname":"no_public_delete_beta","cmd":"DELETE","roles":"{authenticated}","qual":"false","with_check":null},{"tablename":"beta_access_requests","policyname":"no_public_select_beta","cmd":"SELECT","roles":"{authenticated}","qual":"false","with_check":null},{"tablename":"beta_access_requests","policyname":"no_public_update_beta","cmd":"UPDATE","roles":"{authenticated}","qual":"false","with_check":"false"},{"tablename":"business_actions","policyname":"Owners can create actions for their business","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = business_actions.business_id) AND (b.user_id = auth.uid())))))"},{"tablename":"business_actions","policyname":"Owners can delete their business actions","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"business_actions","policyname":"Owners can update their business actions","cmd":"UPDATE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = business_actions.business_id) AND (b.user_id = auth.uid())))))"},{"tablename":"business_actions","policyname":"Owners can view their business actions","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"business_actions","policyname":"Premium required to create actions","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"( SELECT current_user_has_premium() AS current_user_has_premium)"},{"tablename":"business_actions","policyname":"Premium required to update actions","cmd":"UPDATE","roles":"{authenticated}","qual":"( SELECT current_user_has_premium() AS current_user_has_premium)","with_check":"( SELECT current_user_has_premium() AS current_user_has_premium)"},{"tablename":"business_improvement_drafts","policyname":"select_own_business_improvements","cmd":"SELECT","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = business_improvement_drafts.business_id) AND (b.user_id = auth.uid())))))","with_check":null},{"tablename":"business_improvement_drafts","policyname":"update_own_business_improvements","cmd":"UPDATE","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = business_improvement_drafts.business_id) AND (b.user_id = auth.uid())))))","with_check":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = business_improvement_drafts.business_id) AND (b.user_id = auth.uid())))))"},{"tablename":"business_improvement_usage","policyname":"select_own_business_improvement_usage","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"businesses","policyname":"delete_own_business","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"businesses","policyname":"insert_own_business","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"(auth.uid() = user_id)"},{"tablename":"businesses","policyname":"select_own_business","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"businesses","policyname":"update_own_business","cmd":"UPDATE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":"(auth.uid() = user_id)"},{"tablename":"connected_sources","policyname":"delete_own_sources","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"connected_sources","policyname":"insert_own_sources","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"(auth.uid() = user_id)"},{"tablename":"connected_sources","policyname":"select_own_sources","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"connected_sources","policyname":"update_own_sources","cmd":"UPDATE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":"(auth.uid() = user_id)"},{"tablename":"first_value_progress","policyname":"delete_own_fv_progress","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"first_value_progress","policyname":"insert_own_fv_progress","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"(auth.uid() = user_id)"},{"tablename":"first_value_progress","policyname":"select_own_fv_progress","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"first_value_progress","policyname":"update_own_fv_progress","cmd":"UPDATE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":"(auth.uid() = user_id)"},{"tablename":"meta_connections","policyname":"select_own_meta_connection","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"meta_content_items","policyname":"select_own_meta_content_items","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"meta_sync_state","policyname":"select_own_meta_sync_state","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"objects","policyname":"publication_images_select_own","cmd":"SELECT","roles":"{authenticated}","qual":"((bucket_id = 'publication-images'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text) AND (EXISTS ( SELECT 1\n   FROM publications p\n  WHERE ((p.image_path = objects.name) AND (p.user_id = auth.uid())))))","with_check":null},{"tablename":"prepared_replies","policyname":"insert_own_prepared_replies","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = prepared_replies.business_id) AND (b.user_id = auth.uid())))))"},{"tablename":"prepared_replies","policyname":"premium_insert_prepared_replies","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"( SELECT current_user_has_premium() AS current_user_has_premium)"},{"tablename":"prepared_replies","policyname":"premium_update_prepared_replies","cmd":"UPDATE","roles":"{authenticated}","qual":"( SELECT current_user_has_premium() AS current_user_has_premium)","with_check":"( SELECT current_user_has_premium() AS current_user_has_premium)"},{"tablename":"prepared_replies","policyname":"select_own_prepared_replies","cmd":"SELECT","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = prepared_replies.business_id) AND (b.user_id = auth.uid())))))","with_check":null},{"tablename":"prepared_replies","policyname":"update_own_prepared_replies","cmd":"UPDATE","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = prepared_replies.business_id) AND (b.user_id = auth.uid())))))","with_check":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = prepared_replies.business_id) AND (b.user_id = auth.uid())))))"},{"tablename":"prepared_reply_details","policyname":"insert_own_prepared_reply_details","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = prepared_reply_details.business_id) AND (b.user_id = auth.uid())))))"},{"tablename":"prepared_reply_details","policyname":"premium_insert_prepared_reply_details","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"( SELECT current_user_has_premium() AS current_user_has_premium)"},{"tablename":"prepared_reply_details","policyname":"premium_update_prepared_reply_details","cmd":"UPDATE","roles":"{authenticated}","qual":"( SELECT current_user_has_premium() AS current_user_has_premium)","with_check":"( SELECT current_user_has_premium() AS current_user_has_premium)"},{"tablename":"prepared_reply_details","policyname":"select_own_prepared_reply_details","cmd":"SELECT","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = prepared_reply_details.business_id) AND (b.user_id = auth.uid())))))","with_check":null},{"tablename":"prepared_reply_details","policyname":"update_own_prepared_reply_details","cmd":"UPDATE","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = prepared_reply_details.business_id) AND (b.user_id = auth.uid())))))","with_check":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = prepared_reply_details.business_id) AND (b.user_id = auth.uid())))))"},{"tablename":"profiles","policyname":"delete_own_profile","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = id)","with_check":null},{"tablename":"profiles","policyname":"insert_own_profile","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"(auth.uid() = id)"},{"tablename":"profiles","policyname":"select_own_profile","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = id)","with_check":null},{"tablename":"profiles","policyname":"update_own_profile","cmd":"UPDATE","roles":"{authenticated}","qual":"(auth.uid() = id)","with_check":"(auth.uid() = id)"},{"tablename":"publication_drafts","policyname":"select_own_publication_drafts","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"publication_proposals","policyname":"select_own_publication_proposals","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"publication_publish_attempts","policyname":"select_own_publish_attempts","cmd":"SELECT","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = publication_publish_attempts.business_id) AND (b.user_id = auth.uid())))))","with_check":null},{"tablename":"publications","policyname":"insert_own_publications","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"((auth.uid() = user_id) AND (status = 'draft'::text) AND (image_path IS NULL) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = publications.business_id) AND (b.user_id = auth.uid())))))"},{"tablename":"publications","policyname":"select_own_publications","cmd":"SELECT","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = publications.business_id) AND (b.user_id = auth.uid())))))","with_check":null},{"tablename":"saved_seo","policyname":"delete_own_saved_seo","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"saved_seo","policyname":"insert_own_saved_seo","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"(auth.uid() = user_id)"},{"tablename":"saved_seo","policyname":"select_own_saved_seo","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"saved_seo","policyname":"update_own_saved_seo","cmd":"UPDATE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":"(auth.uid() = user_id)"},{"tablename":"saved_seo_results","policyname":"delete_own_saved","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"saved_seo_results","policyname":"insert_own_saved","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"(auth.uid() = user_id)"},{"tablename":"saved_seo_results","policyname":"select_own_saved","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"saved_seo_results","policyname":"update_own_saved","cmd":"UPDATE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":"(auth.uid() = user_id)"},{"tablename":"source_sync_events","policyname":"delete_own_sync_events","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"source_sync_events","policyname":"insert_own_sync_events","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"(auth.uid() = user_id)"},{"tablename":"source_sync_events","policyname":"select_own_sync_events","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"stripe_customers","policyname":"Users can view their own customer data","cmd":"SELECT","roles":"{authenticated}","qual":"((user_id = auth.uid()) AND (deleted_at IS NULL))","with_check":null},{"tablename":"stripe_orders","policyname":"Users can view their own order data","cmd":"SELECT","roles":"{authenticated}","qual":"((customer_id IN ( SELECT stripe_customers.customer_id\n   FROM stripe_customers\n  WHERE ((stripe_customers.user_id = auth.uid()) AND (stripe_customers.deleted_at IS NULL)))) AND (deleted_at IS NULL))","with_check":null},{"tablename":"stripe_subscriptions","policyname":"Users can view their own subscription data","cmd":"SELECT","roles":"{authenticated}","qual":"((customer_id IN ( SELECT stripe_customers.customer_id\n   FROM stripe_customers\n  WHERE ((stripe_customers.user_id = auth.uid()) AND (stripe_customers.deleted_at IS NULL)))) AND (deleted_at IS NULL))","with_check":null},{"tablename":"stripe_webhook_events","policyname":"No client webhook deletes","cmd":"DELETE","roles":"{authenticated}","qual":"false","with_check":null},{"tablename":"stripe_webhook_events","policyname":"No client webhook inserts","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"false"},{"tablename":"stripe_webhook_events","policyname":"No client webhook reads","cmd":"SELECT","roles":"{authenticated}","qual":"false","with_check":null},{"tablename":"stripe_webhook_events","policyname":"No client webhook updates","cmd":"UPDATE","roles":"{authenticated}","qual":"false","with_check":"false"},{"tablename":"subscriptions","policyname":"delete_own","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"subscriptions","policyname":"insert_own","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"(auth.uid() = user_id)"},{"tablename":"subscriptions","policyname":"select_own","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"subscriptions","policyname":"update_own","cmd":"UPDATE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":"(auth.uid() = user_id)"},{"tablename":"trial_fingerprints","policyname":"deny_delete_trial_fingerprints","cmd":"DELETE","roles":"{anon,authenticated}","qual":"false","with_check":null},{"tablename":"trial_fingerprints","policyname":"deny_insert_trial_fingerprints","cmd":"INSERT","roles":"{anon,authenticated}","qual":null,"with_check":"false"},{"tablename":"trial_fingerprints","policyname":"deny_select_trial_fingerprints","cmd":"SELECT","roles":"{anon,authenticated}","qual":"false","with_check":null},{"tablename":"trial_fingerprints","policyname":"deny_update_trial_fingerprints","cmd":"UPDATE","roles":"{anon,authenticated}","qual":"false","with_check":"false"},{"tablename":"user_trials","policyname":"No client trial deletes","cmd":"DELETE","roles":"{authenticated}","qual":"false","with_check":null},{"tablename":"user_trials","policyname":"No client trial inserts","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"false"},{"tablename":"user_trials","policyname":"No client trial updates","cmd":"UPDATE","roles":"{authenticated}","qual":"false","with_check":"false"},{"tablename":"user_trials","policyname":"Users can read own trial","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"user_usage","policyname":"delete_own_usage","cmd":"DELETE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"user_usage","policyname":"insert_own_usage","cmd":"INSERT","roles":"{authenticated}","qual":null,"with_check":"(auth.uid() = user_id)"},{"tablename":"user_usage","policyname":"select_own_usage","cmd":"SELECT","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":null},{"tablename":"user_usage","policyname":"update_own_usage","cmd":"UPDATE","roles":"{authenticated}","qual":"(auth.uid() = user_id)","with_check":"(auth.uid() = user_id)"},{"tablename":"weekly_content_drafts","policyname":"select_own_weekly_content","cmd":"SELECT","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = weekly_content_drafts.business_id) AND (b.user_id = auth.uid())))))","with_check":null},{"tablename":"weekly_content_drafts","policyname":"update_own_weekly_content","cmd":"UPDATE","roles":"{authenticated}","qual":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = weekly_content_drafts.business_id) AND (b.user_id = auth.uid())))))","with_check":"((auth.uid() = user_id) AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = weekly_content_drafts.business_id) AND (b.user_id = auth.uid())))))"}]
+PASS [both] G4 RLS enablement on every public table unchanged -> [{"relname":"ai_usage_monthly","relrowsecurity":true},{"relname":"ai_usage_reservations","relrowsecurity":true},{"relname":"analytics_events","relrowsecurity":true},{"relname":"beta_access_requests","relrowsecurity":true},{"relname":"business_actions","relrowsecurity":true},{"relname":"business_improvement_drafts","relrowsecurity":true},{"relname":"business_improvement_usage","relrowsecurity":true},{"relname":"businesses","relrowsecurity":true},{"relname":"connected_sources","relrowsecurity":true},{"relname":"edge_rate_limits","relrowsecurity":true},{"relname":"first_value_progress","relrowsecurity":true},{"relname":"internal_test_entitlements","relrowsecurity":true},{"relname":"meta_connections","relrowsecurity":true},{"relname":"meta_content_items","relrowsecurity":true},{"relname":"meta_oauth_states","relrowsecurity":true},{"relname":"meta_publishing_consent_states","relrowsecurity":true},{"relname":"meta_sync_state","relrowsecurity":true},{"relname":"prepared_replies","relrowsecurity":true},{"relname":"prepared_reply_details","relrowsecurity":true},{"relname":"profiles","relrowsecurity":true},{"relname":"publication_drafts","relrowsecurity":true},{"relname":"publication_proposals","relrowsecurity":true},{"relname":"publication_publish_attempts","relrowsecurity":true},{"relname":"publications","relrowsecurity":true},{"relname":"saved_seo","relrowsecurity":true},{"relname":"saved_seo_results","relrowsecurity":true},{"relname":"source_sync_events","relrowsecurity":true},{"relname":"stripe_customer_repairs","relrowsecurity":true},{"relname":"stripe_customers","relrowsecurity":true},{"relname":"stripe_orders","relrowsecurity":true},{"relname":"stripe_subscriptions","relrowsecurity":true},{"relname":"stripe_webhook_events","relrowsecurity":true},{"relname":"subscriptions","relrowsecurity":true},{"relname":"trial_fingerprints","relrowsecurity":true},{"relname":"user_trials","relrowsecurity":true},{"relname":"user_usage","relrowsecurity":true},{"relname":"weekly_content_drafts","relrowsecurity":true}]
+PASS [both] G5 only the four intended functions differ (of 91) -> ["publish_attempt_begin","publish_attempt_finish","publish_attempt_record_verification","publish_attempts_guard"]
+PASS [both] G6 no function added or removed -> 91
+
+SUMMARY: 168/168 checks matched expectations, 0 mismatches
+harness exit code: 0

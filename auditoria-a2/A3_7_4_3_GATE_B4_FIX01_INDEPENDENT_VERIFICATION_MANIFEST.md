@@ -1,0 +1,21 @@
+# A3.7.4.3 Gate B.4 FIX01 Independent Verification — file manifest (sha256)
+
+Disposable PostgreSQL 17.6 server stopped after the audit. No production change.
+
+```
+390ca2c4a777bdff23287dbe8ff06d2e9c37ef793fe9645e0ec2ac08f0092448  auditoria-a2/A3_7_4_3_GATE_B4_FIX01_INDEPENDENT_VERIFICATION.md
+a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981  auditoria-a2/gate-b4-fix01-prepared/20261031190000_a3743_gateb4_fix01_publish_safety.sql
+cb612e09f35014aaa9cecf088cc88a9b0b7869685fa1246f3665d9687cbe070b  auditoria-a2/gate-b4-fix01-verification/evidence/BUILD_SUMMARY.txt
+a276a766fa9ab434faa26f34c6f028d8f8ac4cc65413fc371a28c8601d758c95  auditoria-a2/gate-b4-fix01-verification/evidence/ROLLBACK_REHEARSAL_LOG.txt
+385dbbf903cd6c930303993d450fe1cb8df923904a852e6d0dd04615329d5c7f  auditoria-a2/gate-b4-fix01-verification/evidence/SQL_EXECUTION_LOG.txt
+908eb58202ada7aa10f4d8245266eecc527ad144fd2086a192bfb440b1f47f33  auditoria-a2/gate-b4-fix01-verification/evidence/TSC_OUTPUT.txt
+37bf55ecc2bcd2c9a82396ee40714f21bff3f384021a1d9b6ce3f7c183e7cc7a  auditoria-a2/gate-b4-fix01-verification/evidence/VITEST_SUMMARY.txt
+1d2fbea60309b8f1182e37e527823751c8c4f181cefd8998afd26e4f1341d97a  auditoria-a2/gate-b4-fix01-verification/harness/applyFix.cjs
+0c8c85c4d008252a3e660002c7c20f6fa0305b397c0197e13ee1059cc331af66  auditoria-a2/gate-b4-fix01-verification/harness/bootstrap.sql
+fbf1671a150600f2983dbf65a089a20e390740792ca713b736f16aade9873c96  auditoria-a2/gate-b4-fix01-verification/harness/makeRollback.cjs
+fbe3c2add6c5419fb975478166b3035537a68beb20d4930a5fa69a6305b33009  auditoria-a2/gate-b4-fix01-verification/harness/md5.cjs
+0826bb7cfbd49dab0a4587824a6755d5ef5ef26cb689d5670b29ae07a236c302  auditoria-a2/gate-b4-fix01-verification/harness/replay.cjs
+b08699491488b197ab8205297407d9bd1dfc4f75b9f3db8c7b3e2555ee3531ff  auditoria-a2/gate-b4-fix01-verification/harness/sqlChecks.cjs
+87a7ecf9c6a0552f689da70b69f8283ee60bbb6ba22053e0d64d1ffaf8b3c60a  auditoria-a2/gate-b4-fix01-verification/rollback/ROLLBACK_a3743_gateb4_fix01_publish_safety.sql
+87f8bfce541362ee24dbb8280732a24dfcc627b75f91465c2e62cf5f7efeeade  supabase/functions-deploy-state.json
+```
