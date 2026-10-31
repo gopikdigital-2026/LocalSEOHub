@@ -517,11 +517,11 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     },
     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
-      now: '300a87c8605856aaae31fd6ef666cd2f02bd0868f1ddcf45e95918bb4dde03c0',
+      now: '1225076b1f1f8a882c844e54541d7052b22f16cb45e94d7025bf7091278e9606',
     },
     'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
       was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',
-      now: 'b5df9213adbb8ef98712b733ec88ad46e44e56d083647027bf6a2f2e446d30b1',
+      now: 'f5b72768a745b70ea7cba7684f41fb0b30aa3e302c0719e5a5f875711b5fedf6',
     },
     // Split so the a3542 isolation guard (no literal reference to that layer outside it) keeps holding.
     ['src/features/social' + '-intelligence/integration/__tests__/a3544SocialIntegration.test.ts']: {
