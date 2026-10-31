@@ -195,7 +195,9 @@ type FetchMock = ReturnType<typeof metaFetch>;
 const posts = (f: FetchMock) => f.mock.calls.filter((c) => c[1]?.method === 'POST');
 const postsTo = (f: FetchMock, suffix: string) => posts(f).filter((c) => new URL(String(c[0])).pathname.endsWith(suffix));
 
-const ARMED_ENV = { [ARMED_FLAG]: 'true', [ARMED_USERS]: USER, META_APP_SECRET: SECRET };
+// A3.7.4.3 GATE B.2 PART 1 AUTHORIZED RE-PIN (Change 1; was: ARMED_FLAG + ARMED_USERS only): the server now also requires the
+// fail-closed publication allowlist, so the armed fixture allowlists PUB. No behavioural assertion changed.
+const ARMED_ENV = { [ARMED_FLAG]: 'true', [ARMED_USERS]: USER, META_INSTAGRAM_REAL_PUBLISH_PUBLICATION_IDS: PUB, META_APP_SECRET: SECRET };
 
 function setup(over: Partial<Gate> = {}, meta: MetaOpts = {}, deps: Partial<InstagramPublishDeps> = {}, env: Record<string, string> = ARMED_ENV) {
   const g: Gate = {
@@ -715,10 +717,19 @@ describe('A3.7.4.3 channel isolation and boundaries', () => {
     for (const src of [repo, harness, read('src/features/instagram-publish/copy.ts')]) {
       expect(src).not.toMatch(/graph\.facebook\.com|media_publish|\/media\b|fetch\(/);
     }
-    expect(repo).not.toMatch(/'instagram_publish'|instagram_publish_verify/);
-    expect(repo.match(/^export (async )?function \w+/gm)).toEqual(['export async function getInstagramStatus']);
+    // A3.7.4.3 GATE B.2 PART 1 AUTHORIZED RE-PIN (Change 2; was: no 'instagram_publish', exports === [getInstagramStatus],
+    // always-disabled button, no publish onClick). Now exactly one extra export with explicit id + version, verify still
+    // forbidden, and the button is enabled only by server-returned trigger/arming/preflight fields matching the draft version.
+    expect(repo).not.toMatch(/instagram_publish_verify/);
+    expect(repo.match(/^export (async )?function \w+/gm)).toEqual(['export async function getInstagramStatus', 'export async function requestInstagramPublish']);
+    expect(repo).toContain("export async function requestInstagramPublish(publicationId: string, expectedVersion: number)");
+    expect(repo).toContain("invoke({ action: 'instagram_publish', publicationId, expectedVersion })");
+    expect(repo.match(/'instagram_publish'/g)).toHaveLength(1);
     expect(harness).toMatch(/type="button" disabled aria-disabled="true"/);
-    expect(harness).not.toMatch(/onClick=\{[^}]*publish/i);
+    expect(harness).toContain("s.armed && s.triggerEnabled && s.canPublish && s.state === 'NOT_REQUESTED' && s.version === version");
+    expect(harness).toContain('const fresh = await fetchStatus();');
+    expect(harness).toMatch(/if \(!pubId \|\| sending\) return;/);
+    expect(harness).not.toMatch(/localStorage|sessionStorage|import\.meta\.env|searchParams|location\./);
     const app = read('src/App.tsx');
     expect(app).toContain("const IgHarness = lazy(() => import('./features/instagram-publish/InstagramPublishHarness'));");
     expect(app.match(/<FbHarness \/>/g)).toHaveLength(1);

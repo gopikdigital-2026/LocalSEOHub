@@ -97,6 +97,10 @@
       "hasChanged": false,
       "hash": "e590fc59ba439cde7854d22daf6ff7520c01904c51b8a792c97ee13141a1f4ad"
     },
+    "instagram-publishing": {
+      "hasChanged": false,
+      "hash": "be803ecaa96c099a23daa84e58a0a05be716cc82df189a3c343cd6a1c1d7d48a"
+    },
     "meta-connection": {
       "hasChanged": false,
       "hash": "f89184c35bb7b1bcd4165254d4aa098b25a1b95423f8773649d565e2f5dfeb14"
@@ -168,10 +172,6 @@
     "weekly-content": {
       "hasChanged": false,
       "hash": "0bb0ae31d6510a5b48e6be53f18452131073f02a0729426a0a59448eaeee72b9"
-    },
-    "instagram-publishing": {
-      "hasChanged": false,
-      "hash": "d4e3b2992e5d3b12edfb83c0709575a595700f8c036c18835450df355d80e690"
     }
   }
 }

@@ -19,6 +19,8 @@ export interface DerivativeReadiness {
 
 export interface InstagramStatus {
   armed: boolean;
+  triggerEnabled: boolean;
+  triggerReason: string | null;
   state: AttemptState;
   canPublish: boolean;
   issue: string | null;
@@ -52,7 +54,6 @@ async function invoke(body: Record<string, unknown>): Promise<Record<string, unk
   }
 }
 
-// Read-only: the only action this client can send. There is intentionally no publish call here.
 export async function getInstagramStatus(publicationId: string, expectedVersion: number): Promise<InstagramStatus | { error: string }> {
   const body = await invoke({ action: 'instagram_publish_status', publicationId, expectedVersion });
   const ig = body?.instagram as Record<string, unknown> | undefined;
@@ -62,8 +63,11 @@ export async function getInstagramStatus(publicationId: string, expectedVersion:
   const perms = (body.permissions ?? {}) as Record<string, unknown>;
   const d = (body.derivative ?? {}) as Record<string, unknown>;
   const attempt = (body.attempt ?? null) as Record<string, unknown> | null;
+  const trigger = (body.trigger ?? {}) as Record<string, unknown>;
   return {
     armed: body.armed === true,
+    triggerEnabled: trigger.enabled === true,
+    triggerReason: str(trigger.reason),
     state: stateOf(ig.state),
     canPublish: ig.can_publish === true,
     issue: str(ig.issue),
@@ -85,5 +89,23 @@ export async function getInstagramStatus(publicationId: string, expectedVersion:
     },
     externalStage: stageOf(attempt?.external_stage),
     containerStored: attempt?.container_stored === true,
+  };
+}
+
+export interface PublishResult {
+  ok: boolean;
+  code: string | null;
+  state: AttemptState;
+  permalink: string | null;
+}
+
+// The server re-checks arming, allowlist, ownership and draft version; this call grants nothing by itself.
+export async function requestInstagramPublish(publicationId: string, expectedVersion: number): Promise<PublishResult> {
+  const body = await invoke({ action: 'instagram_publish', publicationId, expectedVersion });
+  return {
+    ok: body?.ok === true,
+    code: str(body?.code),
+    state: stateOf(body?.state),
+    permalink: str(body?.permalink),
   };
 }

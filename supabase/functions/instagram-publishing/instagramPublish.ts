@@ -12,6 +12,7 @@ export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 export const SIGNED_URL_TTL_SECONDS = 600;
 export const ARMED_FLAG = "META_INSTAGRAM_REAL_PUBLISH_ARMED";
 export const ARMED_USERS = "META_INSTAGRAM_REAL_PUBLISH_USER_IDS";
+export const ARMED_PUBLICATIONS = "META_INSTAGRAM_REAL_PUBLISH_PUBLICATION_IDS";
 export const STALE_AFTER_MS = 2 * 60 * 1000;
 
 export type Stage = "none" | "container_requested" | "container_created" | "publish_requested";
@@ -104,6 +105,20 @@ export function isArmed(env: (name: string) => string | undefined, userId: strin
   return users.includes(userId.toLowerCase());
 }
 
+// Any missing, empty or malformed entry (including wildcards) disables the whole list.
+export function isPublicationAllowed(env: (name: string) => string | undefined, publicationId: string): boolean {
+  const raw = env(ARMED_PUBLICATIONS);
+  if (typeof raw !== "string") return false;
+  const ids = raw.split(",").map((s) => s.trim().toLowerCase());
+  if (ids.some((s) => !UUID.test(s))) return false;
+  return ids.includes(publicationId.toLowerCase());
+}
+
+export const isAuthorizedToPublish = (env: (name: string) => string | undefined, userId: string, publicationId: string) =>
+  isArmed(env, userId) && isPublicationAllowed(env, publicationId);
+
+type TriggerReason = "not_armed" | "publication_not_allowed" | "preflight_blocked" | "attempt_exists" | "derivative_not_ready";
+
 export function imageMatches(bytes: Uint8Array, mime: string): boolean {
   if (mime === "image/jpeg") return bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
   if (mime === "image/png") {
@@ -154,15 +169,24 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
     const ctx = await deps.context(userId, publicationId);
     if (!ctx) return fail("INVALID_PUBLICATION_STATE", "NOT_REQUESTED", 404);
     const instagram = instagramReadModel(await deps.preflight(userId, publicationId, expectedVersion));
+    const armed = isArmed(deps.env, userId);
+    const derivative = await derivativeReadiness(ctx.image);
+    const reason: TriggerReason | null = !armed ? "not_armed"
+      : !isPublicationAllowed(deps.env, publicationId) ? "publication_not_allowed"
+      : !instagram.can_publish ? "preflight_blocked"
+      : instagram.state !== "NOT_REQUESTED" ? "attempt_exists"
+      : !derivative.ready ? "derivative_not_ready"
+      : null;
     return json({
       ok: true,
-      armed: isArmed(deps.env, userId),
+      armed,
+      trigger: { enabled: reason === null, reason },
       instagram,
       account: { id: ctx.igUserId, username: ctx.igUsername, subtype_verified: false },
       permissions: Object.fromEntries(REQUIRED.map((p) => [p, ctx.permissions.includes(p)])),
       caption: ctx.caption,
       version: ctx.version,
-      derivative: await derivativeReadiness(ctx.image),
+      derivative,
       attempt: ctx.attempt
         ? { status: ctx.attempt.status, external_stage: ctx.attempt.externalStage, container_stored: ctx.attempt.containerStored }
         : null,
@@ -170,7 +194,7 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
   }
 
   async function publish(userId: string, publicationId: string, expectedVersion: number, retry: boolean) {
-    if (!isArmed(deps.env, userId)) return json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "NOT_REQUESTED" }, 403);
+    if (!isAuthorizedToPublish(deps.env, userId, publicationId)) return json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "NOT_REQUESTED" }, 403);
     const row = instagramReadModel(await deps.preflight(userId, publicationId, expectedVersion));
     if (row.issue) return fail(row.issue, ISSUE_STATE[row.issue] ?? row.state);
 
@@ -207,6 +231,12 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
       await close("unknown", null, null, null);
       return fail("PUBLISH_OUTCOME_UNKNOWN", "UNKNOWN", 202);
     };
+    // Arming is re-read before every Graph write so revoking it mid-flight stops the next request.
+    const disarmed = async () =>
+      (await close("failed", null, null, "INTERNAL_ERROR"))
+        ? json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "FAILED" }, 403)
+        : fail("INTERNAL_ERROR", "PUBLISHING", 500);
+    const stillAuthorized = () => isAuthorizedToPublish(deps.env, userId, publicationId);
     const advance = async (stage: Exclude<Stage, "none">, containerId: string | null) => {
       try {
         return (await deps.advance(userId, attemptId, stage, containerId)) === "ok";
@@ -251,6 +281,7 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
       if (!imageUrl) return await failed("INTERNAL_ERROR");
 
       // Write-ahead: the stage is persisted before each external write it describes.
+      if (!stillAuthorized()) return await disarmed();
       if (!(await advance("container_requested", null))) return await failed("INTERNAL_ERROR");
       mediaSent = true;
       const container = await createContainer({ ...auth, igUserId, imageUrl, caption });
@@ -263,6 +294,7 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
       if (ready === "ERROR") return await failed("META_REJECTED");
       if (ready !== "FINISHED") return await failed("META_TEMPORARY_ERROR");
 
+      if (!stillAuthorized()) return await disarmed();
       if (!(await advance("publish_requested", null))) return await failed("INTERNAL_ERROR");
       const published = await publishContainer({ ...auth, igUserId, containerId: container.id });
       if (published.kind === "unknown") return await unknown();
@@ -290,7 +322,7 @@ export function createInstagramPublishHandler(deps: InstagramPublishDeps) {
   // Resolves an UNKNOWN (or stale PUBLISHING) attempt. Before media_publish was requested no post can
   // exist, so "absent" is certain; afterwards only an exact read-only match may settle it.
   async function verify(userId: string, publicationId: string) {
-    if (!isArmed(deps.env, userId)) return json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "NOT_REQUESTED" }, 403);
+    if (!isAuthorizedToPublish(deps.env, userId, publicationId)) return json({ ok: false, code: "REAL_PUBLISH_DISABLED", state: "NOT_REQUESTED" }, 403);
     const ctx = await deps.context(userId, publicationId);
     const attempt = ctx?.attempt;
     if (!ctx || !attempt) return fail("INVALID_PUBLICATION_STATE", "NOT_REQUESTED", 404);

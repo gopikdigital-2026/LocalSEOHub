@@ -6,8 +6,8 @@ type Text = Record<Lang, string>;
 export const INTERNAL_NOTICE = 'Internal validation only. Not visible to customers.';
 
 export const IG = {
-  title: { es: 'Instagram (validación interna, solo lectura)', en: 'Instagram (internal validation, read-only)' },
-  intro: { es: 'Comprueba la cuenta profesional, el texto guardado de Instagram y la imagen JPEG que se generaría. Aquí no se publica nada.', en: 'Checks the professional account, the saved Instagram text and the JPEG image that would be generated. Nothing is published here.' },
+  title: { es: 'Instagram (validación interna)', en: 'Instagram (internal validation)' },
+  intro: { es: 'Comprueba la cuenta profesional, el texto guardado de Instagram y la imagen JPEG que se generaría. Solo se puede publicar si el servidor lo autoriza para esta publicación.', en: 'Checks the professional account, the saved Instagram text and the JPEG image that would be generated. Publishing is only possible when the server authorizes it for this publication.' },
   load: { es: 'Comprobar estado', en: 'Check status' },
   empty: { es: 'Abre una publicación con propuestas listas para comprobarla.', en: 'Open a publication with ready proposals to check it.' },
   publication: { es: 'Publicación', en: 'Publication' },
@@ -26,6 +26,13 @@ export const IG = {
   derivativeReady: { es: 'Se puede generar', en: 'Can be generated' },
   derivativeNo: { es: 'No se puede generar', en: 'Cannot be generated' },
   disabled: { es: 'Publicación real desactivada', en: 'Real publishing disabled' },
+  trigger: { es: 'Publicar en Instagram (prueba interna)', en: 'Publish to Instagram (internal test)' },
+  confirm: { es: 'Esto publicará esta imagen y texto en la cuenta de Instagram conectada. ¿Continuar?', en: 'This will post this image and text to the connected Instagram account. Continue?' },
+  confirmYes: { es: 'Sí, publicar', en: 'Yes, publish' },
+  cancel: { es: 'Cancelar', en: 'Cancel' },
+  sending: { es: 'Enviando…', en: 'Sending…' },
+  published: { es: 'Publicada', en: 'Published' },
+  notAuthorized: { es: 'El servidor no autoriza esta publicación.', en: 'The server does not authorize this publication.' },
   yes: { es: 'sí', en: 'yes' },
   no: { es: 'no', en: 'no' },
 } satisfies Record<string, Text>;

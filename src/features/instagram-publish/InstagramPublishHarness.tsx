@@ -5,7 +5,7 @@ import { useI18n } from '../../lib/i18n';
 import type { Publication } from '../publications/types';
 import { usePublicationResume } from '../publication-resume/context';
 import { getReviewDraft } from '../channel-review/repository';
-import { getInstagramStatus, type InstagramStatus } from './repository';
+import { getInstagramStatus, requestInstagramPublish, type InstagramStatus } from './repository';
 import { CROP_TEXT, GENERIC_ERROR, IG, INTERNAL_NOTICE, STAGE_TEXT, STATE_TEXT } from './copy';
 
 type Ready = Extract<Publication, { status: 'proposals_ready' }>;
@@ -32,6 +32,9 @@ function Item({ label, children }: { label: string; children: ReactNode }) {
   return <div><dt className="text-xs text-slate-500">{label}</dt><dd className="text-sm text-slate-800">{children}</dd></div>;
 }
 
+const canTrigger = (s: InstagramStatus, version: number) =>
+  s.armed && s.triggerEnabled && s.canPublish && s.state === 'NOT_REQUESTED' && s.version === version;
+
 export default function InstagramPublishHarness() {
   const { currentBusiness } = useBusiness();
   const { lang } = useI18n();
@@ -41,30 +44,68 @@ export default function InstagramPublishHarness() {
   const [status, setStatus] = useState<InstagramStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draftVersion, setDraftVersion] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
   const t = (k: keyof typeof IG) => IG[k][lang];
+
+  const fetchStatus = useCallback(async (): Promise<{ status: InstagramStatus; version: number } | { error: string } | null> => {
+    if (!pubId) return null;
+    const draft = await getReviewDraft(pubId);
+    if (!draft) return null;
+    const next = await getInstagramStatus(pubId, draft.version);
+    return 'error' in next ? next : { status: next, version: draft.version };
+  }, [pubId]);
 
   const load = useCallback(async () => {
     if (!pubId) return;
     setLoading(true);
     setError(null);
+    setConfirming(false);
     try {
-      const draft = await getReviewDraft(pubId);
-      if (!draft) { setStatus(null); return; }
-      const next = await getInstagramStatus(pubId, draft.version);
-      if ('error' in next) { setStatus(null); setError(next.error); return; }
-      setStatus(next);
+      const next = await fetchStatus();
+      if (!next) { setStatus(null); setDraftVersion(null); return; }
+      if ('error' in next) { setStatus(null); setDraftVersion(null); setError(next.error); return; }
+      setStatus(next.status);
+      setDraftVersion(next.version);
     } catch {
       setStatus(null);
+      setDraftVersion(null);
       setError(GENERIC_ERROR[lang]);
     } finally {
       setLoading(false);
     }
-  }, [pubId, lang]);
+  }, [pubId, lang, fetchStatus]);
 
-  useEffect(() => { setStatus(null); void load(); }, [load, revision]);
+  useEffect(() => { setStatus(null); setResult(null); void load(); }, [load, revision]);
+
+  // Re-reads server status immediately before sending; the server re-validates everything again.
+  const send = async () => {
+    if (!pubId || sending) return;
+    setSending(true);
+    setError(null);
+    setResult(null);
+    try {
+      const fresh = await fetchStatus();
+      if (!fresh || 'error' in fresh || !canTrigger(fresh.status, fresh.version)) {
+        setError(fresh && 'error' in fresh ? fresh.error : t('notAuthorized'));
+        return;
+      }
+      const r = await requestInstagramPublish(pubId, fresh.version);
+      setResult(r.ok ? t('published') : r.code ?? 'INTERNAL_ERROR');
+    } catch {
+      setError(GENERIC_ERROR[lang]);
+    } finally {
+      setSending(false);
+      setConfirming(false);
+      void load();
+    }
+  };
 
   if (!pub) return null;
   const d = status?.derivative;
+  const enabled = !!status && draftVersion !== null && canTrigger(status, draftVersion) && !loading && !sending;
 
   return (
     <section className="bg-slate-100 font-v2 overflow-x-hidden" aria-label="instagram-validation">
@@ -119,10 +160,31 @@ export default function InstagramPublishHarness() {
                 <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-3 font-sans text-sm text-slate-800">{status.caption ?? ''}</pre>
               </div>
 
-              <button type="button" disabled aria-disabled="true"
-                className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-slate-300 px-4 py-2 text-sm font-medium text-slate-700">
-                <Lock className="w-4 h-4" aria-hidden />{t('disabled')}
-              </button>
+              {!enabled && (
+                <button type="button" disabled aria-disabled="true"
+                  className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-slate-300 px-4 py-2 text-sm font-medium text-slate-700">
+                  <Lock className="w-4 h-4" aria-hidden />{sending ? t('sending') : t('disabled')}
+                  {status.triggerReason && <span className="font-mono text-xs">({status.triggerReason})</span>}
+                </button>
+              )}
+              {enabled && !confirming && (
+                <button type="button" onClick={() => setConfirming(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-800">
+                  <Instagram className="w-4 h-4" aria-hidden />{t('trigger')}
+                </button>
+              )}
+              {enabled && confirming && (
+                <div className="space-y-2 rounded-lg border border-rose-200 bg-rose-50 p-3">
+                  <p className="text-sm text-rose-900">{t('confirm')}</p>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => void send()} disabled={sending}
+                      className="rounded-lg bg-rose-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-800 disabled:opacity-50">{t('confirmYes')}</button>
+                    <button type="button" onClick={() => setConfirming(false)}
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors hover:bg-white">{t('cancel')}</button>
+                  </div>
+                </div>
+              )}
+              {result && <p className="text-sm text-slate-800"><span className="font-mono text-xs">{result}</span></p>}
             </>
           )}
           {!status && !loading && !error && <p className="text-sm text-slate-600">{t('empty')}</p>}
