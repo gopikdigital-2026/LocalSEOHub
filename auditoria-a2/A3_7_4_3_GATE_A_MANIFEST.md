@@ -1,9 +1,9 @@
-# A3.7.4.3 — Gate A Manifest (Correction 01 + Correction 02)
+# A3.7.4.3 — Gate A Manifest (Corrections 01–03)
 
-Date: 2026-10-30
-Verdict: NO-GO — A3.7.4.3 INSTAGRAM GATE A REQUIRES CORRECTION
+Date: 2026-10-31
+Verdict: GO — A3.7.4.3 GATE A CODE READY; INSTAGRAM REAL E2E NOT YET AUTHORIZED
 
-The Instagram code is complete and passes 39/39. Correction 02 applied every authorized test-only re-pin: 14 failures down to 1. The remaining failure is an unauthorized cascade: the A3.7.2 freeze manifest pins `a3721aValidationHarness.test.ts`. See readiness report §17.
+The Instagram code is complete and passes 39/39. Correction 02 applied the authorized test-only re-pins, which fixed 13 of the 14 failures. Correction 03 added the authorized was/now freeze exceptions for the last cascade. Full suite: 2913/2913. No historical freeze manifest was modified.
 
 ## Migration (applied)
 
@@ -82,22 +82,37 @@ The remaining A3.7.4.2 manifest files are also unchanged, including ChannelRevie
 | src/features/social-intelligence/integration/__tests__/a3544SocialIntegration.test.ts | cf7c8076… | c1b5c3c207d802e2f84f9c0e6fbe53a95beac5624d93e6fecb0b4b661fbf2290 | App pin |
 | src/features/publications/__tests__/a3721aValidationHarness.test.ts | c20a942e… | 6c32bfcdde9cb03a79eb2e6d109eb4a2c98166094a40b51803fcf2e4891126fd | route window 300 → 400 |
 | src/features/publications/__tests__/a3733ChannelReview.test.ts | eb212294… | 9dc24452f539a7fc0aa0bd4d28f1238babcf8c298b955a48edbb5088eadf7500 | #29 allows instagram-publishing; /media, /media_publish only in graph.ts |
-| src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts | e7674f8f… | 170e482873d48fca58eb05c90a64b6ff680e9572ad962f865f961b2a85c2384f | AUTHORIZED_REPINS `now` values (was values kept) |
-| src/features/publications/__tests__/a3743InstagramGateA.test.ts | 4bfd5b1e… | 296015bd806a25b0b8c7098c524a750a8658b2a1d3f2462f5f8e941c8398ca58 | T36 a3741 pin |
+| src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts | e7674f8f… | 170e482873d48fca58eb05c90a64b6ff680e9572ad962f865f961b2a85c2384f (superseded by Correction 03) | AUTHORIZED_REPINS `now` values (was values kept) |
+| src/features/publications/__tests__/a3743InstagramGateA.test.ts | 4bfd5b1e… | 296015bd806a25b0b8c7098c524a750a8658b2a1d3f2462f5f8e941c8398ca58 (superseded by Correction 03) | T36 a3741 pin |
 
 Instagram production files, migration, App.tsx (ef7f7cdc…) and config.toml are unchanged by Correction 02.
 
-## Regression snapshot (Correction 02)
+## Correction 03 — explicit historical freeze exceptions (test-only)
 
-- Instagram: 39/39. A3.7.4.1: 68/68. A3.7.4.2: 55/55, 8/8, 19/19, 12/12.
-- Full suite: 2912 pass / 1 fail of 2913. The failure is a3731 "frozen A3.7.2 files still match the freeze manifest" (a3721a hash).
+Hash cascade: a3721a (A3.7.2 manifest) → a3731 (A3.7.3.1 manifest) → a3732 (A3.7.3.4 manifest) → a3741 → T36.
+
+| File | Before | Now | Change |
+|---|---|---|---|
+| src/features/publications/__tests__/a3731SelectionFoundation.test.ts | 38e88e4f65bbf3f0132bcc8cdef7dabb5a0a94f3fa92e16712789cc605940095 | 4030cdc839d1be813b40ffbd6f7f2e1f88a18fce1c51c3fa487b60861fbe7a8c | Single exception: a3721a was c20a942e… / now 6c32bfcd… |
+| src/features/publications/__tests__/a3732AdaptationGuards.test.ts | b0125ea3973b824416fa517f29a6d5958d46d3cb77287d3c801d0cac18c3860b | 721d76d3dd8ce07f178eaf70b3502db0df64f3f0b3393d1ba0ff96b5aa960ddb | Single exception: a3731 was 38e88e4f… / now 4030cdc8… |
+| src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts | 170e4828… | f137e0a69c496c509b2a3dcaf16df05746992112446c7ea15d79619a10a0f61d | AUTHORIZED_REPINS + a3732 (was b0125ea3 / now 721d76d3) |
+| src/features/publications/__tests__/a3743InstagramGateA.test.ts | 296015bd… | a9b6fca21a90e5bc201048224bd6adc9e811222e31af8cf9248fd9d0e8415971 | T36 a3741 pin → f137e0a6 |
+
+Each exception checks three things: the manifest still records the original `was` hash, the file now hashes to exactly `now`, and the set of excepted paths equals the declared set. Every other manifest entry must match exactly; the entry counts (28, 4, 36) are unchanged. No manifest files were edited.
+
+## Regression snapshot (Correction 03, final)
+
+- Instagram: 39/39. A3.7.4.1: 68/68. A3.7.4.2: 55/55, 8/8, 19/19, 12/12. a3731: 36/36. a3732 guards: 28/28.
+- Full suite: **2913 pass / 0 fail** of 2913.
 - tsc: 20 inherited errors, 0 new.
 - Build: PASS.
 
-## Production state at stop
+## Production state at stop (rechecked 2026-10-31 after Correction 03)
 
-- Attempts: 1 (Facebook succeeded); Instagram 0; publishing 0; unknown 0.
-- A/B/C unchanged; no publication D.
+- Attempts: exactly 1 (Facebook succeeded); Instagram 0; publishing 0; unknown 0.
+- A/B/C `updated_at` unchanged (2026-10-27 23:05:19.287086 / 2026-10-28 12:27:05.291163 / 2026-10-30 00:13:08.946825); 17 publications, no D.
 - Both buckets private; 0 derivative objects.
 - META_FACEBOOK_* and META_INSTAGRAM_* secrets absent.
+- Frozen Facebook files byte-identical (facebookPhoto 7225bc3d, facebookPublish 48da8e2f, handler b7525645, index 027ee4fe, harness 78cc2a49, copy e47fa991, repository 4242ea4c, and the rest of the A3.7.4.2 freeze set via T36).
+- No function redeployed in Corrections 02/03; instagram-publishing ACTIVE and unarmed.
 - 0 Instagram posts; 0 new Facebook posts.

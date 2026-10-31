@@ -504,6 +504,8 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
   // 58 -> 59 and a3743 exclusion (a281, a273, a272); a3544 follows App.tsx; a3733 test 29 allows instagram-publishing
   // with /media and /media_publish confined to its graph.ts. Prior "now" values for App/a281/a273/a272/a3544/a3733 were
   // 81b0de7c / 4db0f819 / 2ce19c6b / 20296e5b / cf7c8076 / eb212294.
+  // Authorized A3.7.4.3 GATE A CORRECTION 03: a3732 records a single was/now exception for a3731, which in turn carries the
+  // single A3.7.2 exception for a3721a (route window 300 -> 400). Historical freeze manifests are not rewritten.
   const AUTHORIZED_REPINS: Record<string, { was: string; now: string }> = {
     'src/App.tsx': {
       was: '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba',
@@ -537,6 +539,10 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     'src/features/publication-resume/__tests__/a3734PublicationResume.test.ts': {
       was: '5ca2c7ba3f3c311a94f78565156199efcc6e2c4a95a8bc00583e1fb58ab94cf9',
       now: '7778b24b8cf0e80c07fb33008a751bafd7dbe6c1d18ac395561e7e8ae4df35b1',
+    },
+    'src/features/publications/__tests__/a3732AdaptationGuards.test.ts': {
+      was: 'b0125ea3973b824416fa517f29a6d5958d46d3cb77287d3c801d0cac18c3860b',
+      now: '721d76d3dd8ce07f178eaf70b3502db0df64f3f0b3393d1ba0ff96b5aa960ddb',
     },
   };
   it('every A3.7.3.4 frozen file is byte-identical, except the enumerated authorized re-pins', () => {

@@ -1,6 +1,6 @@
-# A3.7.4.3 — Instagram Professional Single-Image Publishing — Gate A (Correction 01)
+# A3.7.4.3 — Instagram Professional Single-Image Publishing — Gate A (Corrections 01–03)
 
-Date: 2026-10-30
+Date: 2026-10-31
 Scope: implement the owner-approved minimal Instagram state and the safe JPEG derivative, all mocked.
 - No real `/media` or `/media_publish` call.
 - No secret created.
@@ -9,15 +9,18 @@ Scope: implement the owner-approved minimal Instagram state and the safe JPEG de
 
 ## 1. Executive verdict
 
-**NO-GO — A3.7.4.3 INSTAGRAM GATE A REQUIRES CORRECTION**
+**GO — A3.7.4.3 GATE A CODE READY; INSTAGRAM REAL E2E NOT YET AUTHORIZED**
 
 The Instagram implementation is complete and verified:
 - 39/39 mocked Instagram tests pass;
+- the full suite passes 2913/2913 with 0 failures;
 - tsc reports the 20 inherited errors and 0 new;
 - the build passes;
-- every production safety check holds.
+- every production safety check holds (§14, rechecked 2026-10-31).
 
-Correction 02 applied every authorized test-only re-pin, reducing 14 failures to **1**. The verdict stays NO-GO for one reason: the remaining failure is a cascade the authorization did not cover. `a3731SelectionFoundation.test.ts` checks the A3.7.2 freeze manifest, and that manifest pins `a3721aValidationHarness.test.ts`, whose authorized 300 → 400 window edit changed its hash. Fixing it means changing either a historical freeze record or further frozen tests (§17), so I stopped. No production code changed.
+The 14 older-phase pin failures were resolved with test-only changes. Correction 02 applied the authorized re-pins. Correction 03 added explicit was/now freeze exceptions for the a3721a → a3731 → a3732 → a3741 → T36 cascade (§17). No production code, Facebook file, Instagram file or historical freeze manifest changed.
+
+The real Instagram E2E is **not** authorized. Arming secrets, any real `/media` or `/media_publish` call, publication D, Gate B and A3.7.4.4 all need a separate authorization.
 
 ## 2. Frozen baseline
 
@@ -226,7 +229,8 @@ The derivative tests use the real codecs (jpeg-js and upng-js) with fixtures car
 | Instagram suite | 39/39 PASS |
 | A3.7.4.1 suite | 68/68 PASS |
 | A3.7.4.2 suites | a3742FacebookPhotoPublishing 55/55; B2Fix03 8/8; B1Fix01 19/19; Fix02 12/12 — PASS |
-| Full suite (Correction 02) | 2912 PASS / **1 FAIL** of 2913 (previously 2899 / 14) |
+| Full suite (Correction 03, final) | **2913 PASS / 0 FAIL** of 2913 (Correction 02: 2912 / 1; Correction 01: 2899 / 14) |
+| a3731 / a3732 guards | 36/36 / 28/28 |
 | tsc | 20 inherited errors, 0 new |
 | build | PASS |
 
@@ -238,7 +242,7 @@ Before Correction 02, 14 tests failed. All were scope pins in older phases; none
 | App.tsx hash or route-shape pins (caused by mounting the Instagram panel) | a281 #15; a3544 "App.tsx unchanged"; a3721a route-shape regex; a3741 freeze/re-pin table; a273 #113; a272 #91 |
 | Allowed Graph-capable functions = ['meta-publishing'] | a3733 #29 (now also sees instagram-publishing) |
 
-## 14. Production safety (verified read-only)
+## 14. Production safety (verified read-only; rechecked 2026-10-31 after Correction 03, identical)
 
 | Item | Value |
 |---|---|
@@ -279,6 +283,16 @@ Remaining cascade (not authorized, not applied). `a3731SelectionFoundation.test.
 - (b) Update the single a3721a row in the historical A3.7.2 freeze manifest, with a dated re-pin note. This is one documentation change and leaves the other tests alone.
 
 Option (b) is the smallest change; option (a) leaves historical records untouched.
+
+### Correction 03 — option (a) authorized and applied
+
+- In a3731 ("frozen A3.7.2 files still match the freeze manifest"), `AUTHORIZED_EXCEPTIONS` has exactly one entry, a3721a: was c20a942e… (still required in the manifest), now 6c32bfcd…. The other 27 entries must match exactly, and the excepted set must equal the declared set.
+- In a3732 ("A3.7.3.1 frozen files still match their manifest"), there is one entry, a3731: was 38e88e4f…, now 4030cdc8…. The other 3 entries must match exactly.
+- a3741 `AUTHORIZED_REPINS` gains a3732: was b0125ea3… (from the A3.7.3.4 manifest), now 721d76d3…. The a3741 file changes from 170e4828 to f137e0a6.
+- T36 a3741 pin changes from 170e4828 to f137e0a6. The a3743 test file is now a9b6fca2….
+- No historical freeze manifest was modified. No production file changed.
+
+Result: 2913/2913. The GO verdict in §1 applies.
 
 ### Original justification for stopping (Correction 01)
 

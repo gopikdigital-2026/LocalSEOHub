@@ -267,9 +267,26 @@ describe('A3.7.3.1 scope guards', () => {
   it('frozen A3.7.2 files still match the freeze manifest', () => {
     const manifest = src('auditoria-a2/A3_7_2_FREEZE_MANIFEST.md');
     const entries = [...manifest.matchAll(/^\| ((?:supabase|src)\/[^ ]+) \| ([0-9a-f]{64})/gm)];
+    // A3.7.4.3 GATE A CORRECTION 03: the only authorized exception. The manifest must still prove the original hash.
+    const AUTHORIZED_EXCEPTIONS: Record<string, { was: string; now: string }> = {
+      'src/features/publications/__tests__/a3721aValidationHarness.test.ts': {
+        was: 'c20a942e4e8cad4a2c8514e2e258050bc0bd64ee2deb2c966ffcd7854ee306cc',
+        now: '6c32bfcdde9cb03a79eb2e6d109eb4a2c98166094a40b51803fcf2e4891126fd',
+      },
+    };
     expect(entries.length).toBe(28);
+    const excepted: string[] = [];
     for (const [, path, hash] of entries) {
-      expect(createHash('sha256').update(readFileSync(resolve(root, path))).digest('hex'), path).toBe(hash);
+      const actual = createHash('sha256').update(readFileSync(resolve(root, path))).digest('hex');
+      const exception = AUTHORIZED_EXCEPTIONS[path];
+      if (exception) {
+        expect(hash, `${path} manifest still proves previous hash`).toBe(exception.was);
+        expect(actual, path).toBe(exception.now);
+        excepted.push(path);
+      } else {
+        expect(actual, path).toBe(hash);
+      }
     }
+    expect(excepted).toEqual(Object.keys(AUTHORIZED_EXCEPTIONS));
   });
 });
