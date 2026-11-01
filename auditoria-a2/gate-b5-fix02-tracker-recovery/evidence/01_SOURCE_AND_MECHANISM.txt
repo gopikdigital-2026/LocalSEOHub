@@ -1,0 +1,37 @@
+B.5 FIX02 — SOURCE VERIFICATION AND DEPLOY-MECHANISM INVESTIGATION (2026-11-01)
+
+SOURCE SHA-256 (supabase/functions/instagram-publishing)
+graph.ts              a107c840cba644967c9a911ef923755176de0b7674530372a506bdc1333bb61e  PASS (approved)
+index.ts              6312ea2ebf7210d10e0319373d3cf48381e2925b23934a169a65b475334ea675  PASS (approved)
+instagramPublish.ts   df94b08fcbd2134d17a85a3ecdaefdfcdda51a36014771585a6510787ad200f1  PASS (approved)
+publishTarget.ts      d58f363b11e2c02a027da341e0c46c97691fc0490d4435287442b09c16d1040d  PASS (approved)
+connectionPreflight.ts b57c82c1d970ace3643b64de539ad5fdac8a2a3cb66d9e06e51a8570a356b9db PASS (FIX01 manifest: unchanged b57c82c1…b9db)
+derivative.ts         be27cd6efba40260d86f09813316ccbcf36496de2615b62f1c3cb4e25f458dfa  PASS (FIX01 manifest: unchanged be27cd6e…8dfa)
+shared.ts             2de062eaf385236e303c043ff17434b45ff1d8b9200e12e65462bc8e95f623cd  PASS (FIX01 manifest: unchanged 2de062ea…23cd)
+functions-deploy-state.json 87f8bfce541362ee24dbb8280732a24dfcc627b75f91465c2e62cf5f7efeeade (unchanged, read only)
+config.toml           fc17510c97774a53235bc1872ea46de28c0ba5171ebf7766f4abe8e2f562679a (read only)
+
+PRODUCTION SQL FIX01 (read-only)
+schema_migrations 60, newest 20261031234927                                         PASS (not reapplied)
+publish_attempt_begin c7a783fc795bb4f5eb5ebbc1246e943b                              PASS
+publish_attempt_finish b899c48ece67be21664ec8564e475cbb                             PASS
+publish_attempt_record_verification eabb8a45d15c3127aecedbf2d5201255                PASS
+publish_attempts_guard 3ae610d5cbf419af15dce170cb853d7a                             PASS
+
+DEPLOY MECHANISM INVESTIGATION
+1. mcp_supabase_deploy_edge_functions: schema unchanged — zero parameters, no slug,
+   no force/refresh/resync flag. Deploys only tracker entries with hasChanged=true.
+2. Tracker: instagram-publishing hasChanged=false, hash 7daa1d6399f74a76…2284
+   (same as pre-FIX01 baseline). Entries with hasChanged=true: 0.
+3. bolt-database skill: only documents auto-detection; no refresh/resync operation.
+4. Bolt Help Center (bolt-cloud/database/server-functions, troubleshooting/integrations-issues):
+   "Bolt deploys your server functions for you ... when it updates them." No documented
+   manual redeploy, tracker refresh or per-function deploy.
+5. list_edge_functions: exposes slug/status/id/verifyJWT only; no version, no deploy action.
+6. Supabase CLI: not supported in this environment.
+7. No concrete change in the available mechanism was identified, so deploy_edge_functions
+   was NOT called again (per section 3).
+
+RESULT: no supported mechanism to refresh the tracker or explicitly deploy
+instagram-publishing. Forbidden options (editing tracker, artificial source changes) not used.
+Deployment NOT executed. Deployed-code equivalence: UNKNOWN (evidence indicates pre-FIX01 bundle).

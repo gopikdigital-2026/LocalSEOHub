@@ -1,0 +1,26 @@
+B.5 FIX02 — READ-ONLY PRODUCTION SAFETY AND REGRESSION (2026-11-01)
+
+PRODUCTION (execute_sql SELECT only; no function invoked)
+other fns: advance e13cee80, mark_stale b99f5731, publication_publish_gate 12f9d6cf,
+  publication_publish_preflight 356c5e36, internal_test_entitlement_active 325e375c   PASS (= FIX01 recovery)
+policies 93 / 529a39b14d5a186440987fc1428c4466                                        PASS (= prior)
+all-function ACL md5 35a194e9e81695980e1727107bb5df06                                 PASS (= prior)
+attempts 1 total / 0 instagram / 0 containers / last updated_at 2026-10-30 22:40:42.724699+00  PASS
+Publication D: proposals_ready, updated 2026-10-31 16:16:13.516242+00;
+  draft v3, updated 2026-10-31 16:22:09.849195+00                                      PASS (timestamps = prior)
+  Recorded for future comparison (formula noted, prior formula not recorded):
+  md5(instagram_text)=2d8fc2b61014490758796da7b95c79ce, md5(facebook_text)=19979c2c5be0b9e8c11b44051a74f845
+instagram-derivatives storage objects 0                                               PASS
+internal_test_entitlements 1 row, id 41af3f04…, expires 2026-11-01 22:21:13Z, not revoked  PASS (not renewed)
+  Recorded: md5(string_agg(e::text)) = d7f1307c0756104ce7d4e35921c0da6c (different formula from prior 0bd938b4)
+secrets: no META_INSTAGRAM_* ; Meta: META_APP_ID, META_APP_SECRET, META_REDIRECT_URI only  PASS
+edge functions 43 ACTIVE; instagram-publishing a3008491-be86-40c3-ae41-0a93ee773be4;
+  meta-publishing 3b3b0765-4c87-4f5b-ab64-d1025a7a49c1 (ids unchanged)                 PASS
+No deploy, no SQL write, no migration, no Meta POST.                                  PASS
+
+REGRESSION
+vitest: Test Files 90 passed (90); Tests 3069 passed (3069); 0 skipped                PASS
+tsc --noEmit -p tsconfig.app.json: 20 errors, per-file counts identical to baseline   PASS
+  1 App.tsx, 2 BusinessAuditLanding, 2 ContentGeneratorLanding, 1 DiagnosticLanding,
+  10 LandingPage, 2 MetaAdsLanding, 1 a3422GbpRecovery.test, 1 legacy AdminDashboard
+vite build: see report (run after report writing)
