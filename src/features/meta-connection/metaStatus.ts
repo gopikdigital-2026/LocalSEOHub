@@ -156,6 +156,8 @@ const ERROR_DETAIL: Record<Lang, Record<string, string>> = {
     INSTAGRAM_DISCOVERY_FAILED: 'No pudimos consultar tu cuenta de Instagram.',
     REAUTH_REQUIRED: 'El acceso a Meta ha caducado. Vuelve a conectar tu cuenta.',
     SESSION_MISMATCH: 'La conexión se inició en otra sesión. Vuelve a empezar desde aquí.',
+    META_PAGE_ALREADY_ASSIGNED: 'Esta página de Facebook ya está conectada a otra cuenta de LocalSEOHub. Elige otra página o, si es tuya, desconéctala primero desde esa cuenta.',
+    META_INSTAGRAM_ALREADY_ASSIGNED: 'La cuenta de Instagram de esta página ya está conectada a otra cuenta de LocalSEOHub. Elige otra página o, si es tuya, desconéctala primero desde esa cuenta.',
     UNKNOWN_ERROR: 'Algo salió mal. Vuelve a intentarlo.',
   },
   en: {
@@ -173,6 +175,8 @@ const ERROR_DETAIL: Record<Lang, Record<string, string>> = {
     INSTAGRAM_DISCOVERY_FAILED: 'We could not check your Instagram account.',
     REAUTH_REQUIRED: 'Meta access has expired. Reconnect your account.',
     SESSION_MISMATCH: 'The connection was started in another session. Start again from here.',
+    META_PAGE_ALREADY_ASSIGNED: 'This Facebook Page is already connected to another LocalSEOHub account. Choose another Page or, if it is yours, disconnect it from that account first.',
+    META_INSTAGRAM_ALREADY_ASSIGNED: "This Page's Instagram account is already connected to another LocalSEOHub account. Choose another Page or, if it is yours, disconnect it from that account first.",
     UNKNOWN_ERROR: 'Something went wrong. Try again.',
   },
 };

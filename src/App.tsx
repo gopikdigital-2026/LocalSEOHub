@@ -5,6 +5,7 @@ import AppShellV2 from './app-v2/layouts/AppShellV2';
 import { useAuth } from './hooks/useAuth';
 import { useOnboardingStatus } from './hooks/useOnboardingStatus';
 import { AppGuard, OnboardingGuard, useAuthRedirect } from './app-v2/auth';
+import { InternalGuard } from './features/internal-access/InternalGuard';
 import { LoadingState } from './components/ui';
 import { RESET_PASSWORD_PATH, type RecoveryLink } from './features/password-reset/recovery';
 import { VERIFY_REDIRECT_PATH, type VerificationLinkProblem } from './features/email-verification/verification';
@@ -227,7 +228,7 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
           </AppGuard>
         } />
 
-        <Route element={<Suspense fallback={SKELETON}><PublicationResumeProvider /></Suspense>}>
+        <Route element={<InternalGuard><Suspense fallback={SKELETON}><PublicationResumeProvider /></Suspense></InternalGuard>}>
         <Route path="/internal/publications-validation" element={
           <AppGuard>
             <Suspense fallback={SKELETON}>

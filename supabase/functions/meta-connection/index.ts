@@ -58,15 +58,16 @@ const handle = createHandler({
     return typeof row?.access_token === "string" && row.access_token ? row.access_token : null;
   },
   async finishPageSelection(s) {
-    const data = await rpc("meta_finish_page_selection", {
+    const data = await rpc("meta_claim_page_selection", {
       p_connection_id: s.connectionId,
+      p_user_id: s.userId,
       p_page_id: s.pageId,
       p_page_name: s.pageName,
       p_instagram_status: s.instagramStatus,
       p_instagram_id: s.instagramId,
       p_instagram_username: s.instagramUsername,
     });
-    return data === true;
+    return data === "ok" || data === "page_assigned" || data === "instagram_assigned" ? data : "not_pending";
   },
   async failConnection(connectionId, status, code) {
     await rpc("meta_fail_connection", { p_connection_id: connectionId, p_status: status, p_code: code });

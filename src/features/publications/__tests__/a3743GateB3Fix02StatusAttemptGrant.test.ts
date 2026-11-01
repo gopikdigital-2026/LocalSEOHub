@@ -100,7 +100,7 @@ const status = (publicationId = PUB_D, expectedVersion = 3) => ({ action: 'insta
 describe('B.3 FIX02 migration: exact read-only nine-column grant', () => {
   it('exactly one FIX02 grant migration exists and the total is 61', () => {
     expect(grantFiles()).toHaveLength(1);
-    expect(readdirSync(join(ROOT, MIGRATIONS)).filter((f) => f.endsWith('.sql'))).toHaveLength(61); // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60, title "total is 60")
+    expect(readdirSync(join(ROOT, MIGRATIONS)).filter((f) => f.endsWith('.sql'))).toHaveLength(62); // A3.7.5.2 RE-PIN: +1 tenant account-uniqueness migration 20261101230430 (was: 61). A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60, title "total is 60")
   });
 
   it('the only statement is SELECT on the nine authorized columns to service_role', () => {

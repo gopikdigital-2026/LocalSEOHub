@@ -23,6 +23,7 @@ export interface Connection {
 
 export interface PageSelection {
   connectionId: string;
+  userId: string;
   pageId: string;
   pageName: string;
   instagramStatus: InstagramStatus;
@@ -30,12 +31,15 @@ export interface PageSelection {
   instagramUsername: string | null;
 }
 
+export type PageClaimResult = "ok" | "not_pending" | "page_assigned" | "instagram_assigned";
+
 export interface ConnectionDeps {
   getUserId(jwt: string): Promise<string | null>;
   getOwnConnection(userId: string): Promise<Connection | null>;
   completeAuthorization(userId: string, completionHash: string, bindingHash: string): Promise<{ result: CompleteResult; pageCount: number }>;
   readToken(connectionId: string): Promise<string | null>;
-  finishPageSelection(s: PageSelection): Promise<boolean>;
+  // Atomic, database-enforced: a Page / Instagram account belongs to at most one tenant.
+  finishPageSelection(s: PageSelection): Promise<PageClaimResult>;
   failConnection(connectionId: string, status: FailStatus, code: string): Promise<void>;
   cancelAttempt(connectionId: string): Promise<boolean>;
   // Expires a connecting/authorized attempt older than staleBefore or without a live OAuth state.
@@ -89,7 +93,7 @@ export function createHandler(deps: ConnectionDeps) {
     return { ok, body: body as Record<string, unknown> | null, code: ok ? 0 : graphErrorCode(body) };
   }
 
-  async function selectPage(conn: Connection, pageId: string): Promise<Response> {
+  async function selectPage(conn: Connection, userId: string, pageId: string): Promise<Response> {
     const secret = deps.env("META_APP_SECRET");
     if (!secret || !deps.env("META_APP_ID")) return fail("META_APP_NOT_CONFIGURED", 503);
     if (conn.status !== "page_selection_required") return fail("PAGE_SELECTION_NOT_PENDING", 409);
@@ -131,10 +135,12 @@ export function createHandler(deps: ConnectionDeps) {
       }
     }
 
-    const done = await deps.finishPageSelection({
-      connectionId: conn.id, pageId, pageName: page.name, instagramStatus, instagramId, instagramUsername,
+    const claim = await deps.finishPageSelection({
+      connectionId: conn.id, userId, pageId, pageName: page.name, instagramStatus, instagramId, instagramUsername,
     });
-    if (!done) return fail("PAGE_SELECTION_NOT_PENDING", 409);
+    if (claim === "page_assigned") return fail("META_PAGE_ALREADY_ASSIGNED", 409);
+    if (claim === "instagram_assigned") return fail("META_INSTAGRAM_ALREADY_ASSIGNED", 409);
+    if (claim !== "ok") return fail("PAGE_SELECTION_NOT_PENDING", 409);
     return json({ ok: true, status: "connected", instagramStatus });
   }
 
@@ -169,7 +175,7 @@ export function createHandler(deps: ConnectionDeps) {
           const conn = await deps.getOwnConnection(userId);
           // Exactly one Page means the user's own Meta consent already limited the choice to it.
           if (conn && pageCount === 1 && conn.availablePages.length === 1) {
-            return selectPage(conn, conn.availablePages[0].id);
+            return selectPage(conn, userId, conn.availablePages[0].id);
           }
           return json({ ok: true, status: "page_selection_required", pageCount });
         }
@@ -178,7 +184,7 @@ export function createHandler(deps: ConnectionDeps) {
           if (typeof body.pageId !== "string" || !/^\d{1,40}$/.test(body.pageId)) return fail("INVALID_REQUEST", 400);
           const conn = await deps.getOwnConnection(userId);
           if (!conn) return fail("PAGE_SELECTION_NOT_PENDING", 409);
-          return selectPage(conn, body.pageId);
+          return selectPage(conn, userId, body.pageId);
         }
 
         case "disconnect": {

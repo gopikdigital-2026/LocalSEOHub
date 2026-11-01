@@ -126,3 +126,6 @@ verify_jwt = true
 
 [functions.instagram-publishing]
 verify_jwt = true
+
+[functions.internal-access]
+verify_jwt = true
