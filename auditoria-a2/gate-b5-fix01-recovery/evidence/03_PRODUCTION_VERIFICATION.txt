@@ -1,0 +1,15 @@
+B.5 FIX01 RECOVERY — READ-ONLY PRODUCTION VERIFICATION (2026-11-01)
+schema_migrations 60, newest 20261031234927 (no new migration)                         PASS
+FIX01 fns: begin c7a783fc / finish b899c48e / record_verification eabb8a45 / guard 3ae610d5  PASS
+unchanged: advance e13cee80, mark_stale b99f5731, gate 12f9d6cf, preflight 356c5e36, entitlement_active 325e375c  PASS
+ACLs: RPCs {postgres,service_role}; guard & gate {postgres}                            PASS
+all-fn ACL md5 35a194e9e81695980e1727107bb5df06 (= B.5 post value)                      PASS
+other fn source fb511e92..., grants 06557e88..., RLS f7bf2660..., policies 93/529a39b1..., triggers a226db01...  PASS
+attempts 1 total / 0 instagram / last 2026-10-30 22:40:42.724699+00 / 0 containers     PASS
+Publication D proposals_ready, updated 2026-10-31 16:16:13.516242+00; draft v3 16:22:09.849195+00 md5 7c34b594...  PASS
+instagram-derivatives objects 0                                                        PASS
+entitlements 1 / rows md5 0bd938b4d018ba9832d5eee43c66214f (unchanged)                 PASS
+secrets: no META_INSTAGRAM_* (Meta: META_APP_ID, META_APP_SECRET, META_REDIRECT_URI)   PASS
+edge functions 43 ACTIVE; instagram-publishing a3008491-be86-40c3-ae41-0a93ee773be4; meta-publishing 3b3b0765-4c87-4f5b-ab64-d1025a7a49c1
+instagram-publishing deployed with FIX01 bundle                                         FAIL (not deployed)
+No function invoked; no Meta POST.                                                      PASS

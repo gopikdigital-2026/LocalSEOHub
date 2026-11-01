@@ -200,15 +200,18 @@ describe('B.4 FIX01 prepared migration text', () => {
 
   // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was: "is prepared outside supabase/migrations, is not applied, and the applied count stays 60";
   // count 60, promoted file absent, every file < 20261031190000). Gate B.5 promotes the byte-identical file as the single newest migration.
+  // A3.7.4.3 GATE B.5 FIX01 RECOVERY RE-PIN (was: PROMOTED 20261031190000_...; newest 20261031190000_...; others < '20261031190000'):
+  // the promoted file now carries production's recorded version 20261031234927; content sha unchanged.
   it('is promoted byte-identical into supabase/migrations as the single newest migration and the count is 61', () => {
-    const PROMOTED = 'supabase/migrations/20261031190000_a3743_gateb4_fix01_publish_safety.sql';
+    const PROMOTED = 'supabase/migrations/20261031234927_a3743_gateb4_fix01_publish_safety.sql';
     expect(sha(PREPARED)).toBe('a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981');
     expect(existsSync(join(ROOT, PROMOTED))).toBe(true);
     expect(sha(PROMOTED)).toBe('a3209acbc30f3a56c6c4d2260d023c1330d9966c5603552caba99e262bbb5981');
     const applied = readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql')).sort();
     expect(applied).toHaveLength(61);
-    expect(applied[applied.length - 1]).toBe('20261031190000_a3743_gateb4_fix01_publish_safety.sql');
-    expect(applied.slice(0, -1).every((f) => f < '20261031190000')).toBe(true);
+    expect(applied[applied.length - 1]).toBe('20261031234927_a3743_gateb4_fix01_publish_safety.sql');
+    expect(applied.slice(0, -1).every((f) => f < '20261031234927')).toBe(true);
+    expect(existsSync(join(ROOT, 'supabase/migrations/20261031190000_a3743_gateb4_fix01_publish_safety.sql'))).toBe(false);
   });
 
   it('redefines only the three functions and the guard, each SECURITY DEFINER with an empty search_path', () => {

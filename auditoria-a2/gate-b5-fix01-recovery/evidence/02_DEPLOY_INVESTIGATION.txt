@@ -1,0 +1,24 @@
+B.5 FIX01 RECOVERY — DEPLOYMENT INVESTIGATION
+Approved instagram-publishing sources verified on disk (sha256):
+  graph.ts a107c840cba644967c9a911ef923755176de0b7674530372a506bdc1333bb61e  MATCH
+  index.ts 6312ea2ebf7210d10e0319373d3cf48381e2925b23934a169a65b475334ea675  MATCH
+  instagramPublish.ts df94b08fcbd2134d17a85a3ecdaefdfcdda51a36014771585a6510787ad200f1  MATCH
+  publishTarget.ts d58f363b11e2c02a027da341e0c46c97691fc0490d4435287442b09c16d1040d  MATCH
+  connectionPreflight.ts b57c82c1..., derivative.ts be27cd6e..., shared.ts 2de062ea... (unchanged files)
+Deployed baseline differs only in graph.ts/index.ts/instagramPublish.ts (+ publishTarget.ts absent).
+
+Findings:
+1. deploy_edge_functions accepts no slug/bundle argument; it deploys only functions its tracker flags hasChanged=true.
+2. supabase/functions-deploy-state.json (sha 87f8bfce541362ee24dbb8280732a24dfcc627b75f91465c2e62cf5f7efeeade): every function
+   hasChanged=false; instagram-publishing hash 7daa1d63..., identical to the deploy-state inside the pre-FIX01 baseline ZIP.
+3. The tracker hash is content-derived (analyze-competitor-url, audit-maps-profile, audit-reviews, execute-tip-content have
+   byte-identical index.ts and share hash e590fc59...), but its formula could not be reproduced (~180 candidate formulas tried),
+   so it cannot be shown whether 7daa1d63 corresponds to the old or the new bundle.
+4. Most likely cause: the FIX01 source files were written in an earlier session whose change tracking was reset/settled without
+   a deploy, so the tracker records the current tree as already deployed. Detection appears event/tracker-based, not a live
+   comparison with the deployed artifact.
+5. Second call to deploy_edge_functions (after migration reconciliation): "No Edge Functions changed since the last deploy.
+   Nothing to deploy." Deploy-state unchanged.
+6. Alternatives: Supabase CLI unsupported in this environment; no MCP tool deploys a named function or uploads a bundle;
+   editing the deploy-state file or touching source to trigger detection is forbidden by the recovery mandate.
+BLOCKER: no supported mechanism available to deploy the exact approved instagram-publishing bundle. STOP.
