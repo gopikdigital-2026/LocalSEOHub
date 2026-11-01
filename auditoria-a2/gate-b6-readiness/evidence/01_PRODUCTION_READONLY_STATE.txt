@@ -1,0 +1,27 @@
+GATE B.6 READ-ONLY EVIDENCE — 2026-11-01 20:38–20:41 UTC
+
+[edge functions] 43 ACTIVE; instagram-publishing a3008491-be86-40c3-ae41-0a93ee773be4 verifyJWT=true; meta-publishing 3b3b0765-4c87-4f5b-ab64-d1025a7a49c1. Version metadata not exposed by tooling.
+[secrets] SUPABASE_*, LocalSEO_AI, LocalSEO_KEY, STRIPE_*, ADMIN_EMAIL, GOOGLE_*, SITE_URL, META_APP_ID, META_APP_SECRET, META_REDIRECT_URI. No META_INSTAGRAM_REAL_PUBLISH_*.
+[functions md5(prosrc no ws) | acl]
+ publish_attempt_begin c7a783fc795bb4f5eb5ebbc1246e943b {postgres,service_role}
+ publish_attempt_finish b899c48ece67be21664ec8564e475cbb {postgres,service_role}
+ publish_attempt_record_verification eabb8a45d15c3127aecedbf2d5201255 {postgres,service_role}
+ publish_attempts_guard 3ae610d5cbf419af15dce170cb853d7a {postgres}
+ publication_publish_gate 12f9d6cfa192af2efc55038f2a2745d0 {postgres}
+ publication_publish_preflight 356c5e36cba82ea003cf9654fededef7 {postgres,service_role}
+ publish_attempt_advance e13cee809bdeaa8381ba02096761454f {postgres,service_role}
+ publish_attempt_mark_stale b99f5731dca7b2d9a6df5b6c345b78a1 {postgres,service_role}
+ internal_test_entitlement_active 325e375c25b198448ec80d9334065a12 {postgres,service_role}
+ policies 529a39b14d5a186440987fc1428c4466 ; fn_acl 35a194e9e81695980e1727107bb5df06 ; migrations 60, last 20261031234927
+[indexes] pkey(id); number_key(publication,channel,attempt_number); identity_live(publication,channel,draft_version) WHERE publishing|succeeded|unknown; one_active(publication,channel) WHERE publishing|unknown; one_success WHERE succeeded; trigger publish_attempts_guard BEFORE INSERT OR UPDATE
+[facebook] succeeded | 1393994523793266_122114709087502661 | 2026-10-30 22:40:42.724699+00
+[counts] all attempts 1; instagram 0; D 0; containers 0; instagram-derivatives objects 0
+[publication D] status proposals_ready; updated 2026-10-31 16:16:13.516242; draft v3 updated 2026-10-31 16:22:09.849195
+ ig caption sha256 537130129640e265530b14f0c6630124906ceae7964501ef76002eae2603915e
+ image publication-images/aabe426e-…/e6014022-…/875587f5-…/ba93c54e-c0ee-4fa0-a7b4-8284cddaa808.png image/png 901643 B eTag fc3a190ee41708dc8b242ff5b711ae58
+ local asset gate-b1-assets/a3743-publication-d-test-image.png sha256 6edee998611958567dead90b82eebc39bd15db2ea85fe02c3135942adcf853a7 md5 fc3a190ee41708dc8b242ff5b711ae58 901643 B
+ meta_connection instagram_account_id 17841462487279994 page_id 1393994523793266
+ publication_publish_gate(user,D,'instagram',3) = NULL
+[entitlement] 41af3f04-b3f2-48fb-997a-279c84e012ae active=true at 2026-11-01 20:39:49.913497+00; expires 2026-11-01 22:21:13.055308+00; not revoked
+[local sources sha256 prefixes] instagram: connectionPreflight b57c82c1d970ace3 derivative be27cd6efba40260 graph a107c840cba64496 index 6312ea2ebf7210d1 instagramPublish df94b08fcbd2134d publishTarget d58f363b11e2c02a shared 2de062eaf385236e
+ meta-publishing: facebookPhoto 7225bc3d5dd0493f facebookPublish 48da8e2f81eb520d handler b7525645c005ea39 index 027ee4fe8f389fbb
