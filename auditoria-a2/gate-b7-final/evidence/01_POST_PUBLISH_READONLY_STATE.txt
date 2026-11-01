@@ -1,0 +1,21 @@
+A3.7.4.3 Gate B.7 — post-publish read-only state (captured 2026-11-01 21:12:50.833639+00)
+
+secrets (names only): SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY SUPABASE_PUBLISHABLE_KEYS SUPABASE_SECRET_KEYS SUPABASE_DB_URL SUPABASE_JWKS LocalSEO_AI LocalSEO_KEY STRIPE_WEBHOOK_SECRET STRIPE_SECRET_KEY ADMIN_EMAIL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI SITE_URL STRIPE_PRICE_ID META_APP_ID META_APP_SECRET META_REDIRECT_URI
+META_INSTAGRAM_REAL_PUBLISH_* : ABSENT (0 of 3)
+
+publication_publish_attempts (all rows = 2):
+ aaca823e-44ab-4d67-bce2-aeee40d24ba7 | pub b140fc59… | facebook  | v3 | succeeded | #1 | obj 1393994523793266_122114709087502661 | container null | stage none | updated 2026-10-30 22:40:42.724699+00
+ ba3e3bca-6ff0-43a4-947c-7414d571d9d3 | pub 875587f5… | instagram | v3 | succeeded | #1 | obj 18044145305836108 | container 17959806654082910 | stage publish_requested | permalink https://www.instagram.com/p/DfNqSPmiEIP/ | error null | retryable false | verification_required false | started 21:07:27.692896 | finished 21:07:50.49368
+
+publication D: proposals_ready | updated 2026-10-31 16:16:13.516242 | draft v3 updated 2026-10-31 16:22:09.849195 | caption sha256 537130129640e265530b14f0c6630124906ceae7964501ef76002eae2603915e
+image: 901643 B | eTag fc3a190ee41708dc8b242ff5b711ae58 | updated 2026-10-31 16:15:22.690798
+connection: IG 17841462487279994 | Page 1393994523793266
+gate(D, instagram, 3) = ALREADY_PUBLISHED
+instagram-derivatives objects = 0
+publications total = 18 | max updated_at 2026-10-31 16:16:13.516242
+entitlement 41af3f04…: expires 2026-11-01 22:21:13.055308+00 | not revoked
+
+function fingerprints: begin c7a783fc… finish b899c48e… record_verification eabb8a45… guard 3ae610d5… gate 12f9d6cf… preflight 356c5e36… advance e13cee80… mark_stale b99f5731… entitlement_active 325e375c… (all = B.6 baseline; ACLs postgres[/service_role] only)
+migrations 60, last 20261031234927 | policies 93 | trigger publish_attempts_guard enabled
+edge functions 43 ACTIVE; instagram-publishing a3008491-be86-40c3-ae41-0a93ee773be4 verify_jwt=true
+vitest: 90 files / 3069 tests passed | build exit 0
