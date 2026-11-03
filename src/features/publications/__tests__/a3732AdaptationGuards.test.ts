@@ -88,7 +88,8 @@ describe('A3.7.3.2 copied validators are byte-identical to the frozen A3.7.2 ori
     const AUTHORIZED_EXCEPTIONS: Record<string, { was: string; now: string }> = {
       'src/features/publications/__tests__/a3731SelectionFoundation.test.ts': {
         was: '38e88e4f65bbf3f0132bcc8cdef7dabb5a0a94f3fa92e16712789cc605940095',
-        now: '4030cdc839d1be813b40ffbd6f7f2e1f88a18fce1c51c3fa487b60861fbe7a8c',
+        // A3.7.5.2 RE-PIN: a3731 adds one exception for a371 (handler hash only) (was now: 4030cdc839d1be813b40ffbd6f7f2e1f88a18fce1c51c3fa487b60861fbe7a8c)
+        now: '3a392196ea54d6c443d4a15ad7d0f7d719c3b816fda479f24766ea79c630d108',
       },
     };
     const excepted: string[] = [];

@@ -188,7 +188,8 @@ describe('A3.7.1 schema, storage and architecture guards', () => {
     expect(sha('supabase/functions/meta-oauth-start/handler.ts')).toBe('e21d60a5');
     // Re-pinned in A3.7.4.1 (89ff215b -> e59f91db): additive publishing-consent branch; read-only path unchanged.
     expect(sha('supabase/functions/meta-oauth-callback/handler.ts')).toBe('e59f91db');
-    expect(sha('supabase/functions/meta-connection/handler.ts')).toBe('57e8341f');
+    // A3.7.5.2 RE-PIN (57e8341f -> 65e720d3): server-side tenant claim (userId + PageClaimResult conflict codes); token/OAuth paths unchanged.
+    expect(sha('supabase/functions/meta-connection/handler.ts')).toBe('65e720d3');
     expect(sha('supabase/functions/meta-read/handler.ts')).toBe('987cc94b');
   });
 });

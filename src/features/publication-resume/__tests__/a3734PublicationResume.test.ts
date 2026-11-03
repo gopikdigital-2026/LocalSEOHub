@@ -218,7 +218,8 @@ describe('A3.7.3.4 single publication identity', () => {
   });
 
   it('the hidden harness route renders inside the resume layout route', () => {
-    const layout = APP.indexOf('<Route element={<Suspense fallback={SKELETON}><PublicationResumeProvider /></Suspense>}>');
+    // A3.7.5.2 RE-PIN: the resume layout is now wrapped in the server-authorized InternalGuard.
+    const layout = APP.indexOf('<Route element={<InternalGuard><Suspense fallback={SKELETON}><PublicationResumeProvider /></Suspense></InternalGuard>}>');
     const route = APP.indexOf('<Route path="/internal/publications-validation"');
     expect(layout).toBeGreaterThan(-1);
     expect(route).toBeGreaterThan(layout);

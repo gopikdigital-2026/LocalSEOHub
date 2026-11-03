@@ -273,8 +273,10 @@ describe('B.3 FIX02 frozen code untouched', () => {
     'supabase/functions/meta-publishing/handler.ts': 'b7525645c005ea3989609ea34800057cbcbb6ca51e65573c000ba7b7a41e1ffb',
     'supabase/functions/meta-publishing/facebookPublish.ts': '48da8e2f81eb520dabb26c05932b039b4fe023138926b05218a458077b6628dd',
     'supabase/functions/meta-publishing/facebookPhoto.ts': '7225bc3d5dd0493f41940e67207010db84e04231d475c2d33f79fd11b501726a',
-    'src/App.tsx': 'ef7f7cdca4c0c0a952a90cff7e68e427c1decdf2655c68c72d9f1468d2b5029b',
-    'supabase/config.toml': 'fc17510c97774a53235bc1872ea46de28c0ba5171ebf7766f4abe8e2f562679a',
+    // A3.7.5.2 RE-PIN (App was ef7f7cdc; config was fc17510c): InternalGuard on the hidden internal route; config appends only
+    // [functions.internal-access] verify_jwt = true. Every publishing-engine pin above is unchanged.
+    'src/App.tsx': 'f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52',
+    'supabase/config.toml': 'aeda6a0575fef1abbcc128c9f9e8a085f4e8b84bfa12737e1a09e1c28617f49d',
   };
 
   it('Instagram engine, Graph transport, derivative, FIX01 check, Facebook and App are byte-identical', () => {
@@ -295,11 +297,12 @@ describe('B.3 FIX02 frozen code untouched', () => {
 
   // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was: "change only the count to 60", /\.toHaveLength\(60\); \/\/ A3\.7\.4\.3 GATE B\.3 FIX02/):
   // the B.5 annotation now precedes the FIX02 one and the count is 61; the old 59 and 60 pins must both be gone.
-  it('the two re-pinned tests change only the count to 61 with the B.5 and FIX02 annotations', () => {
+  // A3.7.5.2 RE-PIN (was: count 61, B.5 annotation first): the A3.7.5.2 annotation now precedes B.5 and the count is 62.
+  it('the two re-pinned tests change only the count to 62 with the A3.7.5.2, B.5 and FIX02 annotations', () => {
     for (const p of ['src/components/__tests__/a281TrustCleanup.test.ts', 'src/features/action-layer/__tests__/a33DiagnosticAction.test.ts']) {
       const src = read(p);
-      expect(src).toMatch(/\.toHaveLength\(61\); \/\/ A3\.7\.4\.3 GATE B\.5 AUTHORIZED RE-PIN: \+1 promoted FIX01 publish-safety migration 20261031190000 \(was: 60\)\. A3\.7\.4\.3 GATE B\.3 FIX02 AUTHORIZED RE-PIN/);
-      expect(src).not.toMatch(/migrations'\)\)\.filter\(\(f\) => f\.endsWith\('\.sql'\)\)\)\.toHaveLength\((59|60)\)/);
+      expect(src).toMatch(/\.toHaveLength\(62\); \/\/ A3\.7\.5\.2 RE-PIN: \+1 tenant account-uniqueness migration 20261101230430 \(was: 61\)\. A3\.7\.4\.3 GATE B\.5 AUTHORIZED RE-PIN: \+1 promoted FIX01 publish-safety migration 20261031190000 \(was: 60\)\. A3\.7\.4\.3 GATE B\.3 FIX02 AUTHORIZED RE-PIN/);
+      expect(src).not.toMatch(/migrations'\)\)\.filter\(\(f\) => f\.endsWith\('\.sql'\)\)\)\.toHaveLength\((59|60|61)\)/);
     }
   });
 });

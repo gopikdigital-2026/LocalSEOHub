@@ -142,7 +142,7 @@ function connDeps(opts: {
     getOwnConnection: vi.fn(async () => conn),
     completeAuthorization,
     readToken: vi.fn(async () => (opts.token === undefined ? LONG_TOKEN : opts.token)),
-    finishPageSelection: vi.fn(async (s: PageSelection) => { selections.push(s); return true; }),
+    finishPageSelection: vi.fn(async (s: PageSelection) => { selections.push(s); return 'ok' as const; }),
     failConnection: fail,
     cancelAttempt,
     expireStaleAttempt,

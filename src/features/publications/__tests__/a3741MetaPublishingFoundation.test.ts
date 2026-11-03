@@ -509,27 +509,32 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
   const AUTHORIZED_REPINS: Record<string, { was: string; now: string }> = {
     'src/App.tsx': {
       was: '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba',
-      now: 'ef7f7cdca4c0c0a952a90cff7e68e427c1decdf2655c68c72d9f1468d2b5029b',
+      // A3.7.5.2 RE-PIN: InternalGuard wraps the hidden internal layout route (was now: ef7f7cdca4c0c0a952a90cff7e68e427c1decdf2655c68c72d9f1468d2b5029b)
+      now: 'f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52',
     },
     'src/components/__tests__/a281TrustCleanup.test.ts': {
       was: 'cb6a925ab209873f69222303e0b7afc27a1ebfe0e4aaf3d6eecba3364da36c92',
       // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 67ba5b56ce48065241d41032d74beab25c9960628f64b80c1c41fae667a3f821)
-      now: '6ca06357b8a69c5880143e6b3166ba4621c1b63ea4e78fb0b270da1c50243211',
+      // A3.7.5.2 RE-PIN: App pin + migration count 61->62 (was now: 6ca06357b8a69c5880143e6b3166ba4621c1b63ea4e78fb0b270da1c50243211)
+      now: '3d09ed2e893d7ebeff5a5c542001123da6af3f90f24ef31bc2fe37600af45959',
     },
     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
       // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 1225076b1f1f8a882c844e54541d7052b22f16cb45e94d7025bf7091278e9606)
-      now: 'd25610f06528ac2edf3723c5aa3659ab5ac03e0aab32c87dc25426aee799d301',
+      // A3.7.5.2 RE-PIN: App pin + migration count 61->62 + a3752 exclusion (was now: d25610f06528ac2edf3723c5aa3659ab5ac03e0aab32c87dc25426aee799d301)
+      now: '687257b4172e906863bf144ab73c46ef8441bd0c491ddfb8e65556b0ba1d2305',
     },
     'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
       was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',
       // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: f5b72768a745b70ea7cba7684f41fb0b30aa3e302c0719e5a5f875711b5fedf6)
-      now: '3692440117ca7c82d7d3ebe4bad98a06f601c6e8d7dccd71fe09214b8544677c',
+      // A3.7.5.2 RE-PIN: App pin + migration count 61->62 + a3752 exclusion (was now: 3692440117ca7c82d7d3ebe4bad98a06f601c6e8d7dccd71fe09214b8544677c)
+      now: 'e49985e42a77136fd31135bf778cd3d33e331665db3ec6c0a4db2fbe5ad2820a',
     },
     // Split so the a3542 isolation guard (no literal reference to that layer outside it) keeps holding.
     ['src/features/social' + '-intelligence/integration/__tests__/a3544SocialIntegration.test.ts']: {
       was: 'e85d466ffe39ff2797ffc9505d44fa5a25261df955d38a465f0d54d9b12c8c08',
-      now: 'c1b5c3c207d802e2f84f9c0e6fbe53a95beac5624d93e6fecb0b4b661fbf2290',
+      // A3.7.5.2 RE-PIN: App pin only (was now: c1b5c3c207d802e2f84f9c0e6fbe53a95beac5624d93e6fecb0b4b661fbf2290)
+      now: '59b9d73083311fd1a89f90c22ebb686ef12e16e1165d72f42d9a05c4997d5ae8',
     },
     'src/features/publications/__tests__/a3733ChannelReview.test.ts': {
       was: 'd62c66187e16c6200e1327b5709def5e2fe781fd344e2202585560249b8759c9',
@@ -541,11 +546,13 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     },
     'src/features/publication-resume/__tests__/a3734PublicationResume.test.ts': {
       was: '5ca2c7ba3f3c311a94f78565156199efcc6e2c4a95a8bc00583e1fb58ab94cf9',
-      now: '7778b24b8cf0e80c07fb33008a751bafd7dbe6c1d18ac395561e7e8ae4df35b1',
+      // A3.7.5.2 RE-PIN: layout route assertion includes InternalGuard (was now: 7778b24b8cf0e80c07fb33008a751bafd7dbe6c1d18ac395561e7e8ae4df35b1)
+      now: '6daddf699508311aab3a0637a4b32dcd4d2f442ee99b9db5a36f85835dd15aea',
     },
     'src/features/publications/__tests__/a3732AdaptationGuards.test.ts': {
       was: 'b0125ea3973b824416fa517f29a6d5958d46d3cb77287d3c801d0cac18c3860b',
-      now: '721d76d3dd8ce07f178eaf70b3502db0df64f3f0b3393d1ba0ff96b5aa960ddb',
+      // A3.7.5.2 RE-PIN: a3732 follows the a3731 exception update (was now: 721d76d3dd8ce07f178eaf70b3502db0df64f3f0b3393d1ba0ff96b5aa960ddb)
+      now: 'a24601b7d0bafb7164a82e48999a5fadf582ab96c9b8f9c01747ecf3ede6a36e',
     },
   };
   it('every A3.7.3.4 frozen file is byte-identical, except the enumerated authorized re-pins', () => {
@@ -571,7 +578,8 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     expect(repinned.sort()).toEqual(Object.keys(AUTHORIZED_REPINS).sort());
   });
   it('the other frozen Meta handlers are untouched', () => {
-    expect(sha('supabase/functions/meta-connection/handler.ts').slice(0, 8)).toBe('57e8341f');
+    // A3.7.5.2 RE-PIN (was 57e8341f): authorized tenant-claim change; frozen publishing handlers are pinned separately.
+    expect(sha('supabase/functions/meta-connection/handler.ts').slice(0, 8)).toBe('65e720d3');
     expect(sha('supabase/functions/meta-read/handler.ts').slice(0, 8)).toBe('987cc94b');
   });
   it('nothing publishes, creates containers, signs URLs or touches App Review', () => {

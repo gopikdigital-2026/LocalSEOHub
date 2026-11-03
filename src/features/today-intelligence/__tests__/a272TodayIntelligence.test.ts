@@ -40,7 +40,7 @@ const FROZEN: Record<string, string> = {
   'src/features/action-layer/model.ts': '38edfb9004c9a6bea8ca680d71d374eedfacc221fa4229cbbfe5efe4b4994075',
   'src/features/action-layer/copy.ts': '3dbbe24bcd674fd9f684bf6a2a5a40862ca1ca49ab4efcc86471ec035c54330d',
   'src/features/action-layer/ActionDetail.tsx': '1444e520b6bf497e5b710b13184837d59b67114efaf31ed4d00307a0a0ed8336',
-  'src/App.tsx': 'ef7f7cdca4c0c0a952a90cff7e68e427c1decdf2655c68c72d9f1468d2b5029b', // A3.7.4.3 GATE A RE-PIN (was 81b0de7c): read-only Instagram harness panel on the same hidden route. A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
+  'src/App.tsx': 'f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52', // A3.7.5.2 RE-PIN (was ef7f7cdc): InternalGuard wraps the hidden internal layout route; diff = 1 import + 1 wrapped Route element. A3.7.4.3 GATE A RE-PIN (was 81b0de7c): read-only Instagram harness panel on the same hidden route. A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
   'src/features/dashboard/TodaysMissions.tsx': '22684ca84042aa83ef018bb7855e4493a6338eb2cc880359b5a10c011a91b79d',
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);

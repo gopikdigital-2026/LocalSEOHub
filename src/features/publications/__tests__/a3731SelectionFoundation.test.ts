@@ -269,6 +269,11 @@ describe('A3.7.3.1 scope guards', () => {
     const entries = [...manifest.matchAll(/^\| ((?:supabase|src)\/[^ ]+) \| ([0-9a-f]{64})/gm)];
     // A3.7.4.3 GATE A CORRECTION 03: the only authorized exception. The manifest must still prove the original hash.
     const AUTHORIZED_EXCEPTIONS: Record<string, { was: string; now: string }> = {
+      // A3.7.5.2 RE-PIN: a371 re-pins only the meta-connection handler hash (57e8341f -> 65e720d3) for the tenant claim.
+      'src/features/publications/__tests__/a371PublicationsRepository.test.ts': {
+        was: '76ec5d97cdc320d925fff117c2068125848f0d1c68f442e6d3231f98b1a8c38e',
+        now: 'e0b855271c41397779381a28eabc1d1338dd34cb92b72348086dc36d4642bd76',
+      },
       'src/features/publications/__tests__/a3721aValidationHarness.test.ts': {
         was: 'c20a942e4e8cad4a2c8514e2e258050bc0bd64ee2deb2c966ffcd7854ee306cc',
         now: '6c32bfcdde9cb03a79eb2e6d109eb4a2c98166094a40b51803fcf2e4891126fd',

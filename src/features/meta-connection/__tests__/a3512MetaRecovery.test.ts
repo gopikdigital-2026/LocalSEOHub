@@ -56,7 +56,7 @@ function server(initial: Connection | null, opts: { liveState?: boolean } = {}) 
     getOwnConnection,
     completeAuthorization: vi.fn(async () => ({ result: 'unknown' as const, pageCount: 0 })),
     readToken,
-    finishPageSelection: vi.fn(async () => true),
+    finishPageSelection: vi.fn(async () => 'ok' as const),
     failConnection: fail,
     cancelAttempt,
     expireStaleAttempt,
