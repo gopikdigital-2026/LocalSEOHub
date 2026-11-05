@@ -13,7 +13,7 @@ import { VERIFY_REDIRECT_PATH, type VerificationLinkProblem } from './features/e
 // ─── Product pages ──────────────────────────────────────────────────────────
 
 const TodayPage = lazy(() => import('./app-v2/routes/TodayPage'));
-const PlanPage = lazy(() => import('./app-v2/routes/PlanPage'));
+const WeeklyPlanPage = lazy(() => import('./features/weekly-plan/WeeklyPlanPage'));
 const ExecutionPage = lazy(() => import('./features/execution/ExecutionPage'));
 const BusinessProfilePage = lazy(() => import('./features/business-memory/BusinessProfilePage'));
 const BusinessGoalsPage = lazy(() => import('./features/business-memory/BusinessGoalsPage'));
@@ -149,6 +149,13 @@ function AuthRoute({ mode, linkProblem = null }: { mode: 'login' | 'signup'; lin
   );
 }
 
+// ─── /plan → /semana (old links and bookmarks) ──────────────────────────────
+
+function LegacyPlanRedirect() {
+  const { search, hash } = useLocation();
+  return <Navigate to={{ pathname: '/semana', search, hash }} replace />;
+}
+
 // ─── App ────────────────────────────────────────────────────────────────────
 
 export default function App({ initialRecoveryLink = null, initialLinkProblem = null }: { initialRecoveryLink?: RecoveryLink | null; initialLinkProblem?: VerificationLinkProblem | null }) {
@@ -193,7 +200,8 @@ export default function App({ initialRecoveryLink = null, initialLinkProblem = n
         {/* ── Main app (auth + onboarding complete) ── */}
         <Route element={<AppGuard><AppShellV2 /></AppGuard>}>
           <Route path="/hoy" element={<TodayPage />} />
-          <Route path="/plan" element={<PlanPage />} />
+          <Route path="/semana" element={<WeeklyPlanPage />} />
+          <Route path="/plan" element={<LegacyPlanRedirect />} />
           <Route path="/herramientas" element={<ToolsPage />} />
           <Route path="/herramientas/seo" element={<SeoGeneratorPage />} />
           <Route path="/herramientas/advisor" element={<AdvisorPage />} />
