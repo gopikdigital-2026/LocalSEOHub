@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AlertCircle, ExternalLink, Facebook, Instagram, Loader2, RefreshCw, Share2, Unlink, X } from 'lucide-react';
-import { META_COPY, META_POLL_MS, instagramLabel, metaErrorMessage, metaView, type MetaConnectionRow } from './metaStatus';
+import { AlertCircle, ExternalLink, Facebook, Instagram, Loader2, RefreshCw, Share2, ShieldCheck, Unlink, X } from 'lucide-react';
+import { META_COPY, META_POLL_MS, instagramLabel, instagramTone, metaErrorMessage, metaView, type MetaConnectionRow } from './metaStatus';
+import { checkInternalAccess } from '../internal-access/repository';
 import { cancelMetaConnection, disconnectMeta, loadMetaConnection, recoverMetaConnection, selectMetaPage, startMetaConnection } from './metaRepository';
 import { MetaPageSelectModal } from './MetaPageSelectModal';
 import { MetaSyncStatus } from './MetaSyncStatus';
@@ -9,6 +10,32 @@ import { PublishingAccessControl } from '../publishing-access/PublishingAccessCo
 
 const primaryBtn = 'flex items-center gap-1.5 px-3 py-1.5 rounded-v2-lg text-v2-xs font-semibold bg-v2-primary-600 text-white hover:bg-v2-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
 const errorBtn = 'flex items-center gap-1.5 px-3 py-1.5 rounded-v2-lg text-v2-xs font-semibold bg-v2-error-50 text-v2-error-600 hover:bg-v2-error-100 disabled:opacity-50 transition-colors';
+const TONE_STYLE = {
+  active: 'bg-v2-success-50 text-v2-success-700',
+  unavailable: 'bg-v2-neutral-100 text-v2-text-secondary',
+  attention: 'bg-v2-warning-50 text-v2-warning-700',
+} as const;
+
+function StatusChip({ tone, label }: { tone: keyof typeof TONE_STYLE; label: string }) {
+  return <span className={`ml-auto shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-v2-md ${TONE_STYLE[tone]}`}>{label}</span>;
+}
+
+function PermissionsDisclosure({ t }: { t: (typeof META_COPY)['es'] }) {
+  return (
+    <details className="group mb-3 rounded-v2-lg border border-v2-border bg-v2-neutral-50 px-3 py-2">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 text-v2-xs font-medium text-v2-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v2-primary-500 rounded-v2-md">
+        <ShieldCheck size={13} className="shrink-0 text-v2-primary-600" />
+        {t.permissionsTitle}
+      </summary>
+      <ul className="mt-2 space-y-1 list-disc pl-5 text-[11px] leading-relaxed text-v2-text-secondary">
+        {t.permissions.map((p) => <li key={p}>{p}</li>)}
+      </ul>
+      <p className="mt-2 text-[11px] leading-relaxed text-v2-text-secondary">{t.requirements}</p>
+      <p className="mt-1 text-[11px] font-medium leading-relaxed text-v2-text-primary">{t.permissionsNote}</p>
+    </details>
+  );
+}
+
 const secondaryBtn = 'flex items-center gap-1.5 px-3 py-1.5 rounded-v2-lg text-v2-xs font-semibold border border-v2-border text-v2-text-secondary hover:bg-v2-neutral-100 hover:text-v2-text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
 
 export function MetaConnectionCard({ businessId, lang }: { businessId: string; lang: 'es' | 'en' }) {
@@ -19,6 +46,7 @@ export function MetaConnectionCard({ businessId, lang }: { businessId: string; l
   const [notice, setNotice] = useState<string | null>(null);
   const location = useLocation();
   const [picking, setPicking] = useState(() => (location.state as { metaPick?: unknown } | null)?.metaPick === true);
+  const [operator, setOperator] = useState(false);
   const [publishingReturn] = useState(() => {
     const value = (location.state as { metaPublishing?: unknown } | null)?.metaPublishing;
     return typeof value === 'string' && /^[A-Za-z_]{3,40}$/.test(value) ? value : null;
@@ -51,6 +79,15 @@ export function MetaConnectionCard({ businessId, lang }: { businessId: string; l
 
   const view = metaView(row);
   const inProgress = row?.status === 'connecting' || row?.status === 'authorized';
+  const isConnected = view.kind === 'connected';
+
+  // Publishing is not offered commercially; only operators see the publishing-permission step.
+  useEffect(() => {
+    if (!isConnected) return;
+    let cancelled = false;
+    void checkInternalAccess().then((access) => { if (!cancelled) setOperator(access === 'allowed'); });
+    return () => { cancelled = true; };
+  }, [isConnected]);
 
   const recheck = useCallback(async () => {
     await recoverMetaConnection();
@@ -151,6 +188,7 @@ export function MetaConnectionCard({ businessId, lang }: { businessId: string; l
             <Facebook size={13} className="text-blue-600 shrink-0" />
             <dt className="text-v2-text-tertiary">{t.facebook}:</dt>
             <dd className="font-medium text-v2-text-primary truncate">{view.pageName}</dd>
+            <StatusChip tone="active" label={t.statusActive} />
           </div>
           <div className="flex items-center gap-2 text-v2-xs">
             <Instagram size={13} className={`shrink-0 ${view.instagram === 'connected' ? 'text-pink-600' : 'text-v2-text-tertiary'}`} />
@@ -158,14 +196,23 @@ export function MetaConnectionCard({ businessId, lang }: { businessId: string; l
             <dd className={`truncate ${view.instagram === 'connected' ? 'font-medium text-v2-text-primary' : 'text-v2-text-secondary'}`}>
               {instagramLabel(view.instagram, view.instagramUsername, lang)}
             </dd>
+            <StatusChip
+              tone={instagramTone(view.instagram)}
+              label={{ active: t.statusActive, unavailable: t.statusUnavailable, attention: t.statusAttention }[instagramTone(view.instagram)]}
+            />
           </div>
         </dl>
         <MetaSyncStatus businessId={businessId} lang={lang} onReauth={() => void refresh()} />
-        <PublishingAccessControl lang={lang} returned={publishingReturn} />
+        {operator && <PublishingAccessControl lang={lang} returned={publishingReturn} />}
       </>
     );
   } else if (view.kind === 'reauth') {
-    body = <p className="text-v2-xs font-medium text-v2-warning-700 mb-3">{t.reauth}</p>;
+    body = (
+      <>
+        <p className="text-v2-xs font-medium text-v2-warning-700 mb-3">{t.reauth}</p>
+        <PermissionsDisclosure t={t} />
+      </>
+    );
     action = <button onClick={() => void handleConnect()} disabled={busy} className={primaryBtn}>{busy ? spinner : <RefreshCw size={13} />}{t.reconnect}</button>;
   } else if (view.kind === 'error') {
     body = (
@@ -180,7 +227,12 @@ export function MetaConnectionCard({ businessId, lang }: { businessId: string; l
     action = <button onClick={() => void handleConnect()} disabled={busy} className={errorBtn}>{busy ? spinner : <RefreshCw size={13} />}{t.retryConnection}</button>;
   } else {
     const retrying = view.errorCode === 'OAUTH_DENIED' || view.errorCode === 'OAUTH_CANCELLED';
-    if (retrying) body = <p className="text-[11px] text-v2-text-secondary mb-3">{metaErrorMessage(view.errorCode, lang)}</p>;
+    body = (
+      <>
+        {retrying && <p className="text-[11px] text-v2-text-secondary mb-3">{metaErrorMessage(view.errorCode, lang)}</p>}
+        <PermissionsDisclosure t={t} />
+      </>
+    );
     action = retrying
       ? <button onClick={() => void handleConnect()} disabled={busy} className={primaryBtn}>{busy ? spinner : <RefreshCw size={13} />}{t.retryConnection}</button>
       : <button onClick={() => void handleConnect()} disabled={busy} className={primaryBtn}>{busy ? spinner : <ExternalLink size={13} />}{t.connect}</button>;
@@ -189,7 +241,7 @@ export function MetaConnectionCard({ businessId, lang }: { businessId: string; l
   const canDisconnect = !loading && row !== null && view.kind !== 'disconnected' && view.kind !== 'connecting';
 
   return (
-    <div className={`rounded-v2-xl border bg-white p-4 sm:p-5 transition-shadow hover:shadow-v2-sm ${
+    <div aria-busy={loading || busy} className={`rounded-v2-xl border bg-white p-4 sm:p-5 transition-shadow hover:shadow-v2-sm ${
       positive ? 'border-v2-success-200' : negative ? 'border-v2-error-200' : 'border-v2-border'
     }`}>
       <div className="flex items-start gap-3 mb-3">
@@ -215,7 +267,7 @@ export function MetaConnectionCard({ businessId, lang }: { businessId: string; l
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {action}
         {canDisconnect && (
           <button

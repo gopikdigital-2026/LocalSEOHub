@@ -86,7 +86,7 @@ export default function MetaCallbackPage() {
               className="mt-6 inline-flex items-center gap-1.5 px-4 py-2 rounded-v2-lg text-v2-xs font-semibold bg-v2-primary-600 text-white hover:bg-v2-primary-700 transition-colors"
             >
               <ArrowLeft size={13} />
-              {l === 'en' ? 'Back to sources' : 'Volver a fuentes'}
+              {META_COPY[l].backToSources}
             </button>
           </>
         ) : (

@@ -109,6 +109,19 @@ export const META_COPY = {
     disconnect: 'Desconectar',
     confirmDisconnect: '¿Desconectar Facebook e Instagram? Borraremos el acceso guardado.',
     badge: { disconnected: 'Sin conectar', connecting: 'Conectando', page_selection: 'Falta elegir página', connected: 'Conectado', error: 'Error', reauth: 'Requiere acción' },
+    permissionsTitle: '¿Qué permisos pedimos?',
+    permissions: [
+      'Ver la lista de páginas de Facebook que administras, para que elijas la de tu negocio.',
+      'Leer la actividad pública de esa página, para analizar tu presencia.',
+      'Consultar a qué negocio de Meta pertenece la página.',
+      'Ver la cuenta profesional de Instagram vinculada a la página, si existe.',
+    ],
+    permissionsNote: 'Solo lectura: LocalSEOHub no publica nada en tu nombre. Puedes desconectar cuando quieras.',
+    requirements: 'Necesitas administrar una página de Facebook. Instagram solo aparece si es una cuenta profesional vinculada a esa página.',
+    statusActive: 'Activo',
+    statusUnavailable: 'No disponible',
+    statusAttention: 'Revisar',
+    backToSources: 'Volver a fuentes',
   },
   en: {
     title: 'Facebook and Instagram',
@@ -137,6 +150,19 @@ export const META_COPY = {
     disconnect: 'Disconnect',
     confirmDisconnect: 'Disconnect Facebook and Instagram? We will delete the saved access.',
     badge: { disconnected: 'Not connected', connecting: 'Connecting', page_selection: 'Page needed', connected: 'Connected', error: 'Error', reauth: 'Action needed' },
+    permissionsTitle: 'Which permissions do we request?',
+    permissions: [
+      'See the list of Facebook Pages you manage, so you can pick your business Page.',
+      'Read public activity on that Page, to analyse your presence.',
+      'Check which Meta business the Page belongs to.',
+      'See the Instagram professional account linked to the Page, if there is one.',
+    ],
+    permissionsNote: 'Read-only: LocalSEOHub does not post anything on your behalf. You can disconnect at any time.',
+    requirements: 'You need to manage a Facebook Page. Instagram only appears if it is a professional account linked to that Page.',
+    statusActive: 'Active',
+    statusUnavailable: 'Unavailable',
+    statusAttention: 'Check',
+    backToSources: 'Back to sources',
   },
 };
 
@@ -183,6 +209,12 @@ const ERROR_DETAIL: Record<Lang, Record<string, string>> = {
 
 export function metaErrorMessage(code: string | null | undefined, lang: Lang = 'es'): string {
   return (code && ERROR_DETAIL[lang][code]) || ERROR_DETAIL[lang].UNKNOWN_ERROR;
+}
+
+export function instagramTone(status: InstagramStatus): 'active' | 'unavailable' | 'attention' {
+  if (status === 'connected') return 'active';
+  if (status === 'not_associated' || status === 'unsupported') return 'unavailable';
+  return 'attention';
 }
 
 export function instagramLabel(status: InstagramStatus, username: string | null, lang: Lang = 'es'): string {

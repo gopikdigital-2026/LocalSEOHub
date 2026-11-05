@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Facebook, Loader2, X, Check } from 'lucide-react';
 import { META_COPY, type MetaPage } from './metaStatus';
 
@@ -11,6 +11,19 @@ export function MetaPageSelectModal({ pages, lang, onConfirm, onClose }: {
   const t = META_COPY[lang];
   const [selected, setSelected] = useState<string | null>(pages.length === 1 ? pages[0].id : null);
   const [saving, setSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    dialogRef.current?.querySelector<HTMLElement>('ul button')?.focus();
+    return () => previous?.focus?.();
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !saving) onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose, saving]);
 
   const confirm = async () => {
     if (!selected) return;
@@ -23,7 +36,7 @@ export function MetaPageSelectModal({ pages, lang, onConfirm, onClose }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="meta-page-title">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="meta-page-title" ref={dialogRef}>
       <div className="w-full sm:max-w-md bg-white rounded-t-v2-xl sm:rounded-v2-xl shadow-v2-lg max-h-[85vh] flex flex-col">
         <div className="flex items-start justify-between gap-3 p-5 border-b border-v2-border">
           <div>
