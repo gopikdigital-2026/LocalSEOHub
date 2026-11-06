@@ -40,7 +40,7 @@ const FROZEN: Record<string, string> = {
   'src/features/action-layer/model.ts': '38edfb9004c9a6bea8ca680d71d374eedfacc221fa4229cbbfe5efe4b4994075',
   'src/features/action-layer/copy.ts': '3dbbe24bcd674fd9f684bf6a2a5a40862ca1ca49ab4efcc86471ec035c54330d',
   'src/features/action-layer/ActionDetail.tsx': '1444e520b6bf497e5b710b13184837d59b67114efaf31ed4d00307a0a0ed8336',
-  'src/App.tsx': 'f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52', // A3.7.5.2 RE-PIN (was ef7f7cdc): InternalGuard wraps the hidden internal layout route; diff = 1 import + 1 wrapped Route element. A3.7.4.3 GATE A RE-PIN (was 81b0de7c): read-only Instagram harness panel on the same hidden route. A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
+  'src/App.tsx': '4466949b9560d932f092b0de91116b1240c8ffc87c4fce13496a9d571c467f3c', // A3.7.6.3 RE-PIN (was f0c81e90): /semana route + /plan redirect. Earlier: A3.7.5.2 RE-PIN (was ef7f7cdc): InternalGuard wraps the hidden internal layout route; diff = 1 import + 1 wrapped Route element. A3.7.4.3 GATE A RE-PIN (was 81b0de7c): read-only Instagram harness panel on the same hidden route. A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
   'src/features/dashboard/TodaysMissions.tsx': '22684ca84042aa83ef018bb7855e4493a6338eb2cc880359b5a10c011a91b79d',
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
@@ -256,7 +256,7 @@ describe('A2.7.2 · Copy, layout and scope', () => {
   });
   // Plan integration was authorised in A2.7.3; A2.7.2 itself only guaranteed Plan did not consume Today directly.
   it('90. no Plan implementation inside A2.7.2', () => { expect(src('src/app-v2/routes/PlanPage.tsx')).not.toContain('today-intelligence'); expect(tiSrc).not.toContain('PlanPage'); });
-  it('91. no new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback; A3.5.4.3 adds /herramientas/social)', () => { frozen('src/App.tsx'); expect((app.match(/<Route path=/g) ?? []).length).toBe(34); /* A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation */ });
+  it('91. no new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback; A3.5.4.3 adds /herramientas/social)', () => { frozen('src/App.tsx'); expect((app.match(/<Route path=/g) ?? []).length).toBe(35); /* A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation; A3.7.6.3 RE-PIN: /semana */ });
   it('92. Today CTA routes valid', () => {
     for (const r of ACTION_DESTINATIONS) expect(routeExists(r)).toBe(true);
     expect(routeExists('/herramientas')).toBe(true);

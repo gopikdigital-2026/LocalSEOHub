@@ -258,7 +258,7 @@ describe('F-03 Stage 2B · secrets and preservation', () => {
   });
 
   it('28-31. frozen layers (App routes, Today, Missions, engines) stay byte-frozen elsewhere; App untouched here (A3.4.2 adds /herramientas/resenas; A3.5.1A 3 public legal routes; A3.5.1 /oauth/meta/callback)', () => {
-    expect(app.match(/<Route [^>]*path=/g)).toHaveLength(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
+    expect(app.match(/<Route [^>]*path=/g)).toHaveLength(35); // A3.7.6.3 RE-PIN: +1 /semana (was 34). A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
     expect(app).toContain("const PENDING_BIZ_KEY = 'pending_business_name';");
     expect(TOOLS).toHaveLength(9);
   });
@@ -281,7 +281,7 @@ describe('F-03 Stage 2B · secrets and preservation', () => {
 
   it('34/35. migrations stay at 46 and routes at 32 (A3.4.2: a342 migration + /herramientas/resenas; A3.4.2.2: GBP guard; A3.5.1A: 3 public legal routes; A3.5.1: Meta connection migration + /oauth/meta/callback)', () => {
     expect(migrations).toHaveLength(62); // A3.7.5.2 RE-PIN: +1 tenant account-uniqueness migration 20261101230430 (was: 61). A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: +1 promoted FIX01 publish-safety migration 20261031190000 (was: 60). A3.7.4.3 GATE B.3 FIX02 GOVERNANCE RE-PIN: +1 Instagram status attempt read-grant migration. A3.7.4.3 GATE A RE-PIN: +1 Instagram container-state migration. A3.7.4.2 FIX02 RE-PIN: +1 internal owner/admin test entitlement migration. A3.7.4.1 RE-PIN: +2 Meta publishing foundation migrations. A3.7.1 publications foundation; A3.7.2 proposals engine; A3.7.3.1 publication drafts; A3.7.3.2 adaptation engine; A3.7.3.3 channel review editing (initial apply + corrected re-apply)
-    expect(app.match(/<Route [^>]*path=/g)).toHaveLength(34); // A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
+    expect(app.match(/<Route [^>]*path=/g)).toHaveLength(35); // A3.7.6.3 RE-PIN: +1 /semana (was 34). A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation
   });
 
   it('orphan landings are not imported by any active file', () => {

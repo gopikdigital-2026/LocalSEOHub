@@ -510,31 +510,36 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     'src/App.tsx': {
       was: '7902658f9f56ad9db1059bf7111cd3b9ee786256f10b19ff0ac48b3e8d8b94ba',
       // A3.7.5.2 RE-PIN: InternalGuard wraps the hidden internal layout route (was now: ef7f7cdca4c0c0a952a90cff7e68e427c1decdf2655c68c72d9f1468d2b5029b)
-      now: 'f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52',
+      // A3.7.6.3 RE-PIN: /semana route + /plan redirect (was now: f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52)
+      now: '4466949b9560d932f092b0de91116b1240c8ffc87c4fce13496a9d571c467f3c',
     },
     'src/components/__tests__/a281TrustCleanup.test.ts': {
       was: 'cb6a925ab209873f69222303e0b7afc27a1ebfe0e4aaf3d6eecba3364da36c92',
       // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 67ba5b56ce48065241d41032d74beab25c9960628f64b80c1c41fae667a3f821)
       // A3.7.5.2 RE-PIN: App pin + migration count 61->62 (was now: 6ca06357b8a69c5880143e6b3166ba4621c1b63ea4e78fb0b270da1c50243211)
-      now: '3d09ed2e893d7ebeff5a5c542001123da6af3f90f24ef31bc2fe37600af45959',
+      // A3.7.6.3 RE-PIN: App pin + route count for /semana (was now: 3d09ed2e893d7ebeff5a5c542001123da6af3f90f24ef31bc2fe37600af45959)
+      now: '804246c9a2edf2ccc6f3d1c02fcb8302dc1a364b78eacbb289d7f72346d42b15',
     },
     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
       // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 1225076b1f1f8a882c844e54541d7052b22f16cb45e94d7025bf7091278e9606)
       // A3.7.5.2 RE-PIN: App pin + migration count 61->62 + a3752 exclusion (was now: d25610f06528ac2edf3723c5aa3659ab5ac03e0aab32c87dc25426aee799d301)
-      now: '687257b4172e906863bf144ab73c46ef8441bd0c491ddfb8e65556b0ba1d2305',
+      // A3.7.6.3 RE-PIN: App pin + route count for /semana (was now: 687257b4172e906863bf144ab73c46ef8441bd0c491ddfb8e65556b0ba1d2305)
+      now: 'cc367fa1f38117a97f3b221606e11f0bad820e49fefd3b3fee3289f6a5973fc2',
     },
     'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
       was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',
       // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: f5b72768a745b70ea7cba7684f41fb0b30aa3e302c0719e5a5f875711b5fedf6)
       // A3.7.5.2 RE-PIN: App pin + migration count 61->62 + a3752 exclusion (was now: 3692440117ca7c82d7d3ebe4bad98a06f601c6e8d7dccd71fe09214b8544677c)
-      now: 'e49985e42a77136fd31135bf778cd3d33e331665db3ec6c0a4db2fbe5ad2820a',
+      // A3.7.6.3 RE-PIN: App pin + route count for /semana (was now: e49985e42a77136fd31135bf778cd3d33e331665db3ec6c0a4db2fbe5ad2820a)
+      now: 'f372c5e61d2a31e60a851493bdaf775c1bac235a9652a0f0482e4104197c64bb',
     },
     // Split so the a3542 isolation guard (no literal reference to that layer outside it) keeps holding.
     ['src/features/social' + '-intelligence/integration/__tests__/a3544SocialIntegration.test.ts']: {
       was: 'e85d466ffe39ff2797ffc9505d44fa5a25261df955d38a465f0d54d9b12c8c08',
       // A3.7.5.2 RE-PIN: App pin only (was now: c1b5c3c207d802e2f84f9c0e6fbe53a95beac5624d93e6fecb0b4b661fbf2290)
-      now: '59b9d73083311fd1a89f90c22ebb686ef12e16e1165d72f42d9a05c4997d5ae8',
+      // A3.7.6.3 RE-PIN: App pin + route count for /semana (was now: 59b9d73083311fd1a89f90c22ebb686ef12e16e1165d72f42d9a05c4997d5ae8)
+      now: 'ea5c21fc68b461f83411d912ac60a8251289c6627a2eb16655d74e68503cfb64',
     },
     'src/features/publications/__tests__/a3733ChannelReview.test.ts': {
       was: 'd62c66187e16c6200e1327b5709def5e2fe781fd344e2202585560249b8759c9',
@@ -552,7 +557,8 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
     'src/features/publications/__tests__/a3732AdaptationGuards.test.ts': {
       was: 'b0125ea3973b824416fa517f29a6d5958d46d3cb77287d3c801d0cac18c3860b',
       // A3.7.5.2 RE-PIN: a3732 follows the a3731 exception update (was now: 721d76d3dd8ce07f178eaf70b3502db0df64f3f0b3393d1ba0ff96b5aa960ddb)
-      now: 'a24601b7d0bafb7164a82e48999a5fadf582ab96c9b8f9c01747ecf3ede6a36e',
+      // A3.7.6.3 RE-PIN: App pin + route count for /semana (was now: a24601b7d0bafb7164a82e48999a5fadf582ab96c9b8f9c01747ecf3ede6a36e)
+      now: '0293149f5740a1a5560477807c59c7673078aa732efad7c94246b8d70321b878',
     },
   };
   it('every A3.7.3.4 frozen file is byte-identical, except the enumerated authorized re-pins', () => {

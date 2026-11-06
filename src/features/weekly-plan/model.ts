@@ -9,7 +9,6 @@ import { weekKey } from '../weekly-content/model';
 import { WEEKLY_PLAN_COPY } from './copy';
 
 export const WEEK_FOCUS_MAX = 5;
-export const WEEK_PLAN_MAX = 8;
 const MAX_EFFORT_MINUTES = 600;
 
 export type WeeklyItemState = 'pending' | 'in_progress' | 'executed' | 'data_completed' | 'dismissed' | 'outdated';
@@ -101,7 +100,7 @@ export function selectWeeklyFocus(actions: BusinessAction[]): { focus: BusinessA
   const rest = openActions(actions).filter((a) => !picked.has(a.id));
   const focus = [...today, ...rest].slice(0, WEEK_FOCUS_MAX);
   const inFocus = new Set(focus.map((a) => a.id));
-  const later = rest.filter((a) => !inFocus.has(a.id)).slice(0, WEEK_PLAN_MAX - focus.length);
+  const later = rest.filter((a) => !inFocus.has(a.id));
   return { focus, later };
 }
 

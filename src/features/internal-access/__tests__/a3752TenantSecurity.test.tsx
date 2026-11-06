@@ -293,13 +293,13 @@ describe('A3.7.5.2 — routing: internal isolated, customer routes unchanged', (
   });
   it('customer routes stay under AppGuard and outside InternalGuard', () => {
     const customer = APP.slice(APP.indexOf('<Route element={<AppGuard><AppShellV2 /></AppGuard>}>'), APP.indexOf('path="/oauth/google-business/callback"'));
-    for (const p of ['/hoy', '/plan', '/herramientas', '/negocio', '/fuentes', '/facturacion', '/informes']) expect(customer).toContain(`path="${p}"`);
+    for (const p of ['/hoy', '/semana', '/plan', '/herramientas', '/negocio', '/fuentes', '/facturacion', '/informes']) expect(customer).toContain(`path="${p}"`);
     expect(customer).not.toContain('InternalGuard');
     expect(APP.slice(0, APP.indexOf('<InternalGuard>'))).not.toContain('/internal/');
   });
-  it('keeps 34 route paths (36 route elements incl. two layout wrappers), same as A3.7.5.1', () => {
-    expect((APP.match(/path=/g) ?? []).length).toBe(34);
-    expect((APP.match(/<Route\s/g) ?? []).length).toBe(36);
+  it('keeps 35 route paths (37 route elements incl. two layout wrappers): A3.7.5.1 plus /semana (A3.7.6.3)', () => {
+    expect((APP.match(/path=/g) ?? []).length).toBe(35);
+    expect((APP.match(/<Route\s/g) ?? []).length).toBe(37);
   });
 });
 

@@ -789,7 +789,8 @@ describe('A3.7.4.3 channel isolation and boundaries', () => {
       // A3.7.5.2 RE-PIN (was 5e6ca888): AUTHORIZED_REPINS "now" values for App/a281/a273/a272/a3544/a3734/a3732 and the meta-connection handler pin changed.
       // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN (was 4760b8f3): only three AUTHORIZED_REPINS "now" hashes changed (migration count 60->61).
       // A3.7.4.3 GATE A CORRECTION 03 RE-PIN (was 170e4828; CORRECTION 02 was e7674f8f): only AUTHORIZED_REPINS entries changed, now including a3732.
-      'src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts': '4f4f226910fccd6f81b61b8cb3c59e6331e8249f25691b7d760e8009448825cb',
+      // A3.7.6.3 RE-PIN (was 4f4f2269): only AUTHORIZED_REPINS "now" hashes changed for the /semana route.
+      'src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts': 'b042af115cd49fb076e9f4954a46c03db9e417aa9a912b883f6e7eff2b79658c',
     };
     for (const [p, h] of Object.entries(frozen)) expect([p, sha(p)]).toEqual([p, h]);
     expect(MIGRATION).toContain("publication_channel_text_issue(v_text, CASE p_channel WHEN 'facebook' THEN 5000 ELSE 2200 END)");

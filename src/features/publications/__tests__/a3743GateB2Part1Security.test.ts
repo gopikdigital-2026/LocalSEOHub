@@ -303,7 +303,7 @@ describe('B.2 P2 controlled trigger (browser source)', () => {
 
   it('App routing for the harness is unchanged (still a single internal mount, no public route)', () => {
     // A3.7.5.2 RE-PIN (was ef7f7cdc): InternalGuard wraps the hidden internal layout route; still a single internal mount.
-    expect(sha('src/App.tsx')).toBe('f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52');
+    expect(sha('src/App.tsx')).toBe('4466949b9560d932f092b0de91116b1240c8ffc87c4fce13496a9d571c467f3c'); // A3.7.6.3 RE-PIN (was f0c81e90): /semana route + /plan redirect
     const app = read('src/App.tsx');
     expect(app.match(/<IgHarness \/>/g)).toHaveLength(1);
   });

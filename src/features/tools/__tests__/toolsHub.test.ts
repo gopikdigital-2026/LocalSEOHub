@@ -36,9 +36,9 @@ describe('A2.4.1 tools hub foundation', () => {
     expect(app.match(/path="\/herramientas"/g)).toHaveLength(1);
   });
 
-  it('3. sidebar lists Herramientas right after Plan, in the expected order', () => {
+  it('3. sidebar lists Herramientas right after Tu Semana (A3.7.6.3 rename of Plan), in the expected order', () => {
     const labels = [...shell.matchAll(/\{ id: '[^']+', label: '([^']+)'/g)].map((m) => m[1]);
-    expect(labels).toEqual(['Hoy', 'Plan', 'Herramientas', 'Resumen', 'Mi negocio', 'Fuentes', 'Facturación']);
+    expect(labels).toEqual(['Hoy', 'Tu Semana', 'Herramientas', 'Resumen', 'Mi negocio', 'Fuentes', 'Facturación']);
     expect(shell).toMatch(/path: '\/herramientas', icon: <Wrench/);
   });
 

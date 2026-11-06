@@ -69,7 +69,7 @@ const FROZEN: Record<string, string> = {
   'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
   'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
   'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
-  'src/App.tsx': 'f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52', // A3.7.5.2 RE-PIN (was ef7f7cdc): InternalGuard wraps the hidden internal layout route; diff = 1 import + 1 wrapped Route element. A3.7.4.3 GATE A RE-PIN (was 81b0de7c): read-only Instagram harness panel on the same hidden route. A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
+  'src/App.tsx': '4466949b9560d932f092b0de91116b1240c8ffc87c4fce13496a9d571c467f3c', // A3.7.6.3 RE-PIN (was f0c81e90): /semana route + /plan redirect. Earlier: A3.7.5.2 RE-PIN (was ef7f7cdc): InternalGuard wraps the hidden internal layout route; diff = 1 import + 1 wrapped Route element. A3.7.4.3 GATE A RE-PIN (was 81b0de7c): read-only Instagram harness panel on the same hidden route. A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
 };
 const frozen = (p: string) => expect(sha(p), p).toBe(FROZEN[p]);
 
@@ -360,7 +360,7 @@ describe('A2.7.3 · Platform regression', () => {
   });
   it('113. no new route (A3.4.2 adds only /herramientas/resenas; A3.5.1A adds 3 public legal routes; A3.5.1 adds /oauth/meta/callback) and every CTA is real', () => {
     frozen('src/App.tsx');
-    expect((app.match(/<Route path=/g) ?? []).length).toBe(34); /* A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation */
+    expect((app.match(/<Route path=/g) ?? []).length).toBe(35); /* A3.7.2.1A HARNESS RE-PIN: temporary hidden /internal/publications-validation; A3.7.6.3 RE-PIN: /semana */
     for (const r of ACTION_DESTINATIONS) expect(routeExists(r)).toBe(true);
     for (const p of PROFILES) for (const g of SNAPSHOTS) for (const i of road(p, g)) {
       expect(routeExists(i.destination), i.destination).toBe(true);

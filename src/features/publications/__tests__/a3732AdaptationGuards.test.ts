@@ -219,7 +219,7 @@ describe('A3.7.3.2 internal harness', () => {
     expect(block).toContain('<PublicationsValidationPage />');
     expect(block).toContain('<ChannelAdaptationPanel />');
     expect(APP.match(/ChannelAdaptationPanel/g)).toHaveLength(3);
-    expect(APP.match(/<Route [^>]*path=/g)).toHaveLength(34);
+    expect(APP.match(/<Route [^>]*path=/g)).toHaveLength(35); // A3.7.6.3 RE-PIN: +1 /semana (was 34)
   });
 
   it('is not reachable from customer navigation, Tools or landing', () => {

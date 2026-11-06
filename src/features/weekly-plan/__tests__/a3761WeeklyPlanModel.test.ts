@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { buildActionReport, selectTodayActions } from '../../actions/engine';
 import type { BusinessAction } from '../../actions/types';
-import { buildWeeklyPlan, scopeActions, selectWeeklyFocus, weekBounds, WEEK_FOCUS_MAX, WEEK_PLAN_MAX, type BuildWeeklyPlanInput } from '../model';
+import { buildWeeklyPlan, scopeActions, selectWeeklyFocus, weekBounds, WEEK_FOCUS_MAX, type BuildWeeklyPlanInput } from '../model';
 import { WEEKLY_PLAN_COPY } from '../copy';
 
 const BIZ = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -44,10 +44,10 @@ describe('weekly selection and priority', () => {
     expect(scores).toEqual([...scores].sort((a, b) => b - a));
   });
 
-  it('never shows more than five focus actions and eight in total', () => {
+  it('never shows more than five focus actions and lists every other open action for later', () => {
     const p = plan(Array.from({ length: 20 }, (_, i) => act({ score: 100 - i })));
     expect(p.focus).toHaveLength(WEEK_FOCUS_MAX);
-    expect(p.focus.length + p.later.length).toBe(WEEK_PLAN_MAX);
+    expect(p.focus.length + p.later.length).toBe(20);
     const all = [...ids(p.focus), ...ids(p.later)];
     expect(new Set(all).size).toBe(all.length);
   });

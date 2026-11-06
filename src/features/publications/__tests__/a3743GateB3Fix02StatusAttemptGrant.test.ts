@@ -275,7 +275,7 @@ describe('B.3 FIX02 frozen code untouched', () => {
     'supabase/functions/meta-publishing/facebookPhoto.ts': '7225bc3d5dd0493f41940e67207010db84e04231d475c2d33f79fd11b501726a',
     // A3.7.5.2 RE-PIN (App was ef7f7cdc; config was fc17510c): InternalGuard on the hidden internal route; config appends only
     // [functions.internal-access] verify_jwt = true. Every publishing-engine pin above is unchanged.
-    'src/App.tsx': 'f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52',
+    'src/App.tsx': '4466949b9560d932f092b0de91116b1240c8ffc87c4fce13496a9d571c467f3c', // A3.7.6.3 RE-PIN (was f0c81e90): /semana route + /plan redirect
     'supabase/config.toml': 'aeda6a0575fef1abbcc128c9f9e8a085f4e8b84bfa12737e1a09e1c28617f49d',
   };
 

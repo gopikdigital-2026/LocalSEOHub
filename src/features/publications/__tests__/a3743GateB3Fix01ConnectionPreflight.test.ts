@@ -424,7 +424,7 @@ describe('B.3 FIX01 browser panel', () => {
 
   it('app routing, function config and frozen publishing engine are unchanged', () => {
     // A3.7.5.2 RE-PIN (was ef7f7cdc): InternalGuard wraps the hidden internal layout route.
-    expect(sha('src/App.tsx')).toBe('f0c81e90531415f57b28bc1c82851d7cf84b6cf0ebec13f03b9b91833c1b4f52');
+    expect(sha('src/App.tsx')).toBe('4466949b9560d932f092b0de91116b1240c8ffc87c4fce13496a9d571c467f3c'); // A3.7.6.3 RE-PIN (was f0c81e90): /semana route + /plan redirect
     expect(read('supabase/config.toml')).toMatch(/\[functions\.instagram-publishing\]\s*verify_jwt = true/);
     const frozen: Record<string, string> = {
       // A3.7.4.3 GATE B.4 FIX01 AUTHORIZED RE-PIN (was: 5523a9c0481760a672e5d9373cd654f2af0a0c374614b39ca90e9682b95d63ca)

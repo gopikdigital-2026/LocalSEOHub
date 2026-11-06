@@ -18,17 +18,19 @@ import { trackNavigationClick } from '../../services/analytics/v2Analytics';
 import { TrialBanner } from '../../features/billing/BillingNotices';
 import ResolvedActionsNotice from '../../features/actions/ResolvedActionsNotice';
 import UserIdentity from '../../features/user-identity/UserIdentity';
+import { useI18n, type Lang } from '../../lib/i18n';
 
 interface NavItem {
   id: string;
   label: string;
+  labelEn?: string;
   path: string;
   icon: React.ReactNode;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'hoy', label: 'Hoy', path: '/hoy', icon: <Calendar size={18} /> },
-  { id: 'plan', label: 'Plan', path: '/plan', icon: <ClipboardList size={18} /> },
+  { id: 'plan', label: 'Tu Semana', labelEn: 'Your Week', path: '/semana', icon: <ClipboardList size={18} /> },
   { id: 'herramientas', label: 'Herramientas', path: '/herramientas', icon: <Wrench size={18} /> },
   { id: 'informes', label: 'Resumen', path: '/informes', icon: <BarChart2 size={18} /> },
   { id: 'negocio', label: 'Mi negocio', path: '/negocio', icon: <Building2 size={18} /> },
@@ -40,8 +42,11 @@ const NAV_ITEMS: NavItem[] = [
 const BOTTOM_BAR_IDS = ['hoy', 'plan', 'informes', 'negocio', 'fuentes'];
 const BOTTOM_BAR_ITEMS = NAV_ITEMS.filter((item) => BOTTOM_BAR_IDS.includes(item.id));
 
+const navLabel = (item: NavItem, lang: Lang) => (lang === 'en' && item.labelEn ? item.labelEn : item.label);
+
 function SidebarNav() {
   const { session, signOut } = useAuth();
+  const { lang } = useI18n();
   const navigate = useNavigate();
   const userEmail = session?.user?.email ?? '';
 
@@ -75,7 +80,7 @@ function SidebarNav() {
             }
           >
             {item.icon}
-            {item.label}
+            {navLabel(item, lang)}
           </NavLink>
         ))}
       </nav>
@@ -104,6 +109,7 @@ function SidebarNav() {
 function MobileHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { signOut } = useAuth();
+  const { lang } = useI18n();
   const navigate = useNavigate();
 
   return (
@@ -151,7 +157,7 @@ function MobileHeader() {
               }
             >
               {item.icon}
-              {item.label}
+              {navLabel(item, lang)}
             </NavLink>
           ))}
         </nav>
@@ -178,6 +184,7 @@ function MobileHeader() {
 }
 
 function MobileBottomNav() {
+  const { lang } = useI18n();
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-v2-border-light flex items-center justify-around h-16 z-30 safe-area-pb" aria-label="Navegacion principal">
       {BOTTOM_BAR_ITEMS.map((item) => (
@@ -191,7 +198,7 @@ function MobileBottomNav() {
           }
         >
           {item.icon}
-          <span className="text-[10px] font-medium">{item.label}</span>
+          <span className="text-[10px] font-medium">{navLabel(item, lang)}</span>
         </NavLink>
       ))}
     </nav>
