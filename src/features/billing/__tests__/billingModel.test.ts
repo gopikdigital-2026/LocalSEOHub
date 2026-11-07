@@ -74,7 +74,7 @@ describe('billing integration (source checks)', () => {
   it('S1. action writes are blocked client-side without premium and reads stay available', () => {
     const p = src('src/features/actions/ActionsProvider.tsx');
     expect(p).toMatch(/if \(!canWrite\) throw new PremiumRequiredError\(\)/);
-    expect(p).toMatch(/setActions\(await loadActions\(currentBusiness\.id\)\)/);
+    expect(p).toMatch(/const saved = await loadActions\(businessId\)/);
   });
 
   it('S2. access is never granted from the checkout return URL', () => {

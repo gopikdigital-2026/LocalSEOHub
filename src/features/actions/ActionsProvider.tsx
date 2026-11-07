@@ -14,12 +14,21 @@ import { ActionsContext, type ActionsContextValue } from './ActionsContext';
 import { canMarkDone, openActions } from './engine';
 import { useI18n } from '../../lib/i18n';
 import { syncActions, transitionAction, loadActions } from './repository';
+import { hideSatisfiedProfileActions } from './readOnlyView';
 import type { BusinessAction, SourceSnapshot } from './types';
 import { useBilling } from '../billing/BillingContext';
 import { PremiumRequiredError } from '../billing/model';
 
 function fingerprint(updatedAt: string, sources: SourceSnapshot[]): string {
   return [updatedAt, ...sources.map((s) => `${s.sourceType}:${s.status}:${s.lastSyncAt ?? ''}`).sort()].join('|');
+}
+
+async function loadSourceSnapshots(businessId: string): Promise<SourceSnapshot[]> {
+  return (await loadSources(businessId)).map((s) => (
+    s.source_type === 'google_business'
+      ? { sourceType: s.source_type, status: s.status, lastSyncAt: s.verified_at, metadata: s.verified_profile ?? {} }
+      : { sourceType: s.source_type, status: s.status, lastSyncAt: s.last_sync_at, metadata: s.metadata ?? {} }
+  ));
 }
 
 export default function ActionsProvider({ children }: { children: React.ReactNode }) {
@@ -38,6 +47,8 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
   const lastSynced = useRef<string | null>(null);
   const inFlight = useRef<Promise<void> | null>(null);
   const milestonesRef = useRef<Milestones>({});
+  const latestBusinessId = useRef<string | null>(null);
+  latestBusinessId.current = currentBusiness?.id ?? null;
 
   const activate = useCallback(async (event: ActivationEvent, action: BusinessAction | null = null) => {
     if (!userId || !currentBusiness?.onboarding_completed) return [];
@@ -60,17 +71,22 @@ export default function ActionsProvider({ children }: { children: React.ReactNod
       setLoading(true);
       try {
         if (!canWrite) {
-          // Without a trial or subscription the plan is shown as it was saved; nothing new is written.
-          setActions(await loadActions(currentBusiness.id));
+          // Without a trial or subscription nothing is written; filled profile gaps are only hidden on screen.
+          const businessId = currentBusiness.id;
+          const saved = await loadActions(businessId);
+          let visible = saved;
+          try {
+            visible = hideSatisfiedProfileActions(currentBusiness, await loadSourceSnapshots(businessId), saved);
+          } catch {
+            visible = saved;
+          }
+          if (latestBusinessId.current !== businessId) return;
+          setActions(visible);
           lastSynced.current = null;
           setError(null);
           return;
         }
-        const sources: SourceSnapshot[] = (await loadSources(currentBusiness.id)).map((s) => (
-          s.source_type === 'google_business'
-            ? { sourceType: s.source_type, status: s.status, lastSyncAt: s.verified_at, metadata: s.verified_profile ?? {} }
-            : { sourceType: s.source_type, status: s.status, lastSyncAt: s.last_sync_at, metadata: s.metadata ?? {} }
-        ));
+        const sources = await loadSourceSnapshots(currentBusiness.id);
         const fp = fingerprint(currentBusiness.updated_at, sources);
         if (!force && fp === lastSynced.current) return;
         const result = await syncActions(currentBusiness, sources);

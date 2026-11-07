@@ -518,14 +518,16 @@ describe('A3.7.4.1 · K. Freeze and scope', () => {
       // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 67ba5b56ce48065241d41032d74beab25c9960628f64b80c1c41fae667a3f821)
       // A3.7.5.2 RE-PIN: App pin + migration count 61->62 (was now: 6ca06357b8a69c5880143e6b3166ba4621c1b63ea4e78fb0b270da1c50243211)
       // A3.7.6.3 RE-PIN: App pin + route count for /semana (was now: 3d09ed2e893d7ebeff5a5c542001123da6af3f90f24ef31bc2fe37600af45959)
-      now: '804246c9a2edf2ccc6f3d1c02fcb8302dc1a364b78eacbb289d7f72346d42b15',
+      // A3.7.6.7 RE-PIN: ActionsProvider pin for read-only reconciliation (was now: 804246c9a2edf2ccc6f3d1c02fcb8302dc1a364b78eacbb289d7f72346d42b15)
+      now: '82259ae5a94c5a22a70551dc342a801aa107e9128439d83ffb0303213edac365',
     },
     'src/features/roadmap/__tests__/a273Roadmap.test.ts': {
       was: '1fd5954c53ffa07da661db906f323ede4fffa5509fc66c23e21d2e150cf1fb94',
       // A3.7.4.3 GATE B.5 AUTHORIZED RE-PIN: migration count 60->61 (was now: 1225076b1f1f8a882c844e54541d7052b22f16cb45e94d7025bf7091278e9606)
       // A3.7.5.2 RE-PIN: App pin + migration count 61->62 + a3752 exclusion (was now: d25610f06528ac2edf3723c5aa3659ab5ac03e0aab32c87dc25426aee799d301)
       // A3.7.6.3 RE-PIN: App pin + route count for /semana (was now: 687257b4172e906863bf144ab73c46ef8441bd0c491ddfb8e65556b0ba1d2305)
-      now: 'cc367fa1f38117a97f3b221606e11f0bad820e49fefd3b3fee3289f6a5973fc2',
+      // A3.7.6.7 RE-PIN: ActionsProvider pin for read-only reconciliation (was now: cc367fa1f38117a97f3b221606e11f0bad820e49fefd3b3fee3289f6a5973fc2)
+      now: 'fb9fd0510e45f2ec314f3f2d43bb1c4262ca2c052092a03aa8f937f5d6953748',
     },
     'src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts': {
       was: 'e71fbc7bef4ea63c746bc1ce1b360c8c6529e7c3906b5447d9945a5419fbcf9f',

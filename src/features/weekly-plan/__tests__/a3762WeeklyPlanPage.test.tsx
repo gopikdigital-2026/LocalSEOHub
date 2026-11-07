@@ -204,7 +204,7 @@ describe('empty, loading and error states', () => {
 
   it('points to sources when an action needs a missing connection, without showing platform data', async () => {
     await render([action({ sourceType: 'SOURCE_REQUIRED', ruleId: 'connect_gbp', score: 80 })]);
-    expect(q('missing-sources')?.textContent).toContain('Google, Facebook ni Instagram');
+    expect(q('missing-sources')?.textContent).toContain('Algunas fuentes de datos todavía no están disponibles');
     expect(q('item-source')?.textContent).toBe('Fuente sin conectar');
     await click(button('Ver fuentes'));
     expect(env.navigate).toHaveBeenCalledWith('/fuentes');

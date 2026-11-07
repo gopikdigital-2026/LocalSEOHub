@@ -126,7 +126,7 @@ describe('A2.8.1 · preservation', () => {
     'src/features/actions/engine.ts': '2fa3eb2913328eb1a8e859f2e5db95d1e8158bd6cce135b277d3dc86284d3896',
     'src/features/actions/rules.ts': 'd32c4bb98a2819f7b09baabd692e97ef1ed878c8559f5d35a626cacd9b40654f',
     'src/features/actions/repository.ts': '0aff1a5a1c9fa7386d997443e816b3b16a77ac4530d96d1d3e8ec722691ee584',
-    'src/features/actions/ActionsProvider.tsx': '3236e3e803c9b0d2ff37a91543272ff3756c697909039c206f89f93cb18369c9',
+    'src/features/actions/ActionsProvider.tsx': '7e929e087f22fc931f4fee240ca18688d1a9f9d6f32d806a672467313cc62cf6', // AUTHORIZED A3.7.6.7 READ-ONLY RECONCILIATION RE-PIN
     'src/features/actions/types.ts': '660b06d7f51fe4334fff6f5408fc8a2843720b0fbcb1e254fa41a1082b68c068',
     'src/features/actions/ActionsContext.ts': 'f8cb0cb5b77f4f3eb0332a83422d93e95b4f8b71a00ae405875985d51e6db1a7',
     'src/App.tsx': '4466949b9560d932f092b0de91116b1240c8ffc87c4fce13496a9d571c467f3c', // A3.7.6.3 RE-PIN (was f0c81e90): /semana route + /plan redirect. Earlier: A3.7.5.2 RE-PIN (was ef7f7cdc): InternalGuard wraps the hidden internal layout route; diff = 1 import + 1 wrapped Route element. A3.7.4.3 GATE A RE-PIN (was 81b0de7c): read-only Instagram harness panel on the same hidden route. A3.7.4.2 HARNESS RE-PIN (was 7902658f): Facebook single-photo harness panel on the same hidden /internal/publications-validation route
