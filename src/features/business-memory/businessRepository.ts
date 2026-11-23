@@ -2,6 +2,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import { BUSINESS_COLUMNS, type BusinessPatch, type BusinessRecord } from './businessRecord';
 import { LEGACY_MEMORY_KEY, extractLegacyMemory, isValidBusinessId, planLegacyMerge } from './legacyMigration';
+import {
+  ActiveBusinessError, OWNED_BUSINESS_LOOKUP_LIMIT, resolveActiveBusiness,
+} from '../../../supabase/functions/activeBusiness';
 
 type Db = Pick<SupabaseClient, 'from'>;
 type LegacyStorage = Pick<Storage, 'getItem'>;
@@ -12,24 +15,39 @@ function assertRecord(data: unknown): BusinessRecord {
   return rec;
 }
 
-async function fetchOwnBusiness(db: Db, userId: string): Promise<BusinessRecord | null> {
-  const { data, error } = await db.from('businesses').select(BUSINESS_COLUMNS).eq('user_id', userId).maybeSingle();
+async function fetchOwnBusinesses(db: Db, userId: string): Promise<BusinessRecord[]> {
+  const { data, error } = await db
+    .from('businesses')
+    .select(BUSINESS_COLUMNS)
+    .eq('user_id', userId)
+    .limit(OWNED_BUSINESS_LOOKUP_LIMIT);
   if (error) throw new Error(error.message);
-  return data ? assertRecord(data) : null;
+  if (!Array.isArray(data)) throw new Error('Respuesta de negocio no valida');
+  return data.map(assertRecord);
 }
 
-export async function resolveBusiness(userId: string, db: Db = supabase): Promise<BusinessRecord> {
-  const existing = await fetchOwnBusiness(db, userId);
-  if (existing) return existing;
+// Database policies scope the lookup to the signed-in owner; the GBP services re-check ownership server-side.
+// Throws ActiveBusinessError('selection_required') when several businesses exist and none was named.
+export async function resolveBusiness(
+  userId: string,
+  db: Db = supabase,
+  requestedBusinessId: string | null = null,
+): Promise<BusinessRecord> {
+  const owned = await fetchOwnBusinesses(db, userId);
+  if (owned.length === 0 && requestedBusinessId === null) {
+    const { error } = await db
+      .from('businesses')
+      .upsert({ user_id: userId }, { onConflict: 'user_id', ignoreDuplicates: true });
+    if (error) throw new Error(error.message);
+    owned.push(...(await fetchOwnBusinesses(db, userId)));
+    if (owned.length === 0) throw new Error('No se pudo crear el negocio');
+  }
 
-  const { error } = await db
-    .from('businesses')
-    .upsert({ user_id: userId }, { onConflict: 'user_id', ignoreDuplicates: true });
-  if (error) throw new Error(error.message);
-
-  const created = await fetchOwnBusiness(db, userId);
-  if (!created) throw new Error('No se pudo crear el negocio');
-  return created;
+  const active = resolveActiveBusiness(owned.map((b) => b.id), requestedBusinessId);
+  if (active.kind === 'selection_required') throw new ActiveBusinessError('selection_required');
+  const business = active.kind === 'resolved' ? owned.find((b) => b.id === active.businessId) : undefined;
+  if (!business) throw new Error('No se encontro el negocio');
+  return business;
 }
 
 export async function updateBusinessRecord(

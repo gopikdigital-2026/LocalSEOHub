@@ -119,6 +119,7 @@ const es = {
     not_found: 'Primero tienes que crear el perfil de tu negocio.',
     payload_too_large: 'La solicitud es demasiado grande.',
     unavailable: 'Algo ha fallado. Inténtalo de nuevo.',
+    business_selection_required: 'Tienes varios negocios y todavía no es posible elegir cuál consultar.',
   } as Record<ReviewsErrorCode, string>,
 };
 
@@ -192,6 +193,7 @@ const en: ReviewsCopy = {
     not_found: 'You first need to create your business profile.',
     payload_too_large: 'The request is too large.',
     unavailable: 'Something went wrong. Please try again.',
+    business_selection_required: 'You have several businesses and choosing which one to view is not available yet.',
   },
 };
 

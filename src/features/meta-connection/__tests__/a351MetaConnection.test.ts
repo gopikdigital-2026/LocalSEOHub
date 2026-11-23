@@ -578,7 +578,7 @@ describe('A3.5.1 · P. GBP regression: frozen files', () => {
     'supabase/functions/gbp-oauth-callback/index.ts': '90fc20c1f0ca22d56b991c1cd8b38c7c15125167cbae37051b9d4186bf827fae',
     'supabase/functions/gbp-disconnect/handler.ts': '45c1acbed37364c434b9369452d93282a809699b4a7d17bcd5fa535e35b0cf83',
     'supabase/functions/gbp-disconnect/index.ts': '7b28648afd40074e65a9db6d48fb417394981965ecf827edde829d507b9da948',
-    'supabase/functions/gbp-sync/handler.ts': 'd0896d0e8a95eb5c56b9e65169323765c456c4b700d677f6144a531f63b407c6',
+    'supabase/functions/gbp-sync/handler.ts': 'd71f8fde10b30e44eace976982301fc01bab3898974577cf30f612b341d7673a',
     'supabase/functions/gbp-sync/index.ts': 'fee680186b7550eeaf7903185f0a8ad6fc7866b65ff71f1ef1aa1ed9d4209ddf',
     'supabase/functions/gbp-recover-attempt/handler.ts': '879ec241a3605e9aa2355a92166f864f3206391c3ac7ffb5cb4111ce1b5cb660',
     'supabase/functions/gbp-recover-attempt/index.ts': '0126d8d56316b163295ee48cd2e43dcae495323f4b7444695a1e49f573b69461',

@@ -4,6 +4,7 @@ import { requirePremium } from "./entitlement.ts";
 import { ensureAccessToken, vaultCredentialStore } from "./gbpToken.ts";
 import { corsHeaders, handle, type ReserveResult } from "./handler.ts";
 import { MAX_BODY_BYTES, MAX_OUTPUT_TOKENS, MODEL, PROVIDER_TIMEOUT_MS, selectedLocation } from "./logic.ts";
+import { OWNED_BUSINESS_LOOKUP_LIMIT, ownedBusinessIds, resolveActiveBusiness } from "../activeBusiness.ts";
 
 const RESERVE_STATUSES = new Set(["reserved", "fn_limit", "global_limit", "disabled", "invalid"]);
 
@@ -27,10 +28,19 @@ Deno.serve(async (req: Request) => {
 
     return await handle(req, {
       authorize: (r, fn) => requirePremium(r, fn, corsHeaders),
-      async resolveSource(userId) {
+      async resolveSource(userId, requestedBusinessId) {
+        const { data: owned, error: ownedError } = await admin
+          .from("businesses")
+          .select("id")
+          .eq("user_id", userId)
+          .limit(OWNED_BUSINESS_LOOKUP_LIMIT);
+        if (ownedError) throw new Error("business_lookup_failed");
+        const active = resolveActiveBusiness(ownedBusinessIds(owned), requestedBusinessId ?? null);
+        if (active.kind !== "resolved") return { kind: active.kind };
         const { data: business, error } = await admin
           .from("businesses")
           .select("id, name, category, city, services, phone, website")
+          .eq("id", active.businessId)
           .eq("user_id", userId)
           .maybeSingle();
         if (error) throw new Error("business_lookup_failed");

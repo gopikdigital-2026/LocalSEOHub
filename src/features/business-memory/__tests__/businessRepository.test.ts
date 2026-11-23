@@ -25,6 +25,10 @@ function createFakeDb(authUid: string, rows: Row[] = []) {
           const filters: [string, unknown][] = [];
           const q = {
             eq(k: string, v: unknown) { filters.push([k, v]); return q; },
+            async limit(n: number) {
+              const hits = visible().filter((r) => filters.every(([k, v]) => r[k] === v)).slice(0, n);
+              return { data: hits.map((r) => ({ ...r })), error: null };
+            },
             async maybeSingle() {
               const hit = visible().find((r) => filters.every(([k, v]) => r[k] === v));
               return { data: hit ? { ...hit } : null, error: null };

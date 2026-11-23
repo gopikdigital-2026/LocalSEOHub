@@ -6,6 +6,7 @@ import {
   parseInput, parseModelOutput, replyViolations, tokenState,
   type Diagnostic, type NormalizedReview, type ReviewsState,
 } from "./logic.ts";
+import { parseRequestedBusinessId } from "../activeBusiness.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,8 @@ export const corsHeaders = {
 
 export type SourceResolution =
   | { kind: "no_business" }
+  | { kind: "selection_required" }
+  | { kind: "forbidden" }
   | { kind: "not_connected" }
   | { kind: "no_location" }
   | {
@@ -36,7 +39,8 @@ export type ModelResult = { ok: true; raw: string } | { ok: false; retryable: bo
 
 export interface Deps {
   authorize(req: Request, fn: string): Promise<EntitlementResult>;
-  resolveSource(userId: string): Promise<SourceResolution>;
+  // Resolves the active business per the shared contract (owner-checked server-side), then its Google source.
+  resolveSource(userId: string, requestedBusinessId?: string): Promise<SourceResolution>;
   token(sourceId: string): Promise<TokenResult>;
   google(url: string, accessToken: string): Promise<Response>;
   reserve(reservationId: string, userId: string, fn: typeof LEDGER_FUNCTION): Promise<ReserveResult>;
@@ -95,13 +99,18 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   try { body = JSON.parse(rawBody); } catch { return json({ error: "invalid_input" }, 422); }
   const input = parseInput(body);
   if (!input.ok) return json({ error: "invalid_input" }, 422);
+  const requested = parseRequestedBusinessId((body as Record<string, unknown>).businessId);
+  if (!requested.ok) return json({ error: "invalid_input" }, 422);
 
   const access = await deps.authorize(req, input.action === "draft" ? "gbp-reviews-draft" : "gbp-reviews-list");
   if (!access.ok) return access.response;
   const userId = access.userId;
 
-  const source = await deps.resolveSource(userId);
-  if (source.kind === "no_business") return json({ error: "not_found" }, 404);
+  const source = requested.businessId === null
+    ? await deps.resolveSource(userId)
+    : await deps.resolveSource(userId, requested.businessId);
+  if (source.kind === "no_business" || source.kind === "forbidden") return json({ error: "not_found" }, 404);
+  if (source.kind === "selection_required") return json({ error: "business_selection_required" }, 409);
   if (source.kind === "not_connected") return stateResponse("not_connected", null);
   if (source.kind === "no_location") return stateResponse("no_location", null);
 

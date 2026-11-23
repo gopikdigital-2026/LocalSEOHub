@@ -2,6 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { useAuth } from '../../hooks/useAuth';
 import type { BusinessPatch, BusinessRecord } from './businessRecord';
 import { importLegacyMemory, resolveBusiness, updateBusinessRecord } from './businessRepository';
+import { ActiveBusinessError } from '../../../supabase/functions/activeBusiness';
+
+const BUSINESS_SELECTION_REQUIRED_MESSAGE =
+  'Tienes varios negocios. Todavia no es posible elegir el negocio activo.';
 
 interface BusinessContextValue {
   currentBusiness: BusinessRecord | null;
@@ -10,6 +14,7 @@ interface BusinessContextValue {
   authenticated: boolean;
   loading: boolean;
   error: string | null;
+  selectionRequired: boolean;
   refresh: () => Promise<void>;
   updateBusiness: (patch: BusinessPatch) => Promise<BusinessRecord>;
 }
@@ -30,10 +35,12 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [currentBusiness, setCurrentBusiness] = useState<BusinessRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectionRequired, setSelectionRequired] = useState(false);
 
   const load = useCallback(async (uid: string, isCancelled: () => boolean) => {
     setLoading(true);
     setError(null);
+    setSelectionRequired(false);
     try {
       const resolved = await resolveBusiness(uid);
       const migrated = await importLegacyMemory(resolved, browserStorage()).catch(() => resolved);
@@ -41,7 +48,12 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       if (!isCancelled()) {
         setCurrentBusiness(null);
-        setError(e instanceof Error ? e.message : 'No se pudo cargar tu negocio');
+        if (e instanceof ActiveBusinessError && e.kind === 'selection_required') {
+          setSelectionRequired(true);
+          setError(BUSINESS_SELECTION_REQUIRED_MESSAGE);
+        } else {
+          setError(e instanceof Error ? e.message : 'No se pudo cargar tu negocio');
+        }
       }
     } finally {
       if (!isCancelled()) setLoading(false);
@@ -53,6 +65,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     if (!userId) {
       setCurrentBusiness(null);
       setError(null);
+      setSelectionRequired(false);
       setLoading(false);
       return;
     }
@@ -86,6 +99,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         authenticated: !!session,
         loading: sessionLoading || loading || (!!userId && currentBusiness?.user_id !== userId && !error),
         error,
+        selectionRequired,
         refresh,
         updateBusiness,
       }}

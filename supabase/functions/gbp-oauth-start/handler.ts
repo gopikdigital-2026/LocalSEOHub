@@ -1,3 +1,5 @@
+import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
+
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -15,8 +17,9 @@ export interface AttemptStart {
 
 export interface StartDeps {
   getUserId(jwt: string): Promise<string | null>;
-  // The caller's own business, or null when they have none; throws on lookup failure.
-  getOwnBusinessId(userId: string): Promise<string | null>;
+  // Active business per the shared contract: null when the user has none, ActiveBusinessError when
+  // the choice is ambiguous or not owned; throws on lookup failure.
+  getOwnBusinessId(userId: string, requestedBusinessId: string | null): Promise<string | null>;
   // Server-side write: status 'connecting', a fresh state, and no leftover error from a previous attempt.
   beginAttempt(attempt: AttemptStart): Promise<boolean>;
   env(name: string): string | undefined;
@@ -73,14 +76,27 @@ export function createHandler(deps: StartDeps) {
       const userId = jwt ? await deps.getUserId(jwt) : null;
       if (!userId) return json({ code: "NOT_AUTHENTICATED", error: "Sesion no valida" }, 401);
 
-      let requestedBusinessId: unknown = null;
+      let rawBusinessId: unknown = null;
       try {
-        requestedBusinessId = (await req.json())?.businessId ?? null;
+        rawBusinessId = (await req.json())?.businessId ?? null;
       } catch {
-        requestedBusinessId = null;
+        rawBusinessId = null;
       }
+      const requested = parseRequestedBusinessId(rawBusinessId);
+      if (!requested.ok) return json({ code: "FORBIDDEN", error: "Negocio no valido" }, 403);
+      const requestedBusinessId = requested.businessId;
 
-      const businessId = await deps.getOwnBusinessId(userId);
+      let businessId: string | null;
+      try {
+        businessId = await deps.getOwnBusinessId(userId, requestedBusinessId);
+      } catch (e) {
+        if (!(e instanceof ActiveBusinessError)) throw e;
+        if (e.kind === "forbidden") return json({ code: "FORBIDDEN", error: "Negocio no valido" }, 403);
+        return json({
+          code: BUSINESS_SELECTION_REQUIRED,
+          error: "Tienes varios negocios. Indica que negocio quieres conectar.",
+        }, 409);
+      }
       if (!businessId) {
         return json({ code: "NO_BUSINESS", error: "No se encontro tu negocio. Completa la configuracion inicial." }, 400);
       }

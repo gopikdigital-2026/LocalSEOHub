@@ -1,4 +1,5 @@
 import { type CredentialStore, ensureAccessToken } from "./gbpToken.ts";
+import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,7 @@ export const FAILURE_MESSAGES: Record<string, string> = {
   GBP_API_QUOTA_UNAVAILABLE: "Google ha limitado temporalmente las solicitudes. Intentalo en unos minutos.",
   LOCATION_NOT_FOUND: "No encontramos esa ficha en tu cuenta de Google.",
   LOCATION_FETCH_FAILED: "No se pudo leer tu ficha de Google. Intentalo de nuevo.",
+  LOCATION_INVALID_RESPONSE: "Google devolvio una respuesta no valida para tu ficha. Intentalo de nuevo.",
   PERSIST_FAILED: "No se pudo guardar la sincronizacion. Intentalo de nuevo.",
   SYNC_FAILED: "No se pudo sincronizar tu ficha de Google. Intentalo de nuevo.",
 };
@@ -32,8 +34,9 @@ export type SyncEventType = "source_sync_started" | "source_sync_completed" | "s
 
 export interface SyncDeps {
   getUserId(jwt: string): Promise<string | null>;
-  // Throws on lookup failure.
-  getOwnBusinessId(userId: string): Promise<string | null>;
+  // Active business per the shared contract: null when the user has none, ActiveBusinessError when
+  // the choice is ambiguous or not owned; throws on lookup failure.
+  getOwnBusinessId(userId: string, requestedBusinessId: string | null): Promise<string | null>;
   // Only the caller's own google_business row for their own business; throws on lookup failure.
   loadSource(userId: string, businessId: string): Promise<SourceRow | null>;
   credentials(sourceId: string): CredentialStore;
@@ -79,19 +82,80 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-// deno-lint-ignore no-explicit-any
-function toProfile(loc: any): Record<string, unknown> {
-  const addr = loc?.storefrontAddress;
+type Json = Record<string, unknown>;
+
+const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
+const optString = (v: unknown): v is string | null | undefined => v === undefined || v === null || typeof v === "string";
+const optObject = (v: unknown): v is Json | null | undefined => v === undefined || v === null || isObject(v);
+const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((l) => typeof l === "string");
+
+async function readJson(res: Response): Promise<unknown> {
+  try {
+    return JSON.parse(await res.text());
+  } catch {
+    return undefined;
+  }
+}
+
+/** Returns null unless the body is a Location resource for exactly the requested location. */
+export function parseLocationProfile(body: unknown, locationId: string): Json | null {
+  if (!isObject(body) || typeof body.name !== "string") return null;
+  if (body.name !== locationId && !body.name.endsWith(`/${locationId}`)) return null;
+
+  const { title, websiteUri, phoneNumbers, storefrontAddress, categories, regularHours } = body;
+  if (!optString(title) || !optString(websiteUri)) return null;
+  if (!optObject(phoneNumbers) || !optObject(storefrontAddress) || !optObject(categories) || !optObject(regularHours)) return null;
+
+  const phone = phoneNumbers?.primaryPhone;
+  const primaryCategory = categories?.primaryCategory;
+  const periods = regularHours?.periods;
+  const lines = storefrontAddress?.addressLines;
+  if (!optString(phone) || !optObject(primaryCategory)) return null;
+  const categoryName = primaryCategory?.displayName;
+  if (!optString(categoryName)) return null;
+  if (!(periods == null || Array.isArray(periods))) return null;
+  if (!(lines == null || isStringArray(lines))) return null;
+
+  const addressParts = storefrontAddress
+    ? [lines?.join(", "), storefrontAddress.locality, storefrontAddress.administrativeArea, storefrontAddress.postalCode]
+      .filter((p): p is string => typeof p === "string" && p.trim() !== "")
+    : [];
+
   return {
-    name: loc?.title ?? null,
-    category: loc?.categories?.primaryCategory?.displayName ?? null,
-    address: addr
-      ? [addr.addressLines?.join(", "), addr.locality, addr.administrativeArea, addr.postalCode].filter(Boolean).join(", ")
-      : null,
-    phone: loc?.phoneNumbers?.primaryPhone ?? null,
-    website: loc?.websiteUri ?? null,
-    hours: loc?.regularHours?.periods ?? null,
+    name: title || null,
+    category: categoryName || null,
+    address: addressParts.length ? addressParts.join(", ") : null,
+    phone: phone || null,
+    website: websiteUri || null,
+    hours: periods ?? null,
   };
+}
+
+export type ReviewsResult =
+  | { verified: true; count: number; averageRating: number | null }
+  | { verified: false; code: string; status: "error" | "permissions_required" };
+
+const reviewsFailure = (code: string): ReviewsResult => ({
+  verified: false,
+  code,
+  status: code === "REVIEWS_PERMISSION_DENIED" ? "permissions_required" : "error",
+});
+
+function classifyReviewsFetch(status: number): string {
+  if (status === 401 || status === 403) return "REVIEWS_PERMISSION_DENIED";
+  if (status === 429) return "REVIEWS_QUOTA_UNAVAILABLE";
+  return "REVIEWS_FETCH_FAILED";
+}
+
+/** A count is only trusted when Google returned it explicitly; zero is never inferred. */
+export function parseReviewsSummary(body: unknown): ReviewsResult {
+  if (!isObject(body)) return reviewsFailure("REVIEWS_INVALID_RESPONSE");
+  const raw = body.totalReviewCount;
+  const count = typeof raw === "number" ? raw : typeof raw === "string" && /^\d+$/.test(raw) ? Number(raw) : NaN;
+  if (!Number.isSafeInteger(count) || count < 0) return reviewsFailure("REVIEWS_INVALID_RESPONSE");
+  const rating = body.averageRating;
+  const averageRating = count > 0 && typeof rating === "number" && Number.isFinite(rating) && rating >= 0 && rating <= 5 ? rating : null;
+  return { verified: true, count, averageRating };
 }
 
 export function createHandler(deps: SyncDeps) {
@@ -118,16 +182,28 @@ export function createHandler(deps: SyncDeps) {
     }
     const sel = parseSelection(body);
     if (!sel.ok) return json({ success: false, code: "INVALID_LOCATION", error: "Ubicacion no valida" }, 400);
+    const requested = parseRequestedBusinessId((body as Record<string, unknown>).businessId);
+    if (!requested.ok) return json({ success: false, code: "FORBIDDEN", error: "Negocio no valido" }, 403);
 
     let businessId: string | null;
     let source: SourceRow | null;
     try {
-      businessId = await deps.getOwnBusinessId(userId);
+      businessId = await deps.getOwnBusinessId(userId, requested.businessId);
       if (!businessId || (sel.businessId !== null && sel.businessId !== businessId)) {
         return json({ success: false, code: "FORBIDDEN", error: "Negocio no valido" }, 403);
       }
       source = await deps.loadSource(userId, businessId);
-    } catch {
+    } catch (e) {
+      if (e instanceof ActiveBusinessError && e.kind === "selection_required") {
+        return json({
+          success: false,
+          code: BUSINESS_SELECTION_REQUIRED,
+          error: "Tienes varios negocios. Indica que negocio quieres sincronizar.",
+        }, 409);
+      }
+      if (e instanceof ActiveBusinessError) {
+        return json({ success: false, code: "FORBIDDEN", error: "Negocio no valido" }, 403);
+      }
       return json({ success: false, code: "INTERNAL_ERROR", error: FAILURE_MESSAGES.SYNC_FAILED }, 500);
     }
     if (!source || source.status === "disconnected") {
@@ -192,26 +268,35 @@ export function createHandler(deps: SyncDeps) {
         console.error("[gbp-sync] location fetch status:", locationResponse.status);
         return fail(classifyLocationFetch(locationResponse.status));
       }
-      const profile = toProfile(await locationResponse.json().catch(() => null));
+      const profile = parseLocationProfile(await readJson(locationResponse), sel.locationId);
+      if (!profile) {
+        console.error("[gbp-sync] location response rejected: not a matching Location resource");
+        return fail("LOCATION_INVALID_RESPONSE");
+      }
       const recordCount = Object.values(profile).filter(Boolean).length;
 
-      let reviewCount = 0;
+      // The profile alone proves the connection; reviews are verified independently.
+      let reviews: ReviewsResult;
       try {
         const reviewsResponse = await deps.fetch(
           `https://mybusiness.googleapis.com/v4/${sel.accountId}/${sel.locationId}/reviews?pageSize=1`,
           { headers: { Authorization: `Bearer ${token.accessToken}` } },
         );
         if (reviewsResponse.ok) {
-          const reviewData = await reviewsResponse.json();
-          reviewCount = Number(reviewData?.totalReviewCount) || 0;
-          profile.totalReviews = reviewCount;
-          profile.averageRating = reviewData?.averageRating ?? null;
+          reviews = parseReviewsSummary(await readJson(reviewsResponse));
         } else {
           await reviewsResponse.body?.cancel();
+          console.error("[gbp-sync] reviews fetch status:", reviewsResponse.status);
+          reviews = reviewsFailure(classifyReviewsFetch(reviewsResponse.status));
         }
       } catch {
-        // Review count is optional; the profile itself is what proves the connection.
+        reviews = reviewsFailure("REVIEWS_FETCH_FAILED");
       }
+      if (reviews.verified) {
+        profile.totalReviews = reviews.count;
+        profile.averageRating = reviews.averageRating;
+      }
+      const reviewCount = reviews.verified ? reviews.count : null;
 
       const syncedAt = now().toISOString();
       const connected = await deps.updateSource(uid, sourceId, {
@@ -226,20 +311,37 @@ export function createHandler(deps: SyncDeps) {
       if (!connected) return fail("PERSIST_FAILED");
 
       // Reviews only become available once Google itself has confirmed the profile above.
-      const reviewsOk = await deps.upsertReviews(uid, ownerBusinessId, {
-        status: "connected",
-        external_account_id: sel.accountId,
-        external_location_id: sel.locationId,
-        last_sync_at: syncedAt,
-        last_error: null,
-        metadata: { linkedToGBP: true, reviewCount },
-        updated_at: syncedAt,
-      });
+      // On failure the stored metadata is left untouched so a previously verified count is never overwritten.
+      const reviewsOk = await deps.upsertReviews(uid, ownerBusinessId, reviews.verified
+        ? {
+          status: "connected",
+          external_account_id: sel.accountId,
+          external_location_id: sel.locationId,
+          last_sync_at: syncedAt,
+          last_error: null,
+          metadata: { linkedToGBP: true, reviewCount: reviews.count },
+          updated_at: syncedAt,
+        }
+        : {
+          status: reviews.status,
+          external_account_id: sel.accountId,
+          external_location_id: sel.locationId,
+          last_error: reviews.code,
+          updated_at: syncedAt,
+        });
       if (!reviewsOk) console.error("[gbp-sync] reviews link write failed");
 
       await deps.addEvent(uid, sourceId, "source_sync_completed", `${recordCount} datos importados`, recordCount).catch(() => undefined);
 
-      return json({ success: true, status: "connected", profile, recordCount, reviewCount, verifiedAt: syncedAt });
+      return json({
+        success: true,
+        status: "connected",
+        profile,
+        recordCount,
+        reviewCount,
+        reviewsStatus: reviews.verified ? "connected" : reviews.status,
+        verifiedAt: syncedAt,
+      });
     } catch {
       console.error("[gbp-sync] unhandled error");
       return fail("SYNC_FAILED");

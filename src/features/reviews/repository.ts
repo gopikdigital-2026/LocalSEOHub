@@ -7,7 +7,8 @@ export type ReviewsState =
 
 export type ReviewsErrorCode =
   | 'unauthorized' | 'premium_required' | 'rate_limited' | 'review_limit' | 'global_limit' | 'duplicate_request'
-  | 'invalid_input' | 'ai_unavailable' | 'generation_failed' | 'not_found' | 'payload_too_large' | 'unavailable';
+  | 'invalid_input' | 'ai_unavailable' | 'generation_failed' | 'not_found' | 'payload_too_large' | 'unavailable'
+  | 'business_selection_required';
 
 export interface Review {
   reviewId: string;
@@ -47,6 +48,7 @@ const STATES = new Set<ReviewsState>([
 const ERRORS = new Set<ReviewsErrorCode>([
   'unauthorized', 'premium_required', 'rate_limited', 'review_limit', 'global_limit', 'duplicate_request',
   'invalid_input', 'ai_unavailable', 'generation_failed', 'not_found', 'payload_too_large', 'unavailable',
+  'business_selection_required',
 ]);
 
 const strOrNull = (v: unknown): string | null => (typeof v === 'string' ? v : null);
@@ -91,8 +93,9 @@ async function errorCodeFrom(error: unknown): Promise<ReviewsErrorCode> {
   return 'unavailable';
 }
 
-export async function loadReviews(db: Db = supabase): Promise<ReviewsLoad> {
-  const { data, error } = await db.functions.invoke('gbp-reviews', { body: { action: 'list' } });
+export async function loadReviews(db: Db = supabase, businessId: string | null = null): Promise<ReviewsLoad> {
+  const body = businessId ? { action: 'list', businessId } : { action: 'list' };
+  const { data, error } = await db.functions.invoke('gbp-reviews', { body });
   if (error) throw new ReviewsError(await errorCodeFrom(error));
   const state = asState(data);
   if (state) return state;
@@ -109,10 +112,13 @@ export async function loadReviews(db: Db = supabase): Promise<ReviewsLoad> {
 }
 
 export async function draftReply(
-  input: { reviewId: string; lang: 'es' | 'en' },
+  input: { reviewId: string; lang: 'es' | 'en'; businessId?: string | null },
   db: Db = supabase,
 ): Promise<DraftResult> {
-  const body = { action: 'draft', reviewId: input.reviewId, lang: input.lang, requestId: crypto.randomUUID() };
+  const body = {
+    action: 'draft', reviewId: input.reviewId, lang: input.lang, requestId: crypto.randomUUID(),
+    ...(input.businessId ? { businessId: input.businessId } : {}),
+  };
   const { data, error } = await db.functions.invoke('gbp-reviews', { body });
   if (error) throw new ReviewsError(await errorCodeFrom(error));
   const state = asState(data);

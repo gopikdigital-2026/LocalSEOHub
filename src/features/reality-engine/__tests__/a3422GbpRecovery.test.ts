@@ -327,7 +327,7 @@ function syncHarness(opts: {
   const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
     if (opts.fetch) return opts.fetch(url);
-    if (url.includes('businessinformation')) return jsonRes({ title: 'Bar Pepe', phoneNumbers: { primaryPhone: '600' } });
+    if (url.includes('businessinformation')) return jsonRes({ name: 'locations/456', title: 'Bar Pepe', phoneNumbers: { primaryPhone: '600' } });
     if (url.includes('/reviews')) return jsonRes({ totalReviewCount: 12, averageRating: 4.5 });
     return jsonRes({}, 404);
   });

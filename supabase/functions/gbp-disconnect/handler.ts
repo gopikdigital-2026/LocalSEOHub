@@ -1,4 +1,5 @@
 import { type CredentialStore, revokeGoogleToken } from "./gbpToken.ts";
+import { BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,14 +11,16 @@ export type ResolveResult =
   | { kind: "found"; sourceId: string }
   | { kind: "none" }
   | { kind: "forbidden" }
+  | { kind: "selection_required" }
   | { kind: "failed" };
 
 export interface DisconnectDeps {
   getUserId(jwt: string): Promise<string | null>;
-  // Must resolve only through the authenticated user's own business.
+  // Must resolve only through the authenticated user's own business, per the shared active-business contract.
   resolveSource(userId: string, businessId: string | null): Promise<ResolveResult>;
   credentials(sourceId: string): CredentialStore;
-  // Clears stored credentials and removes the connection; must succeed even if revocation failed.
+  // Clears stored credentials and removes the connection and its reviews link for that business only;
+  // must succeed even if revocation failed.
   removeSource(userId: string, sourceId: string): Promise<boolean>;
   fetch: typeof fetch;
 }
@@ -45,11 +48,15 @@ export function createHandler(deps: DisconnectDeps) {
       } catch {
         body = {};
       }
-      const businessId = typeof body.businessId === "string" && body.businessId ? body.businessId : null;
+      const requested = parseRequestedBusinessId(body?.businessId);
+      if (!requested.ok) return json({ success: false, code: "FORBIDDEN" }, 403);
 
-      const resolved = await deps.resolveSource(userId, businessId);
+      const resolved = await deps.resolveSource(userId, requested.businessId);
       if (resolved.kind === "failed") return json({ success: false, code: "INTERNAL_ERROR" }, 500);
       if (resolved.kind === "forbidden") return json({ success: false, code: "FORBIDDEN" }, 403);
+      if (resolved.kind === "selection_required") {
+        return json({ success: false, code: BUSINESS_SELECTION_REQUIRED }, 409);
+      }
       if (resolved.kind === "none") return json({ success: true, revoked: false, removed: false });
 
       let revoked = false;

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AlertCircle, AlertTriangle, ArrowLeft, Info, Link2, Loader2, MapPin, RefreshCw, Star } from 'lucide-react';
 import { useI18n } from '../../lib/i18n';
+import { useBusiness } from '../business-memory/BusinessContext';
 import { COPY, type ReviewsCopy } from './copy';
 import ReviewCard, { type DraftState } from './ReviewCard';
 import {
@@ -54,6 +55,7 @@ function StateCard({ state, t, onRetry }: { state: ReviewsState; t: ReviewsCopy;
 
 export default function ReviewsPage() {
   const { lang } = useI18n();
+  const { businessId, loading: businessLoading } = useBusiness();
   const t = lang === 'en' ? COPY.en : COPY.es;
   const navigate = useNavigate();
   const [data, setData] = useState<PageData>({ kind: 'loading' });
@@ -72,13 +74,17 @@ export default function ReviewsPage() {
     setData({ kind: 'loading' });
     setDrafts({});
     try {
-      setData(await loadReviews());
+      setData(await loadReviews(undefined, businessId));
     } catch (e) {
       setData({ kind: 'error', code: e instanceof ReviewsError ? e.code : 'unavailable' });
     }
-  }, []);
+  }, [businessId]);
 
-  useEffect(() => { void load(); void refreshUsage(); }, [load, refreshUsage]);
+  useEffect(() => {
+    if (businessLoading) return;
+    void load();
+    void refreshUsage();
+  }, [businessLoading, load, refreshUsage]);
 
   const remaining = usage ? Math.max(0, Math.min(usage.limit - usage.used, usage.globalLimit - usage.globalUsed)) : null;
   const atLimit = remaining === 0;
@@ -90,7 +96,7 @@ export default function ReviewsPage() {
   const generate = async (reviewId: string) => {
     setDraft(reviewId, { loading: true, error: null });
     try {
-      const r = await draftReply({ reviewId, lang });
+      const r = await draftReply({ reviewId, lang, businessId });
       if (r.kind === 'draft') setDraft(reviewId, { text: r.text, loading: false });
       else setDraft(reviewId, { loading: false, error: t.states[r.state].body });
     } catch (e) {
