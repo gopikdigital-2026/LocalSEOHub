@@ -1,0 +1,164 @@
+--- a/src/features/reality-engine/SourceManager.tsx
++++ b/src/features/reality-engine/SourceManager.tsx
+@@ -102,7 +102,7 @@
+     if (!confirm(question)) return;
+     setBusySource(source.source_type as SourceType);
+     try {
+-      await disconnectSource(source.id, source.source_type as SourceType);
++      await disconnectSource(source.id, source.source_type as SourceType, source.source_type === 'google_business' ? source.business_id : undefined);
+       await refreshAll();
+     } catch { /* refresh will show the error */ }
+     setBusySource(null);
+--- a/src/features/reality-engine/engine.ts
++++ b/src/features/reality-engine/engine.ts
+@@ -103,11 +103,11 @@
+ 
+ // ─── Disconnect any source ──────────────────────────────────────────────────
+ 
+-export async function disconnectSource(sourceId: string, sourceType: SourceType) {
++export async function disconnectSource(sourceId: string, sourceType: SourceType, businessId?: string) {
+   await addSyncEvent(sourceId, sourceType, 'source_disconnected', 'Fuente desconectada');
+   if (sourceType === 'google_business') {
+     // Revocation and credential removal happen server-side; the browser never sees the tokens.
+-    const { error } = await invokeEdge('gbp-disconnect', {});
++    const { error } = await invokeEdge('gbp-disconnect', businessId ? { businessId } : {});
+     if (error) throw new Error(error);
+     return;
+   }
+--- a/supabase/functions/gbp-list-locations/handler.ts
++++ b/supabase/functions/gbp-list-locations/handler.ts
+@@ -1,3 +1,4 @@
++import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
+ import {
+   type GbpLocation,
+   type ListLocationsError,
+@@ -103,7 +104,9 @@
+       if (body.accountId !== undefined && !isValidAccountId(body.accountId)) {
+         return json(makeError("INVALID_REQUEST"), 400);
+       }
+-      const businessId = typeof body.businessId === "string" && body.businessId ? body.businessId : null;
++      const requested = parseRequestedBusinessId(body?.businessId);
++      if (!requested.ok) return json({ success: false, code: "FORBIDDEN" }, 403);
++      const businessId = requested.businessId;
+ 
+       const { row: source, failed } = await deps.loadSource(userId, businessId);
+       if (failed) return json(makeError("INTERNAL_ERROR"), 500);
+@@ -152,7 +155,10 @@
+       }
+ 
+       return json({ success: true, locations, accountsQueried: accountIds.length, partial: firstError !== null });
+-    } catch {
++    } catch (e) {
++      if (e instanceof ActiveBusinessError) {
++        return json({ success: false, code: e.kind === "selection_required" ? BUSINESS_SELECTION_REQUIRED : "FORBIDDEN" }, e.kind === "selection_required" ? 409 : 403);
++      }
+       console.error("[gbp-list-locations] unhandled error");
+       return json(makeError("INTERNAL_ERROR"), 500);
+     }
+--- a/supabase/functions/gbp-list-locations/index.ts
++++ b/supabase/functions/gbp-list-locations/index.ts
+@@ -2,6 +2,7 @@
+ import { createClient } from "npm:@supabase/supabase-js@2";
+ import { createHandler } from "./handler.ts";
+ import { vaultCredentialStore } from "./gbpToken.ts";
++import { OWNED_BUSINESS_LOOKUP_LIMIT, businessIdOrThrow, ownedBusinessIds, resolveActiveBusiness } from "../activeBusiness.ts";
+ 
+ const supabaseAdmin = createClient(
+   Deno.env.get("SUPABASE_URL")!,
+@@ -14,15 +15,20 @@
+     return error || !data.user ? null : data.user.id;
+   },
+   async loadSource(userId, businessId) {
+-    let query = supabaseAdmin
++    const { data: businesses, error: businessError } = await supabaseAdmin
++      .from("businesses").select("id").eq("user_id", userId).limit(OWNED_BUSINESS_LOOKUP_LIMIT);
++    if (businessError) throw new Error("business lookup failed");
++    const activeBusinessId = businessIdOrThrow(resolveActiveBusiness(ownedBusinessIds(businesses), businessId));
++    if (!activeBusinessId) return { row: null, failed: false };
++    const { data, error } = await supabaseAdmin
+       .from("connected_sources")
+       .select("id")
+       .eq("user_id", userId)
+       .eq("source_type", "google_business")
+-      .neq("status", "disconnected");
+-    if (businessId) query = query.eq("business_id", businessId);
+-    const { data, error } = await query.order("updated_at", { ascending: false }).limit(1);
+-    return { row: data?.[0] ?? null, failed: !!error };
++      .eq("business_id", activeBusinessId)
++      .neq("status", "disconnected")
++      .maybeSingle();
++    return { row: data ?? null, failed: !!error };
+   },
+   credentials: (sourceId) => vaultCredentialStore(supabaseAdmin, sourceId),
+   async updateSource(userId, sourceId, patch) {
+--- a/supabase/functions/gbp-recover-attempt/handler.ts
++++ b/supabase/functions/gbp-recover-attempt/handler.ts
+@@ -1,3 +1,5 @@
++import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
++
+ export const corsHeaders = {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+@@ -21,7 +23,7 @@
+ export interface RecoverDeps {
+   getUserId(jwt: string): Promise<string | null>;
+   // Throws on lookup failure.
+-  getOwnBusinessId(userId: string): Promise<string | null>;
++  getOwnBusinessId(userId: string, requestedBusinessId: string | null): Promise<string | null>;
+   // The caller's own google_business row; throws on lookup failure.
+   loadSource(userId: string, businessId: string): Promise<AttemptRow | null>;
+   // Applies only if the row still has this status and updated_at (no race with a live attempt).
+@@ -82,9 +84,11 @@
+       }
+       const action = body.action === "cancel" ? "cancel" : body.action === "recover" ? "recover" : null;
+       if (!action) return json({ success: false, code: "INVALID_ACTION" }, 400);
+-      const requestedBusinessId = typeof body.businessId === "string" && body.businessId ? body.businessId : null;
++      const requested = parseRequestedBusinessId(body.businessId);
++      if (!requested.ok) return json({ success: false, code: "FORBIDDEN" }, 403);
++      const requestedBusinessId = requested.businessId;
+ 
+-      const businessId = await deps.getOwnBusinessId(userId);
++      const businessId = await deps.getOwnBusinessId(userId, requestedBusinessId);
+       if (!businessId || (requestedBusinessId !== null && requestedBusinessId !== businessId)) {
+         return json({ success: false, code: "FORBIDDEN" }, 403);
+       }
+@@ -112,7 +116,10 @@
+       if (!applied) return json({ success: true, recovered: false, status: row.status, changed: true });
+       console.info("[gbp-recover-attempt] attempt ended:", next.code);
+       return json({ success: true, recovered: true, status: next.status, code: next.code });
+-    } catch {
++    } catch (e) {
++      if (e instanceof ActiveBusinessError) {
++        return json({ success: false, code: e.kind === "selection_required" ? BUSINESS_SELECTION_REQUIRED : "FORBIDDEN" }, e.kind === "selection_required" ? 409 : 403);
++      }
+       console.error("[gbp-recover-attempt] unhandled error");
+       return json({ success: false, code: "INTERNAL_ERROR" }, 500);
+     }
+--- a/supabase/functions/gbp-recover-attempt/index.ts
++++ b/supabase/functions/gbp-recover-attempt/index.ts
+@@ -1,6 +1,7 @@
+ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+ import { createClient } from "npm:@supabase/supabase-js@2";
+ import { createHandler } from "./handler.ts";
++import { OWNED_BUSINESS_LOOKUP_LIMIT, businessIdOrThrow, ownedBusinessIds, resolveActiveBusiness } from "../activeBusiness.ts";
+ 
+ const supabaseAdmin = createClient(
+   Deno.env.get("SUPABASE_URL")!,
+@@ -12,14 +13,14 @@
+     const { data, error } = await supabaseAdmin.auth.getUser(jwt);
+     return error || !data.user ? null : data.user.id;
+   },
+-  async getOwnBusinessId(userId) {
++  async getOwnBusinessId(userId, requestedBusinessId) {
+     const { data, error } = await supabaseAdmin
+       .from("businesses")
+       .select("id")
+       .eq("user_id", userId)
+-      .maybeSingle();
++      .limit(OWNED_BUSINESS_LOOKUP_LIMIT);
+     if (error) throw new Error("business lookup failed");
+-    return data?.id ?? null;
++    return businessIdOrThrow(resolveActiveBusiness(ownedBusinessIds(data), requestedBusinessId));
+   },
+   async loadSource(userId, businessId) {
+     const { data, error } = await supabaseAdmin

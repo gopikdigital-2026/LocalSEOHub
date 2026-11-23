@@ -1,0 +1,76 @@
+{
+  "inputs": {
+    "supabase/functions/activeBusiness.ts": {
+      "bytes": 3042,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-oauth-start/handler.ts": {
+      "bytes": 4982,
+      "imports": [
+        {
+          "path": "supabase/functions/activeBusiness.ts",
+          "kind": "import-statement",
+          "original": "../activeBusiness.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-oauth-start/index.ts": {
+      "bytes": 1360,
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "supabase/functions/gbp-oauth-start/handler.ts",
+          "kind": "import-statement",
+          "original": "./handler.ts"
+        },
+        {
+          "path": "supabase/functions/activeBusiness.ts",
+          "kind": "import-statement",
+          "original": "../activeBusiness.ts"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "../../../../dev/null": {
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "supabase/functions/gbp-oauth-start/index.ts",
+      "inputs": {
+        "supabase/functions/gbp-oauth-start/index.ts": {
+          "bytesInOutput": 1118
+        },
+        "supabase/functions/activeBusiness.ts": {
+          "bytesInOutput": 1427
+        },
+        "supabase/functions/gbp-oauth-start/handler.ts": {
+          "bytesInOutput": 4014
+        }
+      },
+      "bytes": 6745
+    }
+  }
+}
