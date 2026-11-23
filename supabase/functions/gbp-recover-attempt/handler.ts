@@ -1,3 +1,5 @@
+import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
+
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -21,7 +23,7 @@ export interface AttemptRow {
 export interface RecoverDeps {
   getUserId(jwt: string): Promise<string | null>;
   // Throws on lookup failure.
-  getOwnBusinessId(userId: string): Promise<string | null>;
+  getOwnBusinessId(userId: string, requestedBusinessId: string | null): Promise<string | null>;
   // The caller's own google_business row; throws on lookup failure.
   loadSource(userId: string, businessId: string): Promise<AttemptRow | null>;
   // Applies only if the row still has this status and updated_at (no race with a live attempt).
@@ -82,9 +84,11 @@ export function createHandler(deps: RecoverDeps) {
       }
       const action = body.action === "cancel" ? "cancel" : body.action === "recover" ? "recover" : null;
       if (!action) return json({ success: false, code: "INVALID_ACTION" }, 400);
-      const requestedBusinessId = typeof body.businessId === "string" && body.businessId ? body.businessId : null;
+      const requested = parseRequestedBusinessId(body.businessId);
+      if (!requested.ok) return json({ success: false, code: "FORBIDDEN" }, 403);
+      const requestedBusinessId = requested.businessId;
 
-      const businessId = await deps.getOwnBusinessId(userId);
+      const businessId = await deps.getOwnBusinessId(userId, requestedBusinessId);
       if (!businessId || (requestedBusinessId !== null && requestedBusinessId !== businessId)) {
         return json({ success: false, code: "FORBIDDEN" }, 403);
       }
@@ -112,7 +116,10 @@ export function createHandler(deps: RecoverDeps) {
       if (!applied) return json({ success: true, recovered: false, status: row.status, changed: true });
       console.info("[gbp-recover-attempt] attempt ended:", next.code);
       return json({ success: true, recovered: true, status: next.status, code: next.code });
-    } catch {
+    } catch (e) {
+      if (e instanceof ActiveBusinessError) {
+        return json({ success: false, code: e.kind === "selection_required" ? BUSINESS_SELECTION_REQUIRED : "FORBIDDEN" }, e.kind === "selection_required" ? 409 : 403);
+      }
       console.error("[gbp-recover-attempt] unhandled error");
       return json({ success: false, code: "INTERNAL_ERROR" }, 500);
     }

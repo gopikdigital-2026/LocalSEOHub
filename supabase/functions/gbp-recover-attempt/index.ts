@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createHandler } from "./handler.ts";
+import { OWNED_BUSINESS_LOOKUP_LIMIT, businessIdOrThrow, ownedBusinessIds, resolveActiveBusiness } from "../activeBusiness.ts";
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -12,14 +13,14 @@ const handle = createHandler({
     const { data, error } = await supabaseAdmin.auth.getUser(jwt);
     return error || !data.user ? null : data.user.id;
   },
-  async getOwnBusinessId(userId) {
+  async getOwnBusinessId(userId, requestedBusinessId) {
     const { data, error } = await supabaseAdmin
       .from("businesses")
       .select("id")
       .eq("user_id", userId)
-      .maybeSingle();
+      .limit(OWNED_BUSINESS_LOOKUP_LIMIT);
     if (error) throw new Error("business lookup failed");
-    return data?.id ?? null;
+    return businessIdOrThrow(resolveActiveBusiness(ownedBusinessIds(data), requestedBusinessId));
   },
   async loadSource(userId, businessId) {
     const { data, error } = await supabaseAdmin

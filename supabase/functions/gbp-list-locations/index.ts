@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createHandler } from "./handler.ts";
 import { vaultCredentialStore } from "./gbpToken.ts";
+import { OWNED_BUSINESS_LOOKUP_LIMIT, businessIdOrThrow, ownedBusinessIds, resolveActiveBusiness } from "../activeBusiness.ts";
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -14,15 +15,20 @@ const handle = createHandler({
     return error || !data.user ? null : data.user.id;
   },
   async loadSource(userId, businessId) {
-    let query = supabaseAdmin
+    const { data: businesses, error: businessError } = await supabaseAdmin
+      .from("businesses").select("id").eq("user_id", userId).limit(OWNED_BUSINESS_LOOKUP_LIMIT);
+    if (businessError) throw new Error("business lookup failed");
+    const activeBusinessId = businessIdOrThrow(resolveActiveBusiness(ownedBusinessIds(businesses), businessId));
+    if (!activeBusinessId) return { row: null, failed: false };
+    const { data, error } = await supabaseAdmin
       .from("connected_sources")
       .select("id")
       .eq("user_id", userId)
       .eq("source_type", "google_business")
-      .neq("status", "disconnected");
-    if (businessId) query = query.eq("business_id", businessId);
-    const { data, error } = await query.order("updated_at", { ascending: false }).limit(1);
-    return { row: data?.[0] ?? null, failed: !!error };
+      .eq("business_id", activeBusinessId)
+      .neq("status", "disconnected")
+      .maybeSingle();
+    return { row: data ?? null, failed: !!error };
   },
   credentials: (sourceId) => vaultCredentialStore(supabaseAdmin, sourceId),
   async updateSource(userId, sourceId, patch) {

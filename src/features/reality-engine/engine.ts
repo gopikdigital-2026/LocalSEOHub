@@ -103,11 +103,11 @@ export async function saveManualEntry(
 
 // ─── Disconnect any source ──────────────────────────────────────────────────
 
-export async function disconnectSource(sourceId: string, sourceType: SourceType) {
+export async function disconnectSource(sourceId: string, sourceType: SourceType, businessId?: string) {
   await addSyncEvent(sourceId, sourceType, 'source_disconnected', 'Fuente desconectada');
   if (sourceType === 'google_business') {
     // Revocation and credential removal happen server-side; the browser never sees the tokens.
-    const { error } = await invokeEdge('gbp-disconnect', {});
+    const { error } = await invokeEdge('gbp-disconnect', businessId ? { businessId } : {});
     if (error) throw new Error(error);
     return;
   }

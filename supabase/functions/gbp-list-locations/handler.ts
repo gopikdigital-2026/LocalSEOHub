@@ -1,3 +1,4 @@
+import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
 import {
   type GbpLocation,
   type ListLocationsError,
@@ -103,7 +104,9 @@ export function createHandler(deps: HandlerDeps) {
       if (body.accountId !== undefined && !isValidAccountId(body.accountId)) {
         return json(makeError("INVALID_REQUEST"), 400);
       }
-      const businessId = typeof body.businessId === "string" && body.businessId ? body.businessId : null;
+      const requested = parseRequestedBusinessId(body?.businessId);
+      if (!requested.ok) return json({ success: false, code: "FORBIDDEN" }, 403);
+      const businessId = requested.businessId;
 
       const { row: source, failed } = await deps.loadSource(userId, businessId);
       if (failed) return json(makeError("INTERNAL_ERROR"), 500);
@@ -152,7 +155,10 @@ export function createHandler(deps: HandlerDeps) {
       }
 
       return json({ success: true, locations, accountsQueried: accountIds.length, partial: firstError !== null });
-    } catch {
+    } catch (e) {
+      if (e instanceof ActiveBusinessError) {
+        return json({ success: false, code: e.kind === "selection_required" ? BUSINESS_SELECTION_REQUIRED : "FORBIDDEN" }, e.kind === "selection_required" ? 409 : 403);
+      }
       console.error("[gbp-list-locations] unhandled error");
       return json(makeError("INTERNAL_ERROR"), 500);
     }

@@ -102,7 +102,7 @@ export default function SourceManager() {
     if (!confirm(question)) return;
     setBusySource(source.source_type as SourceType);
     try {
-      await disconnectSource(source.id, source.source_type as SourceType);
+      await disconnectSource(source.id, source.source_type as SourceType, source.source_type === 'google_business' ? source.business_id : undefined);
       await refreshAll();
     } catch { /* refresh will show the error */ }
     setBusySource(null);
