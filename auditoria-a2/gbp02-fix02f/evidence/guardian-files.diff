@@ -1,0 +1,513 @@
+--- fix02a/supabase/functions/gbp-oauth-start/handler.ts
++++ current/supabase/functions/gbp-oauth-start/handler.ts
+@@ -1,3 +1,5 @@
++import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
++
+ export const corsHeaders = {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+@@ -15,8 +17,9 @@
+ 
+ export interface StartDeps {
+   getUserId(jwt: string): Promise<string | null>;
+-  // The caller's own business, or null when they have none; throws on lookup failure.
+-  getOwnBusinessId(userId: string): Promise<string | null>;
++  // Active business per the shared contract: null when the user has none, ActiveBusinessError when
++  // the choice is ambiguous or not owned; throws on lookup failure.
++  getOwnBusinessId(userId: string, requestedBusinessId: string | null): Promise<string | null>;
+   // Server-side write: status 'connecting', a fresh state, and no leftover error from a previous attempt.
+   beginAttempt(attempt: AttemptStart): Promise<boolean>;
+   env(name: string): string | undefined;
+@@ -73,14 +76,27 @@
+       const userId = jwt ? await deps.getUserId(jwt) : null;
+       if (!userId) return json({ code: "NOT_AUTHENTICATED", error: "Sesion no valida" }, 401);
+ 
+-      let requestedBusinessId: unknown = null;
++      let rawBusinessId: unknown = null;
+       try {
+-        requestedBusinessId = (await req.json())?.businessId ?? null;
++        rawBusinessId = (await req.json())?.businessId ?? null;
+       } catch {
+-        requestedBusinessId = null;
++        rawBusinessId = null;
+       }
++      const requested = parseRequestedBusinessId(rawBusinessId);
++      if (!requested.ok) return json({ code: "FORBIDDEN", error: "Negocio no valido" }, 403);
++      const requestedBusinessId = requested.businessId;
+ 
+-      const businessId = await deps.getOwnBusinessId(userId);
++      let businessId: string | null;
++      try {
++        businessId = await deps.getOwnBusinessId(userId, requestedBusinessId);
++      } catch (e) {
++        if (!(e instanceof ActiveBusinessError)) throw e;
++        if (e.kind === "forbidden") return json({ code: "FORBIDDEN", error: "Negocio no valido" }, 403);
++        return json({
++          code: BUSINESS_SELECTION_REQUIRED,
++          error: "Tienes varios negocios. Indica que negocio quieres conectar.",
++        }, 409);
++      }
+       if (!businessId) {
+         return json({ code: "NO_BUSINESS", error: "No se encontro tu negocio. Completa la configuracion inicial." }, 400);
+       }
+--- fix02a/supabase/functions/gbp-oauth-start/index.ts
++++ current/supabase/functions/gbp-oauth-start/index.ts
+@@ -1,6 +1,9 @@
+ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+ import { createClient } from "npm:@supabase/supabase-js@2";
+ import { attemptRow, createHandler } from "./handler.ts";
++import {
++  OWNED_BUSINESS_LOOKUP_LIMIT, businessIdOrThrow, ownedBusinessIds, resolveActiveBusiness,
++} from "../activeBusiness.ts";
+ 
+ const supabaseAdmin = createClient(
+   Deno.env.get("SUPABASE_URL")!,
+@@ -12,14 +15,14 @@
+     const { data, error } = await supabaseAdmin.auth.getUser(jwt);
+     return error || !data.user ? null : data.user.id;
+   },
+-  async getOwnBusinessId(userId) {
++  async getOwnBusinessId(userId, requestedBusinessId) {
+     const { data, error } = await supabaseAdmin
+       .from("businesses")
+       .select("id")
+       .eq("user_id", userId)
+-      .maybeSingle();
++      .limit(OWNED_BUSINESS_LOOKUP_LIMIT);
+     if (error) throw new Error("business lookup failed");
+-    return data?.id ?? null;
++    return businessIdOrThrow(resolveActiveBusiness(ownedBusinessIds(data), requestedBusinessId));
+   },
+   async beginAttempt(attempt) {
+     const { error } = await supabaseAdmin
+--- fix02a/supabase/functions/gbp-disconnect/handler.ts
++++ current/supabase/functions/gbp-disconnect/handler.ts
+@@ -1,4 +1,5 @@
+ import { type CredentialStore, revokeGoogleToken } from "./gbpToken.ts";
++import { BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
+ 
+ export const corsHeaders = {
+   "Access-Control-Allow-Origin": "*",
+@@ -10,14 +11,16 @@
+   | { kind: "found"; sourceId: string }
+   | { kind: "none" }
+   | { kind: "forbidden" }
++  | { kind: "selection_required" }
+   | { kind: "failed" };
+ 
+ export interface DisconnectDeps {
+   getUserId(jwt: string): Promise<string | null>;
+-  // Must resolve only through the authenticated user's own business.
++  // Must resolve only through the authenticated user's own business, per the shared active-business contract.
+   resolveSource(userId: string, businessId: string | null): Promise<ResolveResult>;
+   credentials(sourceId: string): CredentialStore;
+-  // Clears stored credentials and removes the connection; must succeed even if revocation failed.
++  // Clears stored credentials and removes the connection and its reviews link for that business only;
++  // must succeed even if revocation failed.
+   removeSource(userId: string, sourceId: string): Promise<boolean>;
+   fetch: typeof fetch;
+ }
+@@ -45,11 +48,15 @@
+       } catch {
+         body = {};
+       }
+-      const businessId = typeof body.businessId === "string" && body.businessId ? body.businessId : null;
++      const requested = parseRequestedBusinessId(body?.businessId);
++      if (!requested.ok) return json({ success: false, code: "FORBIDDEN" }, 403);
+ 
+-      const resolved = await deps.resolveSource(userId, businessId);
++      const resolved = await deps.resolveSource(userId, requested.businessId);
+       if (resolved.kind === "failed") return json({ success: false, code: "INTERNAL_ERROR" }, 500);
+       if (resolved.kind === "forbidden") return json({ success: false, code: "FORBIDDEN" }, 403);
++      if (resolved.kind === "selection_required") {
++        return json({ success: false, code: BUSINESS_SELECTION_REQUIRED }, 409);
++      }
+       if (resolved.kind === "none") return json({ success: true, revoked: false, removed: false });
+ 
+       let revoked = false;
+--- fix02a/supabase/functions/gbp-disconnect/index.ts
++++ current/supabase/functions/gbp-disconnect/index.ts
+@@ -2,6 +2,7 @@
+ import { createClient } from "npm:@supabase/supabase-js@2";
+ import { createHandler } from "./handler.ts";
+ import { vaultCredentialStore } from "./gbpToken.ts";
++import { OWNED_BUSINESS_LOOKUP_LIMIT, ownedBusinessIds, resolveActiveBusiness } from "../activeBusiness.ts";
+ 
+ const supabaseAdmin = createClient(
+   Deno.env.get("SUPABASE_URL")!,
+@@ -14,19 +15,21 @@
+     return error || !data.user ? null : data.user.id;
+   },
+   async resolveSource(userId, businessId) {
+-    const { data: business, error: businessError } = await supabaseAdmin
++    const { data: owned, error: businessError } = await supabaseAdmin
+       .from("businesses")
+       .select("id")
+       .eq("user_id", userId)
+-      .maybeSingle();
++      .limit(OWNED_BUSINESS_LOOKUP_LIMIT);
+     if (businessError) return { kind: "failed" };
+-    if (!business || (businessId != null && businessId !== business.id)) return { kind: "forbidden" };
++    const active = resolveActiveBusiness(ownedBusinessIds(owned), businessId);
++    if (active.kind === "selection_required") return { kind: "selection_required" };
++    if (active.kind !== "resolved") return { kind: "forbidden" };
+ 
+     const { data: source, error } = await supabaseAdmin
+       .from("connected_sources")
+       .select("id")
+       .eq("user_id", userId)
+-      .eq("business_id", business.id)
++      .eq("business_id", active.businessId)
+       .eq("source_type", "google_business")
+       .maybeSingle();
+     if (error) return { kind: "failed" };
+@@ -34,18 +37,28 @@
+   },
+   credentials: (sourceId) => vaultCredentialStore(supabaseAdmin, sourceId),
+   async removeSource(userId, sourceId) {
++    const { data: target } = await supabaseAdmin
++      .from("connected_sources")
++      .select("business_id")
++      .eq("id", sourceId)
++      .eq("user_id", userId)
++      .maybeSingle();
+     const { error: clearError } = await supabaseAdmin.rpc("gbp_clear_credentials", { p_source_id: sourceId });
+     const { error: deleteError } = await supabaseAdmin
+       .from("connected_sources")
+       .delete()
+       .eq("id", sourceId)
+       .eq("user_id", userId);
+-    // The reviews link only exists through Google; the browser may not write it, so it is removed here.
+-    await supabaseAdmin
+-      .from("connected_sources")
+-      .delete()
+-      .eq("user_id", userId)
+-      .eq("source_type", "reviews");
++    // The reviews link only exists through Google; the browser may not write it, so it is removed here,
++    // scoped to the disconnected business so the owner's other businesses keep theirs.
++    if (typeof target?.business_id === "string") {
++      await supabaseAdmin
++        .from("connected_sources")
++        .delete()
++        .eq("user_id", userId)
++        .eq("business_id", target.business_id)
++        .eq("source_type", "reviews");
++    }
+     return !clearError || !deleteError;
+   },
+   fetch: (input, init) => fetch(input, init),
+--- fix02a/supabase/functions/gbp-sync/handler.ts
++++ current/supabase/functions/gbp-sync/handler.ts
+@@ -1,4 +1,5 @@
+ import { type CredentialStore, ensureAccessToken } from "./gbpToken.ts";
++import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
+ 
+ export const corsHeaders = {
+   "Access-Control-Allow-Origin": "*",
+@@ -33,8 +34,9 @@
+ 
+ export interface SyncDeps {
+   getUserId(jwt: string): Promise<string | null>;
+-  // Throws on lookup failure.
+-  getOwnBusinessId(userId: string): Promise<string | null>;
++  // Active business per the shared contract: null when the user has none, ActiveBusinessError when
++  // the choice is ambiguous or not owned; throws on lookup failure.
++  getOwnBusinessId(userId: string, requestedBusinessId: string | null): Promise<string | null>;
+   // Only the caller's own google_business row for their own business; throws on lookup failure.
+   loadSource(userId: string, businessId: string): Promise<SourceRow | null>;
+   credentials(sourceId: string): CredentialStore;
+@@ -180,16 +182,28 @@
+     }
+     const sel = parseSelection(body);
+     if (!sel.ok) return json({ success: false, code: "INVALID_LOCATION", error: "Ubicacion no valida" }, 400);
++    const requested = parseRequestedBusinessId((body as Record<string, unknown>).businessId);
++    if (!requested.ok) return json({ success: false, code: "FORBIDDEN", error: "Negocio no valido" }, 403);
+ 
+     let businessId: string | null;
+     let source: SourceRow | null;
+     try {
+-      businessId = await deps.getOwnBusinessId(userId);
++      businessId = await deps.getOwnBusinessId(userId, requested.businessId);
+       if (!businessId || (sel.businessId !== null && sel.businessId !== businessId)) {
+         return json({ success: false, code: "FORBIDDEN", error: "Negocio no valido" }, 403);
+       }
+       source = await deps.loadSource(userId, businessId);
+-    } catch {
++    } catch (e) {
++      if (e instanceof ActiveBusinessError && e.kind === "selection_required") {
++        return json({
++          success: false,
++          code: BUSINESS_SELECTION_REQUIRED,
++          error: "Tienes varios negocios. Indica que negocio quieres sincronizar.",
++        }, 409);
++      }
++      if (e instanceof ActiveBusinessError) {
++        return json({ success: false, code: "FORBIDDEN", error: "Negocio no valido" }, 403);
++      }
+       return json({ success: false, code: "INTERNAL_ERROR", error: FAILURE_MESSAGES.SYNC_FAILED }, 500);
+     }
+     if (!source || source.status === "disconnected") {
+--- fix02a/supabase/functions/gbp-sync/index.ts
++++ current/supabase/functions/gbp-sync/index.ts
+@@ -2,6 +2,9 @@
+ import { createClient } from "npm:@supabase/supabase-js@2";
+ import { createHandler } from "./handler.ts";
+ import { vaultCredentialStore } from "./gbpToken.ts";
++import {
++  OWNED_BUSINESS_LOOKUP_LIMIT, businessIdOrThrow, ownedBusinessIds, resolveActiveBusiness,
++} from "../activeBusiness.ts";
+ 
+ const supabaseAdmin = createClient(
+   Deno.env.get("SUPABASE_URL")!,
+@@ -13,14 +16,14 @@
+     const { data, error } = await supabaseAdmin.auth.getUser(jwt);
+     return error || !data.user ? null : data.user.id;
+   },
+-  async getOwnBusinessId(userId) {
++  async getOwnBusinessId(userId, requestedBusinessId) {
+     const { data, error } = await supabaseAdmin
+       .from("businesses")
+       .select("id")
+       .eq("user_id", userId)
+-      .maybeSingle();
++      .limit(OWNED_BUSINESS_LOOKUP_LIMIT);
+     if (error) throw new Error("business lookup failed");
+-    return data?.id ?? null;
++    return businessIdOrThrow(resolveActiveBusiness(ownedBusinessIds(data), requestedBusinessId));
+   },
+   async loadSource(userId, businessId) {
+     const { data, error } = await supabaseAdmin
+--- fix02b/supabase/functions/gbp-recover-attempt/handler.ts
++++ current/supabase/functions/gbp-recover-attempt/handler.ts
+@@ -1,3 +1,5 @@
++import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
++
+ export const corsHeaders = {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+@@ -21,7 +23,7 @@
+ export interface RecoverDeps {
+   getUserId(jwt: string): Promise<string | null>;
+   // Throws on lookup failure.
+-  getOwnBusinessId(userId: string): Promise<string | null>;
++  getOwnBusinessId(userId: string, requestedBusinessId: string | null): Promise<string | null>;
+   // The caller's own google_business row; throws on lookup failure.
+   loadSource(userId: string, businessId: string): Promise<AttemptRow | null>;
+   // Applies only if the row still has this status and updated_at (no race with a live attempt).
+@@ -82,9 +84,11 @@
+       }
+       const action = body.action === "cancel" ? "cancel" : body.action === "recover" ? "recover" : null;
+       if (!action) return json({ success: false, code: "INVALID_ACTION" }, 400);
+-      const requestedBusinessId = typeof body.businessId === "string" && body.businessId ? body.businessId : null;
++      const requested = parseRequestedBusinessId(body.businessId);
++      if (!requested.ok) return json({ success: false, code: "FORBIDDEN" }, 403);
++      const requestedBusinessId = requested.businessId;
+ 
+-      const businessId = await deps.getOwnBusinessId(userId);
++      const businessId = await deps.getOwnBusinessId(userId, requestedBusinessId);
+       if (!businessId || (requestedBusinessId !== null && requestedBusinessId !== businessId)) {
+         return json({ success: false, code: "FORBIDDEN" }, 403);
+       }
+@@ -112,7 +116,10 @@
+       if (!applied) return json({ success: true, recovered: false, status: row.status, changed: true });
+       console.info("[gbp-recover-attempt] attempt ended:", next.code);
+       return json({ success: true, recovered: true, status: next.status, code: next.code });
+-    } catch {
++    } catch (e) {
++      if (e instanceof ActiveBusinessError) {
++        return json({ success: false, code: e.kind === "selection_required" ? BUSINESS_SELECTION_REQUIRED : "FORBIDDEN" }, e.kind === "selection_required" ? 409 : 403);
++      }
+       console.error("[gbp-recover-attempt] unhandled error");
+       return json({ success: false, code: "INTERNAL_ERROR" }, 500);
+     }
+--- fix02b/supabase/functions/gbp-recover-attempt/index.ts
++++ current/supabase/functions/gbp-recover-attempt/index.ts
+@@ -1,6 +1,7 @@
+ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+ import { createClient } from "npm:@supabase/supabase-js@2";
+ import { createHandler } from "./handler.ts";
++import { OWNED_BUSINESS_LOOKUP_LIMIT, businessIdOrThrow, ownedBusinessIds, resolveActiveBusiness } from "../activeBusiness.ts";
+ 
+ const supabaseAdmin = createClient(
+   Deno.env.get("SUPABASE_URL")!,
+@@ -12,14 +13,14 @@
+     const { data, error } = await supabaseAdmin.auth.getUser(jwt);
+     return error || !data.user ? null : data.user.id;
+   },
+-  async getOwnBusinessId(userId) {
++  async getOwnBusinessId(userId, requestedBusinessId) {
+     const { data, error } = await supabaseAdmin
+       .from("businesses")
+       .select("id")
+       .eq("user_id", userId)
+-      .maybeSingle();
++      .limit(OWNED_BUSINESS_LOOKUP_LIMIT);
+     if (error) throw new Error("business lookup failed");
+-    return data?.id ?? null;
++    return businessIdOrThrow(resolveActiveBusiness(ownedBusinessIds(data), requestedBusinessId));
+   },
+   async loadSource(userId, businessId) {
+     const { data, error } = await supabaseAdmin
+--- fix02b/supabase/functions/gbp-list-locations/handler.ts
++++ current/supabase/functions/gbp-list-locations/handler.ts
+@@ -1,3 +1,4 @@
++import { ActiveBusinessError, BUSINESS_SELECTION_REQUIRED, parseRequestedBusinessId } from "../activeBusiness.ts";
+ import {
+   type GbpLocation,
+   type ListLocationsError,
+@@ -103,7 +104,9 @@
+       if (body.accountId !== undefined && !isValidAccountId(body.accountId)) {
+         return json(makeError("INVALID_REQUEST"), 400);
+       }
+-      const businessId = typeof body.businessId === "string" && body.businessId ? body.businessId : null;
++      const requested = parseRequestedBusinessId(body?.businessId);
++      if (!requested.ok) return json({ success: false, code: "FORBIDDEN" }, 403);
++      const businessId = requested.businessId;
+ 
+       const { row: source, failed } = await deps.loadSource(userId, businessId);
+       if (failed) return json(makeError("INTERNAL_ERROR"), 500);
+@@ -152,7 +155,10 @@
+       }
+ 
+       return json({ success: true, locations, accountsQueried: accountIds.length, partial: firstError !== null });
+-    } catch {
++    } catch (e) {
++      if (e instanceof ActiveBusinessError) {
++        return json({ success: false, code: e.kind === "selection_required" ? BUSINESS_SELECTION_REQUIRED : "FORBIDDEN" }, e.kind === "selection_required" ? 409 : 403);
++      }
+       console.error("[gbp-list-locations] unhandled error");
+       return json(makeError("INTERNAL_ERROR"), 500);
+     }
+--- fix02b/supabase/functions/gbp-list-locations/index.ts
++++ current/supabase/functions/gbp-list-locations/index.ts
+@@ -2,6 +2,7 @@
+ import { createClient } from "npm:@supabase/supabase-js@2";
+ import { createHandler } from "./handler.ts";
+ import { vaultCredentialStore } from "./gbpToken.ts";
++import { OWNED_BUSINESS_LOOKUP_LIMIT, businessIdOrThrow, ownedBusinessIds, resolveActiveBusiness } from "../activeBusiness.ts";
+ 
+ const supabaseAdmin = createClient(
+   Deno.env.get("SUPABASE_URL")!,
+@@ -14,15 +15,20 @@
+     return error || !data.user ? null : data.user.id;
+   },
+   async loadSource(userId, businessId) {
+-    let query = supabaseAdmin
++    const { data: businesses, error: businessError } = await supabaseAdmin
++      .from("businesses").select("id").eq("user_id", userId).limit(OWNED_BUSINESS_LOOKUP_LIMIT);
++    if (businessError) throw new Error("business lookup failed");
++    const activeBusinessId = businessIdOrThrow(resolveActiveBusiness(ownedBusinessIds(businesses), businessId));
++    if (!activeBusinessId) return { row: null, failed: false };
++    const { data, error } = await supabaseAdmin
+       .from("connected_sources")
+       .select("id")
+       .eq("user_id", userId)
+       .eq("source_type", "google_business")
+-      .neq("status", "disconnected");
+-    if (businessId) query = query.eq("business_id", businessId);
+-    const { data, error } = await query.order("updated_at", { ascending: false }).limit(1);
+-    return { row: data?.[0] ?? null, failed: !!error };
++      .eq("business_id", activeBusinessId)
++      .neq("status", "disconnected")
++      .maybeSingle();
++    return { row: data ?? null, failed: !!error };
+   },
+   credentials: (sourceId) => vaultCredentialStore(supabaseAdmin, sourceId),
+   async updateSource(userId, sourceId, patch) {
+--- fix02a/supabase/functions/gbp-reviews/handler.ts
++++ current/supabase/functions/gbp-reviews/handler.ts
+@@ -6,6 +6,7 @@
+   parseInput, parseModelOutput, replyViolations, tokenState,
+   type Diagnostic, type NormalizedReview, type ReviewsState,
+ } from "./logic.ts";
++import { parseRequestedBusinessId } from "../activeBusiness.ts";
+ 
+ export const corsHeaders = {
+   "Access-Control-Allow-Origin": "*",
+@@ -15,6 +16,8 @@
+ 
+ export type SourceResolution =
+   | { kind: "no_business" }
++  | { kind: "selection_required" }
++  | { kind: "forbidden" }
+   | { kind: "not_connected" }
+   | { kind: "no_location" }
+   | {
+@@ -36,7 +39,8 @@
+ 
+ export interface Deps {
+   authorize(req: Request, fn: string): Promise<EntitlementResult>;
+-  resolveSource(userId: string): Promise<SourceResolution>;
++  // Resolves the active business per the shared contract (owner-checked server-side), then its Google source.
++  resolveSource(userId: string, requestedBusinessId?: string): Promise<SourceResolution>;
+   token(sourceId: string): Promise<TokenResult>;
+   google(url: string, accessToken: string): Promise<Response>;
+   reserve(reservationId: string, userId: string, fn: typeof LEDGER_FUNCTION): Promise<ReserveResult>;
+@@ -95,13 +99,18 @@
+   try { body = JSON.parse(rawBody); } catch { return json({ error: "invalid_input" }, 422); }
+   const input = parseInput(body);
+   if (!input.ok) return json({ error: "invalid_input" }, 422);
++  const requested = parseRequestedBusinessId((body as Record<string, unknown>).businessId);
++  if (!requested.ok) return json({ error: "invalid_input" }, 422);
+ 
+   const access = await deps.authorize(req, input.action === "draft" ? "gbp-reviews-draft" : "gbp-reviews-list");
+   if (!access.ok) return access.response;
+   const userId = access.userId;
+ 
+-  const source = await deps.resolveSource(userId);
+-  if (source.kind === "no_business") return json({ error: "not_found" }, 404);
++  const source = requested.businessId === null
++    ? await deps.resolveSource(userId)
++    : await deps.resolveSource(userId, requested.businessId);
++  if (source.kind === "no_business" || source.kind === "forbidden") return json({ error: "not_found" }, 404);
++  if (source.kind === "selection_required") return json({ error: "business_selection_required" }, 409);
+   if (source.kind === "not_connected") return stateResponse("not_connected", null);
+   if (source.kind === "no_location") return stateResponse("no_location", null);
+ 
+--- fix02a/supabase/functions/gbp-reviews/index.ts
++++ current/supabase/functions/gbp-reviews/index.ts
+@@ -4,6 +4,7 @@
+ import { ensureAccessToken, vaultCredentialStore } from "./gbpToken.ts";
+ import { corsHeaders, handle, type ReserveResult } from "./handler.ts";
+ import { MAX_BODY_BYTES, MAX_OUTPUT_TOKENS, MODEL, PROVIDER_TIMEOUT_MS, selectedLocation } from "./logic.ts";
++import { OWNED_BUSINESS_LOOKUP_LIMIT, ownedBusinessIds, resolveActiveBusiness } from "../activeBusiness.ts";
+ 
+ const RESERVE_STATUSES = new Set(["reserved", "fn_limit", "global_limit", "disabled", "invalid"]);
+ 
+@@ -27,10 +28,19 @@
+ 
+     return await handle(req, {
+       authorize: (r, fn) => requirePremium(r, fn, corsHeaders),
+-      async resolveSource(userId) {
++      async resolveSource(userId, requestedBusinessId) {
++        const { data: owned, error: ownedError } = await admin
++          .from("businesses")
++          .select("id")
++          .eq("user_id", userId)
++          .limit(OWNED_BUSINESS_LOOKUP_LIMIT);
++        if (ownedError) throw new Error("business_lookup_failed");
++        const active = resolveActiveBusiness(ownedBusinessIds(owned), requestedBusinessId ?? null);
++        if (active.kind !== "resolved") return { kind: active.kind };
+         const { data: business, error } = await admin
+           .from("businesses")
+           .select("id, name, category, city, services, phone, website")
++          .eq("id", active.businessId)
+           .eq("user_id", userId)
+           .maybeSingle();
+         if (error) throw new Error("business_lookup_failed");
+--- fix02b/src/features/reality-engine/engine.ts
++++ current/src/features/reality-engine/engine.ts
+@@ -103,11 +103,11 @@
+ 
+ // ─── Disconnect any source ──────────────────────────────────────────────────
+ 
+-export async function disconnectSource(sourceId: string, sourceType: SourceType) {
++export async function disconnectSource(sourceId: string, sourceType: SourceType, businessId?: string) {
+   await addSyncEvent(sourceId, sourceType, 'source_disconnected', 'Fuente desconectada');
+   if (sourceType === 'google_business') {
+     // Revocation and credential removal happen server-side; the browser never sees the tokens.
+-    const { error } = await invokeEdge('gbp-disconnect', {});
++    const { error } = await invokeEdge('gbp-disconnect', businessId ? { businessId } : {});
+     if (error) throw new Error(error);
+     return;
+   }

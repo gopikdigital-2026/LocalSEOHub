@@ -1,0 +1,94 @@
+{
+  "inputs": {
+    "supabase/functions/gbp-disconnect/gbpToken.ts": {
+      "bytes": 5074,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/activeBusiness.ts": {
+      "bytes": 3042,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-disconnect/handler.ts": {
+      "bytes": 3460,
+      "imports": [
+        {
+          "path": "supabase/functions/gbp-disconnect/gbpToken.ts",
+          "kind": "import-statement",
+          "original": "./gbpToken.ts"
+        },
+        {
+          "path": "supabase/functions/activeBusiness.ts",
+          "kind": "import-statement",
+          "original": "../activeBusiness.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-disconnect/index.ts": {
+      "bytes": 2651,
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "supabase/functions/gbp-disconnect/handler.ts",
+          "kind": "import-statement",
+          "original": "./handler.ts"
+        },
+        {
+          "path": "supabase/functions/gbp-disconnect/gbpToken.ts",
+          "kind": "import-statement",
+          "original": "./gbpToken.ts"
+        },
+        {
+          "path": "supabase/functions/activeBusiness.ts",
+          "kind": "import-statement",
+          "original": "../activeBusiness.ts"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "index.js": {
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "supabase/functions/gbp-disconnect/index.ts",
+      "inputs": {
+        "supabase/functions/gbp-disconnect/index.ts": {
+          "bytesInOutput": 2059
+        },
+        "supabase/functions/gbp-disconnect/gbpToken.ts": {
+          "bytesInOutput": 1161
+        },
+        "supabase/functions/activeBusiness.ts": {
+          "bytesInOutput": 1057
+        },
+        "supabase/functions/gbp-disconnect/handler.ts": {
+          "bytesInOutput": 2339
+        }
+      },
+      "bytes": 6849
+    }
+  }
+}

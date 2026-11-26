@@ -1,0 +1,8 @@
+{
+ "base": "deliverables/localseohub-gbp02-fix02e.zip",
+ "compared_identical": 852,
+ "changed": [
+  "src/features/meta-connection/__tests__/a351MetaConnection.test.ts"
+ ],
+ "absent_in_project_not_code": []
+}

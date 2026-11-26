@@ -1,0 +1,434 @@
+{
+ "current": {
+  "photo-exif-gps.jpg": {
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  "photo-text-exif.png": {
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  }
+ },
+ "archived_copies": [
+  {
+   "zip": "deliverables/localseohub-a3743-gateB4fix01-verification.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3743-gateB4fix01-verification.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-a3752-fix01-tenant-security.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3752-fix01-tenant-security.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-a3755-fix01-recovery.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3755-fix01-recovery.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-a3755-fix02-restoration.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3755-fix02-restoration.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-a3755-predeploy-verification.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3755-predeploy-verification.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-a3761-weekly-plan-logic.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3761-weekly-plan-logic.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-a3762-weekly-plan-page.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3762-weekly-plan-page.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-a3763-tu-semana-integration.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3763-tu-semana-integration.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-a3765-weekly-visibility-fix.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3765-weekly-visibility-fix.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-a3767-stale-recommendations-fix.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-a3767-stale-recommendations-fix.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-final-audit.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-final-audit.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix01.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix01.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix01a.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix01a.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix02a.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix02a.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix02b.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix02b.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix02c.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "deliverables/localseohub-gbp02-fix02c.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateA.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateA.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB1.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB1.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB2p1.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB2p1.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB2p2.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB2p2.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix01.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix01.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix02-final.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix02-final.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix02-go.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix02-go.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix02-governance.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix02-governance.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix02.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3fix02.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3p1.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB3p1.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB4-audit.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB4-audit.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB4fix01-exception.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB4fix01-exception.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB4fix01.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB4fix01.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB5-fix01-recovery.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB5-fix01-recovery.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB5-fix02-tracker-recovery.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB5-fix02-tracker-recovery.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB5-rollout.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB5-rollout.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB6-readiness.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB6-readiness.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3743-gateB7-final.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3743-gateB7-final.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  },
+  {
+   "zip": "localseohub-a3751-commercial-readiness.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-exif-gps.jpg",
+   "size": 48612,
+   "sha256": "52547377f0dced0baa51780d2720f4ec4dddcef11c1cc1371a8993c0cbb60471"
+  },
+  {
+   "zip": "localseohub-a3751-commercial-readiness.zip",
+   "entry": "src/features/publications/__tests__/fixtures/photo-text-exif.png",
+   "size": 15107,
+   "sha256": "c137d926cd83ea52302587480b5c80966b9633d93153055aedb233df248eb120"
+  }
+ ]
+}

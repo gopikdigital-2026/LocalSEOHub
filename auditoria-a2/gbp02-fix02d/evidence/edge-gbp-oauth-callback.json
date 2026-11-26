@@ -1,0 +1,57 @@
+{
+  "inputs": {
+    "supabase/functions/gbp-oauth-callback/handler.ts": {
+      "bytes": 9254,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-oauth-callback/index.ts": {
+      "bytes": 2253,
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "supabase/functions/gbp-oauth-callback/handler.ts",
+          "kind": "import-statement",
+          "original": "./handler.ts"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "index.js": {
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "supabase/functions/gbp-oauth-callback/index.ts",
+      "inputs": {
+        "supabase/functions/gbp-oauth-callback/index.ts": {
+          "bytesInOutput": 1937
+        },
+        "supabase/functions/gbp-oauth-callback/handler.ts": {
+          "bytesInOutput": 7709
+        }
+      },
+      "bytes": 9800
+    }
+  }
+}

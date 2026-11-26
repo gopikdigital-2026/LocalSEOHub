@@ -1,0 +1,107 @@
+{
+  "inputs": {
+    "supabase/functions/activeBusiness.ts": {
+      "bytes": 3042,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-list-locations/logic.ts": {
+      "bytes": 4434,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-list-locations/gbpToken.ts": {
+      "bytes": 5074,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-list-locations/handler.ts": {
+      "bytes": 6594,
+      "imports": [
+        {
+          "path": "supabase/functions/activeBusiness.ts",
+          "kind": "import-statement",
+          "original": "../activeBusiness.ts"
+        },
+        {
+          "path": "supabase/functions/gbp-list-locations/logic.ts",
+          "kind": "import-statement",
+          "original": "./logic.ts"
+        },
+        {
+          "path": "supabase/functions/gbp-list-locations/gbpToken.ts",
+          "kind": "import-statement",
+          "original": "./gbpToken.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-list-locations/index.ts": {
+      "bytes": 1776,
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "supabase/functions/gbp-list-locations/handler.ts",
+          "kind": "import-statement",
+          "original": "./handler.ts"
+        },
+        {
+          "path": "supabase/functions/gbp-list-locations/gbpToken.ts",
+          "kind": "import-statement",
+          "original": "./gbpToken.ts"
+        },
+        {
+          "path": "supabase/functions/activeBusiness.ts",
+          "kind": "import-statement",
+          "original": "../activeBusiness.ts"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "index.js": {
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "supabase/functions/gbp-list-locations/index.ts",
+      "inputs": {
+        "supabase/functions/gbp-list-locations/index.ts": {
+          "bytesInOutput": 1481
+        },
+        "supabase/functions/activeBusiness.ts": {
+          "bytesInOutput": 1427
+        },
+        "supabase/functions/gbp-list-locations/logic.ts": {
+          "bytesInOutput": 2989
+        },
+        "supabase/functions/gbp-list-locations/gbpToken.ts": {
+          "bytesInOutput": 3121
+        },
+        "supabase/functions/gbp-list-locations/handler.ts": {
+          "bytesInOutput": 5207
+        }
+      },
+      "bytes": 14525
+    }
+  }
+}

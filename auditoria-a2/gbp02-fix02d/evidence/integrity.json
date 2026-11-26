@@ -1,0 +1,9 @@
+{
+  "changed": [
+    "src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts"
+  ],
+  "production_unchanged": true,
+  "guardians_unchanged": true,
+  "original_test_sha256": "e226db8d159422b7478460e3f4269cc6832418e3cad9dbfe1fc6c22b6305e70f",
+  "final_test_sha256": "e3c2f3e3c3104f10e7565536272d611425c04eaa86d10f8d2e635488faf35e9f"
+}

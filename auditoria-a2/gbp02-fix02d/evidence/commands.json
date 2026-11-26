@@ -1,0 +1,80 @@
+[
+  {
+    "check": "focused",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts",
+      "--reporter=verbose"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "full-suite",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "exit": 1
+  },
+  {
+    "check": "typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exit": 2
+  },
+  {
+    "check": "lint",
+    "command": [
+      "npm",
+      "run",
+      "lint"
+    ],
+    "exit": 1
+  },
+  {
+    "check": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "gbp-compatibility",
+    "command": [
+      "npx",
+      "vitest",
+      "run",
+      "src/features/reality-engine/__tests__/gbp02Fix01Verification.test.ts",
+      "src/features/reality-engine/__tests__/gbp02Fix02bActiveBusiness.test.ts",
+      "src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts",
+      "src/features/reality-engine/__tests__/gbpListLocations.test.ts",
+      "src/features/reality-engine/__tests__/a341GbpSecurity.test.ts",
+      "src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "edge-graph",
+    "command": [
+      "node",
+      "auditoria-a2/gbp02-fix02d/check-edge-graph.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "build-final",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0
+  }
+]

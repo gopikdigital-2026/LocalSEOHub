@@ -1,0 +1,67 @@
+{
+ "supabase/functions/gbp-oauth-start/handler.ts": {
+  "base": "fix02a",
+  "added": 22,
+  "removed": 6
+ },
+ "supabase/functions/gbp-oauth-start/index.ts": {
+  "base": "fix02a",
+  "added": 6,
+  "removed": 3
+ },
+ "supabase/functions/gbp-disconnect/handler.ts": {
+  "base": "fix02a",
+  "added": 11,
+  "removed": 4
+ },
+ "supabase/functions/gbp-disconnect/index.ts": {
+  "base": "fix02a",
+  "added": 23,
+  "removed": 10
+ },
+ "supabase/functions/gbp-sync/handler.ts": {
+  "base": "fix02a",
+  "added": 18,
+  "removed": 4
+ },
+ "supabase/functions/gbp-sync/index.ts": {
+  "base": "fix02a",
+  "added": 6,
+  "removed": 3
+ },
+ "supabase/functions/gbp-recover-attempt/handler.ts": {
+  "base": "fix02b",
+  "added": 11,
+  "removed": 4
+ },
+ "supabase/functions/gbp-recover-attempt/index.ts": {
+  "base": "fix02b",
+  "added": 4,
+  "removed": 3
+ },
+ "supabase/functions/gbp-list-locations/handler.ts": {
+  "base": "fix02b",
+  "added": 8,
+  "removed": 2
+ },
+ "supabase/functions/gbp-list-locations/index.ts": {
+  "base": "fix02b",
+  "added": 11,
+  "removed": 5
+ },
+ "supabase/functions/gbp-reviews/handler.ts": {
+  "base": "fix02a",
+  "added": 12,
+  "removed": 3
+ },
+ "supabase/functions/gbp-reviews/index.ts": {
+  "base": "fix02a",
+  "added": 11,
+  "removed": 1
+ },
+ "src/features/reality-engine/engine.ts": {
+  "base": "fix02b",
+  "added": 2,
+  "removed": 2
+ }
+}

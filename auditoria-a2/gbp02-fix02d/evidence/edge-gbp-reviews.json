@@ -1,0 +1,120 @@
+{
+  "inputs": {
+    "supabase/functions/gbp-reviews/entitlement.ts": {
+      "bytes": 3809,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-reviews/gbpToken.ts": {
+      "bytes": 5074,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-reviews/logic.ts": {
+      "bytes": 11829,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/activeBusiness.ts": {
+      "bytes": 3042,
+      "imports": [],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-reviews/handler.ts": {
+      "bytes": 9413,
+      "imports": [
+        {
+          "path": "supabase/functions/gbp-reviews/logic.ts",
+          "kind": "import-statement",
+          "original": "./logic.ts"
+        },
+        {
+          "path": "supabase/functions/activeBusiness.ts",
+          "kind": "import-statement",
+          "original": "../activeBusiness.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "supabase/functions/gbp-reviews/index.ts": {
+      "bytes": 5432,
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "supabase/functions/gbp-reviews/entitlement.ts",
+          "kind": "import-statement",
+          "original": "./entitlement.ts"
+        },
+        {
+          "path": "supabase/functions/gbp-reviews/gbpToken.ts",
+          "kind": "import-statement",
+          "original": "./gbpToken.ts"
+        },
+        {
+          "path": "supabase/functions/gbp-reviews/handler.ts",
+          "kind": "import-statement",
+          "original": "./handler.ts"
+        },
+        {
+          "path": "supabase/functions/gbp-reviews/logic.ts",
+          "kind": "import-statement",
+          "original": "./logic.ts"
+        },
+        {
+          "path": "supabase/functions/activeBusiness.ts",
+          "kind": "import-statement",
+          "original": "../activeBusiness.ts"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "index.js": {
+      "imports": [
+        {
+          "path": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "npm:@supabase/supabase-js@2",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "exports": [],
+      "entryPoint": "supabase/functions/gbp-reviews/index.ts",
+      "inputs": {
+        "supabase/functions/gbp-reviews/index.ts": {
+          "bytesInOutput": 4804
+        },
+        "supabase/functions/gbp-reviews/entitlement.ts": {
+          "bytesInOutput": 2812
+        },
+        "supabase/functions/gbp-reviews/gbpToken.ts": {
+          "bytesInOutput": 3121
+        },
+        "supabase/functions/gbp-reviews/logic.ts": {
+          "bytesInOutput": 9119
+        },
+        "supabase/functions/activeBusiness.ts": {
+          "bytesInOutput": 992
+        },
+        "supabase/functions/gbp-reviews/handler.ts": {
+          "bytesInOutput": 6953
+        }
+      },
+      "bytes": 28116
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+ "entries": 867,
+ "crc_bad": null,
+ "hash_mismatch": [],
+ "secret_hits_reviewed_false_positive": [],
+ "required_present": true,
+ "zip_sha256": "9e98e6b7980c7661809f5283a7ac8b6c002dc6e08b35fa0cdd7f846178eac6e2",
+ "root_copy_identical": true,
+ "zip_size": 4920591
+}

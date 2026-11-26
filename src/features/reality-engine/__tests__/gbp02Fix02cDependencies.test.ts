@@ -77,7 +77,7 @@ describe('FIX02C · locations with real adapter ownership queries', () => {
       return new Response(JSON.stringify({ locations: [{ name: token.includes('source-a') ? 'locations/111' : 'locations/222', title: token }] }));
     });
     const handle = listHandler({ ...a.deps, credentials, fetch: fetchMock as typeof fetch });
-    return { handle, credentials, fetchMock };
+    return { handle, credentials, fetchMock, changes: a.changes };
   }
 
   it.each(['biz-a', 'biz-b'])('uses only the credentials and locations of %s', async (businessId) => {
@@ -89,12 +89,13 @@ describe('FIX02C · locations with real adapter ownership queries', () => {
   });
 
   it('missing selection returns 409 without touching credentials or Google', async () => {
-    const { handle, credentials, fetchMock } = setup();
+    const { handle, credentials, fetchMock, changes } = setup();
     const res = await handle(post({ accountId: 'accounts/123' }));
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe('BUSINESS_SELECTION_REQUIRED');
     expect(credentials).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(changes).toEqual([]);
   });
 
   it('single business is automatic', async () => {
@@ -161,10 +162,12 @@ describe('FIX02C · unchanged OAuth callback association', () => {
     const { deps } = adapters<CallbackDeps>('gbp-oauth-callback');
     const store = vi.fn();
     const update = vi.fn();
-    const res = await callbackHandler({ ...deps, storeCredentials: store, updateAttempt: update })(new Request('https://x/cb?state=unknown&code=mock'));
+    const fetchMock = vi.fn(() => { throw new Error('Real network forbidden'); });
+    const res = await callbackHandler({ ...deps, storeCredentials: store, updateAttempt: update, fetch: fetchMock })(new Request('https://x/cb?state=unknown&code=mock'));
     expect(res.headers.get('Location')).toContain('ATTEMPT_NOT_FOUND');
     expect(store).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

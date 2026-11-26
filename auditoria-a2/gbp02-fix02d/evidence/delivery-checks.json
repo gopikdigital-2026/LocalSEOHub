@@ -1,0 +1,12 @@
+{
+  "pattern_scan": "PASS",
+  "findings": 0,
+  "environment_files_excluded": true,
+  "production_unchanged": true,
+  "guardians_unchanged": true,
+  "inventory_files": 553,
+  "changed_tests": [
+    "src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts"
+  ],
+  "supabase_edge_packaging": "NOT VERIFIED"
+}
