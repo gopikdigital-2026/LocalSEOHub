@@ -312,12 +312,23 @@ describe('A3.4.1 shared helper, isolation and secrecy', () => {
     }
   });
 
-  it('the callback keeps the stored refresh token when Google omits it', () => {
+  // FIX03B supersedes "keep the stored refresh token": consumption drops the previous authorization's credentials,
+  // so a new authorization must bring its own refresh token and is stored atomically with the phase change.
+  it('the callback stores a self-sufficient authorization atomically, never mixing it with a previous one', () => {
     const cb = src('supabase/functions/gbp-oauth-callback/index.ts');
-    expect(cb).toContain('rpc("gbp_store_credentials"');
+    expect(cb).toContain('rpc("gbp_complete_oauth_attempt"');
     expect(cb).toContain('p_refresh_token: tokens.refreshToken');
+    expect(cb).not.toContain('gbp_store_credentials');
     expect(src('supabase/functions/gbp-oauth-callback/handler.ts'))
-      .toMatch(/refreshToken: typeof tokens\.refresh_token === "string" && tokens\.refresh_token \? tokens\.refresh_token : null/);
+      .toMatch(/typeof tokens\?\.refresh_token !== "string" \|\| !tokens\.refresh_token\) \{\s*return terminate\("error", "CODE_EXCHANGE_FAILED"\)/);
+  });
+
+  it('token refresh writes are compare-and-swap against the pair that was read', () => {
+    const helper = src('supabase/functions/gbp-sync/gbpToken.ts');
+    expect(helper).toContain('rpc("gbp_refresh_credentials"');
+    expect(helper).toContain('p_expected_access: expected.accessToken');
+    expect(helper).toContain('p_expected_refresh: expected.refreshToken');
+    expect(helper).not.toContain('gbp_store_credentials');
   });
 
   it('every GBP lookup is scoped by the JWT user, never a client user_id', () => {

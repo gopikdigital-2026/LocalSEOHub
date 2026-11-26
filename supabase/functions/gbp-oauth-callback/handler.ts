@@ -1,30 +1,41 @@
-export interface Attempt {
-  id: string;
+export interface ConsumedAttempt {
+  sourceId: string;
   userId: string;
   businessId: string;
-  startedAt: string | null;
+  attemptId: string;
+  state: string;
 }
+
+export type ConsumeResult =
+  | { result: "CONSUMED"; attempt: ConsumedAttempt }
+  | { result: "EXPIRED" | "ALREADY_USED" | "NOT_FOUND" };
 
 export interface StoredTokens {
   accessToken: string;
-  refreshToken: string | null;
+  refreshToken: string;
   expiresAt: string;
 }
+
+export type CompleteResult = "COMPLETED" | "EXPIRED" | "SUPERSEDED" | "INVALID_INPUT";
 
 export type TerminalStatus = "error" | "permissions_required" | "disconnected";
 
 export interface CallbackDeps {
   env(name: string): string | undefined;
-  // Only the 'connecting' google_business row carrying this exact state; throws on lookup failure.
-  findAttempt(state: string): Promise<Attempt | null>;
+  // Single-use: moves the matching attempt to 'exchanging' and drops any previous credentials; throws on failure.
+  consumeState(state: string): Promise<ConsumeResult>;
   ownsBusiness(userId: string, businessId: string): Promise<boolean>;
-  storeCredentials(sourceId: string, tokens: StoredTokens): Promise<boolean>;
-  clearCredentials(sourceId: string): Promise<void>;
-  // Must only change the row with this id while it is still 'connecting'.
-  updateAttempt(sourceId: string, patch: Record<string, unknown>): Promise<boolean>;
+  // Stores the credentials and advances to select_location in one transaction, only for this exact attempt.
+  completeAttempt(attempt: ConsumedAttempt, tokens: StoredTokens): Promise<CompleteResult>;
+  // Terminal failure for this exact attempt; leaves no credentials behind.
+  failAttempt(attempt: ConsumedAttempt, status: TerminalStatus, code: string): Promise<boolean>;
   fetch: typeof fetch;
   now?: () => Date;
 }
+
+const STATE_FORMAT = /^[0-9a-f]{64}$/;
+// The database refuses expiries beyond 24 h; Google issues ~1 h tokens, so clamping only refreshes earlier.
+const MAX_EXPIRES_IN_S = 3600;
 
 export function classifyGoogleAuthError(error: string): { status: TerminalStatus; code: string } {
   switch (error) {
@@ -81,19 +92,12 @@ export function createHandler(deps: CallbackDeps) {
       new Response(null, { status: 302, headers: { Location: `${frontendCallback}?${query}` } });
     const redirectError = (code: string) => redirect(`error=${encodeURIComponent(code)}`);
 
-    let attempt: Attempt | null = null;
-    let credentialsStored = false;
+    let attempt: ConsumedAttempt | null = null;
 
     async function terminate(status: TerminalStatus, code: string): Promise<Response> {
       if (attempt) {
         try {
-          if (credentialsStored && status !== "disconnected") await deps.clearCredentials(attempt.id);
-          const ok = await deps.updateAttempt(attempt.id, {
-            status,
-            last_error: code,
-            metadata: { phase: "failed", oauth_state: null, oauth_started_at: attempt.startedAt, failed_at: now().toISOString() },
-            updated_at: now().toISOString(),
-          });
+          const ok = await deps.failAttempt(attempt, status, code);
           if (!ok) console.error("[gbp-oauth-callback] attempt termination not applied");
         } catch {
           console.error("[gbp-oauth-callback] attempt termination failed");
@@ -123,21 +127,30 @@ export function createHandler(deps: CallbackDeps) {
         }
       }
 
-      // Without a state that matches a live attempt there is no row we may safely touch.
-      if (state) {
-        try {
-          attempt = await deps.findAttempt(state);
-        } catch {
-          console.error("[gbp-oauth-callback] attempt lookup failed");
-          return redirectError("ATTEMPT_LOOKUP_FAILED");
-        }
+      if (!state) {
+        return googleError ? redirectError(classifyGoogleAuthError(googleError).code) : redirectError("MISSING_STATE");
       }
+      if (!STATE_FORMAT.test(state)) return redirectError("ATTEMPT_NOT_FOUND");
+
+      // Consuming the state is the only way to reach a row; a second use of the same state finds nothing.
+      let consumed: ConsumeResult;
+      try {
+        consumed = await deps.consumeState(state);
+      } catch {
+        console.error("[gbp-oauth-callback] attempt lookup failed");
+        return redirectError("ATTEMPT_LOOKUP_FAILED");
+      }
+      if (consumed.result === "EXPIRED") return redirectError("ATTEMPT_EXPIRED");
+      if (consumed.result !== "CONSUMED") {
+        if (consumed.result === "NOT_FOUND" && googleError) return redirectError(classifyGoogleAuthError(googleError).code);
+        return redirectError("ATTEMPT_NOT_FOUND");
+      }
+      attempt = consumed.attempt;
 
       if (googleError) {
         const c = classifyGoogleAuthError(googleError);
         return terminate(c.status, c.code);
       }
-      if (!attempt) return redirectError(state ? "ATTEMPT_NOT_FOUND" : "MISSING_STATE");
       if (!code) return terminate("error", "MISSING_CODE");
 
       const clientId = deps.env("GOOGLE_CLIENT_ID");
@@ -175,26 +188,16 @@ export function createHandler(deps: CallbackDeps) {
       }
 
       const tokens = await tokenResponse.json().catch(() => null);
-      if (typeof tokens?.access_token !== "string" || !tokens.access_token) {
+      // The previous credentials were dropped on consumption, so this authorization must be self-sufficient.
+      if (typeof tokens?.access_token !== "string" || !tokens.access_token
+        || typeof tokens?.refresh_token !== "string" || !tokens.refresh_token) {
         return terminate("error", "CODE_EXCHANGE_FAILED");
       }
       const accessToken: string = tokens.access_token;
-      const expiresIn = Number(tokens.expires_in) > 0 ? Number(tokens.expires_in) : 3600;
+      const refreshToken: string = tokens.refresh_token;
+      const expiresIn = Math.min(Number(tokens.expires_in) > 0 ? Number(tokens.expires_in) : MAX_EXPIRES_IN_S, MAX_EXPIRES_IN_S);
 
-      try {
-        credentialsStored = await deps.storeCredentials(attempt.id, {
-          accessToken,
-          refreshToken: typeof tokens.refresh_token === "string" && tokens.refresh_token ? tokens.refresh_token : null,
-          expiresAt: new Date(now().getTime() + expiresIn * 1000).toISOString(),
-        });
-      } catch {
-        credentialsStored = false;
-      }
-      if (!credentialsStored) {
-        credentialsStored = true; // clear any partial write
-        return terminate("error", "CREDENTIAL_STORE_FAILED");
-      }
-
+      // Account discovery runs before anything is persisted, so its failure leaves nothing to clean up.
       let accountsResponse: Response;
       try {
         accountsResponse = await deps.fetch("https://mybusinessaccountmanagement.googleapis.com/v1/accounts", {
@@ -219,16 +222,29 @@ export function createHandler(deps: CallbackDeps) {
         }));
       if (accounts.length === 0) return terminate("error", "NO_GBP_ACCOUNTS");
 
-      const at = now().toISOString();
-      const advanced = await deps.updateAttempt(attempt.id, {
-        status: "connecting",
-        last_error: null,
-        metadata: { phase: "select_location", oauth_state: null, oauth_started_at: attempt.startedAt, authorized_at: at },
-        updated_at: at,
-      });
-      if (!advanced) return terminate("error", "ATTEMPT_UPDATE_FAILED");
-
-      return redirect(`accounts=${encodeURIComponent(JSON.stringify(accounts))}`);
+      let completed: CompleteResult;
+      try {
+        completed = await deps.completeAttempt(attempt, {
+          accessToken,
+          refreshToken,
+          expiresAt: new Date(now().getTime() + expiresIn * 1000).toISOString(),
+        });
+      } catch {
+        return terminate("error", "CREDENTIAL_STORE_FAILED");
+      }
+      if (completed === "COMPLETED") {
+        return redirect(`accounts=${encodeURIComponent(JSON.stringify(accounts))}`);
+      }
+      if (completed === "EXPIRED") {
+        console.warn("[gbp-oauth-callback] attempt ended:", "ATTEMPT_EXPIRED");
+        return redirectError("ATTEMPT_EXPIRED");
+      }
+      if (completed === "SUPERSEDED") {
+        // Another flow owns the row now; it must not be touched.
+        console.warn("[gbp-oauth-callback] attempt ended:", "ATTEMPT_SUPERSEDED");
+        return redirectError("ATTEMPT_NOT_FOUND");
+      }
+      return terminate("error", "CREDENTIAL_STORE_FAILED");
     } catch {
       console.error("[gbp-oauth-callback] unhandled error");
       return terminate("error", "INTERNAL_ERROR");

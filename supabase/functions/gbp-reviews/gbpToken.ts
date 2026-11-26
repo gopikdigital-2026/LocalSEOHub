@@ -3,6 +3,8 @@
 export const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 export const GOOGLE_REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 export const REFRESH_MARGIN_MS = 60_000;
+// The database refuses expiries beyond 24 h; clamping only makes the next refresh happen earlier.
+const MAX_EXPIRES_IN_S = 3600;
 
 export type TokenErrorCode =
   | "NOT_CONNECTED"
@@ -17,10 +19,15 @@ export interface StoredCredentials {
   expiresAt: string | null;
 }
 
+export interface ExpectedCredentials {
+  accessToken: string | null;
+  refreshToken: string;
+}
+
 export interface CredentialStore {
   read(): Promise<StoredCredentials | null>;
-  // A null refresh token keeps the one already stored.
-  write(accessToken: string, refreshToken: string | null, expiresAt: string): Promise<boolean>;
+  // Compare-and-swap: succeeds only if the stored pair still equals `expected`. A null refresh token keeps the stored one.
+  write(accessToken: string, refreshToken: string | null, expiresAt: string, expected: ExpectedCredentials): Promise<boolean>;
 }
 
 export interface TokenDeps {
@@ -88,13 +95,21 @@ export async function ensureAccessToken(store: CredentialStore, deps: TokenDeps)
 
   const data = await res.json().catch(() => null);
   if (typeof data?.access_token !== "string" || !data.access_token) return fail("GBP_API_UNAVAILABLE", true);
-  const expiresIn = typeof data.expires_in === "number" && data.expires_in > 0 ? data.expires_in : 3600;
+  const expiresIn = Math.min(typeof data.expires_in === "number" && data.expires_in > 0 ? data.expires_in : MAX_EXPIRES_IN_S, MAX_EXPIRES_IN_S);
   const expiresAt = new Date(now() + expiresIn * 1000).toISOString();
   const newRefresh = typeof data.refresh_token === "string" && data.refresh_token ? data.refresh_token : null;
 
-  const saved = await store.write(data.access_token, newRefresh, expiresAt);
-  if (!saved) return fail("NOT_CONNECTED");
-  return { ok: true, accessToken: data.access_token, refreshed: true };
+  const refreshToken = creds.refreshToken;
+  const saved = await store.write(data.access_token, newRefresh, expiresAt, { accessToken: creds.accessToken, refreshToken });
+  if (saved) return { ok: true, accessToken: data.access_token, refreshed: true };
+
+  // Lost the swap: a newer authorization or a concurrent refresh owns the row. Never use or keep our result.
+  const current = await store.read();
+  if (!current || (!current.accessToken && !current.refreshToken)) return fail("NOT_CONNECTED");
+  if (current.accessToken && !tokenNeedsRefresh(current.expiresAt, now())) {
+    return { ok: true, accessToken: current.accessToken, refreshed: false };
+  }
+  return fail("GBP_API_UNAVAILABLE", true);
 }
 
 export async function revokeGoogleToken(token: string | null, fetchFn: typeof fetch): Promise<boolean> {
@@ -120,9 +135,11 @@ export function vaultCredentialStore(admin: RpcClient, sourceId: string): Creden
       const row = data[0] as { access_token: string | null; refresh_token: string | null; token_expires_at: string | null };
       return { accessToken: row.access_token, refreshToken: row.refresh_token, expiresAt: row.token_expires_at };
     },
-    async write(accessToken, refreshToken, expiresAt) {
-      const { data, error } = await admin.rpc("gbp_store_credentials", {
+    async write(accessToken, refreshToken, expiresAt, expected) {
+      const { data, error } = await admin.rpc("gbp_refresh_credentials", {
         p_source_id: sourceId,
+        p_expected_access: expected.accessToken,
+        p_expected_refresh: expected.refreshToken,
         p_access_token: accessToken,
         p_refresh_token: refreshToken,
         p_expires_at: expiresAt,

@@ -574,8 +574,8 @@ describe('A3.5.1 · P. GBP regression: frozen files', () => {
   const FROZEN: Record<string, string> = {
     'supabase/functions/gbp-oauth-start/handler.ts': '81d01feaa42c8e01f1989b96e53780a3cc8ca0930d9bf38cd7f36ef203e4d933',
     'supabase/functions/gbp-oauth-start/index.ts': '186e6257e675dd17e598bd7215043ad2155dd0163c9b1438cfd20c9046b288a2',
-    'supabase/functions/gbp-oauth-callback/handler.ts': 'f1a97cb69a9fc33e8dd2da8ccaa99e74979bff474d9f17d6dbe6f07dc13a86a4',
-    'supabase/functions/gbp-oauth-callback/index.ts': '90fc20c1f0ca22d56b991c1cd8b38c7c15125167cbae37051b9d4186bf827fae',
+    'supabase/functions/gbp-oauth-callback/handler.ts': '7daadb1b2d87158f1c2d466a15941ba84c32efb663b490226580cab3d72a6936',
+    'supabase/functions/gbp-oauth-callback/index.ts': 'd29725a135cb6ecc2f59cd1dbc20ab010293b189d7aad9a23c59b0e8c97bc427',
     'supabase/functions/gbp-disconnect/handler.ts': 'e2064c2b75165c6b521cb94f523c974b81ed913cdeb83eb12a6571fb477e2f28',
     'supabase/functions/gbp-disconnect/index.ts': '457b0734e0499d3703dd78c18dcca4c1802552fcea64d0049850748257f85d55',
     'supabase/functions/gbp-sync/handler.ts': '915bedc7baa97f87a00c0b675ff7c86949f202554c067cee4ef8b2534c4aef84',

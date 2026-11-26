@@ -1,0 +1,157 @@
+{
+  "database": "localhost:55432 (disposable)",
+  "server": "PostgreSQL 17.11 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+  "preFix03bStoreMd5": "0a1ea0b065c265df1bc6b01e54ebcf5b",
+  "results": [
+    {
+      "id": "I-0",
+      "name": "migration 1 applies in a single transaction on the 62-migration replay",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "U-B",
+      "name": "date matrix: strict UTC ISO accepted, everything else NULL without exception",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-1",
+      "name": "consume: CONSUMED with identity, phase exchanging, plaintext state removed, hash stored, old credentials dropped",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-2",
+      "name": "second consume of the same state: ALREADY_USED without identifiers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-3",
+      "name": "unknown / malformed / uppercase state: NOT_FOUND without identifiers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-4",
+      "name": "expiry: >15 min, future >30 s, invalid or missing date => EXPIRED and closed; 14 min and +20 s skew accepted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-5",
+      "name": "concurrent consume: second caller blocks on the row lock, exactly one CONSUMED, the other ALREADY_USED",
+      "ok": true,
+      "detail": "waiting=1"
+    },
+    {
+      "id": "I-7",
+      "name": "complete with any mismatched source/user/business/attempt/state: SUPERSEDED and no Vault write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-9",
+      "name": "complete with invalid input (missing refresh, empty/oversized token, past/>24 h expiry, bad state): INVALID_INPUT, no write",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-6",
+      "name": "complete: COMPLETED, phase select_location, credentials in Vault (refs only in the row), readable back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-8",
+      "name": "second complete for the same attempt: SUPERSEDED, credentials unchanged",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-10",
+      "name": "complete after the 15 min window: EXPIRED, row disconnected with ATTEMPT_EXPIRED, nothing stored",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-11",
+      "name": "late callback of attempt A after attempt B started: complete and fail are SUPERSEDED; B's credentials win, no mixing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-12",
+      "name": "fail: invalid status/code => INVALID_INPUT, wrong attempt => SUPERSEDED, valid => FAILED with no credentials, then SUPERSEDED",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-13",
+      "name": "refresh CAS: matching pair => true; stale pair => false and nothing written; old Vault secrets released",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-21",
+      "name": "refresh input validation (null expected refresh, null access, bad expiry, oversized) => false, unchanged",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-14",
+      "name": "late refresh from authorization A during/after reconnection B => false every time; row holds only B's pair",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-15",
+      "name": "legacy store refused while authorizing/exchanging, allowed in select_location; refresh refused on disconnected",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-16",
+      "name": "concurrent refreshes with the same expected pair: one true, the other blocks then false; first writer's token kept",
+      "ok": true,
+      "detail": "waiting=1"
+    },
+    {
+      "id": "I-17",
+      "name": "anon / authenticated / any other role get 42501 on all six functions; owner postgres, ACL service_role only, search_path '', no WHEN OTHERS",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-18",
+      "name": "forced failure after the Vault write rolls back both Vault secrets and the row (complete and refresh)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-19",
+      "name": "isolation: consuming user 1's state never touches user 2's row; cross-tenant complete/refresh refused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-20",
+      "name": "pre-existing GBP functions other than gbp_store_credentials are byte-identical (whitespace-free md5)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-23",
+      "name": "migration 2 (disposable DB only): service_role loses the legacy store (42501), refresh RPC unaffected; its rollback restores it",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "id": "I-22",
+      "name": "rollback: new functions removed, gbp_store_credentials restored to the pre-FIX03B body and ACL, credentials intact, M1 re-appliable",
+      "ok": true,
+      "detail": "store md5 0a1ea0b065c265df1bc6b01e54ebcf5b vs 0a1ea0b065c265df1bc6b01e54ebcf5b"
+    }
+  ]
+}

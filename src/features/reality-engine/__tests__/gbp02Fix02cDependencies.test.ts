@@ -25,8 +25,22 @@ type Row = Record<string, unknown>;
 function adapters<T>(slug: string, businesses = [{ id: 'biz-a', user_id: 'owner' }, { id: 'biz-b', user_id: 'owner' }]) {
   const changes: string[] = [];
   const dataRows: Row[] = structuredClone(rows);
+  const rpcCalls: { fn: string; args: Row }[] = [];
   const db = {
     auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) },
+    async rpc(fn: string, args: Row) {
+      rpcCalls.push({ fn, args });
+      if (fn === 'gbp_consume_oauth_state') {
+        const r = dataRows.find((x) => x.status === 'connecting' && (x.metadata as Row)?.oauth_state === args.p_state);
+        if (!r) return { data: [{ r_result: 'NOT_FOUND', r_source_id: null, r_user_id: null, r_business_id: null, r_attempt_id: null }], error: null };
+        changes.push(String(r.id));
+        r.metadata = { ...(r.metadata as Row), oauth_state: undefined, phase: 'exchanging', attempt_id: `attempt-${r.id}` };
+        return { data: [{ r_result: 'CONSUMED', r_source_id: r.id, r_user_id: r.user_id, r_business_id: r.business_id, r_attempt_id: `attempt-${r.id}` }], error: null };
+      }
+      if (fn === 'gbp_complete_oauth_attempt') return { data: 'COMPLETED', error: null };
+      if (fn === 'gbp_fail_oauth_attempt') return { data: 'FAILED', error: null };
+      return { data: null, error: { code: 'unknown_rpc' } };
+    },
     from(table: string) {
       let data: Row[] = table === 'businesses' ? businesses : dataRows;
       let patch: Row | null = null;
@@ -61,7 +75,7 @@ function adapters<T>(slug: string, businesses = [{ id: 'biz-a', user_id: 'owner'
     fetch: () => { throw new Error('Real network forbidden'); },
   });
   if (!captured) throw new Error('Adapter not captured');
-  return { deps: captured, changes, dataRows };
+  return { deps: captured, changes, dataRows, rpcCalls };
 }
 const post = (body: unknown) => new Request('https://x/test', { method: 'POST', headers: { Authorization: 'Bearer mock', 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
@@ -144,29 +158,36 @@ describe('FIX02C · recover and cancel with real adapter mutations', () => {
   });
 });
 
-describe('FIX02C · unchanged OAuth callback association', () => {
+describe('FIX02C · OAuth callback association (FIX03B consume/complete adapters)', () => {
+  const hexState = (suffix: string) => suffix.repeat(64);
+
   it.each(['a', 'b'])('state-%s stores credentials only for its own source', async (suffix) => {
-    const { deps } = adapters<CallbackDeps>('gbp-oauth-callback');
-    const store = vi.fn(async () => true);
-    const update = vi.fn(async () => true);
+    const { deps, dataRows, rpcCalls, changes } = adapters<CallbackDeps>('gbp-oauth-callback');
+    for (const r of dataRows) (r.metadata as Row).oauth_state = hexState(String(r.business_id).slice(-1));
     const fetchMock = vi.fn(async (url: RequestInfo | URL) => new Response(JSON.stringify(String(url).includes('/token')
-      ? { access_token: 'synthetic', expires_in: 3600 }
+      ? { access_token: 'synthetic', refresh_token: 'synthetic-r', expires_in: 3600 }
       : { accounts: [{ name: 'accounts/123' }] })));
-    const handle = callbackHandler({ ...deps, storeCredentials: store, updateAttempt: update, fetch: fetchMock as typeof fetch });
-    expect((await handle(new Request(`https://x/cb?state=state-${suffix}&code=mock`))).status).toBe(302);
-    expect(store).toHaveBeenCalledExactlyOnceWith(`source-${suffix}`, expect.any(Object));
-    expect(update).toHaveBeenCalledWith(`source-${suffix}`, expect.any(Object));
+    const handle = callbackHandler({ ...deps, fetch: fetchMock as typeof fetch });
+    const res = await handle(new Request(`https://x/cb?state=${hexState(suffix)}&code=mock`));
+    expect(res.headers.get('Location')).toContain('accounts=');
+    expect(changes).toEqual([`source-${suffix}`]);
+    const completes = rpcCalls.filter((c) => c.fn === 'gbp_complete_oauth_attempt');
+    expect(completes).toHaveLength(1);
+    expect(completes[0].args).toMatchObject({
+      p_source_id: `source-${suffix}`, p_user_id: 'owner', p_business_id: `biz-${suffix}`,
+      p_attempt_id: `attempt-source-${suffix}`, p_state: hexState(suffix),
+    });
   });
 
   it('unknown state never accesses tokens or changes a source', async () => {
-    const { deps } = adapters<CallbackDeps>('gbp-oauth-callback');
-    const store = vi.fn();
-    const update = vi.fn();
+    const { deps, rpcCalls, changes } = adapters<CallbackDeps>('gbp-oauth-callback');
     const fetchMock = vi.fn(() => { throw new Error('Real network forbidden'); });
-    const res = await callbackHandler({ ...deps, storeCredentials: store, updateAttempt: update, fetch: fetchMock })(new Request('https://x/cb?state=unknown&code=mock'));
-    expect(res.headers.get('Location')).toContain('ATTEMPT_NOT_FOUND');
-    expect(store).not.toHaveBeenCalled();
-    expect(update).not.toHaveBeenCalled();
+    for (const state of ['unknown', 'f'.repeat(64)]) {
+      const res = await callbackHandler({ ...deps, fetch: fetchMock })(new Request(`https://x/cb?state=${state}&code=mock`));
+      expect(res.headers.get('Location')).toContain('ATTEMPT_NOT_FOUND');
+    }
+    expect(rpcCalls.map((c) => c.fn)).toEqual(['gbp_consume_oauth_state']);
+    expect(changes).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

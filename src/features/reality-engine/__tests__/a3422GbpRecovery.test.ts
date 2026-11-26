@@ -7,7 +7,7 @@ import {
   classifyGoogleAuthError,
   classifyTokenExchangeError,
   type CallbackDeps,
-  type Attempt,
+  type ConsumedAttempt,
 } from '../../../../supabase/functions/gbp-oauth-callback/handler.ts';
 import { createHandler as createSync, parseSelection, type SyncDeps, type SourceRow } from '../../../../supabase/functions/gbp-sync/handler.ts';
 import {
@@ -122,20 +122,27 @@ describe('A3.4.2.2 OAuth start', () => {
 
 // ─── OAuth callback ─────────────────────────────────────────────────────────
 
-interface Row { id: string; userId: string; businessId: string; state: string | null; status: string; patches: Record<string, unknown>[] }
+interface Row {
+  id: string; userId: string; businessId: string; state: string | null; status: string;
+  phase: string; attemptId: string | null; patches: Record<string, unknown>[];
+}
 
+// In-memory model of the FIX03B RPCs: single-use consume, then complete/fail only for the exact attempt.
 function callbackHarness(opts: {
   fetch?: (url: string) => Response | Promise<Response>;
-  store?: boolean | 'throw';
+  complete?: 'INVALID_INPUT' | 'SUPERSEDED' | 'EXPIRED' | 'throw';
   owns?: boolean | 'throw';
-  find?: 'throw';
+  consume?: 'throw' | 'EXPIRED';
 } = {}) {
   const rows: Row[] = [
-    { id: SOURCE_ID, userId: USER, businessId: BIZ, state: STATE, status: 'connecting', patches: [] },
-    { id: 'src-other', userId: OTHER_USER, businessId: OTHER_BIZ, state: 'b'.repeat(64), status: 'connected', patches: [] },
+    { id: SOURCE_ID, userId: USER, businessId: BIZ, state: STATE, status: 'connecting', phase: 'authorizing', attemptId: null, patches: [] },
+    { id: 'src-other', userId: OTHER_USER, businessId: OTHER_BIZ, state: 'b'.repeat(64), status: 'connected', phase: 'connected', attemptId: null, patches: [] },
   ];
-  const cleared: string[] = [];
+  const failed: string[] = [];
   const stored: string[] = [];
+  let seq = 0;
+  const matches = (a: ConsumedAttempt) => rows.find((r) => r.id === a.sourceId && r.userId === a.userId && r.businessId === a.businessId
+    && r.attemptId === a.attemptId && r.status === 'connecting' && r.phase === 'exchanging');
   const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
     if (opts.fetch) return opts.fetch(url);
@@ -145,26 +152,39 @@ function callbackHarness(opts: {
   });
   const deps: CallbackDeps = {
     env: env(),
-    findAttempt: async (state) => {
-      if (opts.find === 'throw') throw new Error('db down');
+    consumeState: async (state) => {
+      if (opts.consume === 'throw') throw new Error('db down');
       const r = rows.find((x) => x.state === state && x.status === 'connecting');
-      return r ? ({ id: r.id, userId: r.userId, businessId: r.businessId, startedAt: NOW.toISOString() } satisfies Attempt) : null;
+      if (!r) return { result: 'NOT_FOUND' };
+      if (opts.consume === 'EXPIRED') {
+        r.state = null; r.status = 'disconnected';
+        r.patches.push({ status: 'disconnected', last_error: 'ATTEMPT_EXPIRED', metadata: { phase: 'failed' } });
+        return { result: 'EXPIRED' };
+      }
+      r.state = null; r.phase = 'exchanging'; r.attemptId = `attempt-${++seq}`;
+      r.patches.push({ metadata: { phase: 'exchanging' } });
+      return { result: 'CONSUMED', attempt: { sourceId: r.id, userId: r.userId, businessId: r.businessId, attemptId: r.attemptId, state } };
     },
     ownsBusiness: async (u, b) => {
       if (opts.owns === 'throw') throw new Error('db down');
       return opts.owns ?? (u === USER && b === BIZ);
     },
-    storeCredentials: async (id) => {
-      if (opts.store === 'throw') throw new Error('vault down');
-      stored.push(id);
-      return opts.store ?? true;
+    completeAttempt: async (a) => {
+      if (opts.complete === 'throw') throw new Error('vault down');
+      if (opts.complete) return opts.complete;
+      const r = matches(a);
+      if (!r) return 'SUPERSEDED';
+      stored.push(r.id);
+      r.phase = 'select_location';
+      r.patches.push({ status: 'connecting', last_error: null, metadata: { phase: 'select_location', authorized_at: NOW.toISOString() } });
+      return 'COMPLETED';
     },
-    clearCredentials: async (id) => { cleared.push(id); },
-    updateAttempt: async (id, patch) => {
-      const r = rows.find((x) => x.id === id && x.status === 'connecting');
+    failAttempt: async (a, status, code) => {
+      const r = matches(a);
       if (!r) return false;
-      r.patches.push(patch);
-      r.status = String(patch.status);
+      failed.push(r.id);
+      r.status = status; r.phase = 'failed';
+      r.patches.push({ status, last_error: code, metadata: { phase: 'failed' } });
       return true;
     },
     fetch: fetchFn as unknown as typeof fetch,
@@ -172,7 +192,7 @@ function callbackHarness(opts: {
   };
   const call = (query: string) => createCallback(deps)(new Request(`https://x/gbp-oauth-callback?${query}`));
   const own = () => rows[0];
-  return { rows, own, cleared, stored, fetchFn, call };
+  return { rows, own, failed, stored, fetchFn, call };
 }
 
 const errorOf = (res: Response) => new URL(res.headers.get('Location')!).searchParams.get('error');
@@ -184,7 +204,9 @@ describe('A3.4.2.2 OAuth callback failure recovery', () => {
     expect(res.status).toBe(302);
     expect(errorOf(res)).toBe('GOOGLE_CONSENT_DENIED');
     expect(h.own().status).toBe('disconnected');
-    expect(h.own().patches[0]).toMatchObject({ last_error: 'GOOGLE_CONSENT_DENIED', metadata: { phase: 'failed', oauth_state: null } });
+    expect(h.own().state).toBeNull();
+    expect(h.own().patches[h.own().patches.length - 1]).toMatchObject({ last_error: 'GOOGLE_CONSENT_DENIED', metadata: { phase: 'failed' } });
+    expect(h.stored).toEqual([]);
     expect(h.fetchFn).not.toHaveBeenCalled();
   });
 
@@ -201,6 +223,7 @@ describe('A3.4.2.2 OAuth callback failure recovery', () => {
       [`code=x&state=${STATE}`, { owns: 'throw' }],
       [`code=x&state=${STATE}`, { owns: false }],
       [`code=x&state=${STATE}`, { fetch: () => { throw new Error('net'); } }],
+      [`code=x&state=${STATE}`, { fetch: (u) => (u.includes('token') ? jsonRes({ access_token: ACCESS, refresh_token: REFRESH }) : jsonRes({ accounts: [] })) }],
       [`code=x&state=${STATE}`, { fetch: (u) => (u.includes('token') ? jsonRes({ access_token: ACCESS }) : jsonRes({ accounts: [] })) }],
     ];
     for (const [query, opts] of scenarios) {
@@ -210,20 +233,25 @@ describe('A3.4.2.2 OAuth callback failure recovery', () => {
       expect(errorOf(res)).toBeTruthy();
       expect(h.own().status).not.toBe('connecting');
       expect(['error', 'permissions_required', 'disconnected']).toContain(h.own().status);
+      expect(h.stored).toEqual([]);
     }
   });
 
   it('5. an invalid or missing state cannot mutate any source', async () => {
-    for (const query of ['code=x&state=' + 'b'.repeat(64), 'code=x&state=unknown', 'code=x', 'error=access_denied&state=unknown']) {
+    for (const query of ['code=x&state=' + 'b'.repeat(64), 'code=x&state=unknown', 'code=x', 'error=access_denied&state=unknown', `code=x&state=${'c'.repeat(64)}`]) {
       const h = callbackHarness();
       const res = await h.call(query);
       expect(res.status).toBe(302);
       expect(h.rows.every((r) => r.patches.length === 0)).toBe(true);
       expect(h.fetchFn).not.toHaveBeenCalled();
     }
-    const lookupDown = callbackHarness({ find: 'throw' });
+    const lookupDown = callbackHarness({ consume: 'throw' });
     expect(errorOf(await lookupDown.call(`code=x&state=${STATE}`))).toBe('ATTEMPT_LOOKUP_FAILED');
-    expect(src('supabase/functions/gbp-oauth-callback/index.ts')).toMatch(/\.eq\(["']status["'],\s*["']connecting["']\)/);
+    expect(lookupDown.fetchFn).not.toHaveBeenCalled();
+    // FIX03B: the only way to reach a row is the single-use consume RPC (connecting + state, under a row lock).
+    const index = src('supabase/functions/gbp-oauth-callback/index.ts');
+    expect(index).toContain('rpc("gbp_consume_oauth_state"');
+    expect(index).not.toMatch(/\.from\(["']connected_sources["']\)/);
   });
 
   it('6. a code exchange failure terminates the attempt', async () => {
@@ -234,28 +262,30 @@ describe('A3.4.2.2 OAuth callback failure recovery', () => {
     expect(h.stored).toEqual([]);
   });
 
-  it('7. a credential store failure terminates the attempt and clears partial writes', async () => {
-    for (const store of [false, 'throw'] as const) {
-      const h = callbackHarness({ store });
+  it('7. a credential store failure terminates the attempt atomically (no partial write to clear)', async () => {
+    for (const complete of ['INVALID_INPUT', 'throw'] as const) {
+      const h = callbackHarness({ complete });
       const res = await h.call(`code=x&state=${STATE}`);
       expect(errorOf(res)).toBe('CREDENTIAL_STORE_FAILED');
       expect(h.own().status).toBe('error');
-      expect(h.cleared).toEqual([SOURCE_ID]);
+      expect(h.failed).toEqual([SOURCE_ID]);
+      expect(h.stored).toEqual([]);
     }
   });
 
-  it('8. an account discovery failure terminates the attempt and clears credentials', async () => {
+  it('8. an account discovery failure terminates the attempt before any credential is stored', async () => {
     const cases: [number, string, string][] = [
       [403, 'GBP_PERMISSION_DENIED', 'permissions_required'],
       [429, 'GBP_API_QUOTA_UNAVAILABLE', 'error'],
       [500, 'ACCOUNT_DISCOVERY_FAILED', 'error'],
     ];
     for (const [status, code, rowStatus] of cases) {
-      const h = callbackHarness({ fetch: (u) => (u.includes('token') ? jsonRes({ access_token: ACCESS }) : jsonRes({}, status)) });
+      const h = callbackHarness({ fetch: (u) => (u.includes('token') ? jsonRes({ access_token: ACCESS, refresh_token: REFRESH }) : jsonRes({}, status)) });
       const res = await h.call(`code=x&state=${STATE}`);
       expect(errorOf(res)).toBe(code);
       expect(h.own().status).toBe(rowStatus);
-      expect(h.cleared).toEqual([SOURCE_ID]);
+      expect(h.failed).toEqual([SOURCE_ID]);
+      expect(h.stored).toEqual([]);
     }
   });
 
@@ -266,9 +296,11 @@ describe('A3.4.2.2 OAuth callback failure recovery', () => {
     expect(loc.pathname).toBe('/oauth/google-business/callback');
     expect(JSON.parse(loc.searchParams.get('accounts')!)).toEqual([{ id: 'accounts/123', name: 'Mi cuenta' }]);
     expect(h.own().status).toBe('connecting');
-    expect(h.own().patches.at(-1)).toMatchObject({
+    expect(h.own().state).toBeNull();
+    expect(h.stored).toEqual([SOURCE_ID]);
+    expect(h.own().patches[h.own().patches.length - 1]).toMatchObject({
       status: 'connecting', last_error: null,
-      metadata: { phase: 'select_location', oauth_state: null, authorized_at: NOW.toISOString() },
+      metadata: { phase: 'select_location', authorized_at: NOW.toISOString() },
     });
   });
 });
