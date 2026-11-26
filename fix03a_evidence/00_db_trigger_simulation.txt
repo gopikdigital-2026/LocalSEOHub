@@ -1,0 +1,15 @@
+FIX03A - Empirical verification (read-only, rolled back; no persisted change)
+Method: DO block on TEMP tables cloned from public.connected_sources (LIKE ... INCLUDING CONSTRAINTS),
+real function public.connected_sources_clear_on_disconnect() attached as BEFORE INSERT OR UPDATE trigger,
+synthetic rows only, block ends with RAISE EXCEPTION so the whole transaction is rolled back.
+
+Result (verbatim message):
+H1SIM|with_trigger rows=1 status=disconnected access=NULL refresh=NULL expires=NULL ext=NULL other_biz_access=sim-access-2
+|without_trigger check_violation:new row for relation "h1_ctl" violates check constraint "connected_sources_disconnected_no_credentials"
+
+Production read-only counters (SELECT only):
+invariant_violations=0 stuck_select_location=0 ended_by_recover=1 ended_with_creds=0
+
+Conclusion: the same UPDATE statement that sets status='disconnected' forgets the Vault refs and nulls
+credentials before the CHECK is evaluated. The PREDEPLOY-01 H1 premise (CHECK rejects the transition)
+does not hold with the live trigger. The CHECK only rejects if the trigger is absent (control case).

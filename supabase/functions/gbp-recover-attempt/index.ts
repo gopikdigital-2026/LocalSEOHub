@@ -43,7 +43,9 @@ const handle = createHandler({
       .eq("status", row.status)
       .eq("updated_at", row.updated_at)
       .select("id");
-    return !error && Array.isArray(data) && data.length === 1;
+    // A database error must surface as a failure; only zero matched rows is a concurrency conflict.
+    if (error || !Array.isArray(data)) throw new Error("state update failed");
+    return data.length === 1;
   },
 });
 

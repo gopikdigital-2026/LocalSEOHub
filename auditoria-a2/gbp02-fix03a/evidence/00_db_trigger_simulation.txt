@@ -1,0 +1,29 @@
+GBP-02-FIX03A · Evidencia 00 · Simulación de semántica de base de datos (sin efectos persistentes)
+
+Método
+- Bloque DO ejecutado en la base del proyecto sobre tablas TEMP creadas con
+  LIKE public.connected_sources INCLUDING DEFAULTS INCLUDING CONSTRAINTS
+  (hereda la CHECK connected_sources_disconnected_no_credentials).
+- h1_sim: se le adjunta el trigger real BEFORE INSERT OR UPDATE que ejecuta
+  public.connected_sources_clear_on_disconnect() (migración 20261019194350_a341_gbp_security_hardening.sql).
+- h1_ctl: control sin trigger.
+- Filas sintéticas (ids/refs ficticios, sin tokens reales). Se ejecuta el mismo UPDATE optimista
+  que usa el adaptador (id + user_id + source_type + status + updated_at).
+- El bloque termina con RAISE EXCEPTION: toda la transacción se revierte. No se crea ni modifica
+  ningún objeto ni fila persistente. No es una migración.
+
+Resultado (re-ejecutado en FIX03A, idéntico al original)
+H1SIM|with_trigger rows=1 status=disconnected access=NULL refresh=NULL expires=NULL ext=NULL other_biz_access=sim-access-2
+|without_trigger check_violation:new row for relation "h1_ctl" violates check constraint "connected_sources_disconnected_no_credentials"
+
+Contadores de producción (solo lectura)
+invariant_violations=0 (public.gbp_credential_invariant_violations())
+stuck_select_location=0 (google_business, status=connecting, phase=select_location)
+ended_with_creds=0 (google_business desconectadas por cancelación/caducidad que conservan credenciales)
+(registro original PREDEPLOY: ended_by_recover=1, ended_with_creds=0)
+
+Conclusión
+- Con el trigger vivo, la transición a 'disconnected' borra referencias Vault y credenciales en la
+  misma sentencia; si el borrado falla, la sentencia entera se aborta (atómico).
+- Otras conexiones (other_biz_access) no se tocan.
+- Sin trigger, la CHECK rechaza la transición: nunca puede quedar una fila desconectada con credenciales.
