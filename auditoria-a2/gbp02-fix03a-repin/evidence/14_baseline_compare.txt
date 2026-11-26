@@ -1,0 +1,8 @@
+project/auditoria-a2/gbp02-fix03a/evidence/08_tsc_POST_FIX.log: identical=True
+project/auditoria-a2/gbp02-fix03a/evidence/08_tsc_PRE_FIX.log: identical=True
+project/auditoria-a2/gbp02-fix03a/evidence/09_eslint_POST_FIX.log: identical=True
+project/auditoria-a2/gbp02-fix03a/evidence/09_eslint_PRE_FIX.log: identical=True
+evidence/08_tsc_POST_FIX.log: identical=True
+evidence/08_tsc_PRE_FIX.log: identical=True
+evidence/09_eslint_POST_FIX.log: identical=True
+evidence/09_eslint_PRE_FIX.log: identical=True

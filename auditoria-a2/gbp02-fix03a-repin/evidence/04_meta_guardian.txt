@@ -1,0 +1,131 @@
+10:07:22 AM [vite] warning: `esbuild` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `oxc` instead.
+10:07:22 AM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic', jsxImportSource: undefined }`
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/tmp/cc-agent/67208463/project[39m
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · D. start: server-generated state[2m > [22m[2mstores only hashes of an unpredictable state and binding, with an expiry
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · D. start: server-generated state[2m > [22m[2mrequests only the minimal read-only scopes and never exposes the app secret
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · D. start: server-generated state[2m > [22m[2mtwo attempts produce different states
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · D. start: server-generated state[2m > [22m[2mtwo attempts produce different states
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mE. rejects missing or malformed state without touching any connection
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mE. rejects missing or malformed state without touching any connection
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mE. rejects missing or malformed state without touching any connection
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. rejects unknown, reused and wrong-user (stale) states and leaves the live attempt alone
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. rejects unknown, reused and wrong-user (stale) states and leaves the live attempt alone
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. rejects unknown, reused and wrong-user (stale) states and leaves the live attempt alone
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. an expired state fails the attempt with OAUTH_STATE_EXPIRED
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_EXPIRED
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. the state is consumed by its hash, never the raw value
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. the state is consumed by its hash, never the raw value
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. the state is consumed by its hash, never the raw value
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":true,"endpoint":"/me/accounts","returned":2,"pages":2,"has_next":false}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mG. user denial ends as disconnected with OAUTH_DENIED
+[22m[39m[meta-oauth-callback] terminated: OAUTH_DENIED
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mG. a missing code fails the attempt
+[22m[39m[meta-oauth-callback] terminated: TOKEN_EXCHANGE_FAILED
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mH. a failed long-lived exchange is also TOKEN_EXCHANGE_FAILED
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange_long","ok":false,"http":500}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mH. a failed long-lived exchange is also TOKEN_EXCHANGE_FAILED
+[22m[39m[meta-oauth-callback] terminated: TOKEN_EXCHANGE_FAILED
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mH. missing Meta secrets after a valid state fail as META_APP_NOT_CONFIGURED
+[22m[39m[meta-oauth-callback] terminated: META_APP_NOT_CONFIGURED
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mNO_AUTHORIZED_PAGES when the user manages no Page
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mNO_AUTHORIZED_PAGES when the user manages no Page
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mNO_AUTHORIZED_PAGES when the user manages no Page
+[22m[39m[meta-oauth-callback] terminated: NO_AUTHORIZED_PAGES
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mNO_AUTHORIZED_PAGES when the user manages no Page
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":true,"endpoint":"/me/accounts","returned":0,"pages":0,"has_next":false}
+[meta-oauth-callback] {"stage":"page_discovery_empty","missing_permissions":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE when pages_show_list was declined
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE when pages_show_list was declined
+[22m[39m[meta-oauth-callback] terminated: META_PERMISSION_UNAVAILABLE
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE when pages_show_list was declined
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":[],"declined":["pages_show_list"],"expired":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE on Graph permission errors
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE on Graph permission errors
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE on Graph permission errors
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":false,"http":403,"result":"META_PERMISSION_UNAVAILABLE","code":200}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE on Graph permission errors
+[22m[39m[meta-oauth-callback] terminated: META_PERMISSION_UNAVAILABLE
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_API_RATE_LIMIT on throttling
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_API_RATE_LIMIT on throttling
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_API_RATE_LIMIT on throttling
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":false,"http":400,"result":"META_API_RATE_LIMIT","code":4}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_API_RATE_LIMIT on throttling
+[22m[39m[meta-oauth-callback] terminated: META_API_RATE_LIMIT
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mPAGE_DISCOVERY_FAILED on other Graph errors
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mPAGE_DISCOVERY_FAILED on other Graph errors
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mPAGE_DISCOVERY_FAILED on other Graph errors
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":false,"http":500,"result":"PAGE_DISCOVERY_FAILED","code":1}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mPAGE_DISCOVERY_FAILED on other Graph errors
+[22m[39m[meta-oauth-callback] terminated: PAGE_DISCOVERY_FAILED
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · N. server-owned disconnect[2m > [22m[2mstill disconnects locally when revocation fails
+[22m[39m[meta-connection] revocation failed
+
+ [32m✓[39m src/features/meta-connection/__tests__/a351MetaConnection.test.ts [2m([22m[2m100 tests[22m[2m)[22m[32m 126[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m100 passed[39m[22m[90m (100)[39m
+[2m   Start at [22m 10:07:22
+[2m   Duration [22m 1.19s[2m (transform 299ms, setup 0ms, import 596ms, tests 126ms, environment 0ms)[22m
+

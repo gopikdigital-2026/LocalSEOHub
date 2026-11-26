@@ -1,0 +1,135 @@
+10:07:27 AM [vite] warning: `esbuild` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `oxc` instead.
+10:07:27 AM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic', jsxImportSource: undefined }`
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/tmp/cc-agent/67208463/project[39m
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mrevokes the refresh token at Google and clears credentials
+[22m[39m[gbp-disconnect] completed { revoked: [33mtrue[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mstill clears credentials locally when revocation fails
+[22m[39m[gbp-disconnect] completed { revoked: [33mfalse[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mstill clears credentials locally when revocation fails
+[22m[39m[gbp-disconnect] completed { revoked: [33mfalse[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mstill clears credentials locally when revocation fails
+[22m[39m[gbp-disconnect] completed { revoked: [33mfalse[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mresolves the source from the JWT user, never from a client user_id
+[22m[39m[gbp-disconnect] completed { revoked: [33mtrue[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mreports a failure if credentials could not be cleared
+[22m[39m[gbp-disconnect] completed { revoked: [33mtrue[39m, removed: [33mfalse[39m }
+
+ [32m✓[39m src/features/reality-engine/__tests__/a341GbpSecurity.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 131[2mms[22m[39m
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth start[2m > [22m[2mrejects unauthenticated, foreign-business and failed-write starts
+[22m[39m[gbp-oauth-start] attempt write failed
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m3. Google cancellation terminates the attempt as disconnected
+[22m[39m[gbp-oauth-callback] attempt ended: GOOGLE_CONSENT_DENIED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: GOOGLE_REDIRECT_URI_MISMATCH
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: GOOGLE_CLIENT_CONFIGURATION_FAILURE
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: MISSING_CODE
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: BUSINESS_LOOKUP_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: BUSINESS_NOT_FOUND
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: CODE_EXCHANGE_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: NO_GBP_ACCOUNTS
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m5. an invalid or missing state cannot mutate any source
+[22m[39m[gbp-oauth-callback] attempt ended: GOOGLE_CONSENT_DENIED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m5. an invalid or missing state cannot mutate any source
+[22m[39m[gbp-oauth-callback] attempt lookup failed
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m6. a code exchange failure terminates the attempt
+[22m[39m[gbp-oauth-callback] token exchange status: [33m400[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m6. a code exchange failure terminates the attempt
+[22m[39m[gbp-oauth-callback] attempt ended: OAUTH_CODE_INVALID
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m7. a credential store failure terminates the attempt and clears partial writes
+[22m[39m[gbp-oauth-callback] attempt ended: CREDENTIAL_STORE_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m7. a credential store failure terminates the attempt and clears partial writes
+[22m[39m[gbp-oauth-callback] attempt ended: CREDENTIAL_STORE_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] accounts status: [33m403[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] attempt ended: GBP_PERMISSION_DENIED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] accounts status: [33m429[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] attempt ended: GBP_API_QUOTA_UNAVAILABLE
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] accounts status: [33m500[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] attempt ended: ACCOUNT_DISCOVERY_FAILED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts[2m > [22m[2mFIX02C · recover and cancel with real adapter mutations[2m > [22m[2mrecover changes only selected business B
+[22m[39m[gbp-recover-attempt] attempt ended: ATTEMPT_EXPIRED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts[2m > [22m[2mFIX02C · recover and cancel with real adapter mutations[2m > [22m[2mcancel changes only selected business B
+[22m[39m[gbp-recover-attempt] attempt ended: USER_CANCELLED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts[2m > [22m[2mFIX02C · recover and cancel with real adapter mutations[2m > [22m[2msingle business recovers automatically
+[22m[39m[gbp-recover-attempt] attempt ended: ATTEMPT_EXPIRED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] location fetch status: [33m403[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: GBP_PERMISSION_DENIED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] location fetch status: [33m404[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: LOCATION_NOT_FOUND
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] location fetch status: [33m500[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: LOCATION_FETCH_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: NOT_CONNECTED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: PERSIST_FAILED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 stale-state recovery[2m > [22m[2m19. a stale connecting attempt recovers to disconnected / ATTEMPT_EXPIRED
+[22m[39m[gbp-recover-attempt] attempt ended: ATTEMPT_EXPIRED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 stale-state recovery[2m > [22m[2m20. a stale syncing attempt recovers to error / SYNC_INTERRUPTED
+[22m[39m[gbp-recover-attempt] attempt ended: SYNC_INTERRUPTED
+
+ [32m✓[39m src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 231[2mms[22m[39m
+ [32m✓[39m src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 265[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m79 passed[39m[22m[90m (79)[39m
+[2m   Start at [22m 10:07:27
+[2m   Duration [22m 1.56s[2m (transform 896ms, setup 0ms, import 1.17s, tests 627ms, environment 0ms)[22m
+

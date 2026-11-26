@@ -1,0 +1,80 @@
+
+> vite-react-typescript-starter@0.0.0 build
+> vite build
+
+vite v5.4.8 building for production...
+transforming...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2174 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                       4.02 kB │ gzip:   1.59 kB
+dist/assets/index-DPPr26Wk.css                      103.76 kB │ gzip:  15.70 kB
+dist/assets/context-DqXSnn94.js                       0.22 kB │ gzip:   0.19 kB
+dist/assets/pendingBusiness-BYJsMoyM.js               0.40 kB │ gzip:   0.26 kB
+dist/assets/model-1R0ROuW8.js                         0.78 kB │ gzip:   0.49 kB
+dist/assets/ImprovementHint-Bn1QNkRg.js               0.83 kB │ gzip:   0.46 kB
+dist/assets/Logo-DrCetjEK.js                          0.87 kB │ gzip:   0.52 kB
+dist/assets/LegalLinks-CaJIFQP7.js                    0.96 kB │ gzip:   0.54 kB
+dist/assets/model-ZWbHvUKj.js                         1.01 kB │ gzip:   0.56 kB
+dist/assets/repository-B29p2_ZW.js                    1.14 kB │ gzip:   0.56 kB
+dist/assets/ActionDetail-BeUlecFy.js                  1.26 kB │ gzip:   0.57 kB
+dist/assets/copy-cUuVxaVJ.js                          1.55 kB │ gzip:   0.71 kB
+dist/assets/primary-CrnTUtyo.js                       1.62 kB │ gzip:   0.61 kB
+dist/assets/profileValidation-D4Im6q3h.js             1.76 kB │ gzip:   0.90 kB
+dist/assets/metaRepository-BO5MudDe.js                2.50 kB │ gzip:   0.99 kB
+dist/assets/repository-RZfK7l75.js                    2.68 kB │ gzip:   1.07 kB
+dist/assets/DataIntegrity-DVeE_aAk.js                 2.84 kB │ gzip:   1.19 kB
+dist/assets/MetaCallbackPage-DmxvB0Cp.js              2.97 kB │ gzip:   1.31 kB
+dist/assets/LegalLayout-BsDDyYWZ.js                   3.27 kB │ gzip:   1.34 kB
+dist/assets/BusinessGoalsPage-HnfcbyeD.js             3.59 kB │ gzip:   1.53 kB
+dist/assets/engine-B8WaQeNh.js                        3.63 kB │ gzip:   1.55 kB
+dist/assets/engine--kTOA6BN.js                        4.08 kB │ gzip:   1.65 kB
+dist/assets/PublicationResumeProvider-BatmqMcS.js     4.13 kB │ gzip:   1.82 kB
+dist/assets/engine-CgIvhZ6c.js                        4.76 kB │ gzip:   1.74 kB
+dist/assets/engine-CJWnxxzI.js                        4.88 kB │ gzip:   1.84 kB
+dist/assets/TermsPage-B5USf4tI.js                     5.23 kB │ gzip:   1.97 kB
+dist/assets/BusinessMemoryPage-DLWOk9-2.js            6.09 kB │ gzip:   1.98 kB
+dist/assets/ImprovementEditor-CFncuFa5.js             6.32 kB │ gzip:   2.25 kB
+dist/assets/GBPCallbackPage-C5yn8xmE.js               6.99 kB │ gzip:   2.25 kB
+dist/assets/ResetPasswordPage-DzeWZSLd.js             7.50 kB │ gzip:   2.61 kB
+dist/assets/repository-DgafOaat.js                    7.80 kB │ gzip:   3.03 kB
+dist/assets/BusinessProfilePage-Bk8rjpaQ.js           8.57 kB │ gzip:   3.19 kB
+dist/assets/ToolsPage-CdNUS2vc.js                     9.22 kB │ gzip:   3.11 kB
+dist/assets/repository-CFgvBImo.js                    9.29 kB │ gzip:   3.40 kB
+dist/assets/metaPublishingRepository-BQO7NcTV.js     10.32 kB │ gzip:   3.73 kB
+dist/assets/BillingPage-D-x1Bd4J.js                  10.63 kB │ gzip:   3.22 kB
+dist/assets/copy-DxfRFUXX.js                         10.96 kB │ gzip:   3.88 kB
+dist/assets/ChannelReviewPanel-DUegpNWQ.js           11.75 kB │ gzip:   4.43 kB
+dist/assets/DataDeletionPage-BC8nHhJO.js             12.23 kB │ gzip:   4.15 kB
+dist/assets/model-CcqqM9Ya.js                        12.98 kB │ gzip:   4.77 kB
+dist/assets/WeeklySummaryPage-CfmRxkA-.js            13.09 kB │ gzip:   4.25 kB
+dist/assets/FacebookPublishHarness-coGuU4DH.js       13.41 kB │ gzip:   4.77 kB
+dist/assets/SocialIntelligencePage-DHszEtjs.js       15.26 kB │ gzip:   4.02 kB
+dist/assets/ChannelAdaptationPanel-DtF0ILuc.js       16.07 kB │ gzip:   5.50 kB
+dist/assets/LoginModal-BCwejF95.js                   19.13 kB │ gzip:   5.52 kB
+dist/assets/SeoGeneratorPage-CBqud0B8.js             19.42 kB │ gzip:   6.12 kB
+dist/assets/FirstValueFlow-xrmZbSEW.js               19.66 kB │ gzip:   6.70 kB
+dist/assets/PublicationsValidationPage-D-4vNunY.js   19.67 kB │ gzip:   6.54 kB
+dist/assets/MapsScannerPage-C8WQfiaR.js              21.23 kB │ gzip:   6.26 kB
+dist/assets/InstagramPublishHarness-D2sNDJKk.js      21.47 kB │ gzip:   6.77 kB
+dist/assets/WeeklyPlanPage-B594NE0D.js               22.73 kB │ gzip:   7.30 kB
+dist/assets/AdvisorPage-BNSa00aq.js                  22.89 kB │ gzip:   7.23 kB
+dist/assets/GeoAuditPage-DKSbZxbO.js                 24.83 kB │ gzip:   7.54 kB
+dist/assets/VoiceSimulatorPage-DgAJKWJh.js           26.10 kB │ gzip:   7.87 kB
+dist/assets/ReviewsPage-CxvCsYpB.js                  27.52 kB │ gzip:   8.33 kB
+dist/assets/DigitalTwinPage-e48SWeIJ.js              28.27 kB │ gzip:   8.16 kB
+dist/assets/PrivacyPolicyPage-bsodz_58.js            30.17 kB │ gzip:   8.92 kB
+dist/assets/ExecutionPage-CcxxKcgX.js                39.38 kB │ gzip:  11.54 kB
+dist/assets/CompetitorRadarPage-DJWQsFG7.js          39.41 kB │ gzip:  11.82 kB
+dist/assets/vendor-lucide-COLShjO-.js                47.72 kB │ gzip:   9.04 kB
+dist/assets/SourceManager-D7ShRlQv.js                47.78 kB │ gzip:  13.51 kB
+dist/assets/LandingPage-DlMCTF95.js                  58.25 kB │ gzip:  13.83 kB
+dist/assets/viewModel-DlidsmgR.js                    60.18 kB │ gzip:  16.47 kB
+dist/assets/TodayPage-C40G0CiP.js                    80.49 kB │ gzip:  22.69 kB
+dist/assets/vendor-supabase-DeUGKTjq.js             126.39 kB │ gzip:  34.36 kB
+dist/assets/vendor-react-DGHss2H6.js                166.52 kB │ gzip:  54.12 kB
+dist/assets/index-BuGH-A5q.js                       336.49 kB │ gzip: 109.92 kB
+✓ built in 11.79s

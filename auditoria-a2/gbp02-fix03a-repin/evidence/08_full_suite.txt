@@ -1,0 +1,725 @@
+10:07:34 AM [vite] warning: `esbuild` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `oxc` instead.
+10:07:34 AM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic', jsxImportSource: undefined }`
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/tmp/cc-agent/67208463/project[39m
+
+ [32m✓[39m src/features/social-intelligence/findings/__tests__/a3542SocialFindings.test.ts [2m([22m[2m59 tests[22m[2m)[22m[33m 919[2mms[22m[39m
+     [33m[2m✓[22m[39m 40. no integration with other product layers [33m 320[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mstart: authenticated, owner business, hashed single-use state, rerequest, binding returned once
+[22m[39m[meta-publishing] {"stage":"publishing_consent_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic","pages_manage_posts","instagram_content_publish"]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · D. start: server-generated state[2m > [22m[2mstores only hashes of an unpredictable state and binding, with an expiry
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+ [32m✓[39m src/features/billing/__tests__/a247CompetitorRadar.test.ts [2m([22m[2m113 tests[22m[2m)[22m[33m 784[2mms[22m[39m
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · D. start: server-generated state[2m > [22m[2mrequests only the minimal read-only scopes and never exposes the app secret
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: a granted consent re-reads permissions and page tasks with appsecret_proof and stores only granted values
+[22m[39m[meta-oauth-callback] {"stage":"publishing_token_exchange","ok":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: a granted consent re-reads permissions and page tasks with appsecret_proof and stores only granted values
+[22m[39m[meta-oauth-callback] {"stage":"publishing_permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic","pages_manage_posts"]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · D. start: server-generated state[2m > [22m[2mtwo attempts produce different states
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: a granted consent re-reads permissions and page tasks with appsecret_proof and stores only granted values
+[22m[39m[meta-oauth-callback] {"stage":"publishing_page_tasks","ok":true,"pages":1}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · D. start: server-generated state[2m > [22m[2mtwo attempts produce different states
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: code=abc / store=declined never disconnects the read-only connection
+[22m[39m[meta-oauth-callback] {"stage":"publishing_token_exchange","ok":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: code=abc / store=declined never disconnects the read-only connection
+[22m[39m[meta-oauth-callback] {"stage":"publishing_permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic","pages_manage_posts"]}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: code=abc / store=declined never disconnects the read-only connection
+[22m[39m[meta-oauth-callback] {"stage":"publishing_page_tasks","ok":true,"pages":1}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: code=abc / store=downgrade never disconnects the read-only connection
+[22m[39m[meta-oauth-callback] {"stage":"publishing_token_exchange","ok":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: code=abc / store=downgrade never disconnects the read-only connection
+[22m[39m[meta-oauth-callback] {"stage":"publishing_permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic","pages_manage_posts"]}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: code=abc / store=downgrade never disconnects the read-only connection
+[22m[39m[meta-oauth-callback] {"stage":"publishing_page_tasks","ok":true,"pages":1}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mE. rejects missing or malformed state without touching any connection
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: code=abc / store=account_mismatch never disconnects the read-only connection
+[22m[39m[meta-oauth-callback] {"stage":"publishing_token_exchange","ok":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: code=abc / store=account_mismatch never disconnects the read-only connection
+[22m[39m[meta-oauth-callback] {"stage":"publishing_permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic","pages_manage_posts"]}
+
+[90mstdout[2m | src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts[2m > [22m[2mA3.7.4.1 · J. Separate publishing consent[2m > [22m[2mcallback: code=abc / store=account_mismatch never disconnects the read-only connection
+[22m[39m[meta-oauth-callback] {"stage":"publishing_page_tasks","ok":true,"pages":1}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mE. rejects missing or malformed state without touching any connection
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mE. rejects missing or malformed state without touching any connection
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. rejects unknown, reused and wrong-user (stale) states and leaves the live attempt alone
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. rejects unknown, reused and wrong-user (stale) states and leaves the live attempt alone
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. rejects unknown, reused and wrong-user (stale) states and leaves the live attempt alone
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_INVALID
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. an expired state fails the attempt with OAUTH_STATE_EXPIRED
+[22m[39m[meta-oauth-callback] terminated: OAUTH_STATE_EXPIRED
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. the state is consumed by its hash, never the raw value
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. the state is consumed by its hash, never the raw value
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · E/F. callback: state validation[2m > [22m[2mF. the state is consumed by its hash, never the raw value
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":true,"endpoint":"/me/accounts","returned":2,"pages":2,"has_next":false}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mG. user denial ends as disconnected with OAUTH_DENIED
+[22m[39m[meta-oauth-callback] terminated: OAUTH_DENIED
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mG. a missing code fails the attempt
+[22m[39m[meta-oauth-callback] terminated: TOKEN_EXCHANGE_FAILED
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mH. a failed long-lived exchange is also TOKEN_EXCHANGE_FAILED
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange_long","ok":false,"http":500}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mH. a failed long-lived exchange is also TOKEN_EXCHANGE_FAILED
+[22m[39m[meta-oauth-callback] terminated: TOKEN_EXCHANGE_FAILED
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · G/H. callback: denial, missing code, exchange failures[2m > [22m[2mH. missing Meta secrets after a valid state fail as META_APP_NOT_CONFIGURED
+[22m[39m[meta-oauth-callback] terminated: META_APP_NOT_CONFIGURED
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mNO_AUTHORIZED_PAGES when the user manages no Page
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mNO_AUTHORIZED_PAGES when the user manages no Page
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mNO_AUTHORIZED_PAGES when the user manages no Page
+[22m[39m[meta-oauth-callback] terminated: NO_AUTHORIZED_PAGES
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mNO_AUTHORIZED_PAGES when the user manages no Page
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":true,"endpoint":"/me/accounts","returned":0,"pages":0,"has_next":false}
+[meta-oauth-callback] {"stage":"page_discovery_empty","missing_permissions":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE when pages_show_list was declined
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE when pages_show_list was declined
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":[],"declined":["pages_show_list"],"expired":[]}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE when pages_show_list was declined
+[22m[39m[meta-oauth-callback] terminated: META_PERMISSION_UNAVAILABLE
+
+ [32m✓[39m src/features/publications/__tests__/a3741MetaPublishingFoundation.test.ts [2m([22m[2m68 tests[22m[2m)[22m[33m 324[2mms[22m[39m
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE on Graph permission errors
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE on Graph permission errors
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE on Graph permission errors
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":false,"http":403,"result":"META_PERMISSION_UNAVAILABLE","code":200}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_PERMISSION_UNAVAILABLE on Graph permission errors
+[22m[39m[meta-oauth-callback] terminated: META_PERMISSION_UNAVAILABLE
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_API_RATE_LIMIT on throttling
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_API_RATE_LIMIT on throttling
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_API_RATE_LIMIT on throttling
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":false,"http":400,"result":"META_API_RATE_LIMIT","code":4}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mMETA_API_RATE_LIMIT on throttling
+[22m[39m[meta-oauth-callback] terminated: META_API_RATE_LIMIT
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mPAGE_DISCOVERY_FAILED on other Graph errors
+[22m[39m[meta-oauth-callback] {"stage":"token_exchange","ok":true,"long_lived":true,"expires_in_s":5184000}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mPAGE_DISCOVERY_FAILED on other Graph errors
+[22m[39m[meta-oauth-callback] {"stage":"permissions","granted":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"declined":[],"expired":[]}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mPAGE_DISCOVERY_FAILED on other Graph errors
+[22m[39m[meta-oauth-callback] {"stage":"page_discovery","ok":false,"http":500,"result":"PAGE_DISCOVERY_FAILED","code":1}
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · I. page discovery outcomes[2m > [22m[2mPAGE_DISCOVERY_FAILED on other Graph errors
+[22m[39m[meta-oauth-callback] terminated: PAGE_DISCOVERY_FAILED
+
+[90mstderr[2m | src/features/meta-connection/__tests__/a351MetaConnection.test.ts[2m > [22m[2mA3.5.1 · N. server-owned disconnect[2m > [22m[2mstill disconnects locally when revocation fails
+[22m[39m[meta-connection] revocation failed
+
+ [32m✓[39m src/features/meta-connection/__tests__/a351MetaConnection.test.ts [2m([22m[2m100 tests[22m[2m)[22m[33m 607[2mms[22m[39m
+ [32m✓[39m src/features/meta-connection/__tests__/a353MetaReadLayer.test.ts [2m([22m[2m53 tests[22m[2m)[22m[33m 705[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/a248VoiceSimulator.test.ts [2m([22m[2m37 tests[22m[2m)[22m[33m 613[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/a26Billing.test.ts [2m([22m[2m123 tests[22m[2m)[22m[33m 419[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/a25Integration.test.ts [2m([22m[2m63 tests[22m[2m)[22m[33m 797[2mms[22m[39m
+ [32m✓[39m src/features/social-intelligence/__tests__/a3541SocialSignals.test.ts [2m([22m[2m79 tests[22m[2m)[22m[32m 214[2mms[22m[39m
+ [32m✓[39m src/features/roadmap/__tests__/a273Roadmap.test.ts [2m([22m[2m123 tests[22m[2m)[22m[33m 390[2mms[22m[39m
+ [32m✓[39m src/features/weekly-content/__tests__/weeklyContent.test.ts [2m([22m[2m36 tests[22m[2m)[22m[33m 312[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m5. malformed 2xx is UNKNOWN, never SUCCEEDED
+[22m[39m[meta-publishing] {"stage":"facebook_photo","result":"PUBLISH_OUTCOME_UNKNOWN","malformed":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m5. malformed 2xx is UNKNOWN, never SUCCEEDED
+[22m[39m[meta-publishing] {"stage":"facebook_photo","result":"PUBLISH_OUTCOME_UNKNOWN","malformed":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m6. explicit rejection → FAILED with normalized code
+[22m[39m[meta-publishing] {"stage":"facebook_photo","http":400,"result":"META_REJECTED","code":100}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m6. rate limit → FAILED with normalized code
+[22m[39m[meta-publishing] {"stage":"facebook_photo","http":400,"result":"META_RATE_LIMITED","code":32}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m6. expired token → FAILED with normalized code
+[22m[39m[meta-publishing] {"stage":"facebook_photo","http":400,"result":"REAUTH_REQUIRED","code":190}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m6. permission → FAILED with normalized code
+[22m[39m[meta-publishing] {"stage":"facebook_photo","http":403,"result":"PERMISSION_REQUIRED","code":200}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m6. invalid image → FAILED with normalized code
+[22m[39m[meta-publishing] {"stage":"facebook_photo","http":400,"result":"IMAGE_UNSUPPORTED","code":324}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m6. transient → FAILED with normalized code
+[22m[39m[meta-publishing] {"stage":"facebook_photo","http":400,"result":"META_TEMPORARY_ERROR","code":2}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m7. ambiguous 5xx is UNKNOWN
+[22m[39m[meta-publishing] {"stage":"facebook_photo","http":503,"result":"PUBLISH_OUTCOME_UNKNOWN"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m8. possibly-sent transport failure (network/timeout) is UNKNOWN and not retried
+[22m[39m[meta-publishing] {"stage":"facebook_photo","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m8. possibly-sent transport failure (network/timeout) is UNKNOWN and not retried
+[22m[39m[meta-publishing] {"stage":"facebook_photo","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 Facebook transport (mocked)[2m > [22m[2m12. derivePageToken rejects a different Page id and maps failures
+[22m[39m[meta-publishing] {"stage":"page_token","result":"REAUTH_REQUIRED","code":190}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 orchestration (mocked)[2m > [22m[2m18. explicit Meta rejection → FAILED persisted
+[22m[39m[meta-publishing] {"stage":"facebook_photo","http":400,"result":"META_REJECTED","code":100}
+
+[90mstdout[2m | src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts[2m > [22m[2mA3.7.4.2 orchestration (mocked)[2m > [22m[2m19. ambiguous result → UNKNOWN persisted, 202, no second POST
+[22m[39m[meta-publishing] {"stage":"facebook_photo","http":502,"result":"PUBLISH_OUTCOME_UNKNOWN"}
+
+ [32m✓[39m src/features/publications/__tests__/a3742FacebookPhotoPublishing.test.ts [2m([22m[2m55 tests[22m[2m)[22m[33m 830[2mms[22m[39m
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth start[2m > [22m[2mrejects unauthenticated, foreign-business and failed-write starts
+[22m[39m[gbp-oauth-start] attempt write failed
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m3. Google cancellation terminates the attempt as disconnected
+[22m[39m[gbp-oauth-callback] attempt ended: GOOGLE_CONSENT_DENIED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: GOOGLE_REDIRECT_URI_MISMATCH
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: GOOGLE_CLIENT_CONFIGURATION_FAILURE
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: MISSING_CODE
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: BUSINESS_LOOKUP_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: BUSINESS_NOT_FOUND
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: CODE_EXCHANGE_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m4. every callback error leaves connecting; config errors are classified
+[22m[39m[gbp-oauth-callback] attempt ended: NO_GBP_ACCOUNTS
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m5. an invalid or missing state cannot mutate any source
+[22m[39m[gbp-oauth-callback] attempt ended: GOOGLE_CONSENT_DENIED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m5. an invalid or missing state cannot mutate any source
+[22m[39m[gbp-oauth-callback] attempt lookup failed
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m6. a code exchange failure terminates the attempt
+[22m[39m[gbp-oauth-callback] token exchange status: [33m400[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m6. a code exchange failure terminates the attempt
+[22m[39m[gbp-oauth-callback] attempt ended: OAUTH_CODE_INVALID
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m7. a credential store failure terminates the attempt and clears partial writes
+[22m[39m[gbp-oauth-callback] attempt ended: CREDENTIAL_STORE_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m7. a credential store failure terminates the attempt and clears partial writes
+[22m[39m[gbp-oauth-callback] attempt ended: CREDENTIAL_STORE_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] accounts status: [33m403[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] attempt ended: GBP_PERMISSION_DENIED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] accounts status: [33m429[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] attempt ended: GBP_API_QUOTA_UNAVAILABLE
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] accounts status: [33m500[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 OAuth callback failure recovery[2m > [22m[2m8. an account discovery failure terminates the attempt and clears credentials
+[22m[39m[gbp-oauth-callback] attempt ended: ACCOUNT_DISCOVERY_FAILED
+
+ [32m✓[39m src/features/improvement/__tests__/improvement.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 223[2mms[22m[39m
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] location fetch status: [33m403[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: GBP_PERMISSION_DENIED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] location fetch status: [33m404[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: LOCATION_NOT_FOUND
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] location fetch status: [33m500[39m
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: LOCATION_FETCH_FAILED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: NOT_CONNECTED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 location selection[2m > [22m[2m18. a sync failure sets a recoverable state and never verified_at
+[22m[39m[gbp-sync] sync ended: PERSIST_FAILED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 stale-state recovery[2m > [22m[2m19. a stale connecting attempt recovers to disconnected / ATTEMPT_EXPIRED
+[22m[39m[gbp-recover-attempt] attempt ended: ATTEMPT_EXPIRED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts[2m > [22m[2mA3.4.2.2 stale-state recovery[2m > [22m[2m20. a stale syncing attempt recovers to error / SYNC_INTERRUPTED
+[22m[39m[gbp-recover-attempt] attempt ended: SYNC_INTERRUPTED
+
+ [32m✓[39m src/features/reality-engine/__tests__/a3422GbpRecovery.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 598[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2mexpired, invalid, foreign-app and rejected tokens are confirmed failures
+[22m[39m[instagram-publishing] {"stage":"pf_permissions","http":400,"code":190}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2mexpired, invalid, foreign-app and rejected tokens are confirmed failures
+[22m[39m[instagram-publishing] {"stage":"pf_page","http":400,"code":190}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2mexpired, invalid, foreign-app and rejected tokens are confirmed failures
+[22m[39m[instagram-publishing] {"stage":"pf_debug_token","http":500,"code":1}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2mincorrect Page association stops before any Instagram read
+[22m[39m[instagram-publishing] {"stage":"pf_page","http":400,"code":100}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2meligibility is inconclusive (not failed) when Meta gives no definitive signal; subtype is never claimed
+[22m[39m[instagram-publishing] {"stage":"pf_publishing_limit","http":500,"code":2}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2meligibility is inconclusive (not failed) when Meta gives no definitive signal; subtype is never claimed
+[22m[39m[instagram-publishing] {"stage":"pf_publishing_limit","http":403,"code":10}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2mdebug_token unavailable leaves the token check inconclusive, not failed
+[22m[39m[instagram-publishing] {"stage":"pf_debug_token","http":500,"code":1}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2mMeta timeout is bounded and reported as META_TIMEOUT / inconclusive
+[22m[39m[instagram-publishing] {"stage":"pf_debug_token","result":"timeout"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2mMeta timeout is bounded and reported as META_TIMEOUT / inconclusive
+[22m[39m[instagram-publishing] {"stage":"pf_page","result":"timeout"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts[2m > [22m[2mB.3 FIX01 live checks (mocked Graph)[2m > [22m[2mMeta timeout is bounded and reported as META_TIMEOUT / inconclusive
+[22m[39m[instagram-publishing] {"stage":"pf_permissions","result":"timeout"}
+
+ [32m✓[39m src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts [2m([22m[2m27 tests[22m[2m)[22m[33m 587[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a3733ChannelReview.test.ts [2m([22m[2m39 tests[22m[2m)[22m[32m 119[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 container lifecycle (mocked Graph)[2m > [22m[2mT18 container definite failure: FAILED, no media_publish, no container stored
+[22m[39m[instagram-publishing] {"stage":"ig_container","http":400,"result":"META_REJECTED","code":100}
+
+ [32m✓[39m src/features/billing/__tests__/a243BusinessAdvisor.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 673[2mms[22m[39m
+     [33m[2m✓[22m[39m 32-33. the frontend never holds LocalSEO_KEY nor calls OpenAI directly [33m 364[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 container lifecycle (mocked Graph)[2m > [22m[2mT19 container ambiguous (transport, 5xx, malformed): UNKNOWN, verification required
+[22m[39m[instagram-publishing] {"stage":"ig_container","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+ [32m✓[39m src/features/action-layer/__tests__/a271ActionLayer.test.ts [2m([22m[2m112 tests[22m[2m)[22m[33m 301[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 container lifecycle (mocked Graph)[2m > [22m[2mT19 container ambiguous (transport, 5xx, malformed): UNKNOWN, verification required
+[22m[39m[instagram-publishing] {"stage":"ig_container","http":503,"result":"META_TEMPORARY_ERROR","code":2}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 container lifecycle (mocked Graph)[2m > [22m[2mT19 container ambiguous (transport, 5xx, malformed): UNKNOWN, verification required
+[22m[39m[instagram-publishing] {"stage":"ig_container","result":"PUBLISH_OUTCOME_UNKNOWN","malformed":true}
+
+ [32m✓[39m src/features/publications/__tests__/a3743GateB4Fix01DatabaseAndFreeze.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 509[2mms[22m[39m
+     [33m[2m✓[22m[39m only the two edge functions call the changed database functions [33m 320[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a372ProposalsEngine.test.ts [2m([22m[2m44 tests[22m[2m)[22m[33m 904[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F2 internal-test entitlement on every write boundary[2m > [22m[2man expired entitlement does not block investigating an UNKNOWN attempt
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":500,"result":"META_TEMPORARY_ERROR","code":1}
+
+ [32m✓[39m src/features/publications/__tests__/a3722RelationalGrounding.test.ts [2m([22m[2m47 tests[22m[2m)[22m[33m 512[2mms[22m[39m
+ [32m✓[39m src/features/activation/__tests__/activation.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 96[2mms[22m[39m
+ [32m✓[39m src/features/reality-engine/__tests__/analyzeWebsiteSsrf.test.ts [2m([22m[2m63 tests[22m[2m)[22m[33m 425[2mms[22m[39m
+ [32m✓[39m src/features/today-intelligence/__tests__/a272TodayIntelligence.test.ts [2m([22m[2m101 tests[22m[2m)[22m[32m 194[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 media_publish and UNKNOWN safety (mocked Graph)[2m > [22m[2mT26 media_publish error reply: UNKNOWN (never FAILED), evidence kept
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":400,"result":"META_REJECTED","code":100}
+
+ [32m✓[39m src/features/password-reset/__tests__/passwordReset.test.ts [2m([22m[2m58 tests[22m[2m)[22m[32m 90[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/a245GeoAudit.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 media_publish and UNKNOWN safety (mocked Graph)[2m > [22m[2mT27 media_publish ambiguous: UNKNOWN; local finish failure after Meta success is also UNKNOWN
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+ [32m✓[39m src/features/reviews/__tests__/a342ReviewsAi.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 201[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 media_publish and UNKNOWN safety (mocked Graph)[2m > [22m[2mT27 media_publish ambiguous: UNKNOWN; local finish failure after Meta success is also UNKNOWN
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":502,"result":"PUBLISH_OUTCOME_UNKNOWN"}
+
+ [32m✓[39m src/features/billing/__tests__/a246DigitalTwin.test.ts [2m([22m[2m55 tests[22m[2m)[22m[32m 184[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 media_publish and UNKNOWN safety (mocked Graph)[2m > [22m[2mT28 UNKNOWN blocks blind retry; verification settles only on evidence
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix02bActiveBusiness.test.ts[2m > [22m[2mFIX02B · disconnect[2m > [22m[2msingle business disconnects without a selection
+[22m[39m[gbp-disconnect] completed { revoked: [33mfalse[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix02bActiveBusiness.test.ts[2m > [22m[2mFIX02B · disconnect[2m > [22m[2mdisconnecting business A leaves business B connected
+[22m[39m[gbp-disconnect] completed { revoked: [33mfalse[39m, removed: [33mtrue[39m }
+
+ [32m✓[39m src/features/reality-engine/__tests__/gbp02Fix02bActiveBusiness.test.ts [2m([22m[2m33 tests[22m[2m)[22m[33m 301[2mms[22m[39m
+ [32m✓[39m src/features/social-intelligence/integration/__tests__/a3544SocialIntegration.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 579[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mHTTP 429 rate limit: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":429,"result":"META_RATE_LIMITED","code":4}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 media_publish and UNKNOWN safety (mocked Graph)[2m > [22m[2mT28 UNKNOWN blocks blind retry; verification settles only on evidence
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstderr[2m | src/features/publications/__tests__/a371PublicationsMedia.test.ts[2m > [22m[2mA3.7.1 publication-media handler security[2m > [22m[2ma failed or throwing save removes the just-uploaded object (no orphan) and leaks no detail
+[22m[39m[publication-media] unhandled error
+
+ [32m✓[39m src/features/publications/__tests__/a371PublicationsMedia.test.ts [2m([22m[2m33 tests[22m[2m)[22m[33m 388[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743InstagramGateA.test.ts[2m > [22m[2mA3.7.4.3 media_publish and UNKNOWN safety (mocked Graph)[2m > [22m[2mT28 UNKNOWN blocks blind retry; verification settles only on evidence
+[22m[39m[instagram-publishing] {"stage":"ig_container","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mHTTP 429 without body: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":429,"result":"META_RATE_LIMITED"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mtemporary 4xx (code 2): UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":400,"result":"META_TEMPORARY_ERROR","code":2}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mexplicit 400 rejection: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":400,"result":"META_REJECTED","code":100}
+
+ [32m✓[39m src/features/publications/__tests__/a3743InstagramGateA.test.ts [2m([22m[2m39 tests[22m[2m)[22m[33m 16628[2mms[22m[39m
+     [33m[2m✓[22m[39m T08 unsupported image: too small, garbage or non-JPEG/PNG never reaches Meta [33m 323[2mms[22m[39m
+     [33m[2m✓[22m[39m T09 PNG becomes an opaque JPEG; transparency composited onto white [33m 696[2mms[22m[39m
+     [33m[2m✓[22m[39m T10 JPEG becomes a compliant derivative: max width 1440, no upscaling, deterministic [33m 3017[2mms[22m[39m
+     [33m[2m✓[22m[39m T11 too-tall image is centre-cropped to 4:5 with no bars [33m 571[2mms[22m[39m
+     [33m[2m✓[22m[39m T12 too-wide image is centre-cropped to 1.91:1 with no bars [33m 720[2mms[22m[39m
+     [33m[2m✓[22m[39m T13 compliant image is not cropped (A and B dimensions included) [33m 566[2mms[22m[39m
+     [33m[2m✓[22m[39m T14 metadata removed, orientation applied, original untouched [33m 624[2mms[22m[39m
+     [33m[2m✓[22m[39m T14b derivative fails closed on codec errors and oversize output [33m 892[2mms[22m[39m
+     [33m[2m✓[22m[39m T16 signed URL never logged, persisted or kept; derivative removed after terminal state [33m 324[2mms[22m[39m
+     [33m[2m✓[22m[39m T18 container definite failure: FAILED, no media_publish, no container stored [33m 320[2mms[22m[39m
+     [33m[2m✓[22m[39m T19 container ambiguous (transport, 5xx, malformed): UNKNOWN, verification required [33m 1309[2mms[22m[39m
+     [33m[2m✓[22m[39m T23 container not ready: bounded polling, then FAILED/UNKNOWN, never media_publish [33m 1797[2mms[22m[39m
+     [33m[2m✓[22m[39m T24 container ready after polling proceeds to media_publish [33m 492[2mms[22m[39m
+     [33m[2m✓[22m[39m T25 media_publish success: SUCCEEDED with read-only verification [33m 302[2mms[22m[39m
+     [33m[2m✓[22m[39m T27 media_publish ambiguous: UNKNOWN; local finish failure after Meta success is also UNKNOWN [33m 1380[2mms[22m[39m
+     [33m[2m✓[22m[39m T28 UNKNOWN blocks blind retry; verification settles only on evidence [33m 1391[2mms[22m[39m
+     [33m[2m✓[22m[39m T29 already published blocks a duplicate [33m 306[2mms[22m[39m
+     [33m[2m✓[22m[39m T30 Facebook and Instagram are independent channels [33m 412[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2m403 permission reply: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":403,"result":"PERMISSION_REQUIRED","code":10}
+
+ [32m✓[39m src/features/publications/__tests__/a3743GateB3Fix02StatusAttemptGrant.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 386[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mHTTP 500: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":500,"result":"META_TEMPORARY_ERROR","code":1}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mHTTP 503 non-JSON: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":503,"result":"PUBLISH_OUTCOME_UNKNOWN"}
+
+ [32m✓[39m src/features/billing/__tests__/a23CostControl.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 218[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mnetwork failure: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+ [32m✓[39m src/features/billing/__tests__/a242SeoGenerator.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 602[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mtimeout: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mmalformed success body: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","malformed":true}
+
+ [32m✓[39m src/features/publications/__tests__/a3743GateB2Part1Security.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 2618[2mms[22m[39m
+     [33m[2m✓[22m[39m D-shaped fixture publishes only under mocked arming + allowlist, with exactly one /media and one /media_publish [33m 901[2mms[22m[39m
+     [33m[2m✓[22m[39m allowlist removed after validation but before /media: no Graph write, attempt FAILED, derivative removed [33m 668[2mms[22m[39m
+     [33m[2m✓[22m[39m arming flag removed between /media and /media_publish: no /media_publish, attempt FAILED (no post exists) [33m 399[2mms[22m[39m
+     [33m[2m✓[22m[39m concurrent duplicate requests create a single attempt and a single post [33m 504[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mnon-numeric id: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","malformed":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mnon-JSON success: UNKNOWN, one /media_publish, no retry possible
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","malformed":true}
+
+ [32m✓[39m src/features/email-verification/__tests__/a261EmailAuth.test.ts [2m([22m[2m57 tests[22m[2m)[22m[32m 191[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mdatabase failure while recording UNKNOWN still answers 202 and keeps blocking
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstderr[2m | src/features/weekly-plan/__tests__/a3762WeeklyPlanPage.test.tsx[2m > [22m[2mweekly content[2m > [22m[2mrenders title, week, purpose, progress notes and each action’s why, source, priority, effort and state
+[22m[39m⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ [32m✓[39m src/features/social-intelligence/ui/__tests__/a3543SocialIntelligenceUi.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 298[2mms[22m[39m
+[90mstdout[2m | src/features/meta-connection/__tests__/a3512MetaRecovery.test.ts[2m > [22m[2mA3.5.1.2 · 1. OAuth started correctly[2m > [22m[2mreturns a Meta dialog URL and a browser binding
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":429,"result":"META_RATE_LIMITED","code":4}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":429,"result":"META_RATE_LIMITED"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":400,"result":"META_TEMPORARY_ERROR","code":2}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":400,"result":"META_REJECTED","code":100}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":403,"result":"PERMISSION_REQUIRED","code":10}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":500,"result":"META_TEMPORARY_ERROR","code":1}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":503,"result":"PUBLISH_OUTCOME_UNKNOWN"}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","malformed":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","malformed":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","malformed":true}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 F6 ambiguous outcomes after /media_publish become UNKNOWN[2m > [22m[2mpublishContainer never reports a definite failure once the request was sent
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a3512MetaRecovery.test.ts[2m > [22m[2mA3.5.1.2 · 6. retry after cancel, expiry or failure[2m > [22m[2ma new start is accepted after cancel
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a3512MetaRecovery.test.ts[2m > [22m[2mA3.5.1.2 · 12. two tabs / concurrent starts[2m > [22m[2meach start issues a distinct state; the older tab's callback is rejected without touching the live attempt
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+[90mstdout[2m | src/features/meta-connection/__tests__/a3512MetaRecovery.test.ts[2m > [22m[2mA3.5.1.2 · 12. two tabs / concurrent starts[2m > [22m[2meach start issues a distinct state; the older tab's callback is rejected without touching the live attempt
+[22m[39m[meta-oauth-start] {"stage":"authorize_url","scopes":["pages_show_list","pages_read_engagement","business_management","instagram_basic"],"auth_type":"rerequest"}
+
+ [32m✓[39m src/features/meta-connection/__tests__/a3512MetaRecovery.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 485[2mms[22m[39m
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 UNKNOWN recovery[2m > [22m[2mno exact match: stays UNKNOWN, counts the check, still blocks new attempts
+[22m[39m[instagram-publishing] {"stage":"ig_media_publish","http":500,"result":"META_TEMPORARY_ERROR","code":1}
+
+[90mstdout[2m | src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts[2m > [22m[2mB.4 FIX01 UNKNOWN recovery[2m > [22m[2mUNKNOWN before /media_publish was ever requested resolves to a safe, single retry
+[22m[39m[instagram-publishing] {"stage":"ig_container","result":"PUBLISH_OUTCOME_UNKNOWN","transport":true}
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-1 cancel in select_location with credentials disconnects and clears credentials atomically
+[22m[39m[gbp-recover-attempt] attempt ended: USER_CANCELLED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-2 expiry in select_location with credentials disconnects and clears credentials atomically
+[22m[39m[gbp-recover-attempt] attempt ended: ATTEMPT_EXPIRED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-3 a credential-clearing failure aborts the transition and is never reported as success
+[22m[39m[gbp-recover-attempt] unhandled error
+
+[90mstderr[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-4 a state-update database error is never reported as success
+[22m[39m[gbp-recover-attempt] unhandled error
+
+[90mstderr[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-4 a state-update database error is never reported as success
+[22m[39m[gbp-recover-attempt] unhandled error
+
+[90mstderr[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-4b the CHECK constraint would reject the transition without the trigger (premise control)
+[22m[39m[gbp-recover-attempt] unhandled error
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-5 a repeated cancel is idempotent and performs no further writes
+[22m[39m[gbp-recover-attempt] attempt ended: USER_CANCELLED
+
+ [32m✓[39m src/features/weekly-plan/__tests__/a3762WeeklyPlanPage.test.tsx [2m([22m[2m33 tests[22m[2m)[22m[33m 2113[2mms[22m[39m
+     [33m[2m✓[22m[39m renders title, week, purpose, progress notes and each action’s why, source, priority, effort and state [33m 313[2mms[22m[39m
+     [33m[2m✓[22m[39m shows at most five priorities, in rank order, and every other open action behind a collapsed toggle [33m 414[2mms[22m[39m
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-8 an attempt without credentials keeps the existing cancel behaviour
+[22m[39m[gbp-recover-attempt] attempt ended: NO_LOCATIONS
+
+ [32m✓[39m src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 798[2mms[22m[39m
+     [33m[2m✓[22m[39m H1-1 cancel in select_location with credentials disconnects and clears credentials atomically [33m 489[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a3743GateB4Fix01PublishSafety.test.ts [2m([22m[2m55 tests[22m[2m)[22m[33m 17507[2mms[22m[39m
+     [33m[2m✓[22m[39m reproduces the finding on the pre-FIX01 model: a stale snapshot records "absent" and a retry publishes twice [33m 1220[2mms[22m[39m
+     [33m[2m✓[22m[39m with the prepared migration the row-locked stage refuses "absent": the attempt stays UNKNOWN and no duplicate is possible [33m 611[2mms[22m[39m
+     [33m[2m✓[22m[39m after "unsafe_absent" an exact read-only match settles the attempt as SUCCEEDED [33m 383[2mms[22m[39m
+     [33m[2m✓[22m[39m verification that wins before publish_requested freezes the stage: the publisher never sends /media_publish [33m 409[2mms[22m[39m
+     [33m[2m✓[22m[39m a non-stale publishing attempt is left alone (PUBLISH_IN_PROGRESS) and the publisher finishes normally [33m 596[2mms[22m[39m
+     [33m[2m✓[22m[39m two concurrent publish requests create one attempt, one container and one /media_publish [33m 481[2mms[22m[39m
+     [33m[2m✓[22m[39m expiry between the container and /media_publish stops the final write [33m 496[2mms[22m[39m
+     [33m[2m✓[22m[39m a successful publish checks the entitlement before begin, before /media and before /media_publish [33m 417[2mms[22m[39m
+     [33m[2m✓[22m[39m an expired entitlement does not block investigating an UNKNOWN attempt [33m 589[2mms[22m[39m
+     [33m[2m✓[22m[39m caption edited after validation: no container is requested [33m 393[2mms[22m[39m
+     [33m[2m✓[22m[39m caption edited after the container: /media_publish is never sent [33m 405[2mms[22m[39m
+     [33m[2m✓[22m[39m draft version bumped after validation: no container is requested [33m 399[2mms[22m[39m
+     [33m[2m✓[22m[39m draft version bumped after the container: /media_publish is never sent [33m 499[2mms[22m[39m
+     [33m[2m✓[22m[39m image path swapped after the container: /media_publish is never sent [33m 321[2mms[22m[39m
+     [33m[2m✓[22m[39m stored derivative replaced after validation: no container is requested [33m 583[2mms[22m[39m
+     [33m[2m✓[22m[39m stored derivative replaced after the container: /media_publish is never sent [33m 400[2mms[22m[39m
+     [33m[2m✓[22m[39m the container carries exactly the validated caption and the derivative is removed afterwards [33m 319[2mms[22m[39m
+     [33m[2m✓[22m[39m HTTP 429 rate limit: UNKNOWN, one /media_publish, no retry possible [33m 311[2mms[22m[39m
+     [33m[2m✓[22m[39m HTTP 429 without body: UNKNOWN, one /media_publish, no retry possible [33m 583[2mms[22m[39m
+     [33m[2m✓[22m[39m temporary 4xx (code 2): UNKNOWN, one /media_publish, no retry possible [33m 319[2mms[22m[39m
+     [33m[2m✓[22m[39m 403 permission reply: UNKNOWN, one /media_publish, no retry possible [33m 392[2mms[22m[39m
+     [33m[2m✓[22m[39m HTTP 500: UNKNOWN, one /media_publish, no retry possible [33m 683[2mms[22m[39m
+     [33m[2m✓[22m[39m HTTP 503 non-JSON: UNKNOWN, one /media_publish, no retry possible [33m 399[2mms[22m[39m
+     [33m[2m✓[22m[39m network failure: UNKNOWN, one /media_publish, no retry possible [33m 400[2mms[22m[39m
+     [33m[2m✓[22m[39m timeout: UNKNOWN, one /media_publish, no retry possible [33m 323[2mms[22m[39m
+     [33m[2m✓[22m[39m malformed success body: UNKNOWN, one /media_publish, no retry possible [33m 487[2mms[22m[39m
+     [33m[2m✓[22m[39m non-numeric id: UNKNOWN, one /media_publish, no retry possible [33m 412[2mms[22m[39m
+     [33m[2m✓[22m[39m database failure while recording UNKNOWN still answers 202 and keeps blocking [33m 403[2mms[22m[39m
+     [33m[2m✓[22m[39m the database stores a "failed" report after publish_requested as UNKNOWN (ok_unknown) [33m 422[2mms[22m[39m
+     [33m[2m✓[22m[39m no exact match: stays UNKNOWN, counts the check, still blocks new attempts [33m 401[2mms[22m[39m
+     [33m[2m✓[22m[39m UNKNOWN before /media_publish was ever requested resolves to a safe, single retry [33m 802[2mms[22m[39m
+     [33m[2m✓[22m[39m a settled attempt cannot be re-verified [33m 582[2mms[22m[39m
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts[2m > [22m[2mFIX02C · recover and cancel with real adapter mutations[2m > [22m[2mrecover changes only selected business B
+[22m[39m[gbp-recover-attempt] attempt ended: ATTEMPT_EXPIRED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts[2m > [22m[2mFIX02C · recover and cancel with real adapter mutations[2m > [22m[2mcancel changes only selected business B
+[22m[39m[gbp-recover-attempt] attempt ended: USER_CANCELLED
+
+[90mstderr[2m | src/features/internal-access/__tests__/a3752TenantSecurity.test.tsx[2m > [22m[2mA3.7.5.2 — internal route guard (browser)[2m > [22m[2mredirects a non-operator to the customer Today page without mounting the panel
+[22m[39m⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts[2m > [22m[2mFIX02C · recover and cancel with real adapter mutations[2m > [22m[2msingle business recovers automatically
+[22m[39m[gbp-recover-attempt] attempt ended: ATTEMPT_EXPIRED
+
+ [32m✓[39m src/features/internal-access/__tests__/a3752TenantSecurity.test.tsx [2m([22m[2m29 tests[22m[2m)[22m[33m 317[2mms[22m[39m
+ [32m✓[39m src/features/reality-engine/__tests__/gbp02Fix02cDependencies.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 783[2mms[22m[39m
+     [33m[2m✓[22m[39m uses only the credentials and locations of biz-a [33m 468[2mms[22m[39m
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mrevokes the refresh token at Google and clears credentials
+[22m[39m[gbp-disconnect] completed { revoked: [33mtrue[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mstill clears credentials locally when revocation fails
+[22m[39m[gbp-disconnect] completed { revoked: [33mfalse[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mstill clears credentials locally when revocation fails
+[22m[39m[gbp-disconnect] completed { revoked: [33mfalse[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mstill clears credentials locally when revocation fails
+[22m[39m[gbp-disconnect] completed { revoked: [33mfalse[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mresolves the source from the JWT user, never from a client user_id
+[22m[39m[gbp-disconnect] completed { revoked: [33mtrue[39m, removed: [33mtrue[39m }
+
+[90mstdout[2m | src/features/reality-engine/__tests__/a341GbpSecurity.test.ts[2m > [22m[2mA3.4.1 gbp-disconnect[2m > [22m[2mreports a failure if credentials could not be cleared
+[22m[39m[gbp-disconnect] completed { revoked: [33mtrue[39m, removed: [33mfalse[39m }
+
+ [32m✓[39m src/features/reality-engine/__tests__/a341GbpSecurity.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 211[2mms[22m[39m
+ [32m✓[39m src/features/prepared-replies/__tests__/preparedReplies.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 124[2mms[22m[39m
+ [32m✓[39m src/features/reality-engine/__tests__/gbp02Fix01Verification.test.ts [2m([22m[2m36 tests[22m[2m)[22m[33m 318[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a3723CopyQuality.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 480[2mms[22m[39m
+ [32m✓[39m src/features/email-verification/__tests__/f03Stage2b.test.ts [2m([22m[2m34 tests[22m[2m)[22m[32m 299[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/a244MapsScanner.test.ts [2m([22m[2m29 tests[22m[2m)[22m[32m 123[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a37221ClassificationRouting.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 706[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a3731SelectionFoundation.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 167[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a3732AdaptationGuards.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 408[2mms[22m[39m
+ [32m✓[39m src/features/publication-resume/__tests__/a3734PublicationResume.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 102[2mms[22m[39m
+ [32m✓[39m src/features/actions/__tests__/engine.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 173[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/a231Reservations.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 208[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a371PublicationsRepository.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 119[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/premiumAccess.test.ts [2m([22m[2m58 tests[22m[2m)[22m[32m 286[2mms[22m[39m
+ [32m✓[39m src/features/weekly-plan/__tests__/a3761WeeklyPlanModel.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 100[2mms[22m[39m
+ [32m✓[39m src/features/improvement/__tests__/fix0721.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 100[2mms[22m[39m
+ [32m✓[39m src/features/actions/__tests__/a3767ReadOnlyReconciliation.test.tsx [2m([22m[2m23 tests[22m[2m)[22m[32m 297[2mms[22m[39m
+ [32m✓[39m src/features/reality-engine/__tests__/gbpListLocations.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 216[2mms[22m[39m
+ [32m✓[39m src/features/meta-connection/__tests__/a3521MetaPagePermissions.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 209[2mms[22m[39m
+ [32m✓[39m src/features/action-layer/__tests__/a33DiagnosticAction.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 87[2mms[22m[39m
+ [32m✓[39m src/components/__tests__/a281TrustCleanup.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 95[2mms[22m[39m
+[90mstderr[2m | src/features/weekly-plan/__tests__/a3763WeeklyPlanRouting.test.tsx[2m > [22m[2m/semana route[2m > [22m[2mrenders Tu Semana inside the app shell for a signed-in, onboarded owner
+[22m[39m⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ [32m✓[39m src/features/publications/__tests__/a3732AdaptationEngine.test.ts [2m([22m[2m36 tests[22m[2m)[22m[33m 382[2mms[22m[39m
+ [32m✓[39m src/features/actions/__tests__/repository.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m src/features/consent/__tests__/a351aConsent.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+[90mstderr[2m | src/features/facebook-publish/__tests__/a3742B2Fix03PublishPanelRefresh.test.tsx[2m > [22m[2mA3.7.4.2 GATE B.2 FIX03: the Facebook publish panel follows every saved draft[2m > [22m[2mA. the harness starts on draft version 2 with the OLD caption
+[22m[39m⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+[90mstderr[2m | src/features/meta-connection/tests/a3753CommercialConnection.test.tsx[2m > [22m[2mA3.7.5.3 customer Meta connection card[2m > [22m[2mexplains the requested permissions before connecting (es)
+[22m[39m⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ [32m✓[39m src/features/billing/__tests__/a2420Ledger.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 309[2mms[22m[39m
+ [32m✓[39m src/features/meta-connection/tests/a3753CommercialConnection.test.tsx [2m([22m[2m20 tests[22m[2m)[22m[33m 523[2mms[22m[39m
+ [32m✓[39m src/features/conversion/__tests__/a31PurchaseActivation.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 185[2mms[22m[39m
+ [32m✓[39m src/features/actions/__tests__/sprint06.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 72[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/stripeWebhook.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 189[2mms[22m[39m
+ [32m✓[39m src/features/facebook-publish/__tests__/a3742B2Fix03PublishPanelRefresh.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1595[2mms[22m[39m
+ [32m✓[39m src/features/publishing-access/__tests__/a3742B1Fix01PublishingAccessUi.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a3721aValidationHarness.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 207[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/stripeBilling.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 279[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a372ProposalsGuards.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a3732AdaptationAdversarial.test.ts [2m([22m[2m39 tests[22m[2m)[22m[32m 294[2mms[22m[39m
+ [32m✓[39m src/features/business-memory/__tests__/businessRepository.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 294[2mms[22m[39m
+ [32m✓[39m src/features/actions/__tests__/fix061.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/features/legal/__tests__/a3551LegalMeta.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 75[2mms[22m[39m
+[90mstderr[2m | src/features/weekly-plan/__tests__/a3765WeeklyPlanVisibility.test.tsx[2m > [22m[2mevery open action is reachable (page)[2m > [22m[2mrenders all 0 open actions once the later section is expanded
+[22m[39m⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ [32m✓[39m src/features/conversion/__tests__/a3Conversion.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 92[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a372Normalization.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 121[2mms[22m[39m
+ [32m✓[39m src/features/publications/__tests__/a37211aUploadBytes.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 128[2mms[22m[39m
+ [32m✓[39m src/features/tools/__tests__/toolsHub.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 79[2mms[22m[39m
+ [32m✓[39m src/features/first-value/__tests__/engine.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+ [32m✓[39m src/domain/__tests__/dataIntegrity.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/features/weekly-plan/__tests__/a3765WeeklyPlanVisibility.test.tsx [2m([22m[2m27 tests[22m[2m)[22m[33m 1883[2mms[22m[39m
+ [32m✓[39m src/features/business-memory/__tests__/legacyMigration.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/features/email-verification/__tests__/a261SpecChecklist.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 83[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/billingModel.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 70[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/a3742Fix02InternalTestEntitlement.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 122[2mms[22m[39m
+ [32m✓[39m src/features/first-value/__tests__/routing.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/features/user-identity/__tests__/personalName.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/components/__tests__/a281Closure.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 79[2mms[22m[39m
+ [32m✓[39m src/features/first-value/__tests__/repository.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/components/__tests__/a28Prelaunch.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/features/billing/__tests__/checkoutCta.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 78[2mms[22m[39m
+ [32m✓[39m src/features/first-value/__tests__/integration.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/features/weekly-plan/__tests__/a3763WeeklyPlanRouting.test.tsx [2m([22m[2m20 tests[22m[2m)[22m[33m 9626[2mms[22m[39m
+     [33m[2m✓[22m[39m renders Tu Semana inside the app shell for a signed-in, onboarded owner [33m 783[2mms[22m[39m
+     [33m[2m✓[22m[39m sends signed-out visitors to login with /semana as the return path [33m 329[2mms[22m[39m
+     [33m[2m✓[22m[39m sends owners who have not finished onboarding to /empezar [33m 332[2mms[22m[39m
+     [33m[2m✓[22m[39m redirects /plan to /semana and lands on Tu Semana without looping [33m 579[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the query string and hash [33m 564[2mms[22m[39m
+     [33m[2m✓[22m[39m still asks signed-out visitors to log in first, returning to /plan (which then redirects) [33m 344[2mms[22m[39m
+     [33m[2m✓[22m[39m shows "Tu Semana" in Spanish in the sidebar, drawer and bottom bar, pointing to /semana [33m 566[2mms[22m[39m
+     [33m[2m✓[22m[39m shows "Your Week" in English [33m 505[2mms[22m[39m
+     [33m[2m✓[22m[39m highlights the entry as active on /semana and after the /plan redirect, on desktop and mobile [33m 989[2mms[22m[39m
+     [33m[2m✓[22m[39m is not active on other pages [33m 401[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the five-item mobile bottom bar in the same order [33m 716[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the existing analytics identifier "plan" on click [33m 1169[2mms[22m[39m
+     [33m[2m✓[22m[39m uses the current business and shows the read-only state without a subscription [33m 393[2mms[22m[39m
+     [33m[2m✓[22m[39m shows the no-business state when no business is selected [33m 446[2mms[22m[39m
+     [33m[2m✓[22m[39m opens the existing execution route from an action [33m 776[2mms[22m[39m
+     [33m[2m✓[22m[39m follows an action’s own in-app destination when it has one [33m 470[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m101 passed[39m[22m[90m (101)[39m
+[2m      Tests [22m [1m[32m3347 passed[39m[22m[90m (3347)[39m
+[2m   Start at [22m 10:07:34
+[2m   Duration [22m 42.80s[2m (transform 20.86s, setup 0ms, import 49.08s, tests 78.74s, environment 16.59s)[22m
+

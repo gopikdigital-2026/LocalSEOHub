@@ -1,0 +1,26 @@
+Seccion A3.5.1 · P (lineas 575-594) entradas=20
+OK  supabase/functions/gbp-oauth-start/handler.ts  81d01feaa42c8e01f1989b96e53780a3cc8ca0930d9bf38cd7f36ef203e4d933
+OK  supabase/functions/gbp-oauth-start/index.ts  186e6257e675dd17e598bd7215043ad2155dd0163c9b1438cfd20c9046b288a2
+OK  supabase/functions/gbp-oauth-callback/handler.ts  f1a97cb69a9fc33e8dd2da8ccaa99e74979bff474d9f17d6dbe6f07dc13a86a4
+OK  supabase/functions/gbp-oauth-callback/index.ts  90fc20c1f0ca22d56b991c1cd8b38c7c15125167cbae37051b9d4186bf827fae
+OK  supabase/functions/gbp-disconnect/handler.ts  e2064c2b75165c6b521cb94f523c974b81ed913cdeb83eb12a6571fb477e2f28
+OK  supabase/functions/gbp-disconnect/index.ts  457b0734e0499d3703dd78c18dcca4c1802552fcea64d0049850748257f85d55
+OK  supabase/functions/gbp-sync/handler.ts  915bedc7baa97f87a00c0b675ff7c86949f202554c067cee4ef8b2534c4aef84
+OK  supabase/functions/gbp-sync/index.ts  748b7aba58828c8b481d3c2dff8f54d878cbc00bca112c38933c9a77177f8ac6
+OK  supabase/functions/gbp-recover-attempt/handler.ts  8467fa461754a1c8ea8e317112adbf1cb3ea17b3893a1ba6309f42ac4cb15437
+OK  supabase/functions/gbp-recover-attempt/index.ts  ba0841a1e1b7aff9e9ce27261557e9501bed46d40be1b8f081806d8da0101a21
+OK  supabase/functions/gbp-list-locations/handler.ts  eb137ce7d5160c127a2f9b622d16f0c2eb3eaf714ca6b93c5ca1a718bbf7c543
+OK  supabase/functions/gbp-list-locations/index.ts  cbdc2d077463d88f9140ac5b1c1db84b9c4e3c2e998587aeef5ea032ab2a7782
+OK  supabase/functions/gbp-reviews/handler.ts  61e667d0f82a4e218f7a6652cb2672c2cdf553e93a167dd45992b20b25a2a16f
+OK  supabase/functions/gbp-reviews/index.ts  3e72f0ada835dbd464abe5ab9cd9262881f3b4c1f7880efc04b81cfa76ef5432
+OK  src/features/reality-engine/GBPCallbackPage.tsx  ec6e9ee8c6e66866b92580042a9e2b98e084d44c56403bee459ff10ef83a5d04
+OK  src/features/reality-engine/gbpStatus.ts  5db8b3c8f2b5bcfc68f9226c2c6642b23f8b5301290c55341d2651237a51e4e3
+OK  src/features/reality-engine/engine.ts  0d1ac39b768bbe6a13e5699aa759c656a1a142f641208bd0615b53b1b381c7cb
+OK  src/features/reality-engine/SourceCard.tsx  a0535ea61b40845930935fcfefc699267aeb827dfc2d7b696e88d0fd0a9cf026
+OK  src/features/reality-engine/registry.ts  2186e0b5e36fa20dde9b80e7e00580331b10d47fc4d7f5ecbde022370a611b8f
+OK  src/features/reality-engine/sourceStatus.ts  f5d9531241a2660ffa3322acdb9ce32d7247a4a906a7d47492125fb3f01bcbf0
+RESULT 20/20
+guardian_before_sha256=dd64157c96f5b3eb59336a26d2d3f37d57f13a7e2f9918c1afb7e3336a6fff78
+guardian_after_sha256=fc1e42a63c56412e8a0089112647a6fe8ee7813b9f0249660d501c6c6f5bb5c4
+old_hash_count=0
+new_hash_count=1

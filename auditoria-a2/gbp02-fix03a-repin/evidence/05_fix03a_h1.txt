@@ -1,0 +1,37 @@
+10:07:24 AM [vite] warning: `esbuild` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `oxc` instead.
+10:07:24 AM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ jsx: 'automatic', jsxImportSource: undefined }`
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/tmp/cc-agent/67208463/project[39m
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-1 cancel in select_location with credentials disconnects and clears credentials atomically
+[22m[39m[gbp-recover-attempt] attempt ended: USER_CANCELLED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-2 expiry in select_location with credentials disconnects and clears credentials atomically
+[22m[39m[gbp-recover-attempt] attempt ended: ATTEMPT_EXPIRED
+
+[90mstderr[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-3 a credential-clearing failure aborts the transition and is never reported as success
+[22m[39m[gbp-recover-attempt] unhandled error
+
+[90mstderr[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-4 a state-update database error is never reported as success
+[22m[39m[gbp-recover-attempt] unhandled error
+
+[90mstderr[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-4 a state-update database error is never reported as success
+[22m[39m[gbp-recover-attempt] unhandled error
+
+[90mstderr[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-4b the CHECK constraint would reject the transition without the trigger (premise control)
+[22m[39m[gbp-recover-attempt] unhandled error
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-5 a repeated cancel is idempotent and performs no further writes
+[22m[39m[gbp-recover-attempt] attempt ended: USER_CANCELLED
+
+[90mstdout[2m | src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts[2m > [22m[2mFIX03A · H1 cancel / expiry with credentials (real adapter + DB semantics)[2m > [22m[2mH1-8 an attempt without credentials keeps the existing cancel behaviour
+[22m[39m[gbp-recover-attempt] attempt ended: NO_LOCATIONS
+
+ [32m✓[39m src/features/reality-engine/__tests__/gbp02Fix03aRecoverH1.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 165[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
+[2m   Start at [22m 10:07:25
+[2m   Duration [22m 791ms[2m (transform 77ms, setup 0ms, import 112ms, tests 165ms, environment 0ms)[22m
+

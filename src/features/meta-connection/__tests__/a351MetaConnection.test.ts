@@ -581,7 +581,7 @@ describe('A3.5.1 · P. GBP regression: frozen files', () => {
     'supabase/functions/gbp-sync/handler.ts': '915bedc7baa97f87a00c0b675ff7c86949f202554c067cee4ef8b2534c4aef84',
     'supabase/functions/gbp-sync/index.ts': '748b7aba58828c8b481d3c2dff8f54d878cbc00bca112c38933c9a77177f8ac6',
     'supabase/functions/gbp-recover-attempt/handler.ts': '8467fa461754a1c8ea8e317112adbf1cb3ea17b3893a1ba6309f42ac4cb15437',
-    'supabase/functions/gbp-recover-attempt/index.ts': '3a0d378b6f71478b1c4c49dcb52aceced12b022ac2e10c97478b9f55e7f9b162',
+    'supabase/functions/gbp-recover-attempt/index.ts': 'ba0841a1e1b7aff9e9ce27261557e9501bed46d40be1b8f081806d8da0101a21',
     'supabase/functions/gbp-list-locations/handler.ts': 'eb137ce7d5160c127a2f9b622d16f0c2eb3eaf714ca6b93c5ca1a718bbf7c543',
     'supabase/functions/gbp-list-locations/index.ts': 'cbdc2d077463d88f9140ac5b1c1db84b9c4e3c2e998587aeef5ea032ab2a7782',
     'supabase/functions/gbp-reviews/handler.ts': '61e667d0f82a4e218f7a6652cb2672c2cdf553e93a167dd45992b20b25a2a16f',

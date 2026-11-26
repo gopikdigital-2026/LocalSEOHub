@@ -1,0 +1,114 @@
+
+/tmp/cc-agent/67208463/project/src/App.tsx
+   5:10  error    'useAuth' is defined but never used                                                                                             @typescript-eslint/no-unused-vars
+  64:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/tmp/cc-agent/67208463/project/src/app-v2/auth.tsx
+  95:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/tmp/cc-agent/67208463/project/src/components/BusinessAuditLanding.tsx
+  10:3  error  'MessageSquare' is defined but never used  @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/components/ContentGeneratorLanding.tsx
+  199:3  error  'index' is defined but never used                         @typescript-eslint/no-unused-vars
+  425:9  error  'handleStartGenerate' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/components/DiagnosticLanding.tsx
+  12:3  error  'MessageSquare' is defined but never used  @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/components/LandingPage.tsx
+    6:50  error    'Users' is defined but never used                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    6:57  error    'Award' is defined but never used                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    7:48  error    'Building2' is defined but never used                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+    8:3   error    'MessageSquare' is defined but never used                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+    8:18  error    'Clock' is defined but never used                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    8:54  error    'Layers' is defined but never used                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  111:10  error    'getToolsShowcase' is defined but never used                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  734:7   error    'TOOL_COLORS' is assigned a value but never used                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  745:10  error    'useReveal' is defined but never used                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  761:10  error    'AnimatedCounter' is defined but never used                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  987:50  warning  The ref value 'startTimeRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'startTimeRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/tmp/cc-agent/67208463/project/src/components/MetaAdsLanding.tsx
+  4:30  error  'Check' is defined but never used        @typescript-eslint/no-unused-vars
+  5:24  error  'AlertCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/features/business-memory/BusinessContext.tsx
+  112:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/tmp/cc-agent/67208463/project/src/features/channel-review/model.ts
+  4:20  error  Unexpected control character(s) in regular expression: \x00, \x08, \x0b, \x1f  no-control-regex
+
+/tmp/cc-agent/67208463/project/src/features/consent/ConsentProvider.tsx
+  13:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/tmp/cc-agent/67208463/project/src/features/conversion/MetaPixelTracker.tsx
+  8:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/tmp/cc-agent/67208463/project/src/features/meta-connection/MetaCallbackPage.tsx
+  11:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  20:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/tmp/cc-agent/67208463/project/src/features/meta-connection/__tests__/a353MetaReadLayer.test.ts
+  107:63  error  '_init' is defined but never used        @typescript-eslint/no-unused-vars
+  219:28  error  '_r' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  219:42  error  '_c' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/features/publications/__tests__/a371PublicationsRepository.test.ts
+  39:31  error  '_name' is defined but never used     @typescript-eslint/no-unused-vars
+  39:46  error  '_options' is defined but never used  @typescript-eslint/no-unused-vars
+  99:34  error  '_url' is defined but never used      @typescript-eslint/no-unused-vars
+  99:48  error  '_init' is defined but never used     @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/features/publications/__tests__/a372ProposalsEngine.test.ts
+  88:25  error  '_p' is defined but never used     @typescript-eslint/no-unused-vars
+  88:37  error  '_u' is defined but never used     @typescript-eslint/no-unused-vars
+  88:49  error  '_id' is defined but never used    @typescript-eslint/no-unused-vars
+  88:62  error  '_path' is defined but never used  @typescript-eslint/no-unused-vars
+  92:27  error  '_id' is defined but never used    @typescript-eslint/no-unused-vars
+  92:40  error  '_u' is defined but never used     @typescript-eslint/no-unused-vars
+  92:52  error  '_fn' is defined but never used    @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/features/publications/__tests__/a3732AdaptationGuards.test.ts
+  29:31  error  '_name' is defined but never used  @typescript-eslint/no-unused-vars
+  29:46  error  '_opts' is defined but never used  @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/features/publications/__tests__/a3733ChannelReview.test.ts
+  46:28  error  '_name' is defined but never used  @typescript-eslint/no-unused-vars
+  46:43  error  '_args' is defined but never used  @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/features/publications/__tests__/a3743GateB3Fix01ConnectionPreflight.test.ts
+  53:61  error  '_init' is defined but never used  @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/features/publications/__tests__/a3743GateB4Fix01DatabaseAndFreeze.test.ts
+  148:52  error  '_id' is defined but never used  @typescript-eslint/no-unused-vars
+
+/tmp/cc-agent/67208463/project/src/features/reality-engine/engine.ts
+  17:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/tmp/cc-agent/67208463/project/src/legacy/components/AdminDashboard.tsx
+   32:10  error    'supabase' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  591:37  warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/tmp/cc-agent/67208463/project/src/lib/i18n.tsx
+  1370:52  error    Empty block statement                                                                                                           no-empty
+  1382:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/tmp/cc-agent/67208463/project/supabase/functions/publication-adaptations/adaptation.ts
+  35:63  error  Unexpected control character(s) in regular expression: \x00, \x09, \x0b, \x1f  no-control-regex
+
+/tmp/cc-agent/67208463/project/supabase/functions/publication-adaptations/context.ts
+  38:23  error  Unexpected control character(s) in regular expression: \x00, \x1f  no-control-regex
+
+/tmp/cc-agent/67208463/project/supabase/functions/publication-adaptations/safety.ts
+  37:63  error  Unexpected control character(s) in regular expression: \x00, \x09, \x0b, \x1f  no-control-regex
+
+/tmp/cc-agent/67208463/project/supabase/functions/publication-proposals/context.ts
+  38:23  error  Unexpected control character(s) in regular expression: \x00, \x1f  no-control-regex
+
+/tmp/cc-agent/67208463/project/supabase/functions/publication-proposals/safety.ts
+  37:63  error  Unexpected control character(s) in regular expression: \x00, \x09, \x0b, \x1f  no-control-regex
+
+✖ 57 problems (47 errors, 10 warnings)
+

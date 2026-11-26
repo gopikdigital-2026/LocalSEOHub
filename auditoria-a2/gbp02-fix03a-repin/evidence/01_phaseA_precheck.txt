@@ -1,0 +1,5 @@
+Fase A
+index.ts sha256 = ba0841a1e1b7aff9e9ce27261557e9501bed46d40be1b8f081806d8da0101a21 (== nuevo autorizado)
+guardian antes: hash antiguo x1, hash nuevo x0 (dd64157c...)
+restantes 19 entradas: 19/19
+RESULTADO: PASS
